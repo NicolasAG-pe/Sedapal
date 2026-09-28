@@ -1914,7 +1914,7 @@
     spotOverlay.setAttribute('aria-hidden','false');
     renderSpot();
   }
-  function endSpotlight(done){
+  function endSpotlight(done, options){
     const wasActive = spotActive;
     spotActive = false;
 
@@ -1923,9 +1923,10 @@
     spotPop.classList.remove('open');
     spotPop.setAttribute('aria-hidden','true');
     clearSpotlight();
-    // Marcar visto solo si el tutorial estaba realmente activo
-    // (Finalizar, Omitir, Escape o clic fuera). Así el logout no marca nada.
-    if(wasActive) markTutorialSeen();
+    // Marcar visto solo ante cierre voluntario (Finalizar, Omitir, Escape o
+    // clic en overlay). El logout pasa {markSeen:false} y nunca marca.
+    const shouldMarkSeen = !options || options.markSeen !== false;
+    if(wasActive && shouldMarkSeen) markTutorialSeen();
     const refocusReplay = ()=>{
       try{
         const replay = document.getElementById('btn-replay-tutorial');
@@ -2920,7 +2921,7 @@
   document.getElementById('btn-logout').addEventListener('click', ()=>{
     resetHidroBotSession();
     [detModal,payModal,copiesModal,incModal].forEach(closeModal);
-    endSpotlight(false);
+    endSpotlight(false, {markSeen:false});
     showView(viewLogin);
     inpPass.value = '';
     inpSupply.focus();
