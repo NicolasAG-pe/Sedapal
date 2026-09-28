@@ -1487,6 +1487,7 @@
       document.querySelectorAll('.view').forEach(v=>v.classList.remove('active','leaving'));
       viewToShow.classList.add('active');
       window.scrollTo(0,0);
+      syncHidroBotVisibility();
     };
     if(current && !isReduced()){
       current.classList.add('leaving');
@@ -1906,6 +1907,7 @@
   function startTutorial(){
     if(!viewDash.classList.contains('active') || loading) return;
     if(spotActive) return; // evita dos tutoriales simultáneos
+    if(hidroBotState.open) minimizeBot();
     spotActive = true;
     spotStep = 0;
     spotOverlay.classList.add('open');
@@ -1915,6 +1917,37 @@
   function endSpotlight(done){
     const wasActive = spotActive;
     spotActive = false;
+
+    spotOverlay.classList.remove('open');
+    spotOverlay.setAttribute('aria-hidden','true');
+    spotPop.classList.remove('open');
+    spotPop.setAttribute('aria-hidden','true');
+    clearSpotlight();
+    // Marcar visto solo si el tutorial estaba realmente activo
+    // (Finalizar, Omitir, Escape o clic fuera). Así el logout no marca nada.
+    if(wasActive) markTutorialSeen();
+    const refocusReplay = ()=>{
+      try{
+        const replay = document.getElementById('btn-replay-tutorial');
+        if(replay && replay.offsetParent !== null) replay.focus({preventScroll:true});
+      }catch(e){}
+    };
+    if(done){
+      // Navegar primero y restaurar el foco cuando Inicio ya esté visible
+      openDashboardPage('inicio').then(()=>{
+        showToast('Tutorial completado');
+        refocusReplay();
+      });
+    } else {
+      refocusReplay();
+    }
+  }
+
+  /* ============================================================
+     HIDROBOT — hermano del tutorial (NO depende de endSpotlight)
+     Inicializacion unica via initHidroBot(). Visibilidad via
+     syncHidroBotVisibility() llamada desde showView().
+     ============================================================ */
   /* ---------- HidroBot: asistente virtual local (sin backend) ---------- */
   /* Las claves de servicios de IA nunca deben almacenarse en el
      JavaScript del navegador. Futura migración: browser -> /api/chat
@@ -1927,6 +1960,9 @@
   const hbForm = document.getElementById('hb-form');
   const hbInput = document.getElementById('hb-input');
   const hidroBotState = {open:false, greeted:false, typing:false};
+  let hidroBotInitialized = false;
+  let hidroBotTypingTimer = null;
+  let hbSessionId = 0;
   const HB_CHIPS = ['Ver último recibo','Recibos pendientes','Consultar consumo','Reportar incidencia','Cortes de servicio','Necesito ayuda'];
 
   /* ---------- HidroBot referencias ---------- */
@@ -2007,16 +2043,35 @@
     addBotMessage('Hola, soy HidroBot, el asistente virtual de Hidro Mejora. Puedo ayudarte con tus recibos, consumo, incidencias, cortes de servicio y navegación dentro de la plataforma. ¿En qué puedo ayudarte?');
     hidroBotState.greeted = true;
   }
-  function resetBotChat(){
+  function resetBotChat(opts){
+    const greet = !!(opts && opts.greet);
+    if(hidroBotTypingTimer){ clearTimeout(hidroBotTypingTimer); hidroBotTypingTimer = null; }
+    const typingEl = document.getElementById('hb-typing');
+    if(typingEl) typingEl.remove();
     hbBody.innerHTML = '';
     hidroBotState.greeted = false;
     hidroBotState.typing = false;
+    hbInput.value = '';
     renderBotChips();
+    if(greet) greetBot();
+  }
+  function resetHidroBotSession(){
+    hbSessionId++;
+    if(hidroBotTypingTimer){ clearTimeout(hidroBotTypingTimer); hidroBotTypingTimer = null; }
+    const typingEl = document.getElementById('hb-typing');
+    if(typingEl) typingEl.remove();
+    hidroBotState.typing = false;
+    minimizeBot();
+    hbBody.innerHTML = '';
+    hidroBotState.greeted = false;
+    hbInput.value = '';
+    renderBotChips();
+    syncHidroBotVisibility();
   }
 
   /* ---------- HidroBot intents ---------- */
   function normalizeBotText(text){
-    return (text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+    return (text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
   }
   function bw(text, w){ return new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(text); }
   // Mapa central de intenciones: el orden del arreglo define la prioridad
@@ -2060,12 +2115,13 @@
     if(has('no tengo agua','falta agua','sin agua','no sale agua','no hay agua')) return {intent:'no_water', confidence:.95};
     if(has('baja presion','poca presion','sale poca agua','poca agua')) return {intent:'low_pressure', confidence:.93};
     if(has('fuga','tuberia rota','rotura de tuberia','sale agua','aniego')) return {intent:'leak', confidence:.92};
-    if(has('ultimo recibo','ultima factura','factura actual','recibo actual','este mes','debo este mes','factura de este mes')) return {intent:'last_receipt', confidence:.92};
+    // Consumo explicito ANTES que ultimo recibo: "cuanto consumi este mes" -> consumption
+    if(has('consumo','consumi','consumiste','consumir','metros','cubico','cubicos','agua consumida') || bw(text,'m3') || text.indexOf('m\u00b3') > -1) return {intent:'consumption', confidence:.93};
+    if(has('ultimo recibo','ultima factura','factura actual','recibo actual','factura de este mes','recibo de este mes','factura este mes','recibo este mes','debo este mes','deuda de este mes')) return {intent:'last_receipt', confidence:.92};
     if(has('cuanto debo','que debo','que recibos debo','pendiente','pendientes','tengo deuda','deuda','vencido','vencidos')) return {intent:'pending_receipts', confidence:.9};
     if(has('quiero pagar','cancelar recibo','cancelar un recibo') || bw(text,'pagar') || bw(text,'pago')) return {intent:'payment', confidence:.9};
     if(has('descargar recibo','descargar pdf','descargar mi recibo','copia','duplicado','comprobante') || bw(text,'pdf')) return {intent:'pdf', confidence:.9};
     if(has('mis recibos','ver recibos','recibos','historial','facturas') || bw(text,'recibo') || bw(text,'factura')) return {intent:'receipts', confidence:.87};
-    if(has('consumo','consumi','metros','cubicos','agua consumida') || bw(text,'m3') || text.indexOf('m³') > -1) return {intent:'consumption', confidence:.9};
     if(cutWords) return {intent:'cuts', confidence:.88};
     if(has('mis incidencias','mis reportes','que reporte')) return {intent:'my_incidents', confidence:.9};
     if(has('incidencia','problema','reporte','reportar','falla')) return {intent:'incident', confidence:.85};
@@ -2103,10 +2159,6 @@
     if(id === 'customer_service'){
       return {text:'Puedes consultar los canales y opciones disponibles en Atención al Cliente.',
         actions:[createBotAction('Ir a Atención al Cliente', ()=>hbGo('ayuda'))]};
-    }
-    if(id === 'receipts'){
-      return {text:'En Recibos puedes buscar por mes, filtrar por año o estado, ver el detalle y descargar el PDF de cada recibo.',
-        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
     }
     if(id === 'last_receipt'){
       const r = recibos[0];
@@ -2229,13 +2281,21 @@
     if(!clean) return;
     addUserMessage(clean);
     showBotTyping();
+    const sessionAtSend = hbSessionId;
     const delay = isReduced() ? 60 : 300 + Math.random() * 400;
-    setTimeout(async ()=>{
+    if(hidroBotTypingTimer){ clearTimeout(hidroBotTypingTimer); }
+    hidroBotTypingTimer = setTimeout(async ()=>{
+      hidroBotTypingTimer = null;
+      if(sessionAtSend !== hbSessionId) return;
+      if(!hbSessionActive()){ hideBotTyping(); return; }
       try{
         const res = await getHidroBotResponse(clean);
+        if(sessionAtSend !== hbSessionId) return;
+        if(!hbSessionActive()){ hideBotTyping(); return; }
         hideBotTyping();
         addBotMessage(res);
       }catch(e){
+        if(sessionAtSend !== hbSessionId) return;
         hideBotTyping();
         addBotMessage('Ocurrió un inconveniente al procesar tu consulta. Intenta de nuevo.');
       }
@@ -2253,7 +2313,11 @@
     setTimeout(()=>{ try{ hbFab.focus({preventScroll:true}); }catch(e){ try{ hbFab.focus(); }catch(_){} } }, isReduced() ? 0 : 120);
   }
   function openHidroBot(){
-    if(!hbSessionActive()) return;
+    if(!viewDash.classList.contains('active')) return;
+    if(loading || !hbSessionActive()){
+      showToast('Cargando datos de tu suministro…');
+      return;
+    }
     hidroBotState.open = true;
     hbPanel.classList.add('open');
     hbPanel.setAttribute('aria-hidden','false');
@@ -2274,69 +2338,33 @@
   }
   function closeHidroBot(){ minimizeBot(); }
   function toggleHidroBot(){ hidroBotState.open ? closeHidroBot() : openHidroBot(); }
-  function resetBotChat(){
-    hbBody.innerHTML = '';
-    renderBotChips();
-    hidroBotState.greeted = false;
-    hidroBotState.typing = false;
-    greetBot();
-  }
   function syncHidroBotVisibility(){
+    if(!hbRoot || !hbFab || !hbPanel) return;
     const on = viewDash.classList.contains('active');
     hbRoot.classList.toggle('show', on);
     hbRoot.setAttribute('aria-hidden', on ? 'false' : 'true');
-    if(!on){
-      if(hidroBotState.open) minimizeBot();
-      resetBotChat();
-    }
+    const open = hidroBotState.open && on;
+    hbPanel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    hbFab.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if(!on && hidroBotState.open) minimizeBot();
   }
 
-  hbFab.addEventListener('click', toggleHidroBot);
-  document.getElementById('hb-min').addEventListener('click', ()=>{ minimizeBot(); refocusFab(); });
-  document.getElementById('hb-close').addEventListener('click', ()=>{ closeHidroBot(); refocusFab(); });
-  document.getElementById('hb-clear').addEventListener('click', ()=>{ resetBotChat(); showToast('Conversación limpiada.'); });
-  hbForm.addEventListener('submit', e=>{ e.preventDefault(); sendBotMessage(); });
-  hbInput.addEventListener('keydown', e=>{
-    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendBotMessage(); }
-  });
-  document.getElementById('btn-logout').addEventListener('click', ()=>{ minimizeBot(); resetBotChat(); });
-  document.addEventListener('keydown', e=>{
-    if(e.key !== 'Escape' || !hidroBotState.open) return;
-    if(document.querySelector('.overlay.open')) return;
-    if(typeof spotActive !== 'undefined' && spotActive) return;
-    e.stopImmediatePropagation();
-    minimizeBot();
-    refocusFab();
-  }, true);
-  if(window.MutationObserver && viewDash){
-    new MutationObserver(syncHidroBotVisibility).observe(viewDash, {attributes:true, attributeFilter:['class']});
-  }
-  renderBotChips();
-  syncHidroBotVisibility();
-
-  spotOverlay.classList.remove('open');
-    spotOverlay.setAttribute('aria-hidden','true');
-    spotPop.classList.remove('open');
-    spotPop.setAttribute('aria-hidden','true');
-    clearSpotlight();
-    // Marcar visto solo si el tutorial estaba realmente activo
-    // (Finalizar, Omitir, Escape o clic fuera). Así el logout no marca nada.
-    if(wasActive) markTutorialSeen();
-    const refocusReplay = ()=>{
-      try{
-        const replay = document.getElementById('btn-replay-tutorial');
-        if(replay && replay.offsetParent !== null) replay.focus({preventScroll:true});
-      }catch(e){}
-    };
-    if(done){
-      // Navegar primero y restaurar el foco cuando Inicio ya esté visible
-      openDashboardPage('inicio').then(()=>{
-        showToast('Tutorial completado');
-        refocusReplay();
-      });
-    } else {
-      refocusReplay();
-    }
+  function initHidroBot(){
+    if(hidroBotInitialized) return;
+    hidroBotInitialized = true;
+    hbFab.addEventListener('click', toggleHidroBot);
+    document.getElementById('hb-min').addEventListener('click', ()=>{ minimizeBot(); refocusFab(); });
+    document.getElementById('hb-close').addEventListener('click', ()=>{ closeHidroBot(); refocusFab(); });
+    document.getElementById('hb-clear').addEventListener('click', ()=>{ resetBotChat({greet:true}); showToast('Conversación limpiada.'); });
+    hbForm.addEventListener('submit', e=>{ e.preventDefault(); sendBotMessage(); });
+    hbInput.addEventListener('keydown', e=>{
+      if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendBotMessage(); }
+    });
+    // Sin MutationObserver: showView() llama a syncHidroBotVisibility().
+    // Sin listener Escape propio: el handler global unico prioriza modal > tutorial > HidroBot.
+    // Sin listener logout propio: el flujo principal de logout llama a resetHidroBotSession().
+    renderBotChips();
+    syncHidroBotVisibility();
   }
   spotNext.addEventListener('click', ()=>{
     if(spotStep < SPOT_STEPS.length - 1){ spotStep++; renderSpot(); }
@@ -2390,8 +2418,12 @@
   }
   detClose.addEventListener('click', ()=>closeModal(detModal));
   detClose2.addEventListener('click', ()=>closeModal(detModal));
+  // Escape global unico: prioridad 1) modal, 2) tutorial, 3) HidroBot.
   document.addEventListener('keydown', e=>{
-    if(e.key==='Escape'){ [detModal,payModal,copiesModal,incModal].forEach(closeModal); if(spotActive) endSpotlight(false); }
+    if(e.key !== 'Escape') return;
+    if(document.querySelector('.overlay.open,.overlay.closing')){ [detModal,payModal,copiesModal,incModal].forEach(closeModal); return; }
+    if(spotActive){ endSpotlight(false); return; }
+    if(hidroBotState.open){ minimizeBot(); refocusFab(); }
   });
 
   /* ---------- PDF real con jsPDF: recibo profesional ---------- */
@@ -2884,8 +2916,11 @@
     }, 1500);
   });
 
+  // Flujo principal de logout (unico listener): incluye limpieza de HidroBot.
   document.getElementById('btn-logout').addEventListener('click', ()=>{
-    closeModal(detModal); endSpotlight(false);
+    resetHidroBotSession();
+    [detModal,payModal,copiesModal,incModal].forEach(closeModal);
+    endSpotlight(false);
     showView(viewLogin);
     inpPass.value = '';
     inpSupply.focus();
@@ -2913,6 +2948,8 @@
 
   spotOverlay.classList.remove('open');
   spotPop.classList.remove('open');
+
+  initHidroBot();
 })();
 </script>
 </body>
