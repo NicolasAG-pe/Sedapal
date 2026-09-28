@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="description" content="SEDAPAL - Hidro Mejora: centraliza tu historial de facturación de agua potable." />
+<title>SEDAPAL · Hidro Mejora</title>
+<style>
+  :root{
+    --navy:#003366;
+    --navy-dark:#00244a;
+    --sky:#00A4E4;
+    --sky-dark:#008cc2;
+    --bg:#F4F4F4;
+    --white:#ffffff;
+    --text:#1d2b36;
+    --muted:#6b7a89;
+    --green:#1e9e62;
+    --green-bg:#e6f6ee;
+    --red:#d63a3a;
+    --red-bg:#fdecec;
+    --orange:#e67e00;
+    --orange-bg:#fff3e0;
+    --border:#e2e8f0;
+    --radius:14px;
+    --shadow:0 8px 28px rgba(0,51,102,.12);
+    --shadow-sm:0 2px 10px rgba(0,51,102,.08);
+    --transition:.28s ease;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:Roboto,Arial,Helvetica,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.55;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* ===== Layout views ===== */
+  .view{display:none;min-height:100vh}
+  .view.active{display:flex;flex-direction:column;animation:fadeUp .35s ease}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* ===== Login ===== */
+  #view-login{align-items:center;justify-content:center;padding:1.5rem;
+    background:linear-gradient(135deg,var(--navy) 0%,#004a8a 55%,var(--sky) 130%);
+    position:relative;overflow:hidden}
+  #view-login::before,#view-login::after{
+    content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.07);pointer-events:none}
+  #view-login::before{width:420px;height:420px;top:-140px;right:-120px}
+  #view-login::after{width:320px;height:320px;bottom:-120px;left:-100px}
+  .login-card{
+    width:100%;max-width:420px;background:var(--white);border-radius:20px;
+    box-shadow:0 20px 60px rgba(0,0,0,.25);padding:2rem 1.75rem;z-index:1;
+    border-top:6px solid var(--sky);
+  }
+  .brand{display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem}
+  .logo-drop{
+    width:52px;height:52px;flex:0 0 52px;border-radius:14px;
+    background:linear-gradient(180deg,var(--sky),var(--navy));
+    display:grid;place-items:center;color:#fff;box-shadow:var(--shadow-sm);
+  }
+  .logo-drop svg{width:30px;height:30px}
+  .brand-text strong{display:block;color:var(--navy);font-size:1.35rem;letter-spacing:.06em;line-height:1}
+  .brand-text span{display:block;color:var(--sky);font-weight:700;font-size:.95rem;letter-spacing:.04em}
+  .brand-text small{color:var(--muted);font-size:.78rem}
+  .login-card h1{font-size:1.25rem;color:var(--navy);margin:.4rem 0 .25rem}
+  .login-card p.subtitle{color:var(--muted);font-size:.9rem;margin-bottom:1.25rem}
+  .field{margin-bottom:1rem}
+  .field label{display:block;font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:.35rem}
+  .field input{
+    width:100%;padding:.8rem .9rem;border:2px solid var(--border);border-radius:10px;
+    font-size:1rem;font-family:inherit;transition:var(--transition);background:#fbfdff;
+  }
+  .field input:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 4px rgba(0,164,228,.15);background:#fff}
+  .field .hint{font-size:.76rem;color:var(--muted);margin-top:.3rem}
+  .form-error{display:none;background:var(--red-bg);color:var(--red);border:1px solid #f5c2c2;
+    font-size:.85rem;padding:.6rem .8rem;border-radius:10px;margin-bottom:1rem}
+  .form-error.show{display:block;animation:fadeUp .25s ease}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+    border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:1rem;
+    padding:.85rem 1.2rem;border-radius:10px;transition:var(--transition);text-decoration:none;
+  }
+  .btn-primary{background:var(--navy);color:#fff;width:100%}
+  .btn-primary:hover,.btn-primary:focus-visible{background:var(--navy-dark);transform:translateY(-1px);box-shadow:var(--shadow)}
+  .btn-sky{background:var(--sky);color:#fff}
+  .btn-sky:hover{background:var(--sky-dark)}
+  .btn-ghost{background:#eef4f9;color:var(--navy)}
+  .btn-ghost:hover{background:#ddeaf4}
+  .btn-block{width:100%}
+  .login-foot{margin-top:1.1rem;text-align:center;font-size:.8rem;color:var(--muted)}
+  .login-foot a{color:var(--sky-dark);font-weight:700;text-decoration:none}
+  .demo-box{margin-top:1rem;background:#f0f7fd;border:1px dashed #9ed6f0;border-radius:10px;
+    padding:.6rem .8rem;font-size:.8rem;color:#2a5a7a}
+
+  /* ===== Dashboard ===== */
+  #view-dashboard{background:var(--bg)}
+  .topbar{background:var(--navy);color:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 14px rgba(0,0,0,.2)}
+  .topbar-inner{max-width:1100px;margin:0 auto;padding:.8rem 1rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+  .topbar .mini-brand{display:flex;align-items:center;gap:.6rem;flex:1;min-width:200px}
+  .mini-drop{width:38px;height:38px;border-radius:10px;background:var(--sky);display:grid;place-items:center;flex:0 0 38px}
+  .mini-drop svg{width:22px;height:22px}
+  .mini-brand strong{font-size:1rem;letter-spacing:.05em;display:block;line-height:1.1}
+  .mini-brand small{font-size:.75rem;opacity:.85;display:block}
+  .supply-chip{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
+    padding:.4rem .8rem;border-radius:999px;font-size:.85rem;display:inline-flex;gap:.45rem;align-items:center}
+  .supply-chip b{letter-spacing:.03em}
+  .btn-logout{background:#fff;color:var(--navy);padding:.55rem 1rem;font-size:.88rem;border-radius:999px}
+  .btn-logout:hover{background:var(--sky);color:#fff}
+  main.dashboard{max-width:1100px;margin:0 auto;width:100%;padding:1.25rem 1rem 3rem;flex:1}
+  .hero{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);
+    padding:1.25rem;border-left:6px solid var(--sky);display:flex;gap:1rem;flex-wrap:wrap;
+    align-items:center;justify-content:space-between;margin-bottom:1.1rem}
+  .hero h2{color:var(--navy);font-size:1.25rem;margin-bottom:.2rem}
+  .hero p{color:var(--muted);font-size:.9rem;max-width:60ch}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-bottom:1.1rem}
+  .stat{background:var(--white);border-radius:12px;padding:.8rem .9rem;box-shadow:var(--shadow-sm);border:1px solid #edf1f5}
+  .stat small{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
+  .stat strong{font-size:1.25rem;color:var(--navy)}
+  .stat.stat-green strong{color:var(--green)}
+  .stat.stat-orange strong{color:var(--orange)}
+  .section-head{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin:1.2rem 0 .8rem;flex-wrap:wrap}
+  .section-head h3{color:var(--navy);font-size:1.05rem}
+  .filter-row{display:flex;gap:.5rem;flex-wrap:wrap}
+  .chip-filter{border:1px solid var(--border);background:#fff;border-radius:999px;
+    padding:.4rem .9rem;font-size:.82rem;font-weight:700;color:var(--navy);cursor:pointer;transition:var(--transition)}
+  .chip-filter.active,.chip-filter:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .cards{display:grid;grid-template-columns:1fr;gap:.85rem}
+  .card{
+    background:var(--white);border-radius:var(--radius);padding:1rem 1.05rem;
+    box-shadow:var(--shadow-sm);border:1px solid #edf1f5;cursor:pointer;
+    transition:var(--transition);position:relative;overflow:hidden;text-align:left;width:100%;font:inherit;color:inherit;
+  }
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--green)}
+  .card[data-estado="Pendiente"]::before{background:var(--orange)}
+  .card[data-estado="Vencido"]::before{background:var(--red)}
+  .card:hover,.card:focus-visible{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#cfe6f5;outline:none}
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.5rem}
+  .card-month{font-weight:800;color:var(--navy);font-size:1rem;text-transform:capitalize}
+  .card-period{font-size:.78rem;color:var(--muted)}
+  .badge{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+    padding:.28rem .65rem;border-radius:999px;white-space:nowrap}
+  .badge.Pagado{background:var(--green-bg);color:#0f7a48;border:1px solid #bfe8d2}
+  .badge.Pendiente{background:var(--orange-bg);color:#b25e00;border:1px solid #ffd9a3}
+  .badge.Vencido{background:var(--red-bg);color:#b42323;border:1px solid #f5c2c2}
+  .card-amount{font-size:1.45rem;font-weight:800;color:var(--text)}
+  .card-amount small{font-size:.85rem;font-weight:600;color:var(--muted)}
+  .card-meta{display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;font-size:.8rem;color:var(--muted)}
+  .card-link{color:var(--sky-dark);font-weight:700;font-size:.82rem}
+  .empty{display:none;text-align:center;padding:2rem;background:#fff;border-radius:12px;color:var(--muted)}
+  .empty.show{display:block}
+
+  /* ===== Modals ===== */
+  .overlay{
+    position:fixed;inset:0;background:rgba(0,25,50,.62);backdrop-filter:blur(3px);
+    display:flex;align-items:center;justify-content:center;padding:1rem;z-index:100;
+    opacity:0;visibility:hidden;transition:opacity var(--transition),visibility var(--transition);
+  }
+  .overlay.open{opacity:1;visibility:visible}
+  .dialog{
+    background:#fff;width:100%;max-width:440px;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.35);
+    overflow:hidden;transform:translateY(18px) scale(.98);transition:transform var(--transition);
+    max-height:92vh;display:flex;flex-direction:column;
+  }
+  .overlay.open .dialog{transform:none}
+  .dialog-head{background:var(--navy);color:#fff;padding:1rem 1.2rem;display:flex;align-items:center;gap:.7rem;justify-content:space-between}
+  .dialog-head h3{font-size:1.05rem}
+  .dialog-head p{font-size:.8rem;opacity:.85}
+  .icon-btn{background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;
+    cursor:pointer;font-size:1.15rem;line-height:1;display:grid;place-items:center;transition:var(--transition);flex:0 0 36px}
+  .icon-btn:hover{background:var(--sky)}
+  .dialog-body{padding:1.25rem 1.2rem;overflow:auto}
+  .steps-dots{display:flex;gap:.4rem;margin-bottom:1rem}
+  .steps-dots i{height:7px;flex:1;border-radius:999px;background:#dbe6ef;transition:var(--transition)}
+  .steps-dots i.on{background:var(--sky)}
+  .tutorial-illus{background:linear-gradient(135deg,#eaf7ff,#dff0ff);border:1px solid #cde9fb;border-radius:12px;
+    padding:1rem;text-align:center;margin-bottom:1rem;color:var(--navy)}
+  .tutorial-illus .big{font-size:2rem}
+  .tutorial-illus strong{display:block;margin-top:.3rem}
+  .tutorial-illus span{font-size:.88rem;color:#41647f}
+  .dialog-actions{display:flex;gap:.6rem;margin-top:1.1rem}
+  .dialog-actions .btn{flex:1}
+  .detail-list{list-style:none;display:grid;gap:.1rem;margin:.4rem 0 1rem}
+  .detail-list li{display:flex;justify-content:space-between;gap:1rem;padding:.7rem .2rem;border-bottom:1px solid var(--border);font-size:.92rem}
+  .detail-list li:last-child{border-bottom:none}
+  .detail-list dt,.detail-list .k{color:var(--muted);font-size:.85rem}
+  .detail-list dd,.detail-list .v{font-weight:700;color:var(--navy);text-align:right}
+  .detail-amount{background:var(--bg);border-radius:12px;padding:.9rem 1rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem}
+  .detail-amount strong{font-size:1.5rem;color:var(--navy)}
+  /* ===== Gráfico de consumo (Pure CSS Bar Chart) ===== */
+  .chart-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);
+    border:1px solid #edf1f5;padding:1.1rem 1.1rem 1rem;margin-bottom:.4rem}
+  .chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.7rem;margin-bottom:.6rem;flex-wrap:wrap}
+  .chart-head h3{color:var(--navy);font-size:1.02rem}
+  .chart-head p{color:var(--muted);font-size:.8rem}
+  .chart-avg-chip{background:#eaf6ff;color:var(--sky-dark);border:1px solid #bfe3f7;font-size:.75rem;font-weight:800;
+    padding:.3rem .7rem;border-radius:999px;white-space:nowrap}
+  .chart{position:relative;display:flex;align-items:flex-end;gap:.55rem;height:210px;
+    padding:26px 4px 0;border-bottom:2px solid var(--border)}
+  .chart-avg-line{position:absolute;left:0;right:0;border-top:2px dashed var(--orange);opacity:.85;pointer-events:none}
+  .chart-avg-line span{position:absolute;top:-20px;right:0;background:var(--orange-bg);color:#b25e00;
+    font-size:.68rem;font-weight:800;padding:.1rem .5rem;border-radius:999px;border:1px solid #ffd9a3}
+  .bar-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+  .bar-wrap{height:150px;width:100%;display:flex;align-items:flex-end;justify-content:center}
+  .bar{position:relative;width:min(48px,62%);min-height:8px;border:none;cursor:pointer;border-radius:9px 9px 4px 4px;
+    background:linear-gradient(180deg,var(--sky) 0%,#0077b6 60%,var(--navy) 100%);
+    transition:var(--transition);font:inherit}
+  .bar:hover,.bar:focus-visible{filter:brightness(1.12);transform:translateY(-2px);outline:2px solid var(--sky);outline-offset:2px}
+  .bar.is-max{background:linear-gradient(180deg,#38c6ff,var(--sky-dark) 65%,var(--navy))}
+  .bar-tip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(5px);
+    background:var(--navy);color:#fff;font-size:.74rem;font-weight:700;padding:.35rem .6rem;border-radius:8px;
+    white-space:nowrap;opacity:0;visibility:hidden;transition:var(--transition);pointer-events:none;z-index:6;
+    box-shadow:0 6px 18px rgba(0,0,0,.3)}
+  .bar-tip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
+    border:6px solid transparent;border-top-color:var(--navy)}
+  .bar-col:hover .bar-tip,.bar:focus-visible .bar-tip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+  .bar-val{margin-top:.4rem;font-size:.78rem;font-weight:800;color:var(--navy)}
+  .bar-label{font-size:.68rem;color:var(--muted);text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .chart-legend{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.7rem;font-size:.76rem;color:var(--muted)}
+  .chart-legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:.3rem;vertical-align:baseline}
+  /* ===== Spotlight Onboarding ===== */
+  .spotlight-overlay{position:fixed;inset:0;background:rgba(0,20,42,.66);z-index:90;
+    opacity:0;visibility:hidden;transition:opacity var(--transition),visibility var(--transition)}
+  .spotlight-overlay.open{opacity:1;visibility:visible}
+  .spotlight-target{position:relative!important;z-index:95!important;background:#fff;
+    box-shadow:0 0 0 4px var(--sky),0 14px 36px rgba(0,164,228,.5)!important;
+    border-radius:12px!important;transition:var(--transition)}
+  button.spotlight-target{box-shadow:0 0 0 4px var(--sky),0 14px 36px rgba(0,164,228,.5)!important}
+  .spotlight-pop{position:fixed;z-index:96;width:min(330px,calc(100vw - 2rem));background:#fff;border-radius:14px;
+    box-shadow:0 20px 55px rgba(0,0,0,.35);border-top:5px solid var(--sky);padding:1rem 1.05rem;
+    opacity:0;visibility:hidden;transform:translateY(10px);transition:var(--transition)}
+  .spotlight-pop.open{opacity:1;visibility:visible;transform:none}
+  .spot-step{display:flex;align-items:center;justify-content:space-between;font-size:.75rem;color:var(--muted);font-weight:700;margin-bottom:.4rem}
+  .spot-dots{display:inline-flex;gap:.3rem;margin-left:.5rem}
+  .spot-dots i{width:22px;height:6px;border-radius:999px;background:#dbe6ef;transition:var(--transition)}
+  .spot-dots i.on{background:var(--sky)}
+  .spotlight-pop h4{color:var(--navy);font-size:.98rem;margin-bottom:.25rem}
+  .spotlight-pop p{font-size:.85rem;color:#41647f;margin-bottom:.8rem}
+  .spot-actions{display:flex;gap:.55rem}
+  .spot-actions .btn{flex:1;padding:.65rem .8rem;font-size:.88rem}
+  /* ===== Factura desglosada / semáforo ===== */
+  .invoice{background:#fbfdff;border:1px solid var(--border);border-radius:12px;padding:.85rem .95rem;margin:.5rem 0 .8rem}
+  .invoice h4{color:var(--navy);font-size:.88rem;margin-bottom:.55rem;text-transform:uppercase;letter-spacing:.04em}
+  .inv-track{display:flex;height:10px;border-radius:999px;overflow:hidden;background:#e8eef4;margin:.55rem 0 .7rem}
+  .inv-track i{display:block;height:100%;transition:var(--transition)}
+  .inv-track .t-agua{background:var(--sky)}
+  .inv-track .t-alc{background:var(--navy)}
+  .inv-track .t-igv{background:#9fb3c8}
+  .inv-row{display:flex;justify-content:space-between;gap:.8rem;font-size:.86rem;padding:.28rem 0}
+  .inv-row span{color:var(--muted)}
+  .inv-row b{color:var(--navy)}
+  .inv-total{display:flex;justify-content:space-between;border-top:2px solid var(--navy);margin-top:.5rem;padding-top:.55rem;font-weight:800;color:var(--navy)}
+  .consumo-box{display:flex;align-items:center;justify-content:space-between;gap:.8rem;background:var(--bg);
+    border-radius:12px;padding:.75rem .95rem;margin-bottom:.6rem}
+  .consumo-box .k{font-size:.8rem;color:var(--muted);display:block}
+  .consumo-box strong{font-size:1.15rem;color:var(--navy)}
+  .consumo-box small{display:block;font-size:.72rem;color:var(--muted)}
+  .semaforo{display:inline-flex;align-items:center;gap:.45rem;font-size:.78rem;font-weight:800;
+    padding:.4rem .75rem;border-radius:999px;border:1px solid;white-space:nowrap;transition:var(--transition)}
+  .semaforo::before{content:"";width:12px;height:12px;border-radius:50%;background:currentColor;
+    box-shadow:0 0 0 4px rgba(0,0,0,.06);transition:var(--transition)}
+  .semaforo.green{background:var(--green-bg);color:#0f7a48;border-color:#bfe8d2}
+  .semaforo.orange{background:var(--orange-bg);color:#b25e00;border-color:#ffd9a3}
+  .semaforo.red{background:var(--red-bg);color:#b42323;border-color:#f5c2c2}
+  .alert-leak{background:var(--red-bg);border:1px solid #f5c2c2;color:#8f1d1d;font-size:.82rem;
+    border-radius:10px;padding:.6rem .8rem;margin-bottom:.7rem;transition:var(--transition)}
+  .alert-leak[hidden]{display:none}
+  footer.page{background:var(--navy);color:#cfe0f0;text-align:center;font-size:.78rem;padding:1rem}
+
+  /* ===== Toast ===== */
+  .toast{
+    position:fixed;left:50%;bottom:1.2rem;transform:translate(-50%,20px);
+    background:var(--navy);color:#fff;padding:.75rem 1.1rem;border-radius:999px;font-size:.88rem;
+    box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;visibility:hidden;transition:var(--transition);z-index:200;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+
+  /* ===== Responsive ===== */
+  @media(min-width:600px){
+    .cards{grid-template-columns:repeat(2,1fr)}
+    .login-card{padding:2.4rem 2.2rem}
+    main.dashboard{padding:1.6rem 1.25rem 3rem}
+  }
+  @media(min-width:900px){
+    .cards{grid-template-columns:repeat(3,1fr)}
+    .hero h2{font-size:1.45rem}
+  }
+  @media(min-width:1150px){
+    .cards{grid-template-columns:repeat(4,1fr)}
+  }
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ VISTA: LOGIN ============ -->
+<section id="view-login" class="view active" aria-label="Pantalla de acceso">
+  <div class="login-card" role="form" aria-labelledby="login-title">
+    <div class="brand" aria-label="Logotipo SEDAPAL">
+      <div class="logo-drop" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C12 2 5 10.2 5 14.5A7 7 0 0 0 12 21.5 7 7 0 0 0 19 14.5C19 10.2 12 2 12 2Zm0 4.3c.9 1.2 2.6 3.6 3.7 5.6.4.7-.1 1.6-.9 1.6H9.2c-.8 0-1.3-.9-.9-1.6 1.1-2 2.8-4.4 3.7-5.6Z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>
+      </div>
+      <div class="brand-text">
+        <strong>SEDAPAL</strong>
+        <span>Hidro Mejora</span>
+        <small>Historial de facturación de agua potable</small>
+      </div>
+    </div>
+
+    <h1 id="login-title">Iniciar sesión</h1>
+    <p class="subtitle">Centraliza tus recibos y consulta tus últimos 12 meses de consumo.</p>
+
+    <div id="form-error" class="form-error" role="alert"></div>
+
+    <form id="login-form" novalidate>
+      <div class="field">
+        <label for="suministro">Número de Suministro</label>
+        <input type="text" id="suministro" name="suministro" inputmode="numeric" autocomplete="username"
+               placeholder="Ej. 1234567-8" maxlength="12" required />
+        <div class="hint">Código de 7 a 9 dígitos que figura en tu recibo.</div>
+      </div>
+      <div class="field">
+        <label for="password">Contraseña</label>
+        <input type="password" id="password" name="password" autocomplete="current-password"
+               placeholder="••••••••" minlength="4" required />
+      </div>
+      <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+    </form>
+
+    <div class="demo-box">💡 <b>Prototipo:</b> ingresa cualquier suministro (ej. <b>5894213</b>) y clave de 4+ caracteres para entrar.</div>
+    <div class="login-foot">¿Olvidaste tu clave? <a href="#" id="forgot-link">Recupérala aquí</a> · <a href="#" id="help-link">Ayuda</a></div>
+  </div>
+</section>
+
+<!-- ============ VISTA: DASHBOARD ============ -->
+<section id="view-dashboard" class="view" aria-label="Panel principal">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="mini-brand">
+        <div class="mini-drop" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2C12 2 5 10.2 5 14.5A7 7 0 0 0 12 21.5 7 7 0 0 0 19 14.5C19 10.2 12 2 12 2Z"/></svg>
+        </div>
+        <div>
+          <strong>SEDAPAL · Hidro Mejora</strong>
+          <small>Historial de recibos</small>
+        </div>
+      </div>
+      <span class="supply-chip" title="Suministro activo">💧 Suministro <b id="supply-label">—</b></span>
+      <button id="btn-logout" class="btn btn-logout" type="button">Cerrar sesión</button>
+    </div>
+  </header>
+
+  <main class="dashboard">
+    <div class="hero">
+      <div>
+        <h2>Hola, titular del suministro <span id="supply-hello">—</span> 👋</h2>
+        <p>Consulta aquí tus últimos 12 recibos. Selecciona un mes para ver el detalle, descargar tu recibo y llevar el control de tu deuda.</p>
+      </div>
+      <button class="btn btn-sky" id="btn-replay-tutorial" type="button">▶ Ver tutorial</button>
+    </div>
+
+    <div class="stats" aria-label="Resumen de cuenta">
+      <div class="stat" id="stat-total-box"><small>Total facturado</small><strong id="stat-total">S/ 0.00</strong></div>
+      <div class="stat stat-green"><small>Recibos pagados</small><strong id="stat-paid">0</strong></div>
+      <div class="stat stat-orange"><small>Pendientes / vencidos</small><strong id="stat-pending">0</strong></div>
+    </div>
+
+    <section class="chart-card" aria-label="Gráfico de consumo histórico">
+      <div class="chart-head">
+        <div>
+          <h3>📊 Consumo histórico</h3>
+          <p>Metros cúbicos consumidos · últimos 6 meses</p>
+        </div>
+        <span class="chart-avg-chip">Promedio: 15 m³</span>
+      </div>
+      <div id="chart" class="chart" role="img" aria-label="Gráfico de barras del consumo de agua de los últimos 6 meses"></div>
+      <div class="chart-legend">
+        <span><i style="background:var(--sky)"></i>Consumo mensual (m³)</span>
+        <span><i style="background:var(--orange)"></i>Línea promedio 15 m³</span>
+      </div>
+    </section>
+
+    <div class="section-head">
+      <h3>📄 Últimos 12 recibos</h3>
+      <div class="filter-row" role="group" aria-label="Filtrar por estado">
+        <button class="chip-filter active" data-filter="Todos" type="button">Todos</button>
+        <button class="chip-filter" data-filter="Pagado" type="button">Pagado</button>
+        <button class="chip-filter" data-filter="Pendiente" type="button">Pendiente</button>
+        <button class="chip-filter" data-filter="Vencido" type="button">Vencido</button>
+      </div>
+    </div>
+
+    <div id="cards" class="cards" role="list"></div>
+    <div id="empty" class="empty">No hay recibos con ese estado. Prueba con otro filtro.</div>
+  </main>
+
+  <footer class="page">© 2026 SEDAPAL · Prototipo académico “Hidro Mejora” — HTML5 + CSS3 + Vanilla JS</footer>
+</section>
+
+<!-- ============ SPOTLIGHT ONBOARDING (recorrido guiado) ============ -->
+<div id="spotlight-overlay" class="spotlight-overlay" aria-hidden="true"></div>
+<div id="spotlight-pop" class="spotlight-pop" role="dialog" aria-modal="true" aria-labelledby="spot-title" aria-hidden="true">
+  <div class="spot-step"><span>Paso <b id="spot-num">1</b> de 3</span><span class="spot-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+  <h4 id="spot-title">—</h4>
+  <p id="spot-text">—</p>
+  <div class="spot-actions">
+    <button class="btn btn-ghost" id="spot-skip" type="button">Omitir</button>
+    <button class="btn btn-sky" id="spot-next" type="button">Siguiente</button>
+  </div>
+</div>
+
+<!-- ============ MODAL: DETALLE RECIBO ============ -->
+<div id="detail-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="detail-title" aria-hidden="true">
+  <div class="dialog">
+    <div class="dialog-head">
+      <div><h3 id="detail-title">Detalle de recibo</h3><p id="detail-subtitle">—</p></div>
+      <button class="icon-btn" id="detail-close" type="button" aria-label="Cerrar detalle">✕</button>
+    </div>
+    <div class="dialog-body">
+      <div class="detail-amount">
+        <span class="k">Monto total</span>
+        <strong id="d-monto">S/ 0.00</strong>
+      </div>
+      <ul class="detail-list">
+        <li><span class="k">Periodo de facturación</span><span class="v" id="d-periodo">—</span></li>
+        <li><span class="k">Fecha de emisión</span><span class="v" id="d-emision">—</span></li>
+        <li><span class="k">Fecha de vencimiento</span><span class="v" id="d-vencimiento">—</span></li>
+        <li><span class="k">Estado de la cuenta</span><span class="v"><span class="badge Pagado" id="d-estado">—</span></span></li>
+      </ul>
+
+      <div class="invoice" aria-label="Desglose de facturación">
+        <h4>🧾 Desglose de la deuda</h4>
+        <div class="inv-track" aria-hidden="true">
+          <i class="t-agua" id="d-bar-agua" style="width:60%"></i><i class="t-alc" id="d-bar-alc" style="width:22%"></i><i class="t-igv" id="d-bar-igv" style="width:18%"></i>
+        </div>
+        <div class="inv-row"><span>💧 Servicio de Agua (60%)</span><b id="d-agua">—</b></div>
+        <div class="inv-row"><span>🚿 Servicio de Alcantarillado (22%)</span><b id="d-alc">—</b></div>
+        <div class="inv-row"><span>🏛 IGV (18%)</span><b id="d-igv">—</b></div>
+        <div class="inv-total"><span>Monto de la deuda</span><b id="d-deuda">—</b></div>
+      </div>
+
+      <div class="consumo-box">
+        <div>
+          <span class="k">Consumo del mes</span>
+          <strong id="d-consumo">—</strong>
+          <small>Promedio referencial: 15 m³</small>
+        </div>
+        <span id="d-semaforo" class="semaforo green">● Normal</span>
+      </div>
+      <div id="d-alerta" class="alert-leak" role="alert" hidden>⚠ <b>Posible fuga o exceso:</b> tu consumo supera los 20 m³. Revisa instalaciones internas.</div>
+
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" id="detail-close-2" type="button">Cerrar</button>
+        <button class="btn btn-primary" id="btn-pdf" type="button">⬇ Descargar PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ---------- Referencias ---------- */
+  const viewLogin = document.getElementById('view-login');
+  const viewDash  = document.getElementById('view-dashboard');
+  const form = document.getElementById('login-form');
+  const inpSupply = document.getElementById('suministro');
+  const inpPass = document.getElementById('password');
+  const formError = document.getElementById('form-error');
+  const supplyLabel = document.getElementById('supply-label');
+  const supplyHello = document.getElementById('supply-hello');
+  const cardsEl = document.getElementById('cards');
+  const emptyEl = document.getElementById('empty');
+  const toast = document.getElementById('toast');
+  const chartEl = document.getElementById('chart');
+
+  /* Spotlight onboarding */
+  const spotOverlay = document.getElementById('spotlight-overlay');
+  const spotPop = document.getElementById('spotlight-pop');
+  const spotNum = document.getElementById('spot-num');
+  const spotTitle = document.getElementById('spot-title');
+  const spotText = document.getElementById('spot-text');
+  const spotNext = document.getElementById('spot-next');
+  const spotSkip = document.getElementById('spot-skip');
+  const spotDots = spotPop.querySelectorAll('.spot-dots i');
+
+  const detModal = document.getElementById('detail-modal');
+  const detClose = document.getElementById('detail-close');
+  const detClose2 = document.getElementById('detail-close-2');
+
+  const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const MESES_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const SPOT_STEPS = [
+    { getTarget: ()=>document.getElementById('stat-total-box'),
+      title:'1. Total facturado', text:'Aquí ves el acumulado de tus 12 recibos. Es tu resumen general de cuenta.' },
+    { getTarget: ()=>document.querySelector('.filter-row'),
+      title:'2. Filtra por estado', text:'Usa la botonera para ver solo recibos Pagados, Pendientes o Vencidos.' },
+    { getTarget: ()=>document.querySelector('#cards .card'),
+      title:'3. Abre el detalle', text:'Haz clic en la primera tarjeta (o cualquiera) para ver el desglose y descargar tu recibo.' }
+  ];
+  let spotStep = 0;
+  let spotActive = false;
+  let recibos = [];
+  let currentFilter = 'Todos';
+  let selected = null;
+
+  /* ---------- Utilidades ---------- */
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>toast.classList.remove('show'), 2600);
+  }
+  function openModal(m){ m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+  function closeModal(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+  function fmt(n){ return 'S/ ' + n.toFixed(2); }
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  /* ---------- Datos simulados: últimos 12 meses ---------- */
+  function generarRecibos(){
+    const hoy = new Date(2026, 8, 28); // Sep 2026 (coherente con fecha del sistema)
+    const estadosFijos = ['Pagado','Pagado','Pagado','Pagado','Vencido','Pagado','Pagado','Pendiente','Pagado','Pagado','Pendiente','Pagado'];
+    const list = [];
+    for(let i=0;i<12;i++){
+      const d = new Date(hoy.getFullYear(), hoy.getMonth()-i, 1);
+      const anio = d.getFullYear(), mes = d.getMonth();
+      const monto = +(45 + Math.random()*75 + (mes%3)*4).toFixed(2);
+      const estado = i===0 ? 'Pendiente' : (i===1 ? 'Vencido' : estadosFijos[i % estadosFijos.length]);
+      const emision = new Date(anio, mes, 5);
+      const venc = new Date(anio, mes, 22);
+      const consumoM3 = Math.round(12 + Math.random()*18); // 12..30 m³
+      list.push({
+        id:i,
+        mesNombre: MESES[mes],
+        mesShort: MESES_SHORT[mes],
+        anio,
+        etiqueta: MESES[mes] + ' ' + anio,
+        periodo: '01/'+pad(mes+1)+'/'+anio+' – '+new Date(anio, mes+1, 0).getDate()+'/'+pad(mes+1)+'/'+anio,
+        monto,
+        estado,
+        emision: pad(emision.getDate())+'/'+pad(emision.getMonth()+1)+'/'+emision.getFullYear(),
+        vencimiento: pad(venc.getDate())+'/'+pad(venc.getMonth()+1)+'/'+venc.getFullYear(),
+        consumoM3,
+        consumo: consumoM3 + ' m³'
+      });
+    }
+    return list;
+  }
+
+  /* ---------- Render de tarjetas ---------- */
+  function renderCards(){
+    cardsEl.innerHTML = '';
+    const filtrados = recibos.filter(r => currentFilter==='Todos' || r.estado===currentFilter);
+    emptyEl.classList.toggle('show', filtrados.length===0);
+
+    filtrados.forEach(r=>{
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'card';
+      btn.dataset.estado = r.estado;
+      btn.setAttribute('role','listitem');
+      btn.setAttribute('aria-label', 'Ver detalle de ' + r.etiqueta + ', ' + fmt(r.monto) + ', ' + r.estado);
+      btn.innerHTML =
+        '<div class="card-top"><div><div class="card-month">'+r.etiqueta+'</div>' +
+        '<div class="card-period">Emitido: '+r.emision+'</div></div>' +
+        '<span class="badge '+r.estado+'">'+r.estado+'</span></div>' +
+        '<div class="card-amount">'+fmt(r.monto)+' <small>/ mes</small></div>' +
+        '<div class="card-meta"><span>Vence: '+r.vencimiento+'</span><span class="card-link">Ver detalle →</span></div>';
+      btn.addEventListener('click', ()=>abrirDetalle(r));
+      cardsEl.appendChild(btn);
+    });
+
+    // Resumen
+    const total = recibos.reduce((a,r)=>a+r.monto,0);
+    document.getElementById('stat-total').textContent = fmt(total);
+    document.getElementById('stat-paid').textContent = recibos.filter(r=>r.estado==='Pagado').length;
+    document.getElementById('stat-pending').textContent = recibos.filter(r=>r.estado!=='Pagado').length;
+    renderChart();
+  }
+
+  /* ---------- 1. Gráfico de consumo histórico (Pure CSS Bar Chart) ---------- */
+  function renderChart(){
+    if(!chartEl) return;
+    const ultimos6 = recibos.slice(0,6).reverse(); // cronológico: más antiguo → más reciente
+    chartEl.innerHTML = '';
+    if(!ultimos6.length) return;
+    const max = Math.max.apply(null, ultimos6.concat([{consumoM3:15}]).map(r=>r.consumoM3));
+    // Línea de promedio 15 m³ (altura en % del área de barras de 150px)
+    const avgPct = Math.min(100, (15 / max) * 100);
+    const line = document.createElement('div');
+    line.className = 'chart-avg-line';
+    line.style.bottom = 'calc(38px + ' + (avgPct*1.5).toFixed(1) + 'px)'; // 150px * pct + offset eje
+    line.innerHTML = '<span>15 m³ prom.</span>';
+    chartEl.appendChild(line);
+
+    let top = -Infinity, topIdx = 0;
+    ultimos6.forEach((r,i)=>{ if(r.consumoM3>top){top=r.consumoM3;topIdx=i;} });
+
+    ultimos6.forEach((r,i)=>{
+      const h = Math.max(6, (r.consumoM3 / max) * 100);
+      const col = document.createElement('div');
+      col.className = 'bar-col';
+      const wrap = document.createElement('div');
+      wrap.className = 'bar-wrap';
+      const bar = document.createElement('button');
+      bar.type = 'button';
+      bar.className = 'bar' + (i===topIdx ? ' is-max' : '');
+      bar.style.height = h.toFixed(1) + '%';
+      bar.setAttribute('aria-label', r.etiqueta + ': ' + r.consumoM3 + ' metros cúbicos');
+      bar.innerHTML = '<span class="bar-tip">' + r.mesShort + ' ' + r.anio + ' · ' + r.consumoM3 + ' m³</span>';
+      // Tooltip también visible con foco táctil: click muestra toast
+      bar.addEventListener('click', ()=>showToast('💧 ' + r.etiqueta + ': ' + r.consumoM3 + ' m³'));
+      wrap.appendChild(bar);
+      col.appendChild(wrap);
+      const val = document.createElement('div');
+      val.className = 'bar-val';
+      val.textContent = r.consumoM3 + ' m³';
+      const lab = document.createElement('div');
+      lab.className = 'bar-label';
+      lab.textContent = r.mesShort + ' ' + String(r.anio).slice(2);
+      col.appendChild(val);
+      col.appendChild(lab);
+      chartEl.appendChild(col);
+    });
+  }
+
+  /* ---------- 2. Tutorial spotlight (ilumina elementos reales) ---------- */
+  function clearSpotlight(){
+    document.querySelectorAll('.spotlight-target').forEach(el=>el.classList.remove('spotlight-target'));
+  }
+  function placeSpotPop(target){
+    const padSpace = 12;
+    const popW = spotPop.offsetWidth || 300;
+    const popH = spotPop.offsetHeight || 180;
+    const r = target.getBoundingClientRect(); // coords de viewport (popover es position:fixed)
+    let top = r.bottom + padSpace;
+    let left = Math.min(
+      Math.max(8, r.left),
+      document.documentElement.clientWidth - popW - 8
+    );
+    // Si no hay espacio abajo, colocar arriba
+    const belowSpace = window.innerHeight - r.bottom;
+    if(belowSpace < popH + 20 && r.top > popH + 20){
+      top = r.top - popH - padSpace;
+    }
+    spotPop.style.top = Math.max(8, top) + 'px';
+    spotPop.style.left = Math.max(8, left) + 'px';
+  }
+  function renderSpot(){
+    clearSpotlight();
+    const step = SPOT_STEPS[spotStep];
+    const target = step.getTarget();
+    if(!target){ endSpotlight(); return; }
+    target.scrollIntoView({block:'center', behavior:'smooth'});
+    setTimeout(()=>{
+      target.classList.add('spotlight-target');
+      spotNum.textContent = spotStep + 1;
+      spotTitle.textContent = step.title;
+      spotText.textContent = step.text;
+      spotDots.forEach((d,i)=>d.classList.toggle('on', i===spotStep));
+      spotNext.textContent = spotStep === SPOT_STEPS.length - 1 ? 'Finalizar' : 'Siguiente';
+      spotPop.classList.add('open');
+      spotPop.setAttribute('aria-hidden','false');
+      placeSpotPop(target);
+      spotNext.focus();
+    }, 320);
+  }
+  function startTutorial(){
+    if(!viewDash.classList.contains('active')) return;
+    spotActive = true;
+    spotStep = 0;
+    spotOverlay.classList.add('open');
+    spotOverlay.setAttribute('aria-hidden','false');
+    document.body.style.overflow = '';
+    renderSpot();
+  }
+  function endSpotlight(done){
+    spotActive = false;
+    spotOverlay.classList.remove('open');
+    spotOverlay.setAttribute('aria-hidden','true');
+    spotPop.classList.remove('open');
+    spotPop.setAttribute('aria-hidden','true');
+    clearSpotlight();
+    if(done) showToast('✅ Tutorial completado. ¡Explora tus recibos!');
+  }
+
+  spotNext.addEventListener('click', ()=>{
+    if(spotStep < SPOT_STEPS.length - 1){ spotStep++; renderSpot(); }
+    else endSpotlight(true);
+  });
+  spotSkip.addEventListener('click', ()=>endSpotlight(false));
+  spotOverlay.addEventListener('click', ()=>endSpotlight(false));
+  window.addEventListener('resize', ()=>{ if(spotActive){ const t = SPOT_STEPS[spotStep].getTarget(); if(t) placeSpotPop(t); } });
+  window.addEventListener('scroll', ()=>{ if(spotActive){ const t = SPOT_STEPS[spotStep].getTarget(); if(t) placeSpotPop(t); } }, {passive:true});
+
+  /* ---------- 3. Detalle con desglose + semáforo ---------- */
+  function desglose(monto){
+    // 60% agua + 22% alcantarillado + 18% IGV = 100% (ajuste de redondeo en agua)
+    let agua = +(monto * 0.60).toFixed(2);
+    let alc  = +(monto * 0.22).toFixed(2);
+    let igv  = +(monto - agua - alc).toFixed(2);
+    return {agua, alc, igv};
+  }
+  function abrirDetalle(r){
+    selected = r;
+    document.getElementById('detail-subtitle').textContent = r.etiqueta + ' · Suministro ' + supplyLabel.textContent;
+    document.getElementById('d-monto').textContent = fmt(r.monto);
+    document.getElementById('d-periodo').textContent = r.periodo;
+    document.getElementById('d-emision').textContent = r.emision;
+    document.getElementById('d-vencimiento').textContent = r.vencimiento;
+    const badge = document.getElementById('d-estado');
+    badge.textContent = r.estado;
+    badge.className = 'badge ' + r.estado;
+    // Desglose matemático
+    const p = desglose(r.monto);
+    document.getElementById('d-agua').textContent = fmt(p.agua);
+    document.getElementById('d-alc').textContent = fmt(p.alc);
+    document.getElementById('d-igv').textContent = fmt(p.igv);
+    document.getElementById('d-bar-agua').style.width = '60%';
+    document.getElementById('d-bar-alc').style.width = '22%';
+    document.getElementById('d-bar-igv').style.width = '18%';
+    document.getElementById('d-deuda').textContent = r.estado==='Pagado' ? 'S/ 0.00 (cancelado)' : fmt(r.monto);
+    // Semáforo de consumo vs promedio 15 m³
+    document.getElementById('d-consumo').textContent = r.consumo;
+    const sem = document.getElementById('d-semaforo');
+    const alerta = document.getElementById('d-alerta');
+    if(r.consumoM3 > 20){
+      sem.className = 'semaforo red';
+      sem.textContent = '● Alto consumo';
+      alerta.hidden = false;
+    } else if(r.consumoM3 > 15){
+      sem.className = 'semaforo orange';
+      sem.textContent = '● Sobre el promedio';
+      alerta.hidden = true;
+    } else {
+      sem.className = 'semaforo green';
+      sem.textContent = '● Normal';
+      alerta.hidden = true;
+    }
+    openModal(detModal);
+    detClose.focus();
+  }
+  detClose.addEventListener('click', ()=>closeModal(detModal));
+  detClose2.addEventListener('click', ()=>closeModal(detModal));
+
+  // Cerrar modal de detalle con clic en overlay o tecla ESC (+ spotlight)
+  detModal.addEventListener('click', e=>{ if(e.target===detModal) closeModal(detModal); });
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Escape'){ closeModal(detModal); if(spotActive) endSpotlight(false); }
+  });
+
+  // Simular descarga PDF (sin librerías: genera archivo de texto imprimible)
+  document.getElementById('btn-pdf').addEventListener('click', ()=>{
+    if(!selected) return;
+    const p = desglose(selected.monto);
+    const contenido =
+      'SEDAPAL - HIDRO MEJORA\nRecibo de agua potable\n--------------------------\n' +
+      'Suministro: '+supplyLabel.textContent+'\nPeriodo: '+selected.periodo+'\n' +
+      'Monto: '+fmt(selected.monto)+'\nDeuda: '+(selected.estado==='Pagado'?'S/ 0.00 (cancelado)':fmt(selected.monto))+'\n' +
+      '  - Agua potable (60%): '+fmt(p.agua)+'\n  - Alcantarillado (22%): '+fmt(p.alc)+'\n  - IGV (18%): '+fmt(p.igv)+'\n' +
+      'Emisión: '+selected.emision+'\nVencimiento: '+selected.vencimiento+'\nEstado: '+selected.estado+'\nConsumo: '+selected.consumo+' (prom. 15 m3)\n';
+    const blob = new Blob([contenido], {type:'text/plain;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'Recibo_'+selected.mesNombre+'_'+selected.anio+'.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+    showToast('⬇ Recibo descargado (PDF simulado).');
+  });
+
+  /* ---------- Login / Logout ---------- */
+  function showError(msg){
+    formError.textContent = msg;
+    formError.classList.add('show');
+  }
+  form.addEventListener('submit', e=>{
+    e.preventDefault();
+    const sup = inpSupply.value.trim();
+    const pwd = inpPass.value;
+    formError.classList.remove('show');
+    if(!/^\d[\d-]{5,11}$/.test(sup)){
+      showError('⚠ Ingresa un Número de Suministro válido (solo dígitos, 6 a 12 caracteres).');
+      inpSupply.focus(); return;
+    }
+    if(pwd.length < 4){
+      showError('⚠ La contraseña debe tener al menos 4 caracteres.');
+      inpPass.focus(); return;
+    }
+    // Acceso OK (prototipo)
+    supplyLabel.textContent = sup;
+    supplyHello.textContent = sup;
+    recibos = generarRecibos();
+    renderCards();
+    viewLogin.classList.remove('active');
+    viewDash.classList.add('active');
+    window.scrollTo(0,0);
+    startTutorial(); // primer inicio de sesión
+  });
+
+  document.getElementById('btn-logout').addEventListener('click', ()=>{
+    closeModal(detModal); endSpotlight(false);
+    viewDash.classList.remove('active');
+    viewLogin.classList.add('active');
+    inpPass.value = '';
+    inpSupply.focus();
+    showToast('Sesión cerrada correctamente.');
+  });
+
+  document.getElementById('btn-replay-tutorial').addEventListener('click', startTutorial);
+  document.getElementById('forgot-link').addEventListener('click', e=>{e.preventDefault();showToast('📧 Te enviamos un enlace de recuperación (simulado).');});
+  document.getElementById('help-link').addEventListener('click', e=>{e.preventDefault();showToast('☎ Ayuda SEDAPAL: (01) 317-8000 (simulado).');});
+
+  // Filtros
+  document.querySelectorAll('.chip-filter').forEach(ch=>{
+    ch.addEventListener('click', ()=>{
+      document.querySelectorAll('.chip-filter').forEach(c=>c.classList.remove('active'));
+      ch.classList.add('active');
+      currentFilter = ch.dataset.filter;
+      renderCards();
+    });
+  });
+
+  // Estado inicial: spotlight oculto
+  spotOverlay.classList.remove('open');
+  spotPop.classList.remove('open');
+})();
+</script>
+</body>
+</html>
