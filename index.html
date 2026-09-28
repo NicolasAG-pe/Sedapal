@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<meta name="description" content="SEDAPAL - Hidro Mejora: centraliza tu historial de facturación de agua potable." />
-<title>SEDAPAL · Hidro Mejora</title>
+<meta name="description" content="SEDAPAL - Hidro Mejora: plataforma corporativa de historial de facturación de agua potable." />
+<title>SEDAPAL · Hidro Mejora — Plataforma Corporativa</title>
 <style>
   :root{
     --navy:#003366;
@@ -26,223 +26,305 @@
     --shadow:0 8px 28px rgba(0,51,102,.12);
     --shadow-sm:0 2px 10px rgba(0,51,102,.08);
     --transition:.28s ease;
+    --glass:rgba(255,255,255,.86);
+    --glass-border:rgba(255,255,255,.55);
   }
   *{box-sizing:border-box;margin:0;padding:0}
+  html,body{overflow-x:clip}
   html{scroll-behavior:smooth}
   body{
-    font-family:Roboto,Arial,Helvetica,sans-serif;
+    font-family:'Inter','Segoe UI',Roboto,Arial,Helvetica,sans-serif;
     background:var(--bg);
     color:var(--text);
-    line-height:1.55;
+    line-height:1.6;
     min-height:100vh;
     -webkit-font-smoothing:antialiased;
   }
+  h1,h2,h3,h4{line-height:1.22;letter-spacing:-.01em}
+  .skip{position:absolute;left:-9999px;top:0;background:var(--navy);color:#fff;padding:.6rem 1rem;z-index:500;border-radius:0 0 10px 0}
+  .skip:focus{left:0}
+  :focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+
   /* ===== Layout views ===== */
   .view{display:none;min-height:100vh}
   .view.active{display:flex;flex-direction:column;animation:fadeUp .35s ease}
+  .view:not(.active){display:none}
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
-  /* ===== Login ===== */
-  #view-login{align-items:center;justify-content:center;padding:1.5rem;
-    background:linear-gradient(135deg,var(--navy) 0%,#004a8a 55%,var(--sky) 130%);
-    position:relative;overflow:hidden}
-  #view-login::before,#view-login::after{
-    content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.07);pointer-events:none}
-  #view-login::before{width:420px;height:420px;top:-140px;right:-120px}
-  #view-login::after{width:320px;height:320px;bottom:-120px;left:-100px}
+  /* ===== Login corporativo: pantalla dividida estricta ===== */
+  #view-login{align-items:center;justify-content:center;padding:1.5rem;position:relative;overflow:hidden;
+    background:#fff;}
   .login-card{
-    width:100%;max-width:420px;background:var(--white);border-radius:20px;
-    box-shadow:0 20px 60px rgba(0,0,0,.25);padding:2rem 1.75rem;z-index:1;
-    border-top:6px solid var(--sky);
+    width:100%;max-width:440px;background:#fff;border:none;border-radius:0;box-shadow:none;
+    padding:2rem 1.75rem;z-index:1;
   }
-  .brand{display:flex;align-items:center;gap:.8rem;margin-bottom:1.2rem}
-  .logo-drop{
-    width:52px;height:52px;flex:0 0 52px;border-radius:14px;
-    background:linear-gradient(180deg,var(--sky),var(--navy));
-    display:grid;place-items:center;color:#fff;box-shadow:var(--shadow-sm);
-  }
-  .logo-drop svg{width:30px;height:30px}
-  .brand-text strong{display:block;color:var(--navy);font-size:1.35rem;letter-spacing:.06em;line-height:1}
-  .brand-text span{display:block;color:var(--sky);font-weight:700;font-size:.95rem;letter-spacing:.04em}
-  .brand-text small{color:var(--muted);font-size:.78rem}
-  .login-card h1{font-size:1.25rem;color:var(--navy);margin:.4rem 0 .25rem}
-  .login-card p.subtitle{color:var(--muted);font-size:.9rem;margin-bottom:1.25rem}
+  .brand{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:.6rem;margin-bottom:1.2rem}
+  .brand-logo{width:150px;height:auto;object-fit:contain;display:block}
+  .brand-text strong{display:block;color:var(--navy);font-size:1.4rem;letter-spacing:.06em;line-height:1.1}
+  .brand-text span{display:block;color:var(--sky-dark);font-weight:800;font-size:.95rem;letter-spacing:.04em}
+  .brand-text small{color:#4c5f70;font-size:.78rem}
+  .login-card h1{font-size:1.35rem;color:var(--navy);margin:.4rem 0 .3rem}
+  .login-card p.subtitle{color:#4c5f70;font-size:.92rem;margin-bottom:1.25rem;line-height:1.6}
   .field{margin-bottom:1rem}
-  .field label{display:block;font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:.35rem}
-  .field input{
-    width:100%;padding:.8rem .9rem;border:2px solid var(--border);border-radius:10px;
-    font-size:1rem;font-family:inherit;transition:var(--transition);background:#fbfdff;
-  }
-  .field input:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 4px rgba(0,164,228,.15);background:#fff}
-  .field .hint{font-size:.76rem;color:var(--muted);margin-top:.3rem}
-  .form-error{display:none;background:var(--red-bg);color:var(--red);border:1px solid #f5c2c2;
+  .field label{display:flex;align-items:center;gap:.4rem;font-size:.85rem;font-weight:700;color:var(--navy);margin-bottom:.35rem}
+  .field label svg{width:15px;height:15px;color:var(--sky-dark)}
+  .field input{width:100%;padding:.8rem .9rem;border:2px solid var(--border);border-radius:10px;
+    font-size:1rem;font-family:inherit;transition:var(--transition);background:rgba(255,255,255,.9)}
+  .field input:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 4px rgba(0,164,228,.18);background:#fff}
+  .field .hint{font-size:.76rem;color:#4c5f70;margin-top:.3rem}
+  .form-error{display:none;background:var(--red-bg);color:#8f1d1d;border:1px solid #f5c2c2;
     font-size:.85rem;padding:.6rem .8rem;border-radius:10px;margin-bottom:1rem}
   .form-error.show{display:block;animation:fadeUp .25s ease}
-  .btn{
-    display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
-    border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:1rem;
-    padding:.85rem 1.2rem;border-radius:10px;transition:var(--transition);text-decoration:none;
-  }
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border:none;cursor:pointer;
+    font-family:inherit;font-weight:700;font-size:1rem;padding:.85rem 1.2rem;border-radius:10px;
+    transition:var(--transition);text-decoration:none}
+  .btn svg{width:17px;height:17px}
   .btn-primary{background:var(--navy);color:#fff;width:100%}
   .btn-primary:hover,.btn-primary:focus-visible{background:var(--navy-dark);transform:translateY(-1px);box-shadow:var(--shadow)}
+  .btn-primary:disabled{opacity:.65;cursor:wait;transform:none}
   .btn-sky{background:var(--sky);color:#fff}
   .btn-sky:hover{background:var(--sky-dark)}
   .btn-ghost{background:#eef4f9;color:var(--navy)}
   .btn-ghost:hover{background:#ddeaf4}
-  .btn-block{width:100%}
-  .login-foot{margin-top:1.1rem;text-align:center;font-size:.8rem;color:var(--muted)}
+  .login-foot{margin-top:1.1rem;text-align:center;font-size:.8rem;color:#4c5f70}
   .login-foot a{color:var(--sky-dark);font-weight:700;text-decoration:none}
-  .demo-box{margin-top:1rem;background:#f0f7fd;border:1px dashed #9ed6f0;border-radius:10px;
-    padding:.6rem .8rem;font-size:.8rem;color:#2a5a7a}
+  .login-foot a:hover{text-decoration:underline}
+  .demo-box{margin-top:1rem;background:rgba(240,247,253,.85);border:1px dashed #6fbfe8;border-radius:10px;
+    padding:.6rem .8rem;font-size:.8rem;color:#174a68}
+  .login-trust{display:flex;gap:.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap;
+    font-size:.72rem;color:var(--navy);font-weight:700}
+  .login-trust span{background:#eef4f9;border:1px solid var(--border);
+    padding:.28rem .7rem;border-radius:999px}
+  .login-panel{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;z-index:1}
+  .login-visual{display:none}
 
-  /* ===== Dashboard ===== */
+  /* ===== Dashboard SaaS: topbar + sidebar ===== */
   #view-dashboard{background:var(--bg)}
-  .topbar{background:var(--navy);color:#fff;position:sticky;top:0;z-index:20;box-shadow:0 2px 14px rgba(0,0,0,.2)}
-  .topbar-inner{max-width:1100px;margin:0 auto;padding:.8rem 1rem;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
-  .topbar .mini-brand{display:flex;align-items:center;gap:.6rem;flex:1;min-width:200px}
-  .mini-drop{width:38px;height:38px;border-radius:10px;background:var(--sky);display:grid;place-items:center;flex:0 0 38px}
-  .mini-drop svg{width:22px;height:22px}
-  .mini-brand strong{font-size:1rem;letter-spacing:.05em;display:block;line-height:1.1}
-  .mini-brand small{font-size:.75rem;opacity:.85;display:block}
+  .topbar{background:var(--navy);color:#fff;position:sticky;top:0;z-index:40;box-shadow:0 2px 14px rgba(0,0,0,.25)}
+  .topbar-inner{max-width:1280px;margin:0 auto;padding:.55rem 1rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+  .btn-menu{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#fff;
+    width:40px;height:40px;border-radius:10px;cursor:pointer;display:grid;place-items:center;transition:var(--transition)}
+  .btn-menu:hover{background:var(--sky);border-color:var(--sky)}
+  .btn-menu svg{width:20px;height:20px}
+  .topbar .mini-brand{display:flex;align-items:center;gap:.6rem;min-width:0}
+  .topbar-logo{height:40px;width:auto;max-width:120px;object-fit:contain;display:block;flex:0 0 auto;
+    background:#fff;border-radius:8px;padding:2px 6px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .topbar-right{margin-left:auto;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+  .mini-brand strong{font-size:1rem;letter-spacing:.04em;display:block;line-height:1.15}
+  .mini-brand small{font-size:.74rem;opacity:.85;display:block}
   .supply-chip{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);
-    padding:.4rem .8rem;border-radius:999px;font-size:.85rem;display:inline-flex;gap:.45rem;align-items:center}
+    padding:.4rem .8rem;border-radius:999px;font-size:.85rem;display:inline-flex;gap:.45rem;align-items:center;color:#fff}
   .supply-chip b{letter-spacing:.03em}
   .btn-logout{background:#fff;color:var(--navy);padding:.55rem 1rem;font-size:.88rem;border-radius:999px}
   .btn-logout:hover{background:var(--sky);color:#fff}
-  main.dashboard{max-width:1100px;margin:0 auto;width:100%;padding:1.25rem 1rem 3rem;flex:1}
-  .hero{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);
+  .shell{max-width:1280px;margin:0 auto;width:100%;flex:1;display:flex;gap:1rem;padding:1rem 1rem 2rem;align-items:flex-start}
+  .sidebar{width:248px;flex:0 0 248px;background:var(--navy);color:#dbe7f3;border-radius:16px;
+    padding:1rem .8rem;position:sticky;top:76px;box-shadow:var(--shadow);transition:var(--transition)}
+  .sidebar nav{display:grid;gap:.4rem}
+  .nav-item{display:flex;align-items:center;gap:.7rem;width:100%;border:1px solid transparent;background:transparent;
+    color:#dbe7f3;font:inherit;font-size:.9rem;font-weight:700;padding:.7rem .8rem;border-radius:11px;
+    cursor:pointer;transition:var(--transition);text-align:left}
+  .nav-item svg{width:19px;height:19px;flex:0 0 19px;color:var(--sky)}
+  .nav-item:hover{background:rgba(255,255,255,.1)}
+  .nav-item.active{background:#fff;color:var(--navy)}
+  .nav-item.active svg{color:var(--sky-dark)}
+  .side-help{margin-top:1rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+    border-radius:12px;padding:.8rem;font-size:.78rem;line-height:1.5}
+  .side-help b{color:#fff}
+  .side-ver{margin-top:.6rem;text-align:center;font-size:.68rem;opacity:.6}
+  .scrim{display:none}
+  #view-dashboard.side-collapsed .sidebar{width:78px;flex-basis:78px}
+  #view-dashboard.side-collapsed .nav-item span,
+  #view-dashboard.side-collapsed .side-help,
+  #view-dashboard.side-collapsed .side-ver{display:none}
+  #view-dashboard.side-collapsed .nav-item{justify-content:center}
+  main.dashboard{flex:1;min-width:0}
+  .dash-sec{display:none}
+  .dash-sec.active{display:block;animation:fadeUp .35s ease}
+  .hero{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--glass-border);border-radius:var(--radius);box-shadow:var(--shadow-sm);
     padding:1.25rem;border-left:6px solid var(--sky);display:flex;gap:1rem;flex-wrap:wrap;
-    align-items:center;justify-content:space-between;margin-bottom:1.1rem}
-  .hero h2{color:var(--navy);font-size:1.25rem;margin-bottom:.2rem}
-  .hero p{color:var(--muted);font-size:.9rem;max-width:60ch}
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.7rem;margin-bottom:1.1rem}
-  .stat{background:var(--white);border-radius:12px;padding:.8rem .9rem;box-shadow:var(--shadow-sm);border:1px solid #edf1f5}
-  .stat small{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
-  .stat strong{font-size:1.25rem;color:var(--navy)}
+    align-items:center;justify-content:space-between;margin-bottom:1rem}
+  .hero h2{color:var(--navy);font-size:1.28rem;margin-bottom:.25rem}
+  .hero p{color:#4c5f70;font-size:.9rem;max-width:62ch}
+  .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:1rem}
+  .stat{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--glass-border);border-radius:12px;padding:.85rem .95rem;box-shadow:var(--shadow-sm)}
+  .stat-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem}
+  .stat-ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:0 0 30px;background:#eaf2fa;color:var(--navy)}
+  .stat-ico svg{width:17px;height:17px}
+  .stat-green .stat-ico{background:var(--green-bg);color:#0f7a48}
+  .stat-orange .stat-ico{background:var(--orange-bg);color:#b25e00}
+  .stat small{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:800}
+  .stat strong{font-size:1.28rem;color:var(--navy);letter-spacing:-.01em}
   .stat.stat-green strong{color:var(--green)}
   .stat.stat-orange strong{color:var(--orange)}
-  .section-head{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin:1.2rem 0 .8rem;flex-wrap:wrap}
-  .section-head h3{color:var(--navy);font-size:1.05rem}
+  .section-head{display:flex;align-items:center;justify-content:space-between;gap:.8rem;margin:1.1rem 0 .8rem;flex-wrap:wrap}
+  .section-head h3{color:var(--navy);font-size:1.05rem;display:flex;align-items:center;gap:.45rem}
+  .section-head h3 svg{width:18px;height:18px;color:var(--sky-dark)}
   .filter-row{display:flex;gap:.5rem;flex-wrap:wrap}
   .chip-filter{border:1px solid var(--border);background:#fff;border-radius:999px;
-    padding:.4rem .9rem;font-size:.82rem;font-weight:700;color:var(--navy);cursor:pointer;transition:var(--transition)}
+    padding:.42rem .95rem;font-size:.82rem;font-weight:700;color:var(--navy);cursor:pointer;transition:var(--transition)}
   .chip-filter.active,.chip-filter:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
   .cards{display:grid;grid-template-columns:1fr;gap:.85rem}
-  .card{
-    background:var(--white);border-radius:var(--radius);padding:1rem 1.05rem;
-    box-shadow:var(--shadow-sm);border:1px solid #edf1f5;cursor:pointer;
-    transition:var(--transition);position:relative;overflow:hidden;text-align:left;width:100%;font:inherit;color:inherit;
-  }
+  .card{background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--glass-border);border-radius:var(--radius);padding:1rem 1.05rem;
+    box-shadow:var(--shadow-sm);transition:var(--transition);position:relative;overflow:hidden;
+    text-align:left;width:100%;font:inherit;color:inherit}
+  .card-open{display:block;width:100%;background:none;border:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
+  .card-actions{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.65rem}
+  .btn-sm{border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:.76rem;padding:.45rem .75rem;
+    border-radius:8px;transition:var(--transition);display:inline-flex;align-items:center;gap:.35rem}
+  .btn-sm.detail{background:#eef4f9;color:var(--navy)}
+  .btn-sm.detail:hover{background:#ddeaf4}
+  .btn-sm.pdfb{background:var(--navy);color:#fff}
+  .btn-sm.pdfb:hover{background:var(--navy-dark)}
+  .btn-sm.payb{background:var(--green);color:#fff}
+  .btn-sm.payb:hover{background:#167a4c}
+  .btn-sm:disabled{opacity:.55;cursor:not-allowed}
   .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--green)}
   .card[data-estado="Pendiente"]::before{background:var(--orange)}
   .card[data-estado="Vencido"]::before{background:var(--red)}
-  .card:hover,.card:focus-visible{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#cfe6f5;outline:none}
+  .card:hover,.card:focus-visible{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#9fd4ef;outline:none}
   .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.5rem}
-  .card-month{font-weight:800;color:var(--navy);font-size:1rem;text-transform:capitalize}
+  .card-month{font-weight:800;color:var(--navy);font-size:1rem;text-transform:capitalize;display:flex;align-items:center;gap:.4rem}
+  .card-month svg{width:15px;height:15px;color:var(--sky-dark)}
   .card-period{font-size:.78rem;color:var(--muted)}
   .badge{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
     padding:.28rem .65rem;border-radius:999px;white-space:nowrap}
-  .badge.Pagado{background:var(--green-bg);color:#0f7a48;border:1px solid #bfe8d2}
-  .badge.Pendiente{background:var(--orange-bg);color:#b25e00;border:1px solid #ffd9a3}
-  .badge.Vencido{background:var(--red-bg);color:#b42323;border:1px solid #f5c2c2}
-  .card-amount{font-size:1.45rem;font-weight:800;color:var(--text)}
+  .badge.Pagado{background:var(--green-bg);color:#0c6b3e;border:1px solid #bfe8d2}
+  .badge.Pendiente{background:var(--orange-bg);color:#9a5200;border:1px solid #ffd9a3}
+  .badge.Vencido{background:var(--red-bg);color:#a11f1f;border:1px solid #f5c2c2}
+  .card-amount{font-size:1.45rem;font-weight:800;color:var(--text);letter-spacing:-.01em}
   .card-amount small{font-size:.85rem;font-weight:600;color:var(--muted)}
   .card-meta{display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;font-size:.8rem;color:var(--muted)}
   .card-link{color:var(--sky-dark);font-weight:700;font-size:.82rem}
   .empty{display:none;text-align:center;padding:2rem;background:#fff;border-radius:12px;color:var(--muted)}
   .empty.show{display:block}
+  .support-grid{display:grid;grid-template-columns:1fr;gap:.8rem}
+  .support-card{background:rgba(255,255,255,.94);border:1px solid var(--glass-border);border-radius:var(--radius);
+    padding:1.1rem;box-shadow:var(--shadow-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .support-card h4{color:var(--navy);display:flex;gap:.5rem;align-items:center;margin-bottom:.3rem}
+  .support-card h4 svg{width:18px;height:18px;color:var(--sky-dark)}
+  .support-card p{font-size:.87rem;color:#4c5f70;margin-bottom:.7rem}
+
+  /* ===== Skeletons ===== */
+  .skel-card,.chart-skel{background:#fff;border:1px solid #edf1f5;border-radius:var(--radius);padding:1rem;position:relative;overflow:hidden}
+  .skel{border-radius:8px;background:linear-gradient(90deg,#e8edf2 25%,#f5f8fb 45%,#e8edf2 65%);background-size:200% 100%;
+    animation:skelShine 1.2s ease-in-out infinite}
+  @keyframes skelShine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .skel-line{height:14px;margin-bottom:.55rem}
+  .skel-line.short{width:45%}.skel-line.mid{width:70%}
+  .skel-amount{height:30px;width:55%;border-radius:10px;margin:.4rem 0 .6rem}
+  .chart-skel{display:flex;align-items:flex-end;gap:.6rem;height:210px}
+  .chart-skel i{flex:1;border-radius:8px 8px 4px 4px;min-height:30px;
+    background:linear-gradient(90deg,#dfe7ee 25%,#f2f6fa 45%,#dfe7ee 65%);background-size:200% 100%;animation:skelShine 1.2s ease-in-out infinite}
 
   /* ===== Modals ===== */
-  .overlay{
-    position:fixed;inset:0;background:rgba(0,25,50,.62);backdrop-filter:blur(3px);
+  .overlay{position:fixed;inset:0;background:rgba(0,25,50,.62);backdrop-filter:blur(3px);
     display:flex;align-items:center;justify-content:center;padding:1rem;z-index:100;
-    opacity:0;visibility:hidden;transition:opacity var(--transition),visibility var(--transition);
-  }
+    opacity:0;visibility:hidden;transition:opacity var(--transition),visibility var(--transition)}
   .overlay.open{opacity:1;visibility:visible}
-  .dialog{
-    background:#fff;width:100%;max-width:440px;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.35);
+  .dialog{background:#fff;width:100%;max-width:460px;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.35);
     overflow:hidden;transform:translateY(18px) scale(.98);transition:transform var(--transition);
-    max-height:92vh;display:flex;flex-direction:column;
-  }
+    max-height:92vh;display:flex;flex-direction:column}
   .overlay.open .dialog{transform:none}
   .dialog-head{background:var(--navy);color:#fff;padding:1rem 1.2rem;display:flex;align-items:center;gap:.7rem;justify-content:space-between}
   .dialog-head h3{font-size:1.05rem}
-  .dialog-head p{font-size:.8rem;opacity:.85}
+  .dialog-head p{font-size:.8rem;opacity:.9}
   .icon-btn{background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:50%;
     cursor:pointer;font-size:1.15rem;line-height:1;display:grid;place-items:center;transition:var(--transition);flex:0 0 36px}
   .icon-btn:hover{background:var(--sky)}
   .dialog-body{padding:1.25rem 1.2rem;overflow:auto}
-  .steps-dots{display:flex;gap:.4rem;margin-bottom:1rem}
-  .steps-dots i{height:7px;flex:1;border-radius:999px;background:#dbe6ef;transition:var(--transition)}
-  .steps-dots i.on{background:var(--sky)}
-  .tutorial-illus{background:linear-gradient(135deg,#eaf7ff,#dff0ff);border:1px solid #cde9fb;border-radius:12px;
-    padding:1rem;text-align:center;margin-bottom:1rem;color:var(--navy)}
-  .tutorial-illus .big{font-size:2rem}
-  .tutorial-illus strong{display:block;margin-top:.3rem}
-  .tutorial-illus span{font-size:.88rem;color:#41647f}
   .dialog-actions{display:flex;gap:.6rem;margin-top:1.1rem}
   .dialog-actions .btn{flex:1}
-  .detail-list{list-style:none;display:grid;gap:.1rem;margin:.4rem 0 1rem}
-  .detail-list li{display:flex;justify-content:space-between;gap:1rem;padding:.7rem .2rem;border-bottom:1px solid var(--border);font-size:.92rem}
+  .detail-list{list-style:none;display:grid;gap:.1rem;margin:.4rem 0 .6rem}
+  .detail-list li{display:flex;justify-content:space-between;gap:1rem;padding:.65rem .2rem;border-bottom:1px solid var(--border);font-size:.92rem}
   .detail-list li:last-child{border-bottom:none}
-  .detail-list dt,.detail-list .k{color:var(--muted);font-size:.85rem}
-  .detail-list dd,.detail-list .v{font-weight:700;color:var(--navy);text-align:right}
+  .detail-list .k{color:var(--muted);font-size:.85rem;display:flex;align-items:center;gap:.4rem}
+  .detail-list .k svg{width:15px;height:15px;color:var(--sky-dark)}
+  .detail-list .v{font-weight:700;color:var(--navy);text-align:right}
   .detail-amount{background:var(--bg);border-radius:12px;padding:.9rem 1rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem}
   .detail-amount strong{font-size:1.5rem;color:var(--navy)}
-  /* ===== Gráfico de consumo (Pure CSS Bar Chart) ===== */
-  .chart-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow-sm);
-    border:1px solid #edf1f5;padding:1.1rem 1.1rem 1rem;margin-bottom:.4rem}
+
+  /* ===== Gráfico corporativo con ejes ===== */
+  .chart-card{background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border:1px solid var(--glass-border);border-radius:var(--radius);box-shadow:var(--shadow-sm);
+    padding:1.1rem 1.1rem 1rem;margin-bottom:.4rem}
   .chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.7rem;margin-bottom:.6rem;flex-wrap:wrap}
-  .chart-head h3{color:var(--navy);font-size:1.02rem}
+  .chart-head h3{color:var(--navy);font-size:1.02rem;display:flex;align-items:center;gap:.45rem}
+  .chart-head h3 svg{width:18px;height:18px;color:var(--sky-dark)}
   .chart-head p{color:var(--muted);font-size:.8rem}
   .chart-avg-chip{background:#eaf6ff;color:var(--sky-dark);border:1px solid #bfe3f7;font-size:.75rem;font-weight:800;
     padding:.3rem .7rem;border-radius:999px;white-space:nowrap}
-  .chart{position:relative;display:flex;align-items:flex-end;gap:.55rem;height:210px;
-    padding:26px 4px 0;border-bottom:2px solid var(--border)}
-  .chart-avg-line{position:absolute;left:0;right:0;border-top:2px dashed var(--orange);opacity:.85;pointer-events:none}
-  .chart-avg-line span{position:absolute;top:-20px;right:0;background:var(--orange-bg);color:#b25e00;
-    font-size:.68rem;font-weight:800;padding:.1rem .5rem;border-radius:999px;border:1px solid #ffd9a3}
+  .chart-pro{display:flex;gap:.5rem}
+  .y-axis{display:flex;flex-direction:column;justify-content:space-between;height:176px;padding:26px 0 0;
+    font-size:.68rem;font-weight:700;color:var(--muted);text-align:right;flex:0 0 44px}
+  .y-axis b{color:var(--navy);font-size:.7rem}
+  .chart{position:relative;flex:1;display:flex;align-items:flex-end;gap:.55rem;height:210px;min-width:0;
+    padding:26px 4px 0;border-left:2px solid var(--border);border-bottom:2px solid var(--border);
+    background-image:linear-gradient(to top,rgba(0,51,102,.07) 1px,transparent 1px);background-size:100% 25%}
+  .chart-avg-line{position:absolute;left:0;right:0;border-top:2px dashed var(--orange);opacity:.9;pointer-events:none}
+  .chart-avg-line span{position:absolute;top:-20px;right:0;background:var(--orange-bg);color:#9a5200;
+    font-size:.66rem;font-weight:800;padding:.1rem .5rem;border-radius:999px;border:1px solid #ffd9a3}
   .bar-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
   .bar-wrap{height:150px;width:100%;display:flex;align-items:flex-end;justify-content:center}
-  .bar{position:relative;width:min(48px,62%);min-height:8px;border:none;cursor:pointer;border-radius:9px 9px 4px 4px;
-    background:linear-gradient(180deg,var(--sky) 0%,#0077b6 60%,var(--navy) 100%);
+  .bar{position:relative;width:min(50px,64%);min-height:8px;border:none;cursor:pointer;border-radius:10px 10px 5px 5px;
+    background:linear-gradient(180deg,#5ccbf5 0%,var(--sky) 42%,#00659b 78%,var(--navy) 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 4px 12px rgba(0,164,228,.25);
     transition:var(--transition);font:inherit}
-  .bar:hover,.bar:focus-visible{filter:brightness(1.12);transform:translateY(-2px);outline:2px solid var(--sky);outline-offset:2px}
-  .bar.is-max{background:linear-gradient(180deg,#38c6ff,var(--sky-dark) 65%,var(--navy))}
-  .bar-tip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(5px);
-    background:var(--navy);color:#fff;font-size:.74rem;font-weight:700;padding:.35rem .6rem;border-radius:8px;
+  .bar:hover,.bar:focus-visible{filter:brightness(1.1);transform:scale(1.07) translateY(-3px);
+    box-shadow:0 10px 22px rgba(0,164,228,.4);outline:2px solid var(--sky);outline-offset:2px}
+  .bar.is-max{background:linear-gradient(180deg,#8adcfb 0%,var(--sky) 45%,#005b8c 80%,var(--navy-dark) 100%)}
+  .bar.spend{background:linear-gradient(180deg,#3d8bd0 0%,var(--navy) 62%,var(--navy-dark) 100%)}
+  #btn-pay-detail[hidden]{display:none}
+  .bar-tip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(5px) scale(.96);
+    background:#111827;color:#fff;font-size:.74rem;font-weight:700;padding:.4rem .65rem;border-radius:9px;
     white-space:nowrap;opacity:0;visibility:hidden;transition:var(--transition);pointer-events:none;z-index:6;
-    box-shadow:0 6px 18px rgba(0,0,0,.3)}
+    box-shadow:0 10px 24px rgba(0,0,0,.4);border:1px solid #374151}
+  .bar-tip small{display:block;font-size:.66rem;font-weight:600;color:#9ca3af}
   .bar-tip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
-    border:6px solid transparent;border-top-color:var(--navy)}
-  .bar-col:hover .bar-tip,.bar:focus-visible .bar-tip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
-  .bar-val{margin-top:.4rem;font-size:.78rem;font-weight:800;color:var(--navy)}
+    border:6px solid transparent;border-top-color:#111827}
+  .bar-col:hover .bar-tip,.bar:focus-visible .bar-tip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0) scale(1)}
+  .bar-val{margin-top:.4rem;font-size:.76rem;font-weight:800;color:var(--navy)}
   .bar-label{font-size:.68rem;color:var(--muted);text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+  .x-axis-label{text-align:center;font-size:.7rem;font-weight:800;color:var(--muted);margin-top:.35rem;letter-spacing:.05em;text-transform:uppercase}
   .chart-legend{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.7rem;font-size:.76rem;color:var(--muted)}
   .chart-legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:.3rem;vertical-align:baseline}
-  /* ===== Spotlight Onboarding ===== */
-  .spotlight-overlay{position:fixed;inset:0;background:rgba(0,20,42,.66);z-index:90;
+
+  /* ===== Spotlight avanzado ===== */
+  .spotlight-overlay{position:fixed;inset:0;background:rgba(0,20,42,.68);z-index:90;
     opacity:0;visibility:hidden;transition:opacity var(--transition),visibility var(--transition)}
   .spotlight-overlay.open{opacity:1;visibility:visible}
   .spotlight-target{position:relative!important;z-index:95!important;background:#fff;
     box-shadow:0 0 0 4px var(--sky),0 14px 36px rgba(0,164,228,.5)!important;
     border-radius:12px!important;transition:var(--transition)}
-  button.spotlight-target{box-shadow:0 0 0 4px var(--sky),0 14px 36px rgba(0,164,228,.5)!important}
-  .spotlight-pop{position:fixed;z-index:96;width:min(330px,calc(100vw - 2rem));background:#fff;border-radius:14px;
-    box-shadow:0 20px 55px rgba(0,0,0,.35);border-top:5px solid var(--sky);padding:1rem 1.05rem;
+  .spotlight-target::after{content:"";position:absolute;inset:-7px;border-radius:16px;
+    border:3px solid var(--sky);pointer-events:none;animation:spotPulse 1.6s ease-out infinite}
+  @keyframes spotPulse{0%{opacity:.9;transform:scale(1)}70%{opacity:0;transform:scale(1.1)}100%{opacity:0;transform:scale(1.1)}}
+  .spotlight-pop{position:fixed;z-index:96;width:min(340px,calc(100vw - 2rem));background:#fff;border-radius:14px;
+    box-shadow:0 20px 55px rgba(0,0,0,.35);border-top:none;padding:0;overflow:hidden;
     opacity:0;visibility:hidden;transform:translateY(10px);transition:var(--transition)}
   .spotlight-pop.open{opacity:1;visibility:visible;transform:none}
+  .spot-progress{height:8px;background:#e2e8f0}
+  .spot-progress i{display:block;height:100%;width:33%;border-radius:0 99px 99px 0;
+    background:linear-gradient(90deg,var(--sky),var(--navy));transition:var(--transition)}
+  .spot-body{padding:1rem 1.05rem}
   .spot-step{display:flex;align-items:center;justify-content:space-between;font-size:.75rem;color:var(--muted);font-weight:700;margin-bottom:.4rem}
   .spot-dots{display:inline-flex;gap:.3rem;margin-left:.5rem}
   .spot-dots i{width:22px;height:6px;border-radius:999px;background:#dbe6ef;transition:var(--transition)}
   .spot-dots i.on{background:var(--sky)}
-  .spotlight-pop h4{color:var(--navy);font-size:.98rem;margin-bottom:.25rem}
+  .spotlight-pop h4{color:var(--navy);font-size:.98rem;margin-bottom:.25rem;display:flex;gap:.4rem;align-items:center}
+  .spotlight-pop h4 svg{width:17px;height:17px;color:var(--sky-dark)}
   .spotlight-pop p{font-size:.85rem;color:#41647f;margin-bottom:.8rem}
   .spot-actions{display:flex;gap:.55rem}
   .spot-actions .btn{flex:1;padding:.65rem .8rem;font-size:.88rem}
-  /* ===== Factura desglosada / semáforo ===== */
+
+  /* ===== Factura / semáforo ===== */
   .invoice{background:#fbfdff;border:1px solid var(--border);border-radius:12px;padding:.85rem .95rem;margin:.5rem 0 .8rem}
-  .invoice h4{color:var(--navy);font-size:.88rem;margin-bottom:.55rem;text-transform:uppercase;letter-spacing:.04em}
+  .invoice h4{color:var(--navy);font-size:.86rem;margin-bottom:.55rem;text-transform:uppercase;letter-spacing:.04em;
+    display:flex;align-items:center;gap:.4rem}
+  .invoice h4 svg{width:16px;height:16px;color:var(--sky-dark)}
   .inv-track{display:flex;height:10px;border-radius:999px;overflow:hidden;background:#e8eef4;margin:.55rem 0 .7rem}
   .inv-track i{display:block;height:100%;transition:var(--transition)}
   .inv-track .t-agua{background:var(--sky)}
@@ -261,33 +343,139 @@
     padding:.4rem .75rem;border-radius:999px;border:1px solid;white-space:nowrap;transition:var(--transition)}
   .semaforo::before{content:"";width:12px;height:12px;border-radius:50%;background:currentColor;
     box-shadow:0 0 0 4px rgba(0,0,0,.06);transition:var(--transition)}
-  .semaforo.green{background:var(--green-bg);color:#0f7a48;border-color:#bfe8d2}
-  .semaforo.orange{background:var(--orange-bg);color:#b25e00;border-color:#ffd9a3}
-  .semaforo.red{background:var(--red-bg);color:#b42323;border-color:#f5c2c2}
+  .semaforo.green{background:var(--green-bg);color:#0c6b3e;border-color:#bfe8d2}
+  .semaforo.orange{background:var(--orange-bg);color:#9a5200;border-color:#ffd9a3}
+  .semaforo.red{background:var(--red-bg);color:#a11f1f;border-color:#f5c2c2}
   .alert-leak{background:var(--red-bg);border:1px solid #f5c2c2;color:#8f1d1d;font-size:.82rem;
     border-radius:10px;padding:.6rem .8rem;margin-bottom:.7rem;transition:var(--transition)}
   .alert-leak[hidden]{display:none}
   footer.page{background:var(--navy);color:#cfe0f0;text-align:center;font-size:.78rem;padding:1rem}
 
-  /* ===== Toast ===== */
-  .toast{
-    position:fixed;left:50%;bottom:1.2rem;transform:translate(-50%,20px);
+  /* ===== Toasts ===== */
+  .toast{position:fixed;left:50%;bottom:1.2rem;transform:translate(-50%,20px);
     background:var(--navy);color:#fff;padding:.75rem 1.1rem;border-radius:999px;font-size:.88rem;
     box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;visibility:hidden;transition:var(--transition);z-index:200;max-width:90vw;text-align:center}
   .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+  .toast-success{position:fixed;top:1rem;right:1rem;z-index:300;display:flex;gap:.7rem;align-items:flex-start;
+    background:#fff;color:var(--text);border-radius:14px;padding:.85rem 1rem;max-width:min(360px,calc(100vw - 2rem));
+    border-left:6px solid var(--green);box-shadow:0 18px 50px rgba(0,0,0,.28);
+    transform:translateX(120%);opacity:0;transition:var(--transition)}
+  .toast-success.show{transform:none;opacity:1}
+  .toast-success.hide{transform:translateX(120%);opacity:0}
+  .toast-success .ok{width:36px;height:36px;flex:0 0 36px;border-radius:50%;background:var(--green-bg);
+    display:grid;place-items:center;color:var(--green)}
+  .toast-success .ok svg{width:20px;height:20px}
+  .toast-success b{color:var(--navy);font-size:.9rem;display:block}
+  .toast-success p{font-size:.8rem;color:var(--muted)}
+
+  /* ===== Acciones rápidas / tablas / pagos / incidencias / cortes ===== */
+  .stat.stat-sky strong{color:var(--sky-dark)}
+  .quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:1rem}
+  .quick-card{display:flex;gap:.7rem;align-items:flex-start;background:#fff;border:1px solid var(--border);
+    border-radius:12px;padding:.8rem .85rem;cursor:pointer;font:inherit;text-align:left;color:inherit;
+    transition:var(--transition);width:100%}
+  .quick-card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#9fd4ef}
+  .quick-ico{width:38px;height:38px;flex:0 0 38px;border-radius:10px;background:#eaf4fb;color:var(--sky-dark);
+    display:grid;place-items:center}
+  .quick-ico svg{width:20px;height:20px}
+  .quick-card b{display:block;font-size:.86rem;color:var(--navy)}
+  .quick-card small{display:block;font-size:.73rem;color:var(--muted);line-height:1.45}
+  .toolbar{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+  .search-input,.year-select{border:1px solid var(--border);background:#fff;border-radius:999px;padding:.42rem .9rem;
+    font-size:.82rem;font-family:inherit;color:var(--navy);transition:var(--transition)}
+  .search-input{min-width:160px}
+  .search-input:focus,.year-select:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 3px rgba(0,164,228,.15)}
+  .field select,.field textarea{width:100%;padding:.8rem .9rem;border:2px solid var(--border);border-radius:10px;
+    font-size:1rem;font-family:inherit;transition:var(--transition);background:rgba(255,255,255,.9);color:var(--text)}
+  .field select:focus,.field textarea:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 4px rgba(0,164,228,.18);background:#fff}
+  .field textarea{min-height:96px;resize:vertical}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:#fff}
+  .tbl{width:100%;border-collapse:collapse;font-size:.83rem;min-width:600px}
+  .tbl th{background:var(--navy);color:#fff;text-align:left;padding:.6rem .7rem;font-size:.72rem;
+    text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+  .tbl td{padding:.55rem .7rem;border-top:1px solid var(--border);white-space:nowrap}
+  .tbl tbody tr:first-child td{border-top:none}
+  .tbl .num{text-align:right;font-weight:700;color:var(--navy)}
+  .tbl-actions{display:flex;gap:.35rem}
+  .dialog-wide{max-width:700px}
+  .pay-amount{background:var(--bg);border-radius:12px;padding:.9rem 1rem;text-align:center;margin-bottom:.7rem}
+  .pay-amount span{font-size:.8rem;color:var(--muted);display:block}
+  .pay-amount strong{font-size:1.7rem;color:var(--navy);display:block;letter-spacing:-.01em}
+  .pay-methods{display:grid;gap:.5rem;margin:.6rem 0}
+  .pay-opt{display:flex;gap:.7rem;align-items:center;border:2px solid var(--border);border-radius:12px;
+    padding:.6rem .8rem;cursor:pointer;transition:var(--transition);font-size:.88rem}
+  .pay-opt:hover{border-color:var(--sky)}
+  .pay-opt input{accent-color:var(--sky);width:17px;height:17px;flex:0 0 17px}
+  .pay-opt.sel{border-color:var(--sky);background:#f0f8fe}
+  .pay-opt b{color:var(--navy);display:block;font-size:.88rem}
+  .pay-opt small{color:var(--muted);font-size:.76rem}
+  .pay-note{font-size:.76rem;color:var(--muted);background:#f6f9fb;border-radius:10px;padding:.55rem .75rem}
+  .spinner{width:42px;height:42px;border-radius:50%;border:4px solid #d7e6f2;border-top-color:var(--sky);
+    margin:1rem auto;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .pay-ok{text-align:center;padding:.4rem 0}
+  .pay-ok .big{width:60px;height:60px;border-radius:50%;background:var(--green-bg);color:var(--green);
+    display:grid;place-items:center;margin:0 auto .6rem}
+  .pay-ok .big svg{width:30px;height:30px}
+  .pay-ok h4{color:var(--navy);margin-bottom:.25rem}
+  .pay-ok p{font-size:.86rem;color:var(--muted);margin-bottom:.7rem}
+  .pay-code{display:inline-block;background:var(--bg);border:1px dashed #9fb3c8;border-radius:8px;
+    padding:.3rem .8rem;font-weight:800;color:var(--navy);letter-spacing:.04em;margin-bottom:.8rem}
+  .inc-item{background:#fff;border:1px solid var(--border);border-radius:12px;padding:.8rem .9rem;display:grid;gap:.3rem}
+  .inc-item .row{display:flex;justify-content:space-between;gap:.6rem;align-items:center;flex-wrap:wrap}
+  .inc-code{font-weight:800;color:var(--navy);font-size:.85rem;letter-spacing:.03em}
+  .inc-desc{font-size:.84rem;color:#4c5f70}
+  .inc-meta{font-size:.76rem;color:var(--muted)}
+  .foto-prev{max-width:100%;max-height:160px;border-radius:10px;border:1px solid var(--border);margin-top:.4rem}
+  .coords{font-size:.76rem;color:var(--muted)}
+  .disclaimer{font-size:.76rem;color:var(--muted);background:#f6f9fb;border-radius:10px;padding:.55rem .75rem;margin-bottom:.8rem}
+  .badge.info{background:#e7f4fd;color:#0b5cab;border:1px solid #bfe0f5}
 
   /* ===== Responsive ===== */
   @media(min-width:600px){
     .cards{grid-template-columns:repeat(2,1fr)}
     .login-card{padding:2.4rem 2.2rem}
-    main.dashboard{padding:1.6rem 1.25rem 3rem}
+    .support-grid{grid-template-columns:repeat(2,1fr)}
+    .quick-grid{grid-template-columns:repeat(3,1fr)}
   }
   @media(min-width:900px){
     .cards{grid-template-columns:repeat(3,1fr)}
-    .hero h2{font-size:1.45rem}
+    .hero h2{font-size:1.5rem}
+    .quick-grid{grid-template-columns:repeat(5,1fr)}
+    /* ===== Login pantalla dividida estricta ===== */
+    #view-login.view.active{display:grid;grid-template-columns:480px 1fr;padding:0;align-items:stretch;justify-content:stretch;background:#fff}
+    .login-panel{background:#fff;min-height:100vh;justify-content:center;align-items:center;padding:2.5rem 2rem;
+      box-shadow:16px 0 40px rgba(0,51,102,.14);z-index:1}
+    .login-card{max-width:360px;width:100%;padding:0}
+    .login-trust{margin-top:1.5rem}
+    .login-visual{display:block;min-height:100vh;
+      background:
+        linear-gradient(135deg,rgba(0,36,74,.45),rgba(0,51,102,.25) 50%,rgba(0,164,228,.08)),
+        url('assets/sedapal1.png');
+      background-size:cover;
+      background-repeat:no-repeat;
+      background-position:65% center}
+  }
+  @media(max-width:640px){
+    .topbar-inner{gap:.5rem;padding:.55rem .7rem}
+    .topbar-logo{height:32px;max-width:96px}
+    .topbar .mini-brand small{display:none}
+    .mini-brand strong{font-size:.88rem}
+    .supply-chip{font-size:.76rem;padding:.32rem .65rem}
+    .btn-logout{padding:.45rem .8rem;font-size:.8rem}
+  }
+  @media(max-width:899px){
+    .shell{padding:.9rem .9rem 2rem}
+    .sidebar{position:fixed;top:0;left:0;bottom:0;border-radius:0 18px 18px 0;z-index:80;width:270px;flex:none;
+      transform:translateX(-105%);transition:var(--transition);padding-top:1.2rem}
+    .shell.nav-open .sidebar{transform:none}
+    .scrim{display:block;position:fixed;inset:0;background:rgba(0,20,42,.55);z-index:70;
+      opacity:0;visibility:hidden;transition:var(--transition)}
+    .shell.nav-open .scrim{opacity:1;visibility:visible}
   }
   @media(min-width:1150px){
-    .cards{grid-template-columns:repeat(4,1fr)}
+    .cards{grid-template-columns:repeat(3,1fr)}
+    .stats{grid-template-columns:repeat(4,1fr)}
   }
   @media(prefers-reduced-motion:reduce){
     *{animation:none!important;transition:none!important}
@@ -295,120 +483,278 @@
 </style>
 </head>
 <body>
+<a class="skip" href="#sec-historial">Saltar al historial de recibos</a>
 
 <!-- ============ VISTA: LOGIN ============ -->
 <section id="view-login" class="view active" aria-label="Pantalla de acceso">
+  <div class="login-panel">
   <div class="login-card" role="form" aria-labelledby="login-title">
     <div class="brand" aria-label="Logotipo SEDAPAL">
-      <div class="logo-drop" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C12 2 5 10.2 5 14.5A7 7 0 0 0 12 21.5 7 7 0 0 0 19 14.5C19 10.2 12 2 12 2Zm0 4.3c.9 1.2 2.6 3.6 3.7 5.6.4.7-.1 1.6-.9 1.6H9.2c-.8 0-1.3-.9-.9-1.6 1.1-2 2.8-4.4 3.7-5.6Z"/><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" stroke="#fff" stroke-width="1.4" stroke-linecap="round" fill="none"/></svg>
-      </div>
+      <img src="assets/logo.png" alt="Logotipo SEDAPAL" class="brand-logo">
       <div class="brand-text">
         <strong>SEDAPAL</strong>
         <span>Hidro Mejora</span>
-        <small>Historial de facturación de agua potable</small>
+        <small>Plataforma corporativa de facturación</small>
       </div>
     </div>
 
     <h1 id="login-title">Iniciar sesión</h1>
-    <p class="subtitle">Centraliza tus recibos y consulta tus últimos 12 meses de consumo.</p>
+    <p class="subtitle">Centraliza tu historial de agua potable: 12 recibos, consumo en m³ y descargas oficiales.</p>
 
     <div id="form-error" class="form-error" role="alert"></div>
 
     <form id="login-form" novalidate>
       <div class="field">
-        <label for="suministro">Número de Suministro</label>
+        <label for="suministro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c3 4.2 6 7.6 6 11a6 6 0 1 1-12 0c0-3.4 3-6.8 6-11z"/></svg>Número de Suministro</label>
         <input type="text" id="suministro" name="suministro" inputmode="numeric" autocomplete="username"
                placeholder="Ej. 1234567-8" maxlength="12" required />
         <div class="hint">Código de 7 a 9 dígitos que figura en tu recibo.</div>
       </div>
       <div class="field">
-        <label for="password">Contraseña</label>
+        <label for="password"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Contraseña</label>
         <input type="password" id="password" name="password" autocomplete="current-password"
                placeholder="••••••••" minlength="4" required />
       </div>
-      <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
+      <button type="submit" class="btn btn-primary" id="btn-login">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+        <span id="btn-login-text">Iniciar Sesión</span>
+      </button>
     </form>
 
-    <div class="demo-box">💡 <b>Prototipo:</b> ingresa cualquier suministro (ej. <b>5894213</b>) y clave de 4+ caracteres para entrar.</div>
+    <div class="demo-box">💡 <b>Acceso demo:</b> ingresa cualquier suministro (ej. <b>5894213</b>) y clave de 4+ caracteres.</div>
     <div class="login-foot">¿Olvidaste tu clave? <a href="#" id="forgot-link">Recupérala aquí</a> · <a href="#" id="help-link">Ayuda</a></div>
   </div>
+  <div class="login-trust" aria-label="Respaldo institucional">
+    <span>🔒 Conexión segura</span><span>🏛 SEDAPAL · Lima, Perú</span><span>⚡ ERP comercial integrado</span>
+  </div>
+  </div>
+  <div class="login-visual" aria-hidden="true"></div>
 </section>
 
-<!-- ============ VISTA: DASHBOARD ============ -->
+<!-- ============ VISTA: DASHBOARD SaaS ============ -->
 <section id="view-dashboard" class="view" aria-label="Panel principal">
   <header class="topbar">
     <div class="topbar-inner">
+      <button id="btn-menu" class="btn-menu" type="button" aria-label="Abrir o cerrar menú de navegación" aria-expanded="false" aria-controls="sidebar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
       <div class="mini-brand">
-        <div class="mini-drop" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="#fff"><path d="M12 2C12 2 5 10.2 5 14.5A7 7 0 0 0 12 21.5 7 7 0 0 0 19 14.5C19 10.2 12 2 12 2Z"/></svg>
-        </div>
+        <img src="assets/logo.png" alt="Logotipo SEDAPAL" class="topbar-logo">
         <div>
           <strong>SEDAPAL · Hidro Mejora</strong>
-          <small>Historial de recibos</small>
+          <small>Plataforma corporativa</small>
         </div>
       </div>
+      <div class="topbar-right">
       <span class="supply-chip" title="Suministro activo">💧 Suministro <b id="supply-label">—</b></span>
       <button id="btn-logout" class="btn btn-logout" type="button">Cerrar sesión</button>
+      </div>
     </div>
   </header>
 
-  <main class="dashboard">
-    <div class="hero">
-      <div>
-        <h2>Hola, titular del suministro <span id="supply-hello">—</span> 👋</h2>
-        <p>Consulta aquí tus últimos 12 recibos. Selecciona un mes para ver el detalle, descargar tu recibo y llevar el control de tu deuda.</p>
-      </div>
-      <button class="btn btn-sky" id="btn-replay-tutorial" type="button">▶ Ver tutorial</button>
-    </div>
+  <div class="shell" id="shell">
+    <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
+      <nav role="navigation">
+        <button class="nav-item active" data-sec="inicio" type="button" aria-current="page">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>
+          <span>Inicio</span>
+        </button>
+        <button class="nav-item" data-sec="historial" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+          <span>Recibos</span>
+        </button>
+        <button class="nav-item" data-sec="incidencias" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3L2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>
+          <span>Incidencias</span>
+        </button>
+        <button class="nav-item" data-sec="cortes" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+          <span>Cortes de servicio</span>
+        </button>
+        <button class="nav-item" data-sec="ayuda" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12a8 8 0 0 1 16 0"/><rect x="2" y="12" width="4" height="7" rx="2"/><rect x="18" y="12" width="4" height="7" rx="2"/><path d="M20 19a4 4 0 0 1-4 3h-2"/></svg>
+          <span>Atención al Cliente</span>
+        </button>
+      </nav>
+      <div class="side-help">💧 <b>¿Consumo elevado?</b><br/>Si superas los 20 m³ revisa fugas internas o solicita inspección al 317-8000.</div>
+      <div class="side-ver">v2.0 · Debian prod</div>
+    </aside>
+    <div class="scrim" id="scrim" aria-hidden="true"></div>
 
-    <div class="stats" aria-label="Resumen de cuenta">
-      <div class="stat" id="stat-total-box"><small>Total facturado</small><strong id="stat-total">S/ 0.00</strong></div>
-      <div class="stat stat-green"><small>Recibos pagados</small><strong id="stat-paid">0</strong></div>
-      <div class="stat stat-orange"><small>Pendientes / vencidos</small><strong id="stat-pending">0</strong></div>
-    </div>
-
-    <section class="chart-card" aria-label="Gráfico de consumo histórico">
-      <div class="chart-head">
-        <div>
-          <h3>📊 Consumo histórico</h3>
-          <p>Metros cúbicos consumidos · últimos 6 meses</p>
+    <main class="dashboard" id="main-content">
+      <!-- INICIO -->
+      <div class="dash-sec active" id="sec-inicio" aria-label="Resumen">
+        <div class="hero">
+          <div>
+            <h2>Hola, suministro <span id="supply-hello">—</span> 👋</h2>
+            <p>Consulta tus últimos 12 recibos, analiza tu consumo en m³ y descarga tus comprobantes oficiales.</p>
+          </div>
+          <button class="btn btn-sky" id="btn-replay-tutorial" type="button">▶ Ver tutorial</button>
         </div>
-        <span class="chart-avg-chip">Promedio: 15 m³</span>
-      </div>
-      <div id="chart" class="chart" role="img" aria-label="Gráfico de barras del consumo de agua de los últimos 6 meses"></div>
-      <div class="chart-legend">
-        <span><i style="background:var(--sky)"></i>Consumo mensual (m³)</span>
-        <span><i style="background:var(--orange)"></i>Línea promedio 15 m³</span>
-      </div>
-    </section>
 
-    <div class="section-head">
-      <h3>📄 Últimos 12 recibos</h3>
-      <div class="filter-row" role="group" aria-label="Filtrar por estado">
-        <button class="chip-filter active" data-filter="Todos" type="button">Todos</button>
-        <button class="chip-filter" data-filter="Pagado" type="button">Pagado</button>
-        <button class="chip-filter" data-filter="Pendiente" type="button">Pendiente</button>
-        <button class="chip-filter" data-filter="Vencido" type="button">Vencido</button>
+        <div class="stats" aria-label="Resumen de cuenta">
+          <div class="stat" id="stat-total-box">
+            <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2M18 14h.01"/></svg></span><small>Último recibo</small></div>
+            <strong id="stat-last">S/ 0.00</strong>
+          </div>
+          <div class="stat stat-sky">
+            <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/></svg></span><small>Consumo último mes</small></div>
+            <strong id="stat-cons">0 m³</strong>
+          </div>
+          <div class="stat stat-orange">
+            <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/></svg></span><small>Recibos pendientes</small></div>
+            <strong id="stat-pend">0</strong>
+          </div>
+          <div class="stat stat-green">
+            <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/></svg></span><small>Estado del suministro</small></div>
+            <strong id="stat-serv">Activo</strong>
+          </div>
+          </div>
+        </div>
+
+        <section aria-label="Acciones rápidas">
+          <div class="section-head"><h3>Acciones rápidas</h3></div>
+          <div class="quick-grid">
+            <button class="quick-card" type="button" data-action="pagar">
+              <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg></span>
+              <span><b>Pagar en línea</b><small>Cancela tus recibos pendientes de forma simulada.</small></span>
+            </button>
+            <button class="quick-card" type="button" data-action="copias">
+              <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></svg></span>
+              <span><b>Obtener copias</b><small>Visualiza y descarga tus 12 recibos en PDF.</small></span>
+            </button>
+            <button class="quick-card" type="button" data-action="consultar">
+              <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
+              <span><b>Consultar recibos</b><small>Busca y filtra tu historial de facturación.</small></span>
+            </button>
+            <button class="quick-card" type="button" data-action="incidencia">
+              <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3L2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg></span>
+              <span><b>Reportar incidencia</b><small>Fugas, falta de agua o baja presión.</small></span>
+            </button>
+            <button class="quick-card" type="button" data-action="cortes">
+              <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></span>
+              <span><b>Cortes de servicio</b><small>Interrupciones programadas y en atención.</small></span>
+            </button>
+          </div>
+        </section>
+
+        <section class="chart-card" aria-label="Gráfico de consumo histórico">
+          <div class="chart-head">
+            <div>
+              <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Consumo histórico</h3>
+              <p>Metros cúbicos consumidos · últimos 6 meses · eje Y en m³</p>
+            </div>
+            <span class="chart-avg-chip">Promedio: 15 m³</span>
+          </div>
+          <div class="chart-pro">
+            <div class="y-axis" aria-hidden="true"><span><b>30</b> m³</span><span><b>20</b></span><span><b>10</b></span><span><b>0</b></span></div>
+            <div id="chart" class="chart" role="img" aria-label="Gráfico de barras del consumo de agua de los últimos 6 meses"></div>
+          </div>
+          <div class="x-axis-label">Meses · eje X</div>
+          <div class="chart-legend">
+            <span><i style="background:var(--sky)"></i>Consumo mensual (m³)</span>
+            <span><i style="background:var(--orange)"></i>Línea promedio 15 m³</span>
+          </div>
+        </section>
+
+        <section class="chart-card" aria-label="Evolución del gasto" style="margin-top:1rem">
+          <div class="chart-head">
+            <div>
+              <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M18 14h.01"/></svg>Evolución del gasto</h3>
+              <p>Soles facturados por mes · últimos 6 meses</p>
+            </div>
+            <span class="chart-avg-chip" id="spend-avg-chip">Promedio: S/ 0.00</span>
+          </div>
+          <div class="chart-pro">
+            <div class="y-axis" id="spend-y" aria-hidden="true"></div>
+            <div id="chart-spend" class="chart" role="img" aria-label="Gráfico de barras del gasto mensual en soles de los últimos 6 meses"></div>
+          </div>
+          <div class="x-axis-label">Meses · eje X</div>
+          <div class="chart-legend">
+            <span><i style="background:var(--navy)"></i>Gasto mensual (S/)</span>
+            <span><i style="background:var(--orange)"></i>Línea promedio</span>
+          </div>
+        </section>
       </div>
-    </div>
 
-    <div id="cards" class="cards" role="list"></div>
-    <div id="empty" class="empty">No hay recibos con ese estado. Prueba con otro filtro.</div>
-  </main>
+      <!-- HISTORIAL -->
+      <div class="dash-sec" id="sec-historial" aria-label="Historial de recibos">
+        <div class="section-head">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></svg>Últimos 12 recibos</h3>
+          <div class="toolbar">
+            <input type="search" id="search-mes" class="search-input" placeholder="Buscar por mes…" aria-label="Buscar recibos por mes" />
+            <select id="filter-anio" class="year-select" aria-label="Filtrar por año"><option value="Todos">Todos los años</option></select>
+          </div>
+        </div>
+        <div class="section-head" style="margin-top:0">
+          <h3 style="font-size:.9rem">Filtrar por estado</h3>
+          <div class="filter-row" role="group" aria-label="Filtrar por estado">
+            <button class="chip-filter active" data-filter="Todos" type="button">Todos</button>
+            <button class="chip-filter" data-filter="Pagado" type="button">Pagado</button>
+            <button class="chip-filter" data-filter="Pendiente" type="button">Pendiente</button>
+            <button class="chip-filter" data-filter="Vencido" type="button">Vencido</button>
+          </div>
+        </div>
+        <div id="cards" class="cards" role="list"></div>
+        <div id="empty" class="empty">No hay recibos con ese estado. Prueba con otro filtro.</div>
+      </div>
 
-  <footer class="page">© 2026 SEDAPAL · Prototipo académico “Hidro Mejora” — HTML5 + CSS3 + Vanilla JS</footer>
+      <!-- INCIDENCIAS -->
+      <div class="dash-sec" id="sec-incidencias" aria-label="Incidencias reportadas">
+        <div class="section-head">
+          <h3>Incidencias reportadas</h3>
+          <button class="btn btn-sky" id="btn-nueva-incidencia" type="button" style="padding:.55rem 1rem;font-size:.86rem">+ Reportar incidencia</button>
+        </div>
+        <div class="disclaimer">Registro simulado con fines académicos. Las incidencias se conservan en este navegador (localStorage) y no se envían a ningún servidor.</div>
+        <div id="inc-list" class="support-grid" role="list"></div>
+        <div id="inc-empty" class="empty">Aún no registras incidencias. Usa “Reportar incidencia” para crear la primera.</div>
+      </div>
+
+      <!-- CORTES -->
+      <div class="dash-sec" id="sec-cortes" aria-label="Cortes de servicio">
+        <div class="section-head">
+          <h3>Cortes de servicio</h3>
+          <input type="search" id="search-distrito" class="search-input" placeholder="Buscar por distrito…" aria-label="Buscar cortes por distrito" />
+        </div>
+        <div class="disclaimer">Información <b>simulada</b> para el prototipo. No se afirma que estos cortes afecten tu suministro.</div>
+        <div id="cortes-list" class="support-grid" role="list"></div>
+        <div id="cortes-empty" class="empty">Sin registros para ese distrito.</div>
+      </div>
+
+      <!-- AYUDA -->
+      <div class="dash-sec" id="sec-ayuda" aria-label="Atención al cliente">
+        <div class="section-head"><h3>🎧 Atención al Cliente</h3></div>
+        <div class="support-grid">
+          <div class="support-card">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/></svg>Línea SEDAPAL</h4>
+            <p>(01) 317-8000 · Lun–Sáb 8:00–20:00. Reporta fugas, reclama facturación o pide inspecciones.</p>
+            <button class="btn btn-sky" type="button" data-call>Llamar ahora</button>
+          </div>
+          <div class="support-card">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Oficinas y reclamos</h4>
+            <p>Registra tu reclamo con tu número de suministro y el periodo facturado observado en el detalle.</p>
+            <button class="btn btn-ghost" type="button" data-claim>Registrar reclamo</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <footer class="page">© 2026 SEDAPAL · Hidro Mejora v2.0 — HTML5 + CSS3 + Vanilla JS · Optimizado para Debian</footer>
 </section>
 
-<!-- ============ SPOTLIGHT ONBOARDING (recorrido guiado) ============ -->
+<!-- ============ SPOTLIGHT ONBOARDING AVANZADO ============ -->
 <div id="spotlight-overlay" class="spotlight-overlay" aria-hidden="true"></div>
 <div id="spotlight-pop" class="spotlight-pop" role="dialog" aria-modal="true" aria-labelledby="spot-title" aria-hidden="true">
-  <div class="spot-step"><span>Paso <b id="spot-num">1</b> de 3</span><span class="spot-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
-  <h4 id="spot-title">—</h4>
-  <p id="spot-text">—</p>
-  <div class="spot-actions">
-    <button class="btn btn-ghost" id="spot-skip" type="button">Omitir</button>
-    <button class="btn btn-sky" id="spot-next" type="button">Siguiente</button>
+  <div class="spot-progress" aria-hidden="true"><i id="spot-bar"></i></div>
+  <div class="spot-body">
+    <div class="spot-step"><span>Paso <b id="spot-num">1</b> de 3</span><span class="spot-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+    <h4 id="spot-title">—</h4>
+    <p id="spot-text">—</p>
+    <div class="spot-actions">
+      <button class="btn btn-ghost" id="spot-skip" type="button">Omitir</button>
+      <button class="btn btn-sky" id="spot-next" type="button">Siguiente</button>
+    </div>
   </div>
 </div>
 
@@ -425,14 +771,15 @@
         <strong id="d-monto">S/ 0.00</strong>
       </div>
       <ul class="detail-list">
-        <li><span class="k">Periodo de facturación</span><span class="v" id="d-periodo">—</span></li>
-        <li><span class="k">Fecha de emisión</span><span class="v" id="d-emision">—</span></li>
-        <li><span class="k">Fecha de vencimiento</span><span class="v" id="d-vencimiento">—</span></li>
-        <li><span class="k">Estado de la cuenta</span><span class="v"><span class="badge Pagado" id="d-estado">—</span></span></li>
+        <li><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Periodo de facturación</span><span class="v" id="d-periodo">—</span></li>
+        <li><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Fecha de emisión</span><span class="v" id="d-emision">—</span></li>
+        <li><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Fecha de vencimiento</span><span class="v" id="d-vencimiento">—</span></li>
+        <li><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c3 4.2 6 7.6 6 11a6 6 0 1 1-12 0c0-3.4 3-6.8 6-11z"/></svg>Lectura anterior / actual</span><span class="v" id="d-lecturas">—</span></li>
+        <li><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>Estado de la cuenta</span><span class="v"><span class="badge Pagado" id="d-estado">—</span></span></li>
       </ul>
 
       <div class="invoice" aria-label="Desglose de facturación">
-        <h4>🧾 Desglose de la deuda</h4>
+        <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></svg>Desglose de la deuda</h4>
         <div class="inv-track" aria-hidden="true">
           <i class="t-agua" id="d-bar-agua" style="width:60%"></i><i class="t-alc" id="d-bar-alc" style="width:22%"></i><i class="t-igv" id="d-bar-igv" style="width:18%"></i>
         </div>
@@ -444,7 +791,7 @@
 
       <div class="consumo-box">
         <div>
-          <span class="k">Consumo del mes</span>
+          <span class="k">💧 Consumo del mes</span>
           <strong id="d-consumo">—</strong>
           <small>Promedio referencial: 15 m³</small>
         </div>
@@ -454,14 +801,149 @@
 
       <div class="dialog-actions">
         <button class="btn btn-ghost" id="detail-close-2" type="button">Cerrar</button>
+        <button class="btn btn-sky" id="btn-pay-detail" type="button">Pagar ahora</button>
         <button class="btn btn-primary" id="btn-pdf" type="button">⬇ Descargar PDF</button>
       </div>
     </div>
   </div>
 </div>
 
-<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<!-- ============ MODAL: PAGO EN LÍNEA (simulado) ============ -->
+<div id="pay-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="pay-title" aria-hidden="true">
+  <div class="dialog">
+    <div class="dialog-head">
+      <div><h3 id="pay-title">Pagar recibo</h3><p id="pay-sub">—</p></div>
+      <button class="icon-btn" id="pay-close" type="button" aria-label="Cerrar pago">✕</button>
+    </div>
+    <div class="dialog-body">
+      <div id="pay-main">
+        <div class="pay-amount"><span>Monto a pagar</span><strong id="pay-monto">S/ 0.00</strong></div>
+        <div class="pay-methods" role="radiogroup" aria-label="Método de pago">
+          <label class="pay-opt sel"><input type="radio" name="pay-method" value="Tarjeta" checked /><span><b>Tarjeta</b><small>Débito o crédito · simulado, sin cargos reales.</small></span></label>
+          <label class="pay-opt"><input type="radio" name="pay-method" value="Banca móvil" /><span><b>Banca móvil</b><small>Transferencia desde tu banco · simulado.</small></span></label>
+          <label class="pay-opt"><input type="radio" name="pay-method" value="Billetera digital" /><span><b>Billetera digital</b><small>Yape / Plin · simulado.</small></span></label>
+        </div>
+        <div class="pay-note">Prototipo académico: no se procesa ninguna tarjeta real ni se guarda información sensible.</div>
+        <div class="dialog-actions">
+          <button class="btn btn-ghost" id="pay-cancel" type="button">Cancelar</button>
+          <button class="btn btn-primary" id="pay-confirm" type="button">Confirmar pago</button>
+        </div>
+      </div>
+      <div id="pay-processing" hidden style="text-align:center">
+        <div class="spinner" aria-hidden="true"></div>
+        <p style="font-size:.88rem;color:var(--muted)">Procesando pago de forma simulada…</p>
+      </div>
+      <div id="pay-success" hidden>
+        <div class="pay-ok">
+          <span class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg></span>
+          <h4>Pago exitoso</h4>
+          <p id="pay-success-text">Tu recibo fue cancelado.</p>
+          <div><span class="pay-code" id="pay-code">—</span></div>
+        </div>
+        <div class="dialog-actions">
+          <button class="btn btn-ghost" id="pay-done" type="button">Cerrar</button>
+          <button class="btn btn-primary" id="pay-constancia" type="button">Descargar constancia (PDF)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<!-- ============ MODAL: OBTENER COPIAS ============ -->
+<div id="copies-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="copies-title" aria-hidden="true">
+  <div class="dialog dialog-wide">
+    <div class="dialog-head">
+      <div><h3 id="copies-title">Obtener copias</h3><p>Últimos 12 recibos · ver, descargar o pagar</p></div>
+      <button class="icon-btn" id="copies-close" type="button" aria-label="Cerrar copias">✕</button>
+    </div>
+    <div class="dialog-body">
+      <div class="tbl-wrap">
+        <table class="tbl">
+          <thead><tr><th>Mes</th><th>Periodo</th><th>Estado</th><th style="text-align:right">Monto</th><th>Acciones</th></tr></thead>
+          <tbody id="copies-tbody"></tbody>
+        </table>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" id="copies-done" type="button">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ MODAL: REPORTAR INCIDENCIA ============ -->
+<div id="incident-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="inc-title" aria-hidden="true">
+  <div class="dialog">
+    <div class="dialog-head">
+      <div><h3 id="inc-title">Reportar incidencia</h3><p>Atención simulada · sin envío real</p></div>
+      <button class="icon-btn" id="inc-close" type="button" aria-label="Cerrar incidencia">✕</button>
+    </div>
+    <div class="dialog-body">
+      <form id="inc-form" novalidate>
+        <div class="field">
+          <label for="inc-tipo">Tipo de incidencia</label>
+          <select id="inc-tipo" required>
+            <option value="Fuga de agua">Fuga de agua</option>
+            <option value="Falta de agua">Falta de agua</option>
+            <option value="Baja presión">Baja presión</option>
+            <option value="Rotura de tubería">Rotura de tubería</option>
+            <option value="Problema con medidor">Problema con medidor</option>
+            <option value="Aniego">Aniego</option>
+            <option value="Facturación">Facturación</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="inc-desc">Descripción</label>
+          <textarea id="inc-desc" placeholder="Describe lo ocurrido…" required minlength="10"></textarea>
+        </div>
+        <div class="field">
+          <label for="inc-dir">Dirección o referencia</label>
+          <input type="text" id="inc-dir" placeholder="Ej. Av. Los Próceres 1234" required />
+        </div>
+        <div class="field">
+          <label for="inc-sup">Número de suministro</label>
+          <input type="text" id="inc-sup" readonly />
+        </div>
+        <div class="field">
+          <label for="inc-foto">Adjuntar fotografía (opcional)</label>
+          <input type="file" id="inc-foto" accept="image/*" />
+          <img id="inc-foto-prev" class="foto-prev" alt="Vista previa de la fotografía adjunta" hidden />
+        </div>
+        <div class="field">
+          <label>Ubicación (opcional)</label>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-ghost" id="inc-geo" type="button" style="padding:.55rem .9rem;font-size:.84rem">Usar mi ubicación</button>
+            <span class="coords" id="inc-coords">Sin ubicación compartida.</span>
+          </div>
+        </div>
+        <div class="dialog-actions">
+          <button class="btn btn-ghost" id="inc-cancel" type="button">Cancelar</button>
+          <button class="btn btn-primary" id="inc-submit" type="submit">Registrar incidencia</button>
+        </div>
+      </form>
+      <div id="inc-ok" hidden>
+        <div class="pay-ok">
+          <span class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg></span>
+          <h4>Incidencia registrada correctamente</h4>
+          <p>Guarda tu código de seguimiento.</p>
+          <div><span class="pay-code" id="inc-code">—</span></div>
+        </div>
+        <div class="dialog-actions">
+          <button class="btn btn-ghost" id="inc-again" type="button">Nueva incidencia</button>
+          <button class="btn btn-primary" id="inc-view" type="button">Ver mis incidencias</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="toast-success" class="toast-success" role="status" aria-live="polite" aria-hidden="true">
+  <span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg></span>
+  <div><b>¡Listo para usar Hidro Mejora! 🎉</b><p id="toast-success-msg">Tutorial completado. Explora tus recibos y tu consumo.</p></div>
+</div>
+
+<script src="assets/vendor/jspdf.umd.min.js"></script>
 <script>
 (function(){
   "use strict";
@@ -469,21 +951,31 @@
   /* ---------- Referencias ---------- */
   const viewLogin = document.getElementById('view-login');
   const viewDash  = document.getElementById('view-dashboard');
+  const shell = document.getElementById('shell');
+  const sidebar = document.getElementById('sidebar');
+  const btnMenu = document.getElementById('btn-menu');
   const form = document.getElementById('login-form');
   const inpSupply = document.getElementById('suministro');
   const inpPass = document.getElementById('password');
   const formError = document.getElementById('form-error');
+  const btnLogin = document.getElementById('btn-login');
+  const btnLoginText = document.getElementById('btn-login-text');
   const supplyLabel = document.getElementById('supply-label');
   const supplyHello = document.getElementById('supply-hello');
   const cardsEl = document.getElementById('cards');
   const emptyEl = document.getElementById('empty');
   const toast = document.getElementById('toast');
+  const toastOk = document.getElementById('toast-success');
+  const toastOkMsg = document.getElementById('toast-success-msg');
   const chartEl = document.getElementById('chart');
+  const chartSpendEl = document.getElementById('chart-spend');
+  const searchMes = document.getElementById('search-mes');
+  const filterAnio = document.getElementById('filter-anio');
 
-  /* Spotlight onboarding */
   const spotOverlay = document.getElementById('spotlight-overlay');
   const spotPop = document.getElementById('spotlight-pop');
   const spotNum = document.getElementById('spot-num');
+  const spotBar = document.getElementById('spot-bar');
   const spotTitle = document.getElementById('spot-title');
   const spotText = document.getElementById('spot-text');
   const spotNext = document.getElementById('spot-next');
@@ -493,22 +985,35 @@
   const detModal = document.getElementById('detail-modal');
   const detClose = document.getElementById('detail-close');
   const detClose2 = document.getElementById('detail-close-2');
+  const payModal = document.getElementById('pay-modal');
+  const copiesModal = document.getElementById('copies-modal');
+  const incModal = document.getElementById('incident-modal');
 
   const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const MESES_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const SPOT_STEPS = [
-    { getTarget: ()=>document.getElementById('stat-total-box'),
-      title:'1. Total facturado', text:'Aquí ves el acumulado de tus 12 recibos. Es tu resumen general de cuenta.' },
-    { getTarget: ()=>document.querySelector('.filter-row'),
-      title:'2. Filtra por estado', text:'Usa la botonera para ver solo recibos Pagados, Pendientes o Vencidos.' },
-    { getTarget: ()=>document.querySelector('#cards .card'),
-      title:'3. Abre el detalle', text:'Haz clic en la primera tarjeta (o cualquiera) para ver el desglose y descargar tu recibo.' }
+    { sec:'inicio', getTarget: ()=>document.getElementById('stat-total-box'),
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>',
+      title:'Último recibo', text:'Tu resumen de cuenta: último monto, consumo y pendientes.' },
+    { sec:'historial', getTarget: ()=>document.querySelector('.filter-row'),
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M7 12h10M10 19h4"/></svg>',
+      title:'Filtra por estado', text:'Botonera de filtros: visualiza solo Pagados, Pendientes o Vencidos.' },
+    { sec:'historial', getTarget: ()=>document.querySelector('#cards .card'),
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/></svg>',
+      title:'Abre el detalle', text:'Toca cualquier tarjeta para ver desglose, semáforo de consumo y PDF.' }
   ];
   let spotStep = 0;
   let spotActive = false;
   let recibos = [];
   let currentFilter = 'Todos';
+  let searchQuery = '';
+  let yearFilter = 'Todos';
   let selected = null;
+  let payTarget = null;
+  let incidencias = [];
+  let incFotoData = null;
+  let incCoords = '';
+  let loading = false;
 
   /* ---------- Utilidades ---------- */
   function showToast(msg){
@@ -517,16 +1022,64 @@
     clearTimeout(showToast._t);
     showToast._t = setTimeout(()=>toast.classList.remove('show'), 2600);
   }
-  function openModal(m){ m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
+  function showSuccess(msg){
+    if(msg) toastOkMsg.textContent = msg;
+    toastOk.setAttribute('aria-hidden','false');
+    toastOk.classList.remove('hide');
+    toastOk.classList.add('show');
+    clearTimeout(showSuccess._t);
+    showSuccess._t = setTimeout(()=>{
+      toastOk.classList.add('hide');
+      toastOk.classList.remove('show');
+      setTimeout(()=>toastOk.setAttribute('aria-hidden','true'), 320);
+    }, 3600);
+  }
+  function openModal(m){ m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
+    const f = m.querySelector('.icon-btn'); if(f) f.focus(); }
   function closeModal(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+  function showView(viewToShow){
+    document.querySelectorAll('.view').forEach(view=>view.classList.remove('active'));
+    viewToShow.classList.add('active');
+    window.scrollTo(0,0);
+  }
   function fmt(n){ return 'S/ ' + n.toFixed(2); }
   function pad(n){ return String(n).padStart(2,'0'); }
 
-  /* ---------- Datos simulados: últimos 12 meses ---------- */
+  /* ---------- Sidebar / secciones ---------- */
+  function showSection(name){
+    document.querySelectorAll('.dash-sec').forEach(s=>s.classList.remove('active'));
+    const sec = document.getElementById('sec-' + name);
+    if(sec) sec.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>{
+      const on = n.dataset.sec === name;
+      n.classList.toggle('active', on);
+      if(on) n.setAttribute('aria-current','page'); else n.removeAttribute('aria-current');
+    });
+    shell.classList.remove('nav-open');
+    btnMenu.setAttribute('aria-expanded','false');
+  }
+  document.querySelectorAll('.nav-item').forEach(n=>{
+    n.addEventListener('click', ()=>showSection(n.dataset.sec));
+  });
+  btnMenu.addEventListener('click', ()=>{
+    if(window.innerWidth < 900){
+      const open = shell.classList.toggle('nav-open');
+      btnMenu.setAttribute('aria-expanded', open ? 'true' : 'false');
+    } else {
+      viewDash.classList.toggle('side-collapsed');
+    }
+  });
+  document.getElementById('scrim').addEventListener('click', ()=>{
+    shell.classList.remove('nav-open');
+    btnMenu.setAttribute('aria-expanded','false');
+  });
+
+  /* ---------- Datos simulados ---------- */
   function generarRecibos(){
-    const hoy = new Date(2026, 8, 28); // Sep 2026 (coherente con fecha del sistema)
+    const hoy = new Date(2026, 8, 28);
     const estadosFijos = ['Pagado','Pagado','Pagado','Pagado','Vencido','Pagado','Pagado','Pendiente','Pagado','Pagado','Pendiente','Pagado'];
     const list = [];
+    let lecturaSig = 1520;
     for(let i=0;i<12;i++){
       const d = new Date(hoy.getFullYear(), hoy.getMonth()-i, 1);
       const anio = d.getFullYear(), mes = d.getMonth();
@@ -534,150 +1087,243 @@
       const estado = i===0 ? 'Pendiente' : (i===1 ? 'Vencido' : estadosFijos[i % estadosFijos.length]);
       const emision = new Date(anio, mes, 5);
       const venc = new Date(anio, mes, 22);
-      const consumoM3 = Math.round(12 + Math.random()*18); // 12..30 m³
+      const consumoM3 = Math.round(12 + Math.random()*18);
+      const lecturaActual = lecturaSig;
+      const lecturaAnterior = +(lecturaActual - consumoM3).toFixed(1);
+      lecturaSig = lecturaAnterior;
       list.push({
-        id:i,
-        mesNombre: MESES[mes],
-        mesShort: MESES_SHORT[mes],
-        anio,
+        id:i, mesNombre: MESES[mes], mesShort: MESES_SHORT[mes], anio, mes,
         etiqueta: MESES[mes] + ' ' + anio,
         periodo: '01/'+pad(mes+1)+'/'+anio+' – '+new Date(anio, mes+1, 0).getDate()+'/'+pad(mes+1)+'/'+anio,
-        monto,
-        estado,
+        numRecibo: 'R-' + anio + '-' + pad(mes+1) + '-' + String(2450 + i*53),
+        monto, estado,
         emision: pad(emision.getDate())+'/'+pad(emision.getMonth()+1)+'/'+emision.getFullYear(),
         vencimiento: pad(venc.getDate())+'/'+pad(venc.getMonth()+1)+'/'+venc.getFullYear(),
-        consumoM3,
-        consumo: consumoM3 + ' m³'
+        consumoM3, consumo: consumoM3 + ' m³',
+        lecturaAnterior, lecturaActual
       });
     }
     return list;
   }
 
-  /* ---------- Render de tarjetas ---------- */
-  function renderCards(){
+  /* ---------- Skeletons (simula petición ERP 1.5s) ---------- */
+  function showSkeletons(){
+    loading = true;
+    btnLogin.disabled = true;
+    btnLoginText.textContent = 'Conectando con ERP…';
+    ['stat-last','stat-cons','stat-pend','stat-serv'].forEach(id=>{ document.getElementById(id).textContent = '···'; });
+    showSection('inicio');
     cardsEl.innerHTML = '';
-    const filtrados = recibos.filter(r => currentFilter==='Todos' || r.estado===currentFilter);
-    emptyEl.classList.toggle('show', filtrados.length===0);
-
-    filtrados.forEach(r=>{
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'card';
-      btn.dataset.estado = r.estado;
-      btn.setAttribute('role','listitem');
-      btn.setAttribute('aria-label', 'Ver detalle de ' + r.etiqueta + ', ' + fmt(r.monto) + ', ' + r.estado);
-      btn.innerHTML =
-        '<div class="card-top"><div><div class="card-month">'+r.etiqueta+'</div>' +
-        '<div class="card-period">Emitido: '+r.emision+'</div></div>' +
-        '<span class="badge '+r.estado+'">'+r.estado+'</span></div>' +
-        '<div class="card-amount">'+fmt(r.monto)+' <small>/ mes</small></div>' +
-        '<div class="card-meta"><span>Vence: '+r.vencimiento+'</span><span class="card-link">Ver detalle →</span></div>';
-      btn.addEventListener('click', ()=>abrirDetalle(r));
-      cardsEl.appendChild(btn);
+    for(let i=0;i<6;i++){
+      const s = document.createElement('div');
+      s.className = 'skel-card'; s.setAttribute('aria-hidden','true');
+      s.innerHTML = '<div class="skel skel-line mid"></div><div class="skel skel-amount"></div><div class="skel skel-line short"></div>';
+      cardsEl.appendChild(s);
+    }
+    emptyEl.classList.remove('show');
+    chartEl.innerHTML = '';
+    const wrap = document.createElement('div');
+    wrap.className = 'chart-skel'; wrap.style.cssText = 'flex:1;display:flex;align-items:flex-end;gap:.6rem;height:100%';
+    wrap.setAttribute('aria-hidden','true');
+    [55,80,64,92,72,86].forEach(h=>{
+      const b = document.createElement('i'); b.style.height = h + '%'; wrap.appendChild(b);
     });
-
-    // Resumen
-    const total = recibos.reduce((a,r)=>a+r.monto,0);
-    document.getElementById('stat-total').textContent = fmt(total);
-    document.getElementById('stat-paid').textContent = recibos.filter(r=>r.estado==='Pagado').length;
-    document.getElementById('stat-pending').textContent = recibos.filter(r=>r.estado!=='Pagado').length;
-    renderChart();
+    chartEl.appendChild(wrap);
+    if(chartSpendEl){
+      chartSpendEl.innerHTML = '';
+      const w2 = document.createElement('div');
+      w2.className = 'chart-skel'; w2.style.cssText = 'flex:1;display:flex;align-items:flex-end;gap:.6rem;height:100%';
+      w2.setAttribute('aria-hidden','true');
+      [48,72,60,84,66,78].forEach(h=>{ const b = document.createElement('i'); b.style.height = h + '%'; w2.appendChild(b); });
+      chartSpendEl.appendChild(w2);
+    }
   }
 
-  /* ---------- 1. Gráfico de consumo histórico (Pure CSS Bar Chart) ---------- */
-  function renderChart(){
-    if(!chartEl) return;
-    const ultimos6 = recibos.slice(0,6).reverse(); // cronológico: más antiguo → más reciente
-    chartEl.innerHTML = '';
-    if(!ultimos6.length) return;
-    const max = Math.max.apply(null, ultimos6.concat([{consumoM3:15}]).map(r=>r.consumoM3));
-    // Línea de promedio 15 m³ (altura en % del área de barras de 150px)
-    const avgPct = Math.min(100, (15 / max) * 100);
+  /* ---------- Render real ---------- */
+  function recibosFiltrados(){
+    const q = searchQuery.trim().toLowerCase();
+    return recibos.filter(r =>
+      (currentFilter==='Todos' || r.estado===currentFilter) &&
+      (yearFilter==='Todos' || String(r.anio)===yearFilter) &&
+      (!q || r.etiqueta.toLowerCase().indexOf(q)>-1 || r.mesNombre.toLowerCase().indexOf(q)>-1)
+    );
+  }
+  function poblarAnios(){
+    if(!filterAnio) return;
+    const actual = filterAnio.value || 'Todos';
+    const anios = [];
+    recibos.forEach(r=>{ if(anios.indexOf(r.anio)<0) anios.push(r.anio); });
+    anios.sort((a,b)=>b-a);
+    filterAnio.innerHTML = '<option value="Todos">Todos los años</option>';
+    anios.forEach(a=>{
+      const o = document.createElement('option');
+      o.value = String(a); o.textContent = String(a);
+      filterAnio.appendChild(o);
+    });
+    filterAnio.value = (actual==='Todos' || anios.indexOf(+actual)>=0) ? actual : 'Todos';
+    yearFilter = filterAnio.value;
+  }
+  function renderCards(){
+    cardsEl.innerHTML = '';
+    poblarAnios();
+    const filtrados = recibosFiltrados();
+    emptyEl.classList.toggle('show', filtrados.length===0);
+    filtrados.forEach(r=>{
+      const impago = r.estado!=='Pagado';
+      const art = document.createElement('article');
+      art.className = 'card';
+      art.dataset.estado = r.estado;
+      art.setAttribute('role','listitem');
+      art.innerHTML =
+        '<button type="button" class="card-open" aria-label="Ver detalle de '+r.etiqueta+', '+fmt(r.monto)+', '+r.estado+'">' +
+        '<span class="card-top"><span><span class="card-month">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1 1-1V3a1 1 0 0 1 1-1z"/></svg>' +
+        r.etiqueta + '</span><span class="card-period">Emitido: '+r.emision+'</span></span>' +
+        '<span class="badge '+r.estado+'">'+r.estado+'</span></span>' +
+        '<span class="card-amount">'+fmt(r.monto)+' <small>/ mes</small></span>' +
+        '<span class="card-meta"><span>Vence: '+r.vencimiento+' · '+r.consumo+'</span></span></button>' +
+        '<div class="card-actions">' +
+        '<button type="button" class="btn-sm detail" data-act="detail">Ver detalle</button>' +
+        '<button type="button" class="btn-sm pdfb" data-act="pdf">Descargar PDF</button>' +
+        (impago ? '<button type="button" class="btn-sm payb" data-act="pay">Pagar</button>' : '') +
+        '</div>';
+      art.querySelector('.card-open').addEventListener('click', ()=>abrirDetalle(r));
+      art.querySelector('[data-act="detail"]').addEventListener('click', ()=>abrirDetalle(r));
+      art.querySelector('[data-act="pdf"]').addEventListener('click', ev=>descargarReciboPDF(r, ev.currentTarget));
+      const payB = art.querySelector('[data-act="pay"]');
+      if(payB) payB.addEventListener('click', ()=>abrirPago(r));
+      cardsEl.appendChild(art);
+    });
+    const ultimo = recibos[0];
+    if(ultimo){
+      document.getElementById('stat-last').textContent = fmt(ultimo.monto);
+      document.getElementById('stat-cons').textContent = ultimo.consumo;
+    }
+    document.getElementById('stat-pend').textContent = recibos.filter(r=>r.estado!=='Pagado').length;
+    document.getElementById('stat-serv').textContent = 'Activo';
+    renderChart();
+    renderSpendChart();
+    loading = false;
+    btnLogin.disabled = false;
+    btnLoginText.textContent = 'Iniciar Sesión';
+  }
+
+  /* ---------- Gráficos de barras reutilizables ---------- */
+  function renderBarChart(container, items, opts){
+    container.innerHTML = '';
+    if(!items.length) return;
+    const max = Math.max.apply(null, items.map(d=>d.value).concat([opts.avg, opts.maxFloor||0]));
+    const avgPct = max > 0 ? Math.min(100,(opts.avg/max)*100) : 0;
     const line = document.createElement('div');
     line.className = 'chart-avg-line';
-    line.style.bottom = 'calc(38px + ' + (avgPct*1.5).toFixed(1) + 'px)'; // 150px * pct + offset eje
-    line.innerHTML = '<span>15 m³ prom.</span>';
-    chartEl.appendChild(line);
-
+    line.style.bottom = 'calc(34px + ' + (avgPct*1.5).toFixed(1) + 'px)';
+    line.innerHTML = '<span>' + opts.avgLabel + '</span>';
+    container.appendChild(line);
     let top = -Infinity, topIdx = 0;
-    ultimos6.forEach((r,i)=>{ if(r.consumoM3>top){top=r.consumoM3;topIdx=i;} });
-
-    ultimos6.forEach((r,i)=>{
-      const h = Math.max(6, (r.consumoM3 / max) * 100);
+    items.forEach((d,i)=>{ if(d.value>top){top=d.value;topIdx=i;} });
+    items.forEach((d,i)=>{
+      const h = Math.max(8,(d.value/max)*100);
       const col = document.createElement('div');
       col.className = 'bar-col';
       const wrap = document.createElement('div');
       wrap.className = 'bar-wrap';
       const bar = document.createElement('button');
       bar.type = 'button';
-      bar.className = 'bar' + (i===topIdx ? ' is-max' : '');
+      bar.className = 'bar' + (opts.barClass ? ' '+opts.barClass : '') + ((!opts.barClass && i===topIdx) ? ' is-max' : '');
       bar.style.height = h.toFixed(1) + '%';
-      bar.setAttribute('aria-label', r.etiqueta + ': ' + r.consumoM3 + ' metros cúbicos');
-      bar.innerHTML = '<span class="bar-tip">' + r.mesShort + ' ' + r.anio + ' · ' + r.consumoM3 + ' m³</span>';
-      // Tooltip también visible con foco táctil: click muestra toast
-      bar.addEventListener('click', ()=>showToast('💧 ' + r.etiqueta + ': ' + r.consumoM3 + ' m³'));
+      bar.setAttribute('aria-label', d.full + ': ' + d.tip + '. Eje Y en ' + opts.unit + ', eje X meses.');
+      bar.innerHTML = '<span class="bar-tip" aria-hidden="true">' + d.full + '<small>' + d.tip + '</small></span>';
+      if(opts.onBarClick) bar.addEventListener('click', ()=>opts.onBarClick(d));
       wrap.appendChild(bar);
       col.appendChild(wrap);
       const val = document.createElement('div');
       val.className = 'bar-val';
-      val.textContent = r.consumoM3 + ' m³';
+      val.textContent = opts.fmtVal ? opts.fmtVal(d.value) : (d.value + ' ' + opts.unit);
       const lab = document.createElement('div');
       lab.className = 'bar-label';
-      lab.textContent = r.mesShort + ' ' + String(r.anio).slice(2);
+      lab.textContent = d.label;
       col.appendChild(val);
       col.appendChild(lab);
-      chartEl.appendChild(col);
+      container.appendChild(col);
     });
   }
+  function ultimos6(){ return recibos.slice(0,6).reverse(); }
+  function promedio6(){
+    const u = ultimos6();
+    return u.length ? +(u.reduce((a,r)=>a+r.consumoM3,0)/u.length).toFixed(1) : 15;
+  }
+  function renderChart(){
+    if(!chartEl) return;
+    const items = ultimos6().map(r=>({
+      label:r.mesShort+' '+String(r.anio).slice(2), full:r.mesShort+' '+r.anio,
+      value:r.consumoM3, tip:r.consumoM3+' m³ consumidos', ref:r
+    }));
+    renderBarChart(chartEl, items, {avg:15, avgLabel:'15 m³ prom.', unit:'m³',
+      onBarClick:d=>showToast('💧 ' + d.ref.etiqueta + ': ' + d.ref.consumoM3 + ' m³')});
+  }
+  function renderSpendChart(){
+    if(!chartSpendEl) return;
+    const items = ultimos6().map(r=>({
+      label:r.mesShort+' '+String(r.anio).slice(2), full:r.mesShort+' '+r.anio,
+      value:r.monto, tip:fmt(r.monto)+' facturados', ref:r
+    }));
+    const avg = items.length ? +(items.reduce((a,d)=>a+d.value,0)/items.length).toFixed(2) : 0;
+    const max = Math.max.apply(null, items.map(d=>d.value).concat([10]));
+    const step = Math.max(10, Math.ceil((max/3)/10)*10);
+    const y = document.getElementById('spend-y');
+    if(y) y.innerHTML = '<span><b>'+(step*3)+'</b> S/</span><span><b>'+(step*2)+
+      '</b></span><span><b>'+step+'</b></span><span><b>0</b></span>';
+    const chip = document.getElementById('spend-avg-chip');
+    if(chip) chip.textContent = 'Promedio: ' + fmt(avg);
+    renderBarChart(chartSpendEl, items, {avg:avg, avgLabel:'Prom. '+fmt(avg), unit:'S/', barClass:'spend',
+      fmtVal:v=>'S/ '+Math.round(v),
+      onBarClick:d=>showToast('💰 ' + d.ref.etiqueta + ': ' + fmt(d.ref.monto))});
+  }
 
-  /* ---------- 2. Tutorial spotlight (ilumina elementos reales) ---------- */
+  /* ---------- Spotlight avanzado (pulso + progreso + éxito) ---------- */
   function clearSpotlight(){
     document.querySelectorAll('.spotlight-target').forEach(el=>el.classList.remove('spotlight-target'));
   }
   function placeSpotPop(target){
-    const padSpace = 12;
-    const popW = spotPop.offsetWidth || 300;
-    const popH = spotPop.offsetHeight || 180;
-    const r = target.getBoundingClientRect(); // coords de viewport (popover es position:fixed)
+    const padSpace = 14;
+    const popW = spotPop.offsetWidth || 320;
+    const popH = spotPop.offsetHeight || 200;
+    const r = target.getBoundingClientRect();
     let top = r.bottom + padSpace;
-    let left = Math.min(
-      Math.max(8, r.left),
-      document.documentElement.clientWidth - popW - 8
-    );
-    // Si no hay espacio abajo, colocar arriba
-    const belowSpace = window.innerHeight - r.bottom;
-    if(belowSpace < popH + 20 && r.top > popH + 20){
-      top = r.top - popH - padSpace;
-    }
+    let left = Math.min(Math.max(8, r.left), document.documentElement.clientWidth - popW - 8);
+    if(window.innerHeight - r.bottom < popH + 24 && r.top > popH + 24) top = r.top - popH - padSpace;
     spotPop.style.top = Math.max(8, top) + 'px';
     spotPop.style.left = Math.max(8, left) + 'px';
   }
   function renderSpot(){
     clearSpotlight();
     const step = SPOT_STEPS[spotStep];
+    showSection(step.sec);
     const target = step.getTarget();
-    if(!target){ endSpotlight(); return; }
+    if(!target){ endSpotlight(false); return; }
+    const pct = Math.round(((spotStep+1)/SPOT_STEPS.length)*100);
+    spotNum.textContent = spotStep + 1;
+    spotBar.style.width = pct + '%';
+    spotDots.forEach((d,i)=>d.classList.toggle('on', i<=spotStep));
+    spotTitle.innerHTML = step.icon + ' ' + step.title;
+    spotText.textContent = step.text + ' (' + pct + '%)';
+    spotNext.textContent = spotStep === SPOT_STEPS.length - 1 ? 'Finalizar' : 'Siguiente';
     target.scrollIntoView({block:'center', behavior:'smooth'});
     setTimeout(()=>{
+      if(!spotActive) return;
       target.classList.add('spotlight-target');
-      spotNum.textContent = spotStep + 1;
-      spotTitle.textContent = step.title;
-      spotText.textContent = step.text;
-      spotDots.forEach((d,i)=>d.classList.toggle('on', i===spotStep));
-      spotNext.textContent = spotStep === SPOT_STEPS.length - 1 ? 'Finalizar' : 'Siguiente';
       spotPop.classList.add('open');
       spotPop.setAttribute('aria-hidden','false');
       placeSpotPop(target);
       spotNext.focus();
-    }, 320);
+    }, 360);
   }
   function startTutorial(){
-    if(!viewDash.classList.contains('active')) return;
+    if(!viewDash.classList.contains('active') || loading) return;
     spotActive = true;
     spotStep = 0;
     spotOverlay.classList.add('open');
     spotOverlay.setAttribute('aria-hidden','false');
-    document.body.style.overflow = '';
     renderSpot();
   }
   function endSpotlight(done){
@@ -687,9 +1333,8 @@
     spotPop.classList.remove('open');
     spotPop.setAttribute('aria-hidden','true');
     clearSpotlight();
-    if(done) showToast('✅ Tutorial completado. ¡Explora tus recibos!');
+    if(done) showSuccess('Tutorial completado. Explora tus recibos y tu consumo.');
   }
-
   spotNext.addEventListener('click', ()=>{
     if(spotStep < SPOT_STEPS.length - 1){ spotStep++; renderSpot(); }
     else endSpotlight(true);
@@ -699,9 +1344,8 @@
   window.addEventListener('resize', ()=>{ if(spotActive){ const t = SPOT_STEPS[spotStep].getTarget(); if(t) placeSpotPop(t); } });
   window.addEventListener('scroll', ()=>{ if(spotActive){ const t = SPOT_STEPS[spotStep].getTarget(); if(t) placeSpotPop(t); } }, {passive:true});
 
-  /* ---------- 3. Detalle con desglose + semáforo ---------- */
+  /* ---------- Detalle con desglose + semáforo ---------- */
   function desglose(monto){
-    // 60% agua + 22% alcantarillado + 18% IGV = 100% (ajuste de redondeo en agua)
     let agua = +(monto * 0.60).toFixed(2);
     let alc  = +(monto * 0.22).toFixed(2);
     let igv  = +(monto - agua - alc).toFixed(2);
@@ -717,7 +1361,6 @@
     const badge = document.getElementById('d-estado');
     badge.textContent = r.estado;
     badge.className = 'badge ' + r.estado;
-    // Desglose matemático
     const p = desglose(r.monto);
     document.getElementById('d-agua').textContent = fmt(p.agua);
     document.getElementById('d-alc').textContent = fmt(p.alc);
@@ -726,61 +1369,398 @@
     document.getElementById('d-bar-alc').style.width = '22%';
     document.getElementById('d-bar-igv').style.width = '18%';
     document.getElementById('d-deuda').textContent = r.estado==='Pagado' ? 'S/ 0.00 (cancelado)' : fmt(r.monto);
-    // Semáforo de consumo vs promedio 15 m³
+    document.getElementById('d-lecturas').textContent = r.lecturaAnterior.toFixed(1) + ' → ' + r.lecturaActual.toFixed(1) + ' m³';
     document.getElementById('d-consumo').textContent = r.consumo;
     const sem = document.getElementById('d-semaforo');
     const alerta = document.getElementById('d-alerta');
-    if(r.consumoM3 > 20){
-      sem.className = 'semaforo red';
-      sem.textContent = '● Alto consumo';
-      alerta.hidden = false;
-    } else if(r.consumoM3 > 15){
-      sem.className = 'semaforo orange';
-      sem.textContent = '● Sobre el promedio';
-      alerta.hidden = true;
-    } else {
-      sem.className = 'semaforo green';
-      sem.textContent = '● Normal';
-      alerta.hidden = true;
-    }
+    if(r.consumoM3 > 20){ sem.className = 'semaforo red'; sem.textContent = '● Alto consumo'; alerta.hidden = false; }
+    else if(r.consumoM3 > 15){ sem.className = 'semaforo orange'; sem.textContent = '● Sobre el promedio'; alerta.hidden = true; }
+    else { sem.className = 'semaforo green'; sem.textContent = '● Normal'; alerta.hidden = true; }
+    const payBtn = document.getElementById('btn-pay-detail');
+    if(r.estado==='Pagado'){ payBtn.hidden = true; }
+    else { payBtn.hidden = false; payBtn.textContent = 'Pagar ahora · ' + fmt(r.monto); }
     openModal(detModal);
     detClose.focus();
   }
   detClose.addEventListener('click', ()=>closeModal(detModal));
   detClose2.addEventListener('click', ()=>closeModal(detModal));
-
-  // Cerrar modal de detalle con clic en overlay o tecla ESC (+ spotlight)
-  detModal.addEventListener('click', e=>{ if(e.target===detModal) closeModal(detModal); });
   document.addEventListener('keydown', e=>{
-    if(e.key==='Escape'){ closeModal(detModal); if(spotActive) endSpotlight(false); }
+    if(e.key==='Escape'){ [detModal,payModal,copiesModal,incModal].forEach(closeModal); if(spotActive) endSpotlight(false); }
   });
 
-  // Simular descarga PDF (sin librerías: genera archivo de texto imprimible)
-  document.getElementById('btn-pdf').addEventListener('click', ()=>{
+  /* ---------- PDF real con jsPDF: recibo profesional ---------- */
+  const PDF_NAVY = [0,51,102], PDF_SKY = [0,164,228], PDF_ORANGE = [200,110,0];
+  const PDF_GREEN = [30,158,98], PDF_RED = [180,40,40], PDF_MUT = [110,120,130], PDF_DARK = [25,35,45];
+  let _logoCache = undefined;
+  function loadLogoDataURL(){
+    if(_logoCache !== undefined) return Promise.resolve(_logoCache);
+    return new Promise(resolve=>{
+      try{
+        const img = new Image();
+        let done = false;
+        const fin = v=>{ if(!done){ done = true; _logoCache = v; resolve(v); } };
+        img.onload = ()=>{
+          try{
+            const c = document.createElement('canvas');
+            c.width = 240; c.height = 240;
+            c.getContext('2d').drawImage(img, 0, 0, 240, 240);
+            fin(c.toDataURL('image/jpeg', 0.85));
+          }catch(e){ fin(null); }
+        };
+        img.onerror = ()=>fin(null);
+        img.src = 'assets/logo.png';
+        setTimeout(()=>fin(_logoCache === undefined ? null : _logoCache), 2500);
+      }catch(e){ _logoCache = null; resolve(null); }
+    });
+  }
+  function generarReciboPDF(r){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:'mm', format:'a4'});
+    const W = 210;
+    const p = desglose(r.monto);
+    const estCol = r.estado==='Pagado' ? PDF_GREEN : (r.estado==='Vencido' ? PDF_RED : PDF_ORANGE);
+    const estTxt = r.estado==='Pagado' ? 'PAGADO' : (r.estado==='Vencido' ? 'VENCIDO' : 'PENDIENTE');
+    // Cabecera corporativa
+    doc.setFillColor(...PDF_NAVY); doc.rect(0, 0, W, 36, 'F');
+    if(_logoCache){ try{ doc.addImage(_logoCache, 'JPEG', 172, 5, 26, 26); }catch(e){} }
+    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(16);
+    doc.text('SEDAPAL - Hidro Mejora', 14, 13);
+    doc.setFontSize(10); doc.setFont('helvetica','normal');
+    doc.text('Recibo de servicio de agua potable', 14, 20);
+    doc.setFontSize(9);
+    doc.text('Suministro: ' + supplyLabel.textContent, 14, 26);
+    doc.text('Recibo N: ' + r.numRecibo, 14, 31);
+    // Franja de prototipo
+    doc.setFontSize(8); doc.setTextColor(...PDF_MUT);
+    doc.text('Prototipo académico · Hidro Mejora — Documento simulado sin valor oficial', 14, 41);
+    // Datos del suministro
+    let y = 48;
+    doc.setTextColor(...PDF_NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text('DATOS DEL SUMINISTRO', 14, y); y += 2;
+    doc.setDrawColor(...PDF_NAVY); doc.setLineWidth(0.6); doc.line(14, y, 196, y); y += 6;
+    doc.setFontSize(9);
+    const filas = [
+      ['Suministro:', supplyLabel.textContent, 'Categoría:', 'Doméstica'],
+      ['Titular:', 'Familia Demo (simulado)', 'Periodo:', r.etiqueta],
+      ['Dirección:', 'Av. Los Próceres 1234, Lima (simulada)', 'Emisión:', r.emision],
+      ['Lecturas (m³):', r.lecturaAnterior.toFixed(1) + ' → ' + r.lecturaActual.toFixed(1), 'Vencimiento:', r.vencimiento]
+    ];
+    filas.forEach(f=>{
+      doc.setTextColor(...PDF_DARK); doc.setFont('helvetica','bold'); doc.text(f[0], 14, y);
+      doc.setFont('helvetica','normal'); doc.text(String(f[1]), 52, y);
+      doc.setFont('helvetica','bold'); doc.text(f[2], 118, y);
+      doc.setFont('helvetica','normal'); doc.text(String(f[3]), 150, y);
+      y += 6;
+    });
+    // Total destacado + estado
+    y += 3;
+    doc.setFillColor(238,244,249); doc.roundedRect(14, y, 182, 26, 2, 2, 'F');
+    doc.setTextColor(...PDF_NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text('TOTAL A PAGAR', 20, y + 9);
+    doc.setFontSize(20); doc.text('S/ ' + r.monto.toFixed(2), 20, y + 19);
+    doc.setFontSize(14); doc.setTextColor(...estCol);
+    doc.text(estTxt, 150, y + 12);
+    if(r.estado==='Pagado'){ doc.setFontSize(9); doc.setTextColor(...PDF_MUT); doc.text('Deuda: S/ 0.00', 150, y + 18); }
+    y += 34;
+    // Detalle de facturación
+    doc.setTextColor(...PDF_NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text('DETALLE DE FACTURACIÓN', 14, y); y += 2;
+    doc.setDrawColor(...PDF_NAVY); doc.setLineWidth(0.6); doc.line(14, y, 196, y); y += 6;
+    doc.setFontSize(9.5);
+    [['Servicio de agua potable (60%)', p.agua], ['Servicio de alcantarillado (22%)', p.alc], ['IGV (18%)', p.igv]].forEach(row=>{
+      doc.setTextColor(...PDF_DARK); doc.setFont('helvetica','normal'); doc.text(row[0], 14, y);
+      doc.setFont('helvetica','bold'); doc.text('S/ ' + row[1].toFixed(2), 196, y, {align:'right'});
+      y += 6;
+    });
+    doc.setDrawColor(160,170,180); doc.setLineWidth(0.4); doc.line(14, y, 196, y); y += 6;
+    doc.setTextColor(...PDF_NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text('TOTAL', 14, y);
+    doc.text('S/ ' + r.monto.toFixed(2), 196, y, {align:'right'});
+    y += 10;
+    // Consumo
+    doc.setFontSize(11); doc.text('CONSUMO DEL MES', 14, y); y += 2;
+    doc.setDrawColor(...PDF_NAVY); doc.setLineWidth(0.6); doc.line(14, y, 196, y); y += 6;
+    doc.setFontSize(9.5); doc.setFont('helvetica','normal'); doc.setTextColor(...PDF_DARK);
+    const prom = promedio6();
+    const prev = recibos[r.id + 1];
+    const dif = prev ? (r.consumoM3 - prev.consumoM3) : null;
+    doc.text('Consumo mensual: ' + r.consumoM3 + ' m³', 14, y);
+    doc.text('Promedio últimos 6 meses: ' + prom + ' m³', 110, y); y += 6;
+    doc.text(dif === null ? 'Sin mes anterior para comparar.' :
+      ('Vs. mes anterior (' + prev.mesShort + '): ' + (dif > 0 ? '+' : '') + dif.toFixed(1) + ' m³'), 14, y);
+    y += 10;
+    // Gráfico de consumo últimos 6 meses
+    const items = ultimos6();
+    const maxV = Math.max.apply(null, items.map(x=>x.consumoM3).concat([prom, 1]));
+    doc.setTextColor(...PDF_NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(11);
+    doc.text('CONSUMO ÚLTIMOS 6 MESES (m³)', 14, y);
+    const gx = 14, gw = 182, gyBase = y + 44, gh = 36;
+    doc.setFontSize(7);
+    items.forEach((x,i)=>{
+      const slot = gw / items.length;
+      const bh = Math.max(2, (x.consumoM3/maxV) * gh);
+      const bx = gx + i*slot + 5, bw = slot - 10;
+      if(x.consumoM3 > prom) doc.setFillColor(...PDF_ORANGE); else doc.setFillColor(...PDF_SKY);
+      doc.rect(bx, gyBase - bh, bw, bh, 'F');
+      doc.setTextColor(...PDF_DARK); doc.setFont('helvetica','bold');
+      doc.text(String(x.consumoM3), bx + bw/2, gyBase - bh - 2, {align:'center'});
+      doc.setFont('helvetica','normal');
+      doc.text(x.mesShort, bx + bw/2, gyBase + 5, {align:'center'});
+    });
+    doc.setDrawColor(150,160,170); doc.setLineWidth(0.4); doc.line(gx, gyBase, gx + gw, gyBase);
+    const ay = gyBase - (prom/maxV) * gh;
+    doc.setDrawColor(...PDF_ORANGE); doc.setLineWidth(0.5);
+    try{ doc.setLineDashPattern([2, 1.5], 0); }catch(e){}
+    doc.line(gx, ay, gx + gw, ay);
+    try{ doc.setLineDashPattern([], 0); }catch(e){}
+    doc.setTextColor(...PDF_ORANGE); doc.setFont('helvetica','bold');
+    doc.text('Prom: ' + prom + ' m³', gx + gw, ay - 2, {align:'right'});
+    // Pie
+    doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(...PDF_MUT);
+    doc.text('Prototipo académico · Hidro Mejora — Suministro ' + supplyLabel.textContent + ' · Recibo ' + r.numRecibo, W/2, 288, {align:'center'});
+    return doc;
+  }
+  async function descargarReciboPDF(r, btn){
+    if(!window.jspdf){ showToast('No se pudo cargar el generador PDF.'); return; }
+    const label = btn ? btn.textContent : null;
+    if(btn){ btn.disabled = true; btn.textContent = 'Generando…'; }
+    try{
+      if(_logoCache === undefined) _logoCache = await loadLogoDataURL();
+      const doc = generarReciboPDF(r);
+      const sup = String(supplyLabel.textContent).replace(/[^0-9A-Za-z]/g,'') || 'demo';
+      doc.save('SEDAPAL_Recibo_' + r.anio + '_' + pad(r.mes+1) + '_' + sup + '.pdf');
+      showToast('Recibo PDF descargado.');
+    }catch(e){ showToast('No se pudo generar el PDF.'); }
+    if(btn){ btn.disabled = false; if(label !== null) btn.textContent = label; }
+  }
+
+  document.getElementById('btn-pdf').addEventListener('click', ev=>{
     if(!selected) return;
-    const p = desglose(selected.monto);
-    const contenido =
-      'SEDAPAL - HIDRO MEJORA\nRecibo de agua potable\n--------------------------\n' +
-      'Suministro: '+supplyLabel.textContent+'\nPeriodo: '+selected.periodo+'\n' +
-      'Monto: '+fmt(selected.monto)+'\nDeuda: '+(selected.estado==='Pagado'?'S/ 0.00 (cancelado)':fmt(selected.monto))+'\n' +
-      '  - Agua potable (60%): '+fmt(p.agua)+'\n  - Alcantarillado (22%): '+fmt(p.alc)+'\n  - IGV (18%): '+fmt(p.igv)+'\n' +
-      'Emisión: '+selected.emision+'\nVencimiento: '+selected.vencimiento+'\nEstado: '+selected.estado+'\nConsumo: '+selected.consumo+' (prom. 15 m3)\n';
-    const blob = new Blob([contenido], {type:'text/plain;charset=utf-8'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'Recibo_'+selected.mesNombre+'_'+selected.anio+'.txt';
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
-    showToast('⬇ Recibo descargado (PDF simulado).');
+    descargarReciboPDF(selected, ev.currentTarget);
+  });
+  document.getElementById('btn-pay-detail').addEventListener('click', ()=>{
+    if(selected && selected.estado!=='Pagado') abrirPago(selected);
   });
 
-  /* ---------- Login / Logout ---------- */
+  /* ---------- Pago en línea (simulado) ---------- */
+  function showPayState(s){
+    document.getElementById('pay-main').hidden = s!=='main';
+    document.getElementById('pay-processing').hidden = s!=='processing';
+    document.getElementById('pay-success').hidden = s!=='success';
+  }
+  function abrirPago(r){
+    if(!r || r.estado==='Pagado'){ showToast('Este recibo ya está pagado.'); return; }
+    payTarget = r;
+    document.getElementById('pay-sub').textContent = r.etiqueta + ' · Suministro ' + supplyLabel.textContent;
+    document.getElementById('pay-monto').textContent = fmt(r.monto);
+    document.getElementById('pay-confirm').textContent = 'Confirmar pago · ' + fmt(r.monto);
+    showPayState('main');
+    openModal(payModal);
+  }
+  document.querySelectorAll('.pay-opt input').forEach(radio=>{
+    radio.addEventListener('change', ()=>{
+      document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel', o.querySelector('input').checked));
+    });
+  });
+  document.getElementById('pay-confirm').addEventListener('click', ()=>{
+    if(!payTarget || payTarget.estado==='Pagado') return;
+    showPayState('processing');
+    setTimeout(()=>{
+      if(!payTarget) return;
+      payTarget.estado = 'Pagado';
+      renderCards();
+      if(copiesModal.classList.contains('open')) renderCopies(false);
+      const code = 'PAG-' + payTarget.anio + '-' + Math.floor(100000 + Math.random()*900000);
+      document.getElementById('pay-success-text').textContent =
+        'Recibo ' + payTarget.etiqueta + ' cancelado por ' + fmt(payTarget.monto) + '. Deuda actual: S/ 0.00.';
+      document.getElementById('pay-code').textContent = code;
+      showPayState('success');
+      showSuccess('Pago registrado. El recibo ahora figura como Pagado.');
+    }, 1600);
+  });
+  document.getElementById('pay-constancia').addEventListener('click', ev=>{
+    if(payTarget) descargarReciboPDF(payTarget, ev.currentTarget);
+  });
+  document.getElementById('pay-done').addEventListener('click', ()=>{
+    closeModal(payModal);
+    if(selected && payTarget && selected.id===payTarget.id && detModal.classList.contains('open')) abrirDetalle(selected);
+    payTarget = null;
+  });
+  ['pay-cancel','pay-close'].forEach(id=>document.getElementById(id).addEventListener('click', ()=>{ closeModal(payModal); payTarget = null; }));
+
+  /* ---------- Obtener copias (reutiliza el generador PDF) ---------- */
+  function abrirCopias(soloPendientes){
+    renderCopies(!!soloPendientes);
+    openModal(copiesModal);
+  }
+  function renderCopies(soloPendientes){
+    const tb = document.getElementById('copies-tbody');
+    if(!tb) return;
+    tb.innerHTML = '';
+    const rows = soloPendientes ? recibos.filter(r=>r.estado!=='Pagado') : recibos;
+    if(!rows.length){
+      tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted)">Sin recibos pendientes. Todo al día.</td></tr>';
+      return;
+    }
+    const mk = (t,c)=>{ const b = document.createElement('button'); b.type = 'button'; b.className = 'btn-sm ' + c; b.textContent = t; return b; };
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td><b>' + r.etiqueta + '</b></td><td>' + r.periodo + '</td>' +
+        '<td><span class="badge ' + r.estado + '">' + r.estado + '</span></td>' +
+        '<td class="num">' + fmt(r.monto) + '</td>';
+      const td = document.createElement('td');
+      const box = document.createElement('div'); box.className = 'tbl-actions';
+      const bV = mk('Ver','detail');
+      bV.addEventListener('click', ()=>{ closeModal(copiesModal); abrirDetalle(r); });
+      const bP = mk('PDF','pdfb');
+      bP.addEventListener('click', ev=>descargarReciboPDF(r, ev.currentTarget));
+      box.appendChild(bV); box.appendChild(bP);
+      if(r.estado!=='Pagado'){
+        const bPay = mk('Pagar','payb');
+        bPay.addEventListener('click', ()=>{ closeModal(copiesModal); abrirPago(r); });
+        box.appendChild(bPay);
+      }
+      td.appendChild(box); tr.appendChild(td);
+      tb.appendChild(tr);
+    });
+  }
+  document.getElementById('copies-close').addEventListener('click', ()=>closeModal(copiesModal));
+  document.getElementById('copies-done').addEventListener('click', ()=>closeModal(copiesModal));
+  detModal.addEventListener('click', e=>{ if(e.target===detModal) closeModal(detModal); });
+  payModal.addEventListener('click', e=>{ if(e.target===payModal){ closeModal(payModal); payTarget = null; } });
+  copiesModal.addEventListener('click', e=>{ if(e.target===copiesModal) closeModal(copiesModal); });
+  incModal.addEventListener('click', e=>{ if(e.target===incModal) closeModal(incModal); });
+
+  /* ---------- Incidencias (simulado + localStorage) ---------- */
+  try{ incidencias = JSON.parse(localStorage.getItem('hm_inc') || '[]'); }catch(e){ incidencias = []; }
+  function guardarInc(){
+    try{ localStorage.setItem('hm_inc', JSON.stringify(incidencias.map(i=>({code:i.code, tipo:i.tipo, desc:i.desc, dir:i.dir, sup:i.sup, fecha:i.fecha, coords:i.coords})))); }
+    catch(e){}
+  }
+  function renderInc(){
+    const list = document.getElementById('inc-list');
+    if(!list) return;
+    list.innerHTML = '';
+    document.getElementById('inc-empty').classList.toggle('show', !incidencias.length);
+    incidencias.forEach(inc=>{
+      const d = document.createElement('div');
+      d.className = 'inc-item'; d.setAttribute('role','listitem');
+      d.innerHTML = '<div class="row"><span class="inc-code">' + inc.code + '</span>' +
+        '<span class="badge info">' + inc.tipo + '</span></div>' +
+        '<div class="inc-desc">' + inc.desc + '</div>' +
+        '<div class="inc-meta">' + inc.fecha + ' · ' + inc.dir + (inc.coords ? ' · ' + inc.coords : '') + '</div>';
+      list.appendChild(d);
+    });
+  }
+  function openIncidentModal(tipo){
+    const f = document.getElementById('inc-form');
+    if(f) f.hidden = false;
+    document.getElementById('inc-ok').hidden = true;
+    if(tipo) document.getElementById('inc-tipo').value = tipo;
+    document.getElementById('inc-sup').value = supplyLabel.textContent;
+    openModal(incModal);
+    document.getElementById('inc-tipo').focus();
+  }
+  document.getElementById('btn-nueva-incidencia').addEventListener('click', ()=>openIncidentModal());
+  document.getElementById('inc-close').addEventListener('click', ()=>closeModal(incModal));
+  document.getElementById('inc-cancel').addEventListener('click', ()=>closeModal(incModal));
+  document.getElementById('inc-foto').addEventListener('change', ev=>{
+    const file = ev.target.files && ev.target.files[0];
+    const prev = document.getElementById('inc-foto-prev');
+    if(!file){ incFotoData = null; prev.hidden = true; prev.removeAttribute('src'); return; }
+    const rd = new FileReader();
+    rd.onload = ()=>{ incFotoData = rd.result; prev.src = rd.result; prev.hidden = false; };
+    rd.readAsDataURL(file);
+  });
+  document.getElementById('inc-geo').addEventListener('click', ()=>{
+    const out = document.getElementById('inc-coords');
+    if(!navigator.geolocation){ showToast('Geolocalización no disponible en este navegador.'); return; }
+    out.textContent = 'Solicitando permiso…';
+    navigator.geolocation.getCurrentPosition(
+      pos=>{ incCoords = pos.coords.latitude.toFixed(5) + ', ' + pos.coords.longitude.toFixed(5); out.textContent = incCoords; },
+      ()=>{ out.textContent = 'Sin ubicación compartida.'; showToast('No se pudo obtener la ubicación.'); },
+      {timeout:8000}
+    );
+  });
+  document.getElementById('inc-form').addEventListener('submit', ev=>{
+    ev.preventDefault();
+    const tipo = document.getElementById('inc-tipo').value;
+    const desc = document.getElementById('inc-desc').value.trim();
+    const dir = document.getElementById('inc-dir').value.trim();
+    if(desc.length < 10){ showToast('Describe la incidencia con al menos 10 caracteres.'); document.getElementById('inc-desc').focus(); return; }
+    if(!dir){ showToast('Indica una dirección o referencia.'); document.getElementById('inc-dir').focus(); return; }
+    const code = 'INC-2026-' + Math.floor(100000 + Math.random()*900000);
+    incidencias.unshift({
+      code, tipo, desc, dir, sup:supplyLabel.textContent,
+      fecha:new Date().toLocaleDateString('es-PE'), coords:incCoords, foto:incFotoData
+    });
+    guardarInc(); renderInc();
+    document.getElementById('inc-form').hidden = true;
+    document.getElementById('inc-code').textContent = code;
+    document.getElementById('inc-ok').hidden = false;
+    showSuccess('Incidencia registrada correctamente.');
+  });
+  document.getElementById('inc-again').addEventListener('click', ()=>{
+    document.getElementById('inc-form').reset();
+    document.getElementById('inc-sup').value = supplyLabel.textContent;
+    incFotoData = null; incCoords = '';
+    document.getElementById('inc-foto-prev').hidden = true;
+    document.getElementById('inc-coords').textContent = 'Sin ubicación compartida.';
+    document.getElementById('inc-form').hidden = false;
+    document.getElementById('inc-ok').hidden = true;
+  });
+  document.getElementById('inc-view').addEventListener('click', ()=>{ closeModal(incModal); showSection('incidencias'); });
+
+  /* ---------- Cortes de servicio (simulados) ---------- */
+  const CORTES = [
+    {distrito:'Ate', zona:'Santa Clara', fecha:'28/09/2026', hora:'08:00 – 14:00', motivo:'Mantenimiento de red primaria', estado:'Programado'},
+    {distrito:'Comas', zona:'La Pascana', fecha:'28/09/2026', hora:'09:30 – 16:00', motivo:'Reparación de tubería matriz', estado:'En proceso'},
+    {distrito:'San Juan de Lurigancho', zona:'Canto Grande', fecha:'27/09/2026', hora:'07:00 – 18:30', motivo:'Rotura de tubería secundaria', estado:'Restablecido'},
+    {distrito:'Villa El Salvador', zona:'Sector 3, Grupo 12', fecha:'29/09/2026', hora:'08:00 – 13:00', motivo:'Empalme de nueva red', estado:'Programado'},
+    {distrito:'Callao', zona:'Ventanilla Alta', fecha:'28/09/2026', hora:'10:00 – 15:00', motivo:'Baja presión por mantenimiento', estado:'En proceso'},
+    {distrito:'Miraflores', zona:'Malecón Sur', fecha:'26/09/2026', hora:'22:00 – 04:00', motivo:'Lavado de reservorio', estado:'Restablecido'}
+  ];
+  function corteBadge(e){ return e==='Programado' ? 'info' : (e==='En proceso' ? 'Pendiente' : 'Pagado'); }
+  function renderCortes(f){
+    const list = document.getElementById('cortes-list');
+    if(!list) return;
+    const q = (f || '').trim().toLowerCase();
+    list.innerHTML = '';
+    const rows = CORTES.filter(c => !q || c.distrito.toLowerCase().indexOf(q)>-1 || c.zona.toLowerCase().indexOf(q)>-1);
+    document.getElementById('cortes-empty').classList.toggle('show', !rows.length);
+    rows.forEach(c=>{
+      const d = document.createElement('div');
+      d.className = 'inc-item'; d.setAttribute('role','listitem');
+      d.innerHTML = '<div class="row"><span class="inc-code">' + c.distrito.toUpperCase() + '</span>' +
+        '<span class="badge ' + corteBadge(c.estado) + '">' + c.estado.toUpperCase() + '</span></div>' +
+        '<div class="inc-desc"><b>' + (c.estado==='Programado' ? 'Corte programado' : (c.estado==='En proceso' ? 'Incidencia en atención' : 'Servicio restablecido')) +
+        '</b> · ' + c.motivo + '</div>' +
+        '<div class="inc-meta">' + c.zona + ' · ' + c.fecha + ' · ' + c.hora + '</div>';
+      list.appendChild(d);
+    });
+  }
+  document.getElementById('search-distrito').addEventListener('input', ev=>renderCortes(ev.target.value));
+
+  /* ---------- Acciones rápidas ---------- */
+  document.querySelectorAll('.quick-card').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const a = b.dataset.action;
+      if(a==='pagar') abrirCopias(true);
+      else if(a==='copias') abrirCopias(false);
+      else if(a==='consultar') showSection('historial');
+      else if(a==='incidencia') openIncidentModal();
+      else if(a==='cortes') showSection('cortes');
+    });
+  });
+
+  /* ---------- Login / Logout con skeleton 1.5s ---------- */
   function showError(msg){
     formError.textContent = msg;
     formError.classList.add('show');
   }
   form.addEventListener('submit', e=>{
     e.preventDefault();
+    if(loading) return;
     const sup = inpSupply.value.trim();
     const pwd = inpPass.value;
     formError.classList.remove('show');
@@ -792,21 +1772,21 @@
       showError('⚠ La contraseña debe tener al menos 4 caracteres.');
       inpPass.focus(); return;
     }
-    // Acceso OK (prototipo)
     supplyLabel.textContent = sup;
     supplyHello.textContent = sup;
     recibos = generarRecibos();
-    renderCards();
-    viewLogin.classList.remove('active');
-    viewDash.classList.add('active');
-    window.scrollTo(0,0);
-    startTutorial(); // primer inicio de sesión
+    currentFilter = 'Todos';
+    searchQuery = ''; yearFilter = 'Todos';
+    if(searchMes) searchMes.value = '';
+    document.querySelectorAll('.chip-filter').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
+    showView(viewDash);
+    showSkeletons();
+    setTimeout(()=>{ renderCards(); renderInc(); renderCortes(''); startTutorial(); }, 1500);
   });
 
   document.getElementById('btn-logout').addEventListener('click', ()=>{
     closeModal(detModal); endSpotlight(false);
-    viewDash.classList.remove('active');
-    viewLogin.classList.add('active');
+    showView(viewLogin);
     inpPass.value = '';
     inpSupply.focus();
     showToast('Sesión cerrada correctamente.');
@@ -815,18 +1795,20 @@
   document.getElementById('btn-replay-tutorial').addEventListener('click', startTutorial);
   document.getElementById('forgot-link').addEventListener('click', e=>{e.preventDefault();showToast('📧 Te enviamos un enlace de recuperación (simulado).');});
   document.getElementById('help-link').addEventListener('click', e=>{e.preventDefault();showToast('☎ Ayuda SEDAPAL: (01) 317-8000 (simulado).');});
+  document.querySelectorAll('[data-call]').forEach(b=>b.addEventListener('click', ()=>showToast('📞 Conectando con (01) 317-8000 (simulado)…')));
+  document.querySelectorAll('[data-claim]').forEach(b=>b.addEventListener('click', ()=>openIncidentModal('Facturación')));
 
-  // Filtros
   document.querySelectorAll('.chip-filter').forEach(ch=>{
     ch.addEventListener('click', ()=>{
       document.querySelectorAll('.chip-filter').forEach(c=>c.classList.remove('active'));
       ch.classList.add('active');
       currentFilter = ch.dataset.filter;
-      renderCards();
+      if(!loading) renderCards();
     });
   });
+  if(searchMes) searchMes.addEventListener('input', ()=>{ searchQuery = searchMes.value; if(!loading) renderCards(); });
+  if(filterAnio) filterAnio.addEventListener('change', ()=>{ yearFilter = filterAnio.value; if(!loading) renderCards(); });
 
-  // Estado inicial: spotlight oculto
   spotOverlay.classList.remove('open');
   spotPop.classList.remove('open');
 })();
