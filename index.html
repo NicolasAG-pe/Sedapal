@@ -26,6 +26,13 @@
     --shadow:0 8px 28px rgba(0,51,102,.12);
     --shadow-sm:0 2px 10px rgba(0,51,102,.08);
     --transition:.28s ease;
+    /* Sistema de motion corporativo */
+    --ease-standard:cubic-bezier(.4,0,.2,1);
+    --ease-out:cubic-bezier(.22,1,.36,1);
+    --ease-in:cubic-bezier(.55,0,1,.45);
+    --duration-fast:160ms;
+    --duration-normal:260ms;
+    --duration-slow:380ms;
     --glass:rgba(255,255,255,.86);
     --glass-border:rgba(255,255,255,.55);
   }
@@ -47,7 +54,10 @@
 
   /* ===== Layout views ===== */
   .view{display:none;min-height:100vh}
-  .view.active{display:flex;flex-direction:column;animation:fadeUp .35s ease}
+  .view.active{display:flex;flex-direction:column;animation:viewIn var(--duration-slow) var(--ease-out) both}
+  .view.active.leaving{display:flex;animation:viewOut var(--duration-fast) var(--ease-in) both}
+  @keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes viewOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-4px)}}
   .view:not(.active){display:none}
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 
@@ -118,29 +128,126 @@
   .btn-logout{background:#fff;color:var(--navy);padding:.55rem 1rem;font-size:.88rem;border-radius:999px}
   .btn-logout:hover{background:var(--sky);color:#fff}
   .shell{max-width:1280px;margin:0 auto;width:100%;flex:1;display:flex;gap:1rem;padding:1rem 1rem 2rem;align-items:flex-start}
-  .sidebar{width:248px;flex:0 0 248px;background:var(--navy);color:#dbe7f3;border-radius:16px;
-    padding:1rem .8rem;position:sticky;top:76px;box-shadow:var(--shadow);transition:var(--transition)}
-  .sidebar nav{display:grid;gap:.4rem}
-  .nav-item{display:flex;align-items:center;gap:.7rem;width:100%;border:1px solid transparent;background:transparent;
-    color:#dbe7f3;font:inherit;font-size:.9rem;font-weight:700;padding:.7rem .8rem;border-radius:11px;
-    cursor:pointer;transition:var(--transition);text-align:left}
-  .nav-item svg{width:19px;height:19px;flex:0 0 19px;color:var(--sky)}
-  .nav-item:hover{background:rgba(255,255,255,.1)}
-  .nav-item.active{background:#fff;color:var(--navy)}
-  .nav-item.active svg{color:var(--sky-dark)}
-  .side-help{margin-top:1rem;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
-    border-radius:12px;padding:.8rem;font-size:.78rem;line-height:1.5}
-  .side-help b{color:#fff}
-  .side-ver{margin-top:.6rem;text-align:center;font-size:.68rem;opacity:.6}
+  .sidebar{width:248px;flex:0 0 248px;background:var(--navy);color:#dbe7f3;border-radius:14px;
+    padding:16px 12px;position:sticky;top:76px;z-index:30;overflow:visible;box-shadow:var(--shadow);
+    transition:width var(--duration-normal) var(--ease-out),flex-basis var(--duration-normal) var(--ease-out),padding var(--duration-normal) var(--ease-out)}
+  /* Cabecera del panel */
+  .side-head{padding:.1rem .5rem .8rem;max-height:140px;overflow:hidden}
+  .side-title{font-size:.8rem;font-weight:800;letter-spacing:.12em;color:#fff}
+  .side-supply{font-size:.76rem;color:#a9c3da;margin-top:.25rem}
+  .side-supply b{color:#fff;font-weight:700}
+  .side-status{display:flex;align-items:center;gap:.45rem;font-size:.76rem;color:#bfe8c9;margin-top:.3rem;font-weight:600}
+  .side-status .dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#34d399}
+  /* Grupos de navegación */
+  .sidebar nav{display:grid}
+  .nav-group{display:grid;gap:5px;margin-top:20px}
+  .nav-group:first-child{margin-top:12px}
+  .side-label{font-size:.66rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+    color:rgba(219,231,243,.55);padding:0 .55rem;margin-bottom:1px;max-height:32px;overflow:hidden}
+  .nav-item{position:relative;display:flex;align-items:center;gap:.65rem;width:100%;border:none;
+    background:transparent;color:#dbe7f3;font:inherit;font-size:.9rem;font-weight:600;min-height:46px;
+    padding:.65rem .8rem;border-radius:9px;cursor:pointer;
+    transition:background-color var(--duration-normal) var(--ease-standard),color var(--duration-normal) var(--ease-standard);
+    text-align:left}
+  .nav-item span{white-space:nowrap;overflow:hidden;max-width:170px;
+    transition:opacity var(--duration-fast) var(--ease-standard),max-width var(--duration-normal) var(--ease-out)}
+  .nav-item svg{width:19px;height:19px;flex:0 0 19px;color:#8fb8d8;
+    transition:color var(--duration-normal) var(--ease-standard)}
+  .nav-item:hover:not(.active){background:rgba(255,255,255,.06)}
+  .nav-item.active{background:rgba(0,164,228,.14);color:#fff;box-shadow:inset 3px 0 0 var(--sky)}
+  .nav-item.active svg{color:#5cd0f8}
+  .shell{transition:padding var(--duration-normal) var(--ease-out)}
+  /* Tarjeta de consumo dinámica */
+  .side-cons{margin-top:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
+    border-radius:10px;padding:.7rem .75rem;max-height:240px;overflow:hidden}
+  .side-cons-title{font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(219,231,243,.6)}
+  .side-cons-value{font-size:1.4rem;font-weight:800;color:#fff;line-height:1.25;margin:.15rem 0 .05rem}
+  .side-cons-delta{font-size:.76rem;color:#a9c3da}
+  .side-cons.ok .side-cons-value{color:#8fe3b4}
+  .side-cons.warn .side-cons-value{color:#ffd9a3}
+  .side-cons.warn .side-cons-delta{color:#f5c48a}
+  .side-cta{background:none;border:none;padding:0;margin-top:.35rem;font:inherit;font-size:.76rem;font-weight:700;
+    color:#7cc7f5;cursor:pointer}
+  .side-cta:hover{text-decoration:underline}
+  .side-cta[hidden]{display:none}
+  .side-foot{margin-top:16px;text-align:center;font-size:.68rem;color:rgba(219,231,243,.5);max-height:40px;overflow:hidden}
+  /* Transición suave al colapsar: fundido + plegado, sin saltos */
+  .side-head,.side-label,.side-cons,.side-foot{
+    transition:opacity var(--duration-fast) var(--ease-standard),visibility 0s linear var(--duration-normal),
+      max-height var(--duration-normal) var(--ease-out),margin var(--duration-normal) var(--ease-out),
+      padding var(--duration-normal) var(--ease-out)}
   .scrim{display:none}
-  #view-dashboard.side-collapsed .sidebar{width:78px;flex-basis:78px}
-  #view-dashboard.side-collapsed .nav-item span,
-  #view-dashboard.side-collapsed .side-help,
-  #view-dashboard.side-collapsed .side-ver{display:none}
-  #view-dashboard.side-collapsed .nav-item{justify-content:center}
-  main.dashboard{flex:1;min-width:0}
-  .dash-sec{display:none}
-  .dash-sec.active{display:block;animation:fadeUp .35s ease}
+  #view-dashboard.side-collapsed .sidebar{width:76px;flex-basis:76px;padding:16px 10px}
+  #view-dashboard.side-collapsed .nav-item{justify-content:center;padding:.65rem 0}
+  #view-dashboard.side-collapsed .nav-item span{opacity:0;max-width:0}
+  #view-dashboard.side-collapsed .side-head,
+  #view-dashboard.side-collapsed .side-label,
+  #view-dashboard.side-collapsed .side-cons,
+  #view-dashboard.side-collapsed .side-foot{opacity:0;visibility:hidden;max-height:0;margin-top:0;margin-bottom:0;
+    padding-top:0;padding-bottom:0}
+  #view-dashboard.side-collapsed .nav-group{margin-top:10px}
+  #view-dashboard.side-collapsed .nav-group:first-child{margin-top:0}
+  /* Tooltip CSS en modo colapsado: flota sobre el contenido (sidebar z-30 > main z-1) */
+  #view-dashboard.side-collapsed .nav-item::after{content:attr(data-tip);position:absolute;left:calc(100% + 12px);
+    top:50%;transform:translateY(-50%) translateX(-4px);background:#0b2a4a;color:#fff;font-size:.78rem;font-weight:700;
+    padding:.45rem .7rem;border-radius:8px;white-space:nowrap;opacity:0;visibility:hidden;pointer-events:none;z-index:1;
+    box-shadow:0 6px 18px rgba(0,0,0,.35);
+    transition:opacity 150ms var(--ease-standard),transform 150ms var(--ease-out),visibility 0s linear 150ms}
+  #view-dashboard.side-collapsed .nav-item::before{content:"";position:absolute;left:calc(100% + 6px);
+    top:50%;transform:translateY(-50%);border:5px solid transparent;border-right-color:#0b2a4a;
+    opacity:0;visibility:hidden;pointer-events:none;z-index:1;
+    transition:opacity 150ms var(--ease-standard),visibility 0s linear 150ms}
+  #view-dashboard.side-collapsed .nav-item:hover::after,
+  #view-dashboard.side-collapsed .nav-item:focus-visible::after,
+  #view-dashboard.side-collapsed .nav-item:hover::before,
+  #view-dashboard.side-collapsed .nav-item:focus-visible::before{opacity:1;visibility:visible;transform:translateY(-50%) translateX(0)}
+  #view-dashboard.side-collapsed .nav-item:hover::before,
+  #view-dashboard.side-collapsed .nav-item:focus-visible::before{transform:translateY(-50%)}
+  main.dashboard{flex:1;min-width:0;position:relative;z-index:1}
+  /* ===== Páginas internas del dashboard: solo una forma parte del layout ===== */
+  .dash-sec{display:none;min-height:calc(100vh - 240px)}
+  .dash-sec.active{display:block}
+  .dash-sec.page-enter{animation:pageIn 240ms var(--ease-out) both}
+  @keyframes pageIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .dash-sec.page-exit{display:block;animation:pageOut 140ms var(--ease-in) both;pointer-events:none}
+  @keyframes pageOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(4px)}}
+  /* Encabezado de página interna */
+  .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin:0 0 1rem}
+  .page-crumb{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.15rem}
+  .page-title{color:var(--navy);font-size:1.35rem;font-weight:700;margin:0}
+  .page-title:focus{outline:none}
+  .page-title:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+  .page-desc{color:var(--muted);font-size:.88rem;margin:.2rem 0 0;max-width:62ch}
+  .page-actions{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+  .page-actions .btn{padding:.6rem 1rem;font-size:.86rem}
+  /* Resumen superior de módulo */
+  .mod-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:1rem}
+  @media(min-width:900px){.mod-stats{grid-template-columns:repeat(4,1fr)}}
+  .mod-stat{background:#fff;border:1px solid var(--border);border-radius:12px;padding:.7rem .9rem}
+  .mod-stat small{display:block;font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .mod-stat strong{font-size:1.2rem;color:var(--navy)}
+  /* Zona de estado del suministro */
+  .service-status{display:flex;align-items:center;gap:.6rem;background:#fff;border:1px solid var(--border);
+    border-radius:12px;padding:.7rem .95rem;margin-bottom:1rem;font-size:.88rem;color:var(--muted);flex-wrap:wrap}
+  .service-status .dot{width:10px;height:10px;border-radius:50%;background:var(--green);flex:0 0 10px}
+  .service-status b{color:var(--navy)}
+  /* Subgrupos de cortes */
+  .corte-group{margin-bottom:1rem}
+  .corte-group:last-child{margin-bottom:0}
+  .corte-group h4{font-size:.85rem;color:var(--navy);margin-bottom:.5rem;display:flex;align-items:center;gap:.5rem}
+  .corte-group h4 .count{font-size:.72rem;background:#eef4f9;border-radius:999px;padding:.1rem .55rem;color:var(--muted)}
+  /* Panel previo al contacto */
+  .pre-contact{background:#fff;border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;margin-bottom:1rem}
+  .pre-contact h4{font-size:.9rem;color:var(--navy);margin-bottom:.5rem}
+  .pre-contact dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem;margin:0}
+  .pre-contact dl>div{background:var(--bg);border-radius:8px;padding:.45rem .65rem}
+  .pre-contact dt{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
+  .pre-contact dd{margin:0;font-weight:800;color:var(--navy);font-size:.92rem}
+  /* FAQ con details nativo */
+  .faq details{background:#fff;border:1px solid var(--border);border-radius:10px;padding:.7rem .9rem;margin-bottom:.5rem}
+  .faq summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:.88rem}
+  .faq summary:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
+  .faq p{font-size:.85rem;color:var(--muted);margin:.45rem 0 0}
   .hero{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
     border:1px solid var(--glass-border);border-radius:var(--radius);box-shadow:var(--shadow-sm);
     padding:1.25rem;border-left:6px solid var(--sky);display:flex;gap:1rem;flex-wrap:wrap;
@@ -149,7 +256,11 @@
   .hero p{color:#4c5f70;font-size:.9rem;max-width:62ch}
   .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:1rem}
   .stat{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    border:1px solid var(--glass-border);border-radius:12px;padding:.85rem .95rem;box-shadow:var(--shadow-sm)}
+    border:1px solid var(--glass-border);border-radius:12px;padding:.85rem .95rem;box-shadow:var(--shadow-sm);
+    transition:transform var(--duration-normal) var(--ease-out),box-shadow var(--duration-normal) var(--ease-out)}
+  .stats.stagger .stat{animation:statIn 380ms var(--ease-out) backwards;animation-delay:var(--stagger-delay,0ms)}
+  @keyframes statIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .stat:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
   .stat-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem}
   .stat-ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:0 0 30px;background:#eaf2fa;color:var(--navy)}
   .stat-ico svg{width:17px;height:17px}
@@ -164,8 +275,12 @@
   .section-head h3 svg{width:18px;height:18px;color:var(--sky-dark)}
   .filter-row{display:flex;gap:.5rem;flex-wrap:wrap}
   .chip-filter{border:1px solid var(--border);background:#fff;border-radius:999px;
-    padding:.42rem .95rem;font-size:.82rem;font-weight:700;color:var(--navy);cursor:pointer;transition:var(--transition)}
-  .chip-filter.active,.chip-filter:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+    padding:.42rem .95rem;font-size:.82rem;font-weight:700;color:var(--navy);cursor:pointer;
+    transition:background-color var(--duration-normal) var(--ease-standard),color var(--duration-normal) var(--ease-standard),
+      border-color var(--duration-normal) var(--ease-standard),transform var(--duration-fast) var(--ease-out)}
+  .chip-filter:hover{background:#eef4f9}
+  .chip-filter:active{transform:translateY(-1px)}
+  .chip-filter.active,.chip-filter.active:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
   .cards{display:grid;grid-template-columns:1fr;gap:.85rem}
   .card{background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
     border:1px solid var(--glass-border);border-radius:var(--radius);padding:1rem 1.05rem;
@@ -174,7 +289,11 @@
   .card-open{display:block;width:100%;background:none;border:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
   .card-actions{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.65rem}
   .btn-sm{border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:.76rem;padding:.45rem .75rem;
-    border-radius:8px;transition:var(--transition);display:inline-flex;align-items:center;gap:.35rem}
+    border-radius:8px;display:inline-flex;align-items:center;gap:.35rem;
+    transition:background-color var(--duration-normal) var(--ease-standard),color var(--duration-normal) var(--ease-standard),
+      transform var(--duration-fast) var(--ease-out)}
+  .btn-sm:hover{transform:translateY(-1px)}
+  .btn-sm:active{transform:translateY(0) scale(.98)}
   .btn-sm.detail{background:#eef4f9;color:var(--navy)}
   .btn-sm.detail:hover{background:#ddeaf4}
   .btn-sm.pdfb{background:var(--navy);color:#fff}
@@ -201,6 +320,15 @@
   .card-link{color:var(--sky-dark);font-weight:700;font-size:.82rem}
   .empty{display:none;text-align:center;padding:2rem;background:#fff;border-radius:12px;color:var(--muted)}
   .empty.show{display:block}
+  .content-fade{animation:contentIn var(--duration-normal) var(--ease-out) both}
+  @keyframes contentIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .cards.is-fading,.chart-card.is-fading{opacity:0;transition:opacity var(--duration-fast) var(--ease-in)}
+  .tbl tbody tr{animation:rowIn var(--duration-normal) var(--ease-out) both;animation-delay:var(--row-delay,0ms);
+    transition:background-color var(--duration-fast) var(--ease-standard)}
+  @keyframes rowIn{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+  .tbl tbody tr:hover{background:#f7fafd}
+  .btn{transition:background-color var(--duration-normal) var(--ease-standard),color var(--duration-normal) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-out),box-shadow var(--duration-normal) var(--ease-out)}
   .support-grid{display:grid;grid-template-columns:1fr;gap:.8rem}
   .support-card{background:rgba(255,255,255,.94);border:1px solid var(--glass-border);border-radius:var(--radius);
     padding:1.1rem;box-shadow:var(--shadow-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
@@ -221,14 +349,18 @@
     background:linear-gradient(90deg,#dfe7ee 25%,#f2f6fa 45%,#dfe7ee 65%);background-size:200% 100%;animation:skelShine 1.2s ease-in-out infinite}
 
   /* ===== Modals ===== */
-  .overlay{position:fixed;inset:0;background:rgba(0,25,50,.62);backdrop-filter:blur(3px);
+  .overlay{position:fixed;inset:0;background:rgba(0,25,50,.55);backdrop-filter:blur(3px);
     display:flex;align-items:center;justify-content:center;padding:1rem;z-index:100;
-    opacity:0;visibility:hidden;transition:opacity var(--transition),visibility var(--transition)}
+    opacity:0;visibility:hidden;transition:opacity var(--duration-normal) var(--ease-standard),visibility var(--duration-normal) var(--ease-standard)}
   .overlay.open{opacity:1;visibility:visible}
+  .overlay.closing{opacity:0;visibility:visible;pointer-events:none}
   .dialog{background:#fff;width:100%;max-width:460px;border-radius:18px;box-shadow:0 24px 70px rgba(0,0,0,.35);
-    overflow:hidden;transform:translateY(18px) scale(.98);transition:transform var(--transition);
+    overflow:hidden;opacity:0;transform:translateY(16px) scale(.985);
+    transition:opacity var(--duration-normal) var(--ease-out),transform var(--duration-normal) var(--ease-out);
     max-height:92vh;display:flex;flex-direction:column}
-  .overlay.open .dialog{transform:none}
+  .overlay.open .dialog{opacity:1;transform:none}
+  .overlay.closing .dialog{opacity:0;transform:translateY(10px) scale(.99);transition-duration:var(--duration-fast);
+    transition-timing-function:var(--ease-in)}
   .dialog-head{background:var(--navy);color:#fff;padding:1rem 1.2rem;display:flex;align-items:center;gap:.7rem;justify-content:space-between}
   .dialog-head h3{font-size:1.05rem}
   .dialog-head p{font-size:.8rem;opacity:.9}
@@ -272,20 +404,24 @@
   .bar{position:relative;width:min(50px,64%);min-height:8px;border:none;cursor:pointer;border-radius:10px 10px 5px 5px;
     background:linear-gradient(180deg,#5ccbf5 0%,var(--sky) 42%,#00659b 78%,var(--navy) 100%);
     box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 4px 12px rgba(0,164,228,.25);
-    transition:var(--transition);font:inherit}
-  .bar:hover,.bar:focus-visible{filter:brightness(1.1);transform:scale(1.07) translateY(-3px);
-    box-shadow:0 10px 22px rgba(0,164,228,.4);outline:2px solid var(--sky);outline-offset:2px}
+    transition:transform var(--duration-normal) var(--ease-out),filter var(--duration-normal) var(--ease-standard),
+      box-shadow var(--duration-normal) var(--ease-out);font:inherit;transform-origin:bottom center}
+  .chart-anim .bar{animation:barGrow 520ms var(--ease-out) both;animation-delay:var(--bar-delay,0ms)}
+  @keyframes barGrow{from{transform:scaleY(0);opacity:.35}to{transform:scaleY(1);opacity:1}}
+  .bar:hover,.bar:focus-visible{filter:brightness(1.08);transform:translateY(-3px);
+    box-shadow:0 10px 20px rgba(0,164,228,.35);outline:2px solid var(--sky);outline-offset:2px}
   .bar.is-max{background:linear-gradient(180deg,#8adcfb 0%,var(--sky) 45%,#005b8c 80%,var(--navy-dark) 100%)}
   .bar.spend{background:linear-gradient(180deg,#3d8bd0 0%,var(--navy) 62%,var(--navy-dark) 100%)}
   #btn-pay-detail[hidden]{display:none}
-  .bar-tip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(5px) scale(.96);
+  .bar-tip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(5px);
     background:#111827;color:#fff;font-size:.74rem;font-weight:700;padding:.4rem .65rem;border-radius:9px;
-    white-space:nowrap;opacity:0;visibility:hidden;transition:var(--transition);pointer-events:none;z-index:6;
+    white-space:nowrap;opacity:0;visibility:hidden;transition:opacity var(--duration-fast) var(--ease-standard),
+      transform var(--duration-fast) var(--ease-out),visibility var(--duration-fast) var(--ease-standard);pointer-events:none;z-index:6;
     box-shadow:0 10px 24px rgba(0,0,0,.4);border:1px solid #374151}
   .bar-tip small{display:block;font-size:.66rem;font-weight:600;color:#9ca3af}
   .bar-tip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
     border:6px solid transparent;border-top-color:#111827}
-  .bar-col:hover .bar-tip,.bar:focus-visible .bar-tip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0) scale(1)}
+  .bar-col:hover .bar-tip,.bar:focus-visible .bar-tip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
   .bar-val{margin-top:.4rem;font-size:.76rem;font-weight:800;color:var(--navy)}
   .bar-label{font-size:.68rem;color:var(--muted);text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
   .x-axis-label{text-align:center;font-size:.7rem;font-weight:800;color:var(--muted);margin-top:.35rem;letter-spacing:.05em;text-transform:uppercase}
@@ -302,23 +438,25 @@
   .spotlight-target::after{content:"";position:absolute;inset:-7px;border-radius:16px;
     border:3px solid var(--sky);pointer-events:none;animation:spotPulse 1.6s ease-out infinite}
   @keyframes spotPulse{0%{opacity:.9;transform:scale(1)}70%{opacity:0;transform:scale(1.1)}100%{opacity:0;transform:scale(1.1)}}
-  .spotlight-pop{position:fixed;z-index:96;width:min(340px,calc(100vw - 2rem));background:#fff;border-radius:14px;
+  .spotlight-pop{position:fixed;z-index:96;width:min(380px,calc(100vw - 2rem));background:#fff;border-radius:14px;
     box-shadow:0 20px 55px rgba(0,0,0,.35);border-top:none;padding:0;overflow:hidden;
     opacity:0;visibility:hidden;transform:translateY(10px);transition:var(--transition)}
   .spotlight-pop.open{opacity:1;visibility:visible;transform:none}
+  @media(max-width:640px){
+    .spotlight-pop,.spotlight-pop.open{left:8px!important;right:8px;top:auto!important;bottom:16px;
+      width:auto;max-width:none;transform:none}
+  }
   .spot-progress{height:8px;background:#e2e8f0}
-  .spot-progress i{display:block;height:100%;width:33%;border-radius:0 99px 99px 0;
+  .spot-progress i{display:block;height:100%;width:10%;border-radius:0 99px 99px 0;
     background:linear-gradient(90deg,var(--sky),var(--navy));transition:var(--transition)}
   .spot-body{padding:1rem 1.05rem}
   .spot-step{display:flex;align-items:center;justify-content:space-between;font-size:.75rem;color:var(--muted);font-weight:700;margin-bottom:.4rem}
-  .spot-dots{display:inline-flex;gap:.3rem;margin-left:.5rem}
-  .spot-dots i{width:22px;height:6px;border-radius:999px;background:#dbe6ef;transition:var(--transition)}
-  .spot-dots i.on{background:var(--sky)}
   .spotlight-pop h4{color:var(--navy);font-size:.98rem;margin-bottom:.25rem;display:flex;gap:.4rem;align-items:center}
   .spotlight-pop h4 svg{width:17px;height:17px;color:var(--sky-dark)}
-  .spotlight-pop p{font-size:.85rem;color:#41647f;margin-bottom:.8rem}
+  .spotlight-pop p{font-size:.85rem;color:#41647f;margin-bottom:.8rem;line-height:1.55}
   .spot-actions{display:flex;gap:.55rem}
   .spot-actions .btn{flex:1;padding:.65rem .8rem;font-size:.88rem}
+  .spot-actions .btn[hidden]{display:none}
 
   /* ===== Factura / semáforo ===== */
   .invoice{background:#fbfdff;border:1px solid var(--border);border-radius:12px;padding:.85rem .95rem;margin:.5rem 0 .8rem}
@@ -352,14 +490,16 @@
   footer.page{background:var(--navy);color:#cfe0f0;text-align:center;font-size:.78rem;padding:1rem}
 
   /* ===== Toasts ===== */
-  .toast{position:fixed;left:50%;bottom:1.2rem;transform:translate(-50%,20px);
+  .toast{position:fixed;left:50%;bottom:1.2rem;transform:translate(-50%,14px);
     background:var(--navy);color:#fff;padding:.75rem 1.1rem;border-radius:999px;font-size:.88rem;
-    box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;visibility:hidden;transition:var(--transition);z-index:200;max-width:90vw;text-align:center}
+    box-shadow:0 10px 30px rgba(0,0,0,.3);opacity:0;visibility:hidden;
+    transition:opacity var(--duration-normal) var(--ease-standard),transform var(--duration-normal) var(--ease-out),
+      visibility var(--duration-normal) var(--ease-standard);z-index:200;max-width:90vw;text-align:center}
   .toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
   .toast-success{position:fixed;top:1rem;right:1rem;z-index:300;display:flex;gap:.7rem;align-items:flex-start;
     background:#fff;color:var(--text);border-radius:14px;padding:.85rem 1rem;max-width:min(360px,calc(100vw - 2rem));
     border-left:6px solid var(--green);box-shadow:0 18px 50px rgba(0,0,0,.28);
-    transform:translateX(120%);opacity:0;transition:var(--transition)}
+    transform:translateX(120%);opacity:0;transition:opacity var(--duration-normal) var(--ease-standard),transform var(--duration-normal) var(--ease-out)}
   .toast-success.show{transform:none;opacity:1}
   .toast-success.hide{transform:translateX(120%);opacity:0}
   .toast-success .ok{width:36px;height:36px;flex:0 0 36px;border-radius:50%;background:var(--green-bg);
@@ -370,16 +510,32 @@
 
   /* ===== Acciones rápidas / tablas / pagos / incidencias / cortes ===== */
   .stat.stat-sky strong{color:var(--sky-dark)}
-  .quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:1rem}
-  .quick-card{display:flex;gap:.7rem;align-items:flex-start;background:#fff;border:1px solid var(--border);
-    border-radius:12px;padding:.8rem .85rem;cursor:pointer;font:inherit;text-align:left;color:inherit;
-    transition:var(--transition);width:100%}
-  .quick-card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#9fd4ef}
-  .quick-ico{width:38px;height:38px;flex:0 0 38px;border-radius:10px;background:#eaf4fb;color:var(--sky-dark);
-    display:grid;place-items:center}
-  .quick-ico svg{width:20px;height:20px}
-  .quick-card b{display:block;font-size:.86rem;color:var(--navy)}
-  .quick-card small{display:block;font-size:.73rem;color:var(--muted);line-height:1.45}
+  .quick-grid{display:grid;grid-template-columns:1fr;grid-auto-rows:1fr;gap:.7rem;margin-bottom:1rem}
+  .quick-card{position:relative;display:flex;flex-direction:column;gap:.55rem;align-items:flex-start;
+    background:#fff;border:1px solid var(--border);border-radius:14px;padding:.95rem 1rem 1rem;cursor:pointer;
+    font:inherit;text-align:left;color:inherit;width:100%;min-height:132px;
+    transition:transform var(--duration-normal) var(--ease-out),
+      box-shadow var(--duration-normal) var(--ease-out),
+      border-color var(--duration-normal) var(--ease-standard),
+      background-color var(--duration-normal) var(--ease-standard)}
+  .quick-card:hover{transform:translateY(-4px);box-shadow:0 10px 26px rgba(0,51,102,.14);border-color:#a5d8f0}
+  .quick-card:active{transform:translateY(-1px) scale(.985);transition-duration:var(--duration-fast)}
+  .quick-card:focus-visible{outline:none;border-color:var(--sky);
+    box-shadow:0 0 0 4px rgba(0,164,228,.22),0 8px 20px rgba(0,51,102,.10)}
+  .quick-card.is-activating{transform:translateY(-1px) scale(.985);border-color:var(--sky);
+    box-shadow:0 0 0 3px rgba(0,164,228,.18)}
+  .quick-ico{width:38px;height:38px;flex:0 0 38px;border-radius:11px;background:#eaf4fb;color:var(--sky-dark);
+    display:grid;place-items:center;transition:background-color var(--duration-normal) var(--ease-standard),
+      color var(--duration-normal) var(--ease-standard)}
+  .quick-ico svg{width:20px;height:20px;transition:transform var(--duration-normal) var(--ease-out)}
+  .quick-card:hover .quick-ico{background:#dceefa;color:var(--navy)}
+  .quick-card:hover .quick-ico svg{transform:scale(1.05)}
+  .quick-body{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;width:100%}
+  .quick-body b{display:block;font-size:.88rem;color:var(--navy);line-height:1.3}
+  .quick-card small{display:block;font-size:.74rem;color:var(--muted);line-height:1.45;margin-top:.15rem}
+  .quick-arrow{width:16px;height:16px;flex:0 0 16px;margin-top:2px;color:var(--sky-dark);opacity:.55;
+    transition:transform var(--duration-normal) var(--ease-out),opacity var(--duration-normal) var(--ease-standard)}
+  .quick-card:hover .quick-arrow{transform:translateX(4px);opacity:1}
   .toolbar{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
   .search-input,.year-select{border:1px solid var(--border);background:#fff;border-radius:999px;padding:.42rem .9rem;
     font-size:.82rem;font-family:inherit;color:var(--navy);transition:var(--transition)}
@@ -431,17 +587,79 @@
   .disclaimer{font-size:.76rem;color:var(--muted);background:#f6f9fb;border-radius:10px;padding:.55rem .75rem;margin-bottom:.8rem}
   .badge.info{background:#e7f4fd;color:#0b5cab;border:1px solid #bfe0f5}
 
+  /* ===== HidroBot UI ===== */
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  #hidrobot-root{display:none}
+  #hidrobot-root.show{display:block}
+  .hb-fab{position:fixed;right:22px;bottom:22px;z-index:60;width:58px;height:58px;border-radius:50%;
+    border:none;cursor:pointer;background:var(--navy);color:#fff;display:grid;place-items:center;
+    box-shadow:0 10px 26px rgba(0,51,102,.35);
+    transition:transform var(--duration-fast) var(--ease-out),background-color var(--duration-normal) var(--ease-standard),box-shadow var(--duration-normal) var(--ease-out),opacity var(--duration-normal) var(--ease-standard),visibility var(--duration-normal)}
+  .hb-fab:hover{transform:translateY(-2px);background:var(--navy-dark);box-shadow:0 14px 30px rgba(0,51,102,.4)}
+  .hb-fab:focus-visible{outline:3px solid var(--sky);outline-offset:3px}
+  .hb-fab svg{width:28px;height:28px}
+  .hb-fab.hide{opacity:0;visibility:hidden;transform:scale(.9);pointer-events:none}
+  .hb-dot{position:absolute;top:2px;right:2px;width:13px;height:13px;border-radius:50%;background:var(--green);border:2.5px solid #fff}
+  .hb-panel{position:fixed;right:20px;bottom:92px;z-index:60;width:min(380px,calc(100vw - 2rem));
+    height:min(560px,calc(100dvh - 130px));min-height:380px;background:#fff;border-radius:16px;
+    box-shadow:0 24px 60px rgba(0,20,40,.35);display:flex;flex-direction:column;overflow:hidden;
+    opacity:0;visibility:hidden;transform:translateY(8px) scale(.99);
+    transition:opacity 240ms var(--ease-out),transform 240ms var(--ease-out),visibility 240ms}
+  .hb-panel.open{opacity:1;visibility:visible;transform:none}
+  .hb-head{background:var(--navy);color:#fff;padding:.8rem .9rem;display:flex;align-items:center;gap:.65rem}
+  .hb-avatar{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:var(--sky);display:grid;place-items:center;color:#fff}
+  .hb-avatar svg{width:22px;height:22px}
+  .hb-id{flex:1;min-width:0}
+  .hb-id b{display:block;font-size:.95rem;line-height:1.2}
+  .hb-id small{display:block;font-size:.72rem;opacity:.85}
+  .hb-status{display:flex;align-items:center;gap:.3rem;font-size:.7rem;opacity:.9;margin-top:.15rem}
+  .hb-status i{width:7px;height:7px;border-radius:50%;background:var(--green)}
+  .hb-demo{font-size:.66rem;opacity:.65}
+  .hb-iconbtn{background:rgba(255,255,255,.14);border:none;color:#fff;width:30px;height:30px;border-radius:8px;
+    cursor:pointer;display:grid;place-items:center;transition:background-color var(--duration-fast) var(--ease-standard)}
+  .hb-iconbtn:hover{background:rgba(255,255,255,.28)}
+  .hb-iconbtn svg{width:16px;height:16px}
+  .hb-body{flex:1;overflow-y:auto;padding:.9rem;display:flex;flex-direction:column;gap:.55rem;background:#fbfdff;min-height:0}
+  .hb-msg{max-width:85%;padding:.55rem .75rem;border-radius:12px;font-size:.86rem;line-height:1.5;overflow-wrap:break-word}
+  .hb-msg.bot{align-self:flex-start;background:#f1f6fa;color:var(--text);border-bottom-left-radius:4px}
+  .hb-msg.user{align-self:flex-end;background:var(--navy);color:#fff;border-bottom-right-radius:4px}
+  .hb-time{display:block;font-size:.66rem;opacity:.6;margin-top:.2rem}
+  .hb-acts{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem}
+  .hb-act,.hb-chip{border:1px solid var(--sky-dark);background:#fff;color:var(--sky-dark);font:inherit;
+    font-size:.78rem;font-weight:700;padding:.4rem .7rem;border-radius:999px;cursor:pointer;
+    transition:background-color var(--duration-fast) var(--ease-standard),color var(--duration-fast) var(--ease-standard)}
+  .hb-act:hover,.hb-chip:hover{background:var(--sky-dark);color:#fff}
+  .hb-chips{display:flex;flex-wrap:wrap;gap:.4rem;padding:.55rem .9rem 0;background:#fbfdff}
+  .hb-typing{display:inline-flex;gap:4px;align-items:center;padding:.2rem 0}
+  .hb-typing i{width:7px;height:7px;border-radius:50%;background:#8aa5b8;animation:hbBlink 1s infinite}
+  .hb-typing i:nth-child(2){animation-delay:.15s}
+  .hb-typing i:nth-child(3){animation-delay:.3s}
+  @keyframes hbBlink{0%,100%{opacity:.35}50%{opacity:1}}
+  .hb-composer{display:flex;gap:.5rem;align-items:flex-end;padding:.7rem .9rem calc(.7rem + env(safe-area-inset-bottom,0px));
+    border-top:1px solid var(--border);background:#fff}
+  .hb-input{flex:1;resize:none;border:2px solid var(--border);border-radius:10px;padding:.55rem .7rem;
+    font:inherit;font-size:.86rem;line-height:1.4;max-height:96px;background:#fff;color:var(--text)}
+  .hb-input:focus{outline:none;border-color:var(--sky);box-shadow:0 0 0 3px rgba(0,164,228,.18)}
+  .hb-send{width:40px;height:40px;flex:0 0 40px;border:none;border-radius:10px;background:var(--sky);color:#fff;
+    cursor:pointer;display:grid;place-items:center;
+    transition:background-color var(--duration-fast) var(--ease-standard),transform var(--duration-fast) var(--ease-out)}
+  .hb-send:hover{background:var(--sky-dark);transform:translateY(-1px)}
+  .hb-send svg{width:18px;height:18px}
+  @media(max-width:640px){
+    .hb-panel{left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom,0px));width:auto;height:520px;max-height:calc(100dvh - 90px)}
+    .hb-fab{right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+  }
+
   /* ===== Responsive ===== */
   @media(min-width:600px){
     .cards{grid-template-columns:repeat(2,1fr)}
     .login-card{padding:2.4rem 2.2rem}
     .support-grid{grid-template-columns:repeat(2,1fr)}
     .quick-grid{grid-template-columns:repeat(3,1fr)}
-  }
-  @media(min-width:900px){
+  }  @media(min-width:900px){
     .cards{grid-template-columns:repeat(3,1fr)}
     .hero h2{font-size:1.5rem}
-    .quick-grid{grid-template-columns:repeat(5,1fr)}
+    .quick-grid{grid-template-columns:repeat(3,1fr)}   /* 3 + 2: evita filas huérfanas */
     /* ===== Login pantalla dividida estricta ===== */
     #view-login.view.active{display:grid;grid-template-columns:480px 1fr;padding:0;align-items:stretch;justify-content:stretch;background:#fff}
     .login-panel{background:#fff;min-height:100vh;justify-content:center;align-items:center;padding:2.5rem 2rem;
@@ -467,18 +685,29 @@
   @media(max-width:899px){
     .shell{padding:.9rem .9rem 2rem}
     .sidebar{position:fixed;top:0;left:0;bottom:0;border-radius:0 18px 18px 0;z-index:80;width:270px;flex:none;
-      transform:translateX(-105%);transition:var(--transition);padding-top:1.2rem}
+      transform:translateX(-105%);transition:transform var(--duration-normal) var(--ease-out),width var(--duration-normal) var(--ease-out);padding-top:1.2rem}
     .shell.nav-open .sidebar{transform:none}
     .scrim{display:block;position:fixed;inset:0;background:rgba(0,20,42,.55);z-index:70;
-      opacity:0;visibility:hidden;transition:var(--transition)}
+      opacity:0;visibility:hidden;transition:opacity var(--duration-normal) var(--ease-standard),visibility var(--duration-normal) var(--ease-standard)}
     .shell.nav-open .scrim{opacity:1;visibility:visible}
   }
   @media(min-width:1150px){
     .cards{grid-template-columns:repeat(3,1fr)}
     .stats{grid-template-columns:repeat(4,1fr)}
   }
+  @media(min-width:1600px){
+    .quick-grid{grid-template-columns:repeat(5,1fr)}
+  }
   @media(prefers-reduced-motion:reduce){
-    *{animation:none!important;transition:none!important}
+    *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+    .dash-sec.active,.view.active{opacity:1;transform:none}
+    .chart-anim .bar{transform:none;opacity:1}
+    .stats.stagger .stat,.tbl tbody tr{opacity:1;transform:none}
+    .quick-card:hover{transform:none}
+    .quick-arrow{transform:none}
+    .hb-panel{transform:none}
+    .hb-typing i{animation:none}
+    .hb-fab:hover{transform:none}
   }
 </style>
 </head>
@@ -507,8 +736,8 @@
       <div class="field">
         <label for="suministro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c3 4.2 6 7.6 6 11a6 6 0 1 1-12 0c0-3.4 3-6.8 6-11z"/></svg>Número de Suministro</label>
         <input type="text" id="suministro" name="suministro" inputmode="numeric" autocomplete="username"
-               placeholder="Ej. 1234567-8" maxlength="12" required />
-        <div class="hint">Código de 7 a 9 dígitos que figura en tu recibo.</div>
+               placeholder="Ej. 5894213" maxlength="9" required />
+        <div class="hint">Ingresa tu código de suministro de 7 a 9 dígitos.</div>
       </div>
       <div class="field">
         <label for="password"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Contraseña</label>
@@ -554,36 +783,62 @@
 
   <div class="shell" id="shell">
     <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
-      <nav role="navigation">
-        <button class="nav-item active" data-sec="inicio" type="button" aria-current="page">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>
-          <span>Inicio</span>
-        </button>
-        <button class="nav-item" data-sec="historial" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
-          <span>Recibos</span>
-        </button>
-        <button class="nav-item" data-sec="incidencias" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3L2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>
-          <span>Incidencias</span>
-        </button>
-        <button class="nav-item" data-sec="cortes" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
-          <span>Cortes de servicio</span>
-        </button>
-        <button class="nav-item" data-sec="ayuda" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12a8 8 0 0 1 16 0"/><rect x="2" y="12" width="4" height="7" rx="2"/><rect x="18" y="12" width="4" height="7" rx="2"/><path d="M20 19a4 4 0 0 1-4 3h-2"/></svg>
-          <span>Atención al Cliente</span>
-        </button>
+      <div class="side-head">
+        <div class="side-title">Hidro Mejora</div>
+        <div class="side-supply">Suministro <b id="side-supply">—</b></div>
+        <div class="side-status"><span class="dot" aria-hidden="true"></span>Servicio activo</div>
+      </div>
+      <nav role="navigation" aria-label="Secciones">
+        <div class="nav-group">
+          <div class="side-label" aria-hidden="true">Principal</div>
+          <button class="nav-item active" data-sec="inicio" data-tip="Inicio" type="button" aria-current="page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10.5L12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>
+            <span>Inicio</span>
+          </button>
+        </div>
+        <div class="nav-group">
+          <div class="side-label" aria-hidden="true">Gestión</div>
+          <button class="nav-item" data-sec="historial" data-tip="Recibos" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+            <span>Recibos</span>
+          </button>
+          <button class="nav-item" data-sec="incidencias" data-tip="Incidencias" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3L2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>
+            <span>Incidencias</span>
+          </button>
+          <button class="nav-item" data-sec="cortes" data-tip="Cortes de servicio" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+            <span>Cortes de servicio</span>
+          </button>
+        </div>
+        <div class="nav-group">
+          <div class="side-label" aria-hidden="true">Soporte</div>
+          <button class="nav-item" data-sec="ayuda" data-tip="Atención al Cliente" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12a8 8 0 0 1 16 0"/><rect x="2" y="12" width="4" height="7" rx="2"/><rect x="18" y="12" width="4" height="7" rx="2"/><path d="M20 19a4 4 0 0 1-4 3h-2"/></svg>
+            <span>Atención al Cliente</span>
+          </button>
+        </div>
       </nav>
-      <div class="side-help">💧 <b>¿Consumo elevado?</b><br/>Si superas los 20 m³ revisa fugas internas o solicita inspección al 317-8000.</div>
-      <div class="side-ver">v2.0 · Debian prod</div>
+      <div class="side-cons ok" id="side-cons" aria-live="polite">
+        <div class="side-cons-title">Consumo este mes</div>
+        <div class="side-cons-value" id="side-cons-value">—</div>
+        <div class="side-cons-delta" id="side-cons-delta">—</div>
+        <button class="side-cta" id="side-cons-cta" type="button" hidden>Revisar consumo →</button>
+      </div>
+      <div class="side-foot">Hidro Mejora · Beta v2.1</div>
     </aside>
     <div class="scrim" id="scrim" aria-hidden="true"></div>
 
     <main class="dashboard" id="main-content">
       <!-- INICIO -->
       <div class="dash-sec active" id="sec-inicio" aria-label="Resumen">
+        <div class="page-header">
+          <div>
+            <div class="page-crumb">Hidro Mejora</div>
+            <h2 class="page-title" tabindex="-1">Inicio</h2>
+            <p class="page-desc">Resumen general de tu suministro.</p>
+          </div>
+        </div>
         <div class="hero">
           <div>
             <h2>Hola, suministro <span id="supply-hello">—</span> 👋</h2>
@@ -598,7 +853,7 @@
             <strong id="stat-last">S/ 0.00</strong>
           </div>
           <div class="stat stat-sky">
-            <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/></svg></span><small>Consumo último mes</small></div>
+            <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c3 4.2 6 7.6 6 11a6 6 0 1 1-12 0c0-3.4 3-6.8 6-11z"/></svg></span><small>Consumo último mes</small></div>
             <strong id="stat-cons">0 m³</strong>
           </div>
           <div class="stat stat-orange">
@@ -610,30 +865,49 @@
             <strong id="stat-serv">Activo</strong>
           </div>
           </div>
-        </div>
 
         <section aria-label="Acciones rápidas">
-          <div class="section-head"><h3>Acciones rápidas</h3></div>
+          <div class="section-head">
+            <div>
+              <h3>Acciones rápidas</h3>
+              <p style="font-size:.82rem;color:var(--muted);margin-top:.15rem">Gestiona tu suministro desde un solo lugar</p>
+            </div>
+          </div>
           <div class="quick-grid">
             <button class="quick-card" type="button" data-action="pagar">
               <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg></span>
-              <span><b>Pagar en línea</b><small>Cancela tus recibos pendientes de forma simulada.</small></span>
+              <span class="quick-body">
+                <span><b>Pagar en línea</b><small>Cancela recibos pendientes o vencidos.</small></span>
+                <svg class="quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </span>
             </button>
             <button class="quick-card" type="button" data-action="copias">
               <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></svg></span>
-              <span><b>Obtener copias</b><small>Visualiza y descarga tus 12 recibos en PDF.</small></span>
+              <span class="quick-body">
+                <span><b>Obtener copias</b><small>Consulta y descarga tus 12 recibos.</small></span>
+                <svg class="quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </span>
             </button>
             <button class="quick-card" type="button" data-action="consultar">
               <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
-              <span><b>Consultar recibos</b><small>Busca y filtra tu historial de facturación.</small></span>
+              <span class="quick-body">
+                <span><b>Consultar recibos</b><small>Busca y filtra tu historial.</small></span>
+                <svg class="quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </span>
             </button>
             <button class="quick-card" type="button" data-action="incidencia">
               <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3L2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg></span>
-              <span><b>Reportar incidencia</b><small>Fugas, falta de agua o baja presión.</small></span>
+              <span class="quick-body">
+                <span><b>Reportar incidencia</b><small>Fugas, falta de agua o presión.</small></span>
+                <svg class="quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </span>
             </button>
             <button class="quick-card" type="button" data-action="cortes">
               <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></span>
-              <span><b>Cortes de servicio</b><small>Interrupciones programadas y en atención.</small></span>
+              <span class="quick-body">
+                <span><b>Cortes de servicio</b><small>Interrupciones programadas.</small></span>
+                <svg class="quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </span>
             </button>
           </div>
         </section>
@@ -679,6 +953,23 @@
 
       <!-- HISTORIAL -->
       <div class="dash-sec" id="sec-historial" aria-label="Historial de recibos">
+        <div class="page-header">
+          <div>
+            <div class="page-crumb">Hidro Mejora / Recibos</div>
+            <h2 class="page-title" tabindex="-1">Recibos</h2>
+            <p class="page-desc">Consulta y administra tu historial de facturación.</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-sky" id="btn-copies-head" type="button">Obtener copias</button>
+          </div>
+        </div>
+        <div class="mod-stats" aria-label="Resumen de recibos">
+          <div class="mod-stat"><small>Total de recibos</small><strong id="rec-total">0</strong></div>
+          <div class="mod-stat"><small>Pagados</small><strong id="rec-paid">0</strong></div>
+          <div class="mod-stat"><small>Pendientes</small><strong id="rec-pend">0</strong></div>
+          <div class="mod-stat"><small>Vencidos</small><strong id="rec-venc">0</strong></div>
+        </div>
+        <div id="receipt-filters">
         <div class="section-head">
           <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></svg>Últimos 12 recibos</h3>
           <div class="toolbar">
@@ -695,15 +986,27 @@
             <button class="chip-filter" data-filter="Vencido" type="button">Vencido</button>
           </div>
         </div>
+        </div>
         <div id="cards" class="cards" role="list"></div>
         <div id="empty" class="empty">No hay recibos con ese estado. Prueba con otro filtro.</div>
       </div>
 
       <!-- INCIDENCIAS -->
       <div class="dash-sec" id="sec-incidencias" aria-label="Incidencias reportadas">
-        <div class="section-head">
-          <h3>Incidencias reportadas</h3>
-          <button class="btn btn-sky" id="btn-nueva-incidencia" type="button" style="padding:.55rem 1rem;font-size:.86rem">+ Reportar incidencia</button>
+        <div class="page-header">
+          <div>
+            <div class="page-crumb">Hidro Mejora / Incidencias</div>
+            <h2 class="page-title" tabindex="-1">Incidencias</h2>
+            <p class="page-desc">Gestiona los reportes relacionados con tu suministro.</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-sky" id="btn-nueva-incidencia" type="button">+ Nueva incidencia</button>
+          </div>
+        </div>
+        <div class="mod-stats" aria-label="Resumen de incidencias" style="grid-template-columns:repeat(3,1fr)">
+          <div class="mod-stat"><small>Registradas</small><strong id="inc-stat-total">0</strong></div>
+          <div class="mod-stat"><small>Con foto</small><strong id="inc-stat-foto">0</strong></div>
+          <div class="mod-stat"><small>Con ubicación</small><strong id="inc-stat-geo">0</strong></div>
         </div>
         <div class="disclaimer">Registro simulado con fines académicos. Las incidencias se conservan en este navegador (localStorage) y no se envían a ningún servidor.</div>
         <div id="inc-list" class="support-grid" role="list"></div>
@@ -712,8 +1015,16 @@
 
       <!-- CORTES -->
       <div class="dash-sec" id="sec-cortes" aria-label="Cortes de servicio">
+        <div class="page-header">
+          <div>
+            <div class="page-crumb">Hidro Mejora / Cortes</div>
+            <h2 class="page-title" tabindex="-1">Cortes de servicio</h2>
+            <p class="page-desc">Consulta interrupciones y trabajos programados.</p>
+          </div>
+        </div>
+        <div class="service-status"><span class="dot" aria-hidden="true"></span><span>Servicio de tu suministro&nbsp;<b>Activo</b>&nbsp;· Suministro&nbsp;<b id="cortes-supply">—</b></span></div>
         <div class="section-head">
-          <h3>Cortes de servicio</h3>
+          <h3>Buscar por distrito</h3>
           <input type="search" id="search-distrito" class="search-input" placeholder="Buscar por distrito…" aria-label="Buscar cortes por distrito" />
         </div>
         <div class="disclaimer">Información <b>simulada</b> para el prototipo. No se afirma que estos cortes afecten tu suministro.</div>
@@ -723,17 +1034,54 @@
 
       <!-- AYUDA -->
       <div class="dash-sec" id="sec-ayuda" aria-label="Atención al cliente">
-        <div class="section-head"><h3>🎧 Atención al Cliente</h3></div>
+        <div class="page-header">
+          <div>
+            <div class="page-crumb">Hidro Mejora / Ayuda</div>
+            <h2 class="page-title" tabindex="-1">Atención al Cliente</h2>
+            <p class="page-desc">Encuentra el canal adecuado para resolver tu consulta.</p>
+          </div>
+        </div>
+        <div class="pre-contact" aria-label="Antes de comunicarte">
+          <h4>Antes de comunicarte</h4>
+          <dl>
+            <div><dt>Suministro</dt><dd id="ate-supply">—</dd></div>
+            <div><dt>Último recibo</dt><dd id="ate-last">—</dd></div>
+            <div><dt>Estado del servicio</dt><dd id="ate-serv">Activo</dd></div>
+          </dl>
+        </div>
+        <div class="section-head"><h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12a8 8 0 0 1 16 0"/><rect x="2" y="12" width="4" height="7" rx="2"/><rect x="18" y="12" width="4" height="7" rx="2"/><path d="M20 19a4 4 0 0 1-4 3h-2"/></svg>Canales de atención</h3></div>
         <div class="support-grid">
           <div class="support-card">
-            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/></svg>Línea SEDAPAL</h4>
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/></svg>Línea de atención</h4>
             <p>(01) 317-8000 · Lun–Sáb 8:00–20:00. Reporta fugas, reclama facturación o pide inspecciones.</p>
             <button class="btn btn-sky" type="button" data-call>Llamar ahora</button>
           </div>
           <div class="support-card">
-            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Oficinas y reclamos</h4>
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3L2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>Reportar problema</h4>
+            <p>Registra fugas, falta de agua o baja presión con seguimiento simulado en este navegador.</p>
+            <button class="btn btn-ghost" type="button" data-report>Reportar incidencia</button>
+          </div>
+          <div class="support-card">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>Reclamos de facturación</h4>
             <p>Registra tu reclamo con tu número de suministro y el periodo facturado observado en el detalle.</p>
             <button class="btn btn-ghost" type="button" data-claim>Registrar reclamo</button>
+          </div>
+          <div class="support-card">
+            <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 0 1 4.9.7c0 1.6-2.4 2-2.4 3.3M12 17h.01"/></svg>Preguntas frecuentes</h4>
+            <div class="faq">
+              <details>
+                <summary>¿Cuándo vence mi recibo?</summary>
+                <p>Información simulada: cada recibo muestra su fecha de vencimiento en el detalle. En este prototipo todos los vencimientos son demostrativos.</p>
+              </details>
+              <details>
+                <summary>¿Cómo se calcula mi consumo?</summary>
+                <p>Información simulada: es la diferencia entre tu lectura actual y la anterior, expresada en metros cúbicos (m³).</p>
+              </details>
+              <details>
+                <summary>¿Puedo pagar desde aquí?</summary>
+                <p>Sí, de forma simulada: usa “Pagar en línea” en un recibo pendiente o vencido. No se procesa ninguna tarjeta real.</p>
+              </details>
+            </div>
           </div>
         </div>
       </div>
@@ -745,14 +1093,15 @@
 
 <!-- ============ SPOTLIGHT ONBOARDING AVANZADO ============ -->
 <div id="spotlight-overlay" class="spotlight-overlay" aria-hidden="true"></div>
-<div id="spotlight-pop" class="spotlight-pop" role="dialog" aria-modal="true" aria-labelledby="spot-title" aria-hidden="true">
+<div id="spotlight-pop" class="spotlight-pop" role="dialog" aria-modal="true" aria-labelledby="spot-title" aria-describedby="spot-text" aria-hidden="true">
   <div class="spot-progress" aria-hidden="true"><i id="spot-bar"></i></div>
   <div class="spot-body">
-    <div class="spot-step"><span>Paso <b id="spot-num">1</b> de 3</span><span class="spot-dots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+    <div class="spot-step"><span>Paso <b id="spot-num">1</b> de <b id="spot-total">10</b></span></div>
     <h4 id="spot-title">—</h4>
     <p id="spot-text">—</p>
     <div class="spot-actions">
       <button class="btn btn-ghost" id="spot-skip" type="button">Omitir</button>
+      <button class="btn btn-ghost" id="spot-prev" type="button" hidden>Anterior</button>
       <button class="btn btn-sky" id="spot-next" type="button">Siguiente</button>
     </div>
   </div>
@@ -853,7 +1202,7 @@
 <div id="copies-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="copies-title" aria-hidden="true">
   <div class="dialog dialog-wide">
     <div class="dialog-head">
-      <div><h3 id="copies-title">Obtener copias</h3><p>Últimos 12 recibos · ver, descargar o pagar</p></div>
+      <div><h3 id="copies-title">Obtener copias</h3><p id="copies-sub">Consulta y descarga tus últimos recibos</p></div>
       <button class="icon-btn" id="copies-close" type="button" aria-label="Cerrar copias">✕</button>
     </div>
     <div class="dialog-body">
@@ -943,6 +1292,34 @@
   <div><b>¡Listo para usar Hidro Mejora! 🎉</b><p id="toast-success-msg">Tutorial completado. Explora tus recibos y tu consumo.</p></div>
 </div>
 
+<!-- ============ HIDROBOT: asistente virtual local (sin backend) ============ -->
+<div id="hidrobot-root" aria-hidden="true">
+  <button id="hb-fab" class="hb-fab" type="button" aria-label="Abrir HidroBot, asistente virtual" aria-haspopup="dialog" aria-expanded="false" aria-controls="hb-panel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3c3 4.5 6 7.7 6 11a6 6 0 1 1-12 0c0-3.3 3-6.5 6-11z"/><path d="M9.5 13.5h.01M12 13.5h.01M14.5 13.5h.01"/></svg>
+    <span class="hb-dot" aria-hidden="true" title="Asistente disponible"></span>
+  </button>
+  <section id="hb-panel" class="hb-panel" role="dialog" aria-labelledby="hb-title" aria-hidden="true">
+    <header class="hb-head">
+      <span class="hb-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3c3 4.5 6 7.7 6 11a6 6 0 1 1-12 0c0-3.3 3-6.5 6-11z"/><path d="M9.5 13.5h.01M12 13.5h.01M14.5 13.5h.01"/></svg></span>
+      <div class="hb-id">
+        <b id="hb-title">HidroBot</b>
+        <small>Asistente virtual de Hidro Mejora</small>
+        <span class="hb-status"><i aria-hidden="true"></i>Disponible · <span class="hb-demo">Entorno demostrativo</span></span>
+      </div>
+      <button id="hb-clear" class="hb-iconbtn" type="button" aria-label="Limpiar conversación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6.5 7l.8 13a1 1 0 0 0 1 .9h7.4a1 1 0 0 0 1-.9l.8-13"/></svg></button>
+      <button id="hb-min" class="hb-iconbtn" type="button" aria-label="Minimizar HidroBot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+      <button id="hb-close" class="hb-iconbtn" type="button" aria-label="Cerrar HidroBot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </header>
+    <div id="hb-body" class="hb-body" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversación con HidroBot"></div>
+    <div id="hb-chips" class="hb-chips" aria-label="Sugerencias rápidas"></div>
+    <form id="hb-form" class="hb-composer" autocomplete="off">
+      <label class="sr-only" for="hb-input">Escribe tu consulta</label>
+      <textarea id="hb-input" class="hb-input" rows="1" maxlength="500" placeholder="Escribe tu consulta…"></textarea>
+      <button id="hb-send" class="hb-send" type="submit" aria-label="Enviar mensaje"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+    </form>
+  </section>
+</div>
+
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script>
 (function(){
@@ -975,12 +1352,13 @@
   const spotOverlay = document.getElementById('spotlight-overlay');
   const spotPop = document.getElementById('spotlight-pop');
   const spotNum = document.getElementById('spot-num');
+  const spotTotal = document.getElementById('spot-total');
   const spotBar = document.getElementById('spot-bar');
   const spotTitle = document.getElementById('spot-title');
   const spotText = document.getElementById('spot-text');
   const spotNext = document.getElementById('spot-next');
+  const spotPrev = document.getElementById('spot-prev');
   const spotSkip = document.getElementById('spot-skip');
-  const spotDots = spotPop.querySelectorAll('.spot-dots i');
 
   const detModal = document.getElementById('detail-modal');
   const detClose = document.getElementById('detail-close');
@@ -993,17 +1371,48 @@
   const MESES_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   const SPOT_STEPS = [
     { sec:'inicio', getTarget: ()=>document.getElementById('stat-total-box'),
-      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>',
-      title:'Último recibo', text:'Tu resumen de cuenta: último monto, consumo y pendientes.' },
-    { sec:'historial', getTarget: ()=>document.querySelector('.filter-row'),
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0-2-2V9a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2M18 14h.01"/></svg>',
+      title:'Resumen de tu suministro', text:'Aquí puedes revisar de forma rápida el monto de tu último recibo, tu consumo reciente, los recibos pendientes y el estado actual del suministro.' },
+    { sec:'inicio', getTarget: ()=>document.querySelector('#sec-inicio .quick-grid'),
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h7"/></svg>',
+      title:'Acciones rápidas', text:'Desde este panel puedes pagar recibos, obtener copias, consultar tu historial, reportar incidencias y revisar cortes de servicio sin buscar cada función en el menú.' },
+    { sec:'inicio', getTarget: ()=>document.getElementById('chart'),
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+      title:'Historial de consumo', text:'Este gráfico compara tu consumo de agua de los últimos meses. Puedes utilizarlo para identificar aumentos o cambios en el uso del servicio.' },
+    { sec:'inicio', getTarget: ()=>document.getElementById('chart-spend'),
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0-2-2V9a2 2 0 0 0-2-2z"/></svg>',
+      title:'Evolución del gasto', text:'Aquí puedes comparar cuánto se ha facturado durante los últimos meses y reconocer variaciones entre periodos.' },
+    { sec:'historial', getTarget: ()=>document.querySelector('#sec-historial .page-header'),
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></svg>',
+      title:'Tus recibos', text:'En este módulo encontrarás tu historial de facturación. Puedes buscar por mes, filtrar por año o revisar recibos pagados, pendientes y vencidos.' },
+    { sec:'historial', getTarget: ()=>document.getElementById('receipt-filters'),
       icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16M7 12h10M10 19h4"/></svg>',
-      title:'Filtra por estado', text:'Botonera de filtros: visualiza solo Pagados, Pendientes o Vencidos.' },
-    { sec:'historial', getTarget: ()=>document.querySelector('#cards .card'),
-      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/></svg>',
-      title:'Abre el detalle', text:'Toca cualquier tarjeta para ver desglose, semáforo de consumo y PDF.' }
+      title:'Encuentra un recibo', text:'Utiliza la búsqueda y los filtros para encontrar rápidamente el periodo que necesitas sin revisar todos los recibos manualmente.' },
+    { sec:'historial', getTarget: ()=>document.querySelector('#cards .card'), resetFilters:true,
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>',
+      title:'Detalle y operaciones', text:'Selecciona un recibo para consultar el monto, fechas, consumo y desglose de facturación. Desde allí también puedes descargar el PDF o realizar un pago cuando corresponda.' },
+    { sec:'incidencias', getTarget: ()=>document.getElementById('btn-nueva-incidencia'),
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3L2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>',
+      title:'Reportar una incidencia', text:'Utiliza este módulo para registrar problemas relacionados con tu servicio, como fugas, falta de agua, baja presión o inconvenientes con el medidor. Los reportes del prototipo se guardan localmente.' },
+    { sec:'cortes', getTarget: ()=>document.querySelector('#sec-cortes .section-head'),
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>',
+      title:'Cortes de servicio', text:'Aquí puedes consultar interrupciones programadas, eventos en atención y servicios restablecidos. Puedes utilizar el buscador para filtrar la información por distrito.' },
+    { sec:'ayuda', getTarget: ()=>document.querySelector('#sec-ayuda .page-header'),
+      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 0 1 16 0"/><rect x="2" y="12" width="4" height="7" rx="2"/><rect x="18" y="12" width="4" height="7" rx="2"/></svg>',
+      title:'Atención al Cliente', text:'En esta sección encontrarás los canales de orientación y soporte del prototipo, además de accesos para consultas y reclamos relacionados con tu suministro.' }
   ];
   let spotStep = 0;
   let spotActive = false;
+  // Bandera SOLO para el auto-inicio: nunca bloquea el botón "Ver tutorial"
+  const TUT_KEY = 'hm_tutorial_seen';
+  function hasSeenTutorial(){
+    try{ return localStorage.getItem(TUT_KEY) === '1'; }
+    catch(e){ return false; }
+  }
+  function markTutorialSeen(){
+    try{ localStorage.setItem(TUT_KEY, '1'); }
+    catch(e){}
+  }
   let recibos = [];
   let currentFilter = 'Todos';
   let searchQuery = '';
@@ -1016,11 +1425,20 @@
   let loading = false;
 
   /* ---------- Utilidades ---------- */
+  const toastQueue = [];
+  let toastBusy = false;
   function showToast(msg){
+    if(toastBusy){ toastQueue.push(msg); if(toastQueue.length > 2) toastQueue.shift(); return; }
+    toastBusy = true;
     toast.textContent = msg;
     toast.classList.add('show');
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(()=>toast.classList.remove('show'), 2600);
+    showToast._t = setTimeout(()=>{
+      toast.classList.remove('show');
+      const next = toastQueue.shift();
+      toastBusy = false;
+      if(next){ setTimeout(()=>showToast(next), 220); }
+    }, 2700);
   }
   function showSuccess(msg){
     if(msg) toastOkMsg.textContent = msg;
@@ -1034,33 +1452,140 @@
       setTimeout(()=>toastOk.setAttribute('aria-hidden','true'), 320);
     }, 3600);
   }
-  function openModal(m){ m.classList.add('open'); m.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden';
-    const f = m.querySelector('.icon-btn'); if(f) f.focus(); }
-  function closeModal(m){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); document.body.style.overflow=''; }
+  function anyModalOpen(){ return !!document.querySelector('.overlay.open, .overlay.closing'); }
+  function lockScroll(on){ document.body.style.overflow = on ? 'hidden' : ''; }
+  function openModal(m, opener){
+    if(!m.classList.contains('open')){
+      const o = opener || (document.activeElement && document.activeElement !== document.body ? document.activeElement : null);
+      if(o) lastFocus = o;
+    }
+    m.classList.remove('closing');
+    m.classList.add('open');
+    m.setAttribute('aria-hidden','false');
+    lockScroll(true);
+    const f = m.querySelector('.icon-btn') || m.querySelector('[data-autofocus]') || m.querySelector('button, input, select, textarea');
+    if(f) setTimeout(()=>{ try{ f.focus({preventScroll:true}); }catch(e){ f.focus(); } }, 30);
+  }
+  function closeModal(m){
+    if(!m.classList.contains('open')) return;
+    m.classList.add('closing');
+    m.classList.remove('open');
+    const done = ()=>{
+      m.classList.remove('closing');
+      m.setAttribute('aria-hidden','true');
+      if(!anyModalOpen()) lockScroll(false);
+      const back = lastFocus && document.contains(lastFocus) ? lastFocus : null;
+      if(back){ try{ back.focus({preventScroll:true}); }catch(e){ back.focus(); } }
+      lastFocus = null;
+    };
+    if(isReduced()) done(); else setTimeout(done, 200);
+  }
   function showView(viewToShow){
-    document.querySelectorAll('.view').forEach(view=>view.classList.remove('active'));
-    viewToShow.classList.add('active');
-    window.scrollTo(0,0);
+    const current = document.querySelector('.view.active');
+    if(current === viewToShow){ window.scrollTo(0,0); return; }
+    const swap = ()=>{
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active','leaving'));
+      viewToShow.classList.add('active');
+      window.scrollTo(0,0);
+    };
+    if(current && !isReduced()){
+      current.classList.add('leaving');
+      setTimeout(swap, 150);
+    } else {
+      swap();
+    }
   }
   function fmt(n){ return 'S/ ' + n.toFixed(2); }
   function pad(n){ return String(n).padStart(2,'0'); }
 
-  /* ---------- Sidebar / secciones ---------- */
-  function showSection(name){
-    document.querySelectorAll('.dash-sec').forEach(s=>s.classList.remove('active'));
-    const sec = document.getElementById('sec-' + name);
-    if(sec) sec.classList.add('active');
+  /* ---------- Router interno del dashboard: una sola página activa ---------- */
+  const HASH_SEC = {inicio:'inicio', historial:'recibos', incidencias:'incidencias', cortes:'cortes', ayuda:'atencion'};
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const isReduced = ()=>reduceMotion.matches;
+  const mainContent = document.getElementById('main-content');
+  let navLock = false;
+  let lastFocus = null;
+  let kbNav = false;
+  document.addEventListener('keydown', e=>{
+    if(e.key==='Enter' || e.key===' ') kbNav = true;
+  }, true);
+  document.addEventListener('pointerdown', ()=>{ kbNav = false; }, true);
+  function closeMobileNav(){
+    shell.classList.remove('nav-open');
+    btnMenu.setAttribute('aria-expanded','false');
+  }
+  function syncSidebar(name){
     document.querySelectorAll('.nav-item').forEach(n=>{
       const on = n.dataset.sec === name;
       n.classList.toggle('active', on);
       if(on) n.setAttribute('aria-current','page'); else n.removeAttribute('aria-current');
     });
-    shell.classList.remove('nav-open');
-    btnMenu.setAttribute('aria-expanded','false');
+  }
+  function updateHash(name){
+    const h = '#' + (HASH_SEC[name] || name);
+    if(location.hash !== h) history.replaceState(null, '', h);
+  }
+  function focusPageTitle(target){
+    const t = target.querySelector('.page-title');
+    if(!t) return;
+    try{ t.focus({preventScroll:true}); }catch(e){ try{ t.focus(); }catch(_){} }
+  }
+  /* Cambia de vista: salida breve -> swap -> entrada. Reset de scroll instantáneo. */
+  function openDashboardPage(pageName, options){
+    const o = options || {};
+    const target = document.getElementById('sec-' + pageName);
+    if(!target) return Promise.resolve(null);
+    const current = document.querySelector('.dash-sec.active');
+    const finish = (resolve)=>{
+      document.querySelectorAll('.dash-sec').forEach(s=>{
+        s.classList.remove('active','page-exit','page-enter');
+      });
+      target.classList.add('active');
+      if(pageName==='inicio') setTimeout(replayCharts, isReduced() ? 0 : 120);
+      // Reset instantáneo: la página siempre empieza desde arriba (sin smooth)
+      window.scrollTo({top:0, behavior:'instant'});
+      navLock = false;
+      if(!isReduced()) target.classList.add('page-enter');
+      const f = o.focus ? document.getElementById(o.focus) : null;
+      if(f) setTimeout(()=>{ try{ f.focus({preventScroll:true}); }catch(e){ f.focus(); } }, 60);
+      else if(kbNav) setTimeout(()=>focusPageTitle(target), 60);
+      resolve(target);
+    };
+
+    if(current === target){
+      closeMobileNav();
+      syncSidebar(pageName);
+      updateHash(pageName);
+      window.scrollTo({top:0, behavior:'instant'});
+      if(!isReduced()){ target.classList.remove('page-enter'); void target.offsetWidth; target.classList.add('page-enter'); }
+      const f = o.focus ? document.getElementById(o.focus) : null;
+      if(f) setTimeout(()=>{ try{ f.focus({preventScroll:true}); }catch(e){ f.focus(); } }, 60);
+      else if(kbNav) setTimeout(()=>focusPageTitle(target), 60);
+      return Promise.resolve(target);
+    }
+    if(navLock) return Promise.resolve(target);
+    navLock = true;
+    closeMobileNav();
+    syncSidebar(pageName);
+    updateHash(pageName);
+
+    return new Promise(resolve=>{
+      if(current && !isReduced()){
+        current.classList.add('page-exit');
+        setTimeout(()=>{
+          current.classList.remove('active','page-exit');
+          finish(resolve);
+        }, 140);
+      } else {
+        if(current) current.classList.remove('active','page-exit');
+        finish(resolve);
+      }
+    });
   }
   document.querySelectorAll('.nav-item').forEach(n=>{
-    n.addEventListener('click', ()=>showSection(n.dataset.sec));
+    n.addEventListener('click', ()=>openDashboardPage(n.dataset.sec));
   });
+  document.getElementById('side-cons-cta').addEventListener('click', ()=>openDashboardPage('inicio'));
   btnMenu.addEventListener('click', ()=>{
     if(window.innerWidth < 900){
       const open = shell.classList.toggle('nav-open');
@@ -1069,9 +1594,10 @@
       viewDash.classList.toggle('side-collapsed');
     }
   });
-  document.getElementById('scrim').addEventListener('click', ()=>{
-    shell.classList.remove('nav-open');
-    btnMenu.setAttribute('aria-expanded','false');
+  document.getElementById('scrim').addEventListener('click', closeMobileNav);
+  window.addEventListener('hashchange', ()=>{
+    const found = Object.keys(HASH_SEC).find(k=>HASH_SEC[k] === location.hash.slice(1));
+    if(found && viewDash.classList.contains('active')) openDashboardPage(found);
   });
 
   /* ---------- Datos simulados ---------- */
@@ -1112,7 +1638,7 @@
     btnLogin.disabled = true;
     btnLoginText.textContent = 'Conectando con ERP…';
     ['stat-last','stat-cons','stat-pend','stat-serv'].forEach(id=>{ document.getElementById(id).textContent = '···'; });
-    showSection('inicio');
+    openDashboardPage('inicio');
     cardsEl.innerHTML = '';
     for(let i=0;i<6;i++){
       const s = document.createElement('div');
@@ -1139,6 +1665,40 @@
     }
   }
 
+  function actualizarSideCons(){
+    const card = document.getElementById('side-cons');
+    if(!card || !recibos.length) return;
+    const ultimo = recibos[0];
+    const prom = promedio6();
+    const pct = prom > 0 ? Math.round(((ultimo.consumoM3 - prom) / prom) * 100) : 0;
+    const elevado = ultimo.consumoM3 > 20 || pct >= 15;
+    document.getElementById('side-cons-value').textContent = ultimo.consumo;
+    document.getElementById('side-cons-delta').textContent = elevado
+      ? '↑ ' + pct + '% vs. promedio (' + prom + ' m³)'
+      : 'Dentro del promedio (' + prom + ' m³)';
+    document.getElementById('side-cons-cta').hidden = !elevado;
+    card.classList.toggle('warn', elevado);
+    card.classList.toggle('ok', !elevado);
+  }
+  function animateStats(){
+    const box = document.querySelector('.stats');
+    if(!box) return;
+    box.classList.remove('stagger');
+    const items = box.querySelectorAll('.stat');
+    items.forEach((s,i)=>s.style.setProperty('--stagger-delay', (i*40) + 'ms'));
+    if(isReduced()) return;
+    void box.offsetWidth; // reinicia la animación
+    box.classList.add('stagger');
+  }
+  function replayCharts(){
+    [chartEl, chartSpendEl].forEach(c=>{
+      if(!c) return;
+      c.classList.remove('chart-anim');
+      if(isReduced() || !c.querySelector('.bar')) return;
+      void c.offsetWidth;
+      c.classList.add('chart-anim');
+    });
+  }
   /* ---------- Render real ---------- */
   function recibosFiltrados(){
     const q = searchQuery.trim().toLowerCase();
@@ -1187,11 +1747,11 @@
         '<button type="button" class="btn-sm pdfb" data-act="pdf">Descargar PDF</button>' +
         (impago ? '<button type="button" class="btn-sm payb" data-act="pay">Pagar</button>' : '') +
         '</div>';
-      art.querySelector('.card-open').addEventListener('click', ()=>abrirDetalle(r));
-      art.querySelector('[data-act="detail"]').addEventListener('click', ()=>abrirDetalle(r));
+      art.querySelector('.card-open').addEventListener('click', ev=>abrirDetalle(r, ev.currentTarget));
+      art.querySelector('[data-act="detail"]').addEventListener('click', ev=>abrirDetalle(r, ev.currentTarget));
       art.querySelector('[data-act="pdf"]').addEventListener('click', ev=>descargarReciboPDF(r, ev.currentTarget));
       const payB = art.querySelector('[data-act="pay"]');
-      if(payB) payB.addEventListener('click', ()=>abrirPago(r));
+      if(payB) payB.addEventListener('click', ev=>abrirPago(r, ev.currentTarget));
       cardsEl.appendChild(art);
     });
     const ultimo = recibos[0];
@@ -1201,8 +1761,16 @@
     }
     document.getElementById('stat-pend').textContent = recibos.filter(r=>r.estado!=='Pagado').length;
     document.getElementById('stat-serv').textContent = 'Activo';
+    document.getElementById('rec-total').textContent = recibos.length;
+    document.getElementById('rec-paid').textContent = recibos.filter(r=>r.estado==='Pagado').length;
+    document.getElementById('rec-pend').textContent = recibos.filter(r=>r.estado==='Pendiente').length;
+    document.getElementById('rec-venc').textContent = recibos.filter(r=>r.estado==='Vencido').length;
+    document.getElementById('ate-last').textContent = ultimo ? (ultimo.etiqueta + ' · ' + fmt(ultimo.monto)) : '—';
+    document.getElementById('ate-serv').textContent = 'Activo';
+    actualizarSideCons();
     renderChart();
     renderSpendChart();
+    animateStats();
     loading = false;
     btnLogin.disabled = false;
     btnLoginText.textContent = 'Iniciar Sesión';
@@ -1211,6 +1779,7 @@
   /* ---------- Gráficos de barras reutilizables ---------- */
   function renderBarChart(container, items, opts){
     container.innerHTML = '';
+    container.classList.remove('chart-anim');
     if(!items.length) return;
     const max = Math.max.apply(null, items.map(d=>d.value).concat([opts.avg, opts.maxFloor||0]));
     const avgPct = max > 0 ? Math.min(100,(opts.avg/max)*100) : 0;
@@ -1231,6 +1800,7 @@
       bar.type = 'button';
       bar.className = 'bar' + (opts.barClass ? ' '+opts.barClass : '') + ((!opts.barClass && i===topIdx) ? ' is-max' : '');
       bar.style.height = h.toFixed(1) + '%';
+      bar.style.setProperty('--bar-delay', (i * 45) + 'ms');
       bar.setAttribute('aria-label', d.full + ': ' + d.tip + '. Eje Y en ' + opts.unit + ', eje X meses.');
       bar.innerHTML = '<span class="bar-tip" aria-hidden="true">' + d.full + '<small>' + d.tip + '</small></span>';
       if(opts.onBarClick) bar.addEventListener('click', ()=>opts.onBarClick(d));
@@ -1246,6 +1816,10 @@
       col.appendChild(lab);
       container.appendChild(col);
     });
+    if(!isReduced()){
+      void container.offsetWidth; // reinicia la animación de crecimiento
+      container.classList.add('chart-anim');
+    }
   }
   function ultimos6(){ return recibos.slice(0,6).reverse(); }
   function promedio6(){
@@ -1295,31 +1869,43 @@
     spotPop.style.top = Math.max(8, top) + 'px';
     spotPop.style.left = Math.max(8, left) + 'px';
   }
+  function resetReceiptFilters(){
+    currentFilter = 'Todos'; searchQuery = ''; yearFilter = 'Todos';
+    if(searchMes) searchMes.value = '';
+    if(filterAnio) filterAnio.value = 'Todos';
+    document.querySelectorAll('.chip-filter').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
+    renderCards();
+  }
   function renderSpot(){
     clearSpotlight();
     const step = SPOT_STEPS[spotStep];
-    showSection(step.sec);
-    const target = step.getTarget();
-    if(!target){ endSpotlight(false); return; }
     const pct = Math.round(((spotStep+1)/SPOT_STEPS.length)*100);
-    spotNum.textContent = spotStep + 1;
-    spotBar.style.width = pct + '%';
-    spotDots.forEach((d,i)=>d.classList.toggle('on', i<=spotStep));
-    spotTitle.innerHTML = step.icon + ' ' + step.title;
-    spotText.textContent = step.text + ' (' + pct + '%)';
-    spotNext.textContent = spotStep === SPOT_STEPS.length - 1 ? 'Finalizar' : 'Siguiente';
-    target.scrollIntoView({block:'center', behavior:'smooth'});
-    setTimeout(()=>{
-      if(!spotActive) return;
-      target.classList.add('spotlight-target');
-      spotPop.classList.add('open');
-      spotPop.setAttribute('aria-hidden','false');
-      placeSpotPop(target);
-      spotNext.focus();
-    }, 360);
+    // La navegación es asíncrona: esperamos a que la sección esté activa
+    Promise.resolve(openDashboardPage(step.sec)).then(()=>{
+      if(step.resetFilters && !document.querySelector('#cards .card')) resetReceiptFilters();
+      const target = step.getTarget();
+      if(!target){ endSpotlight(false); return; }
+      spotNum.textContent = spotStep + 1;
+      spotTotal.textContent = SPOT_STEPS.length;
+      spotBar.style.width = pct + '%';
+      spotTitle.innerHTML = step.icon + ' ' + step.title;
+      spotText.textContent = step.text;
+      spotPrev.hidden = spotStep === 0;
+      spotNext.textContent = spotStep === SPOT_STEPS.length - 1 ? 'Finalizar' : 'Siguiente';
+      if(window.innerWidth > 640) target.scrollIntoView({block:'center', behavior: isReduced() ? 'auto' : 'smooth'});
+      setTimeout(()=>{
+        if(!spotActive) return;
+        target.classList.add('spotlight-target');
+        spotPop.classList.add('open');
+        spotPop.setAttribute('aria-hidden','false');
+        placeSpotPop(target);
+        spotNext.focus();
+      }, 360);
+    });
   }
   function startTutorial(){
     if(!viewDash.classList.contains('active') || loading) return;
+    if(spotActive) return; // evita dos tutoriales simultáneos
     spotActive = true;
     spotStep = 0;
     spotOverlay.classList.add('open');
@@ -1327,17 +1913,437 @@
     renderSpot();
   }
   function endSpotlight(done){
+    const wasActive = spotActive;
     spotActive = false;
-    spotOverlay.classList.remove('open');
+  /* ---------- HidroBot: asistente virtual local (sin backend) ---------- */
+  /* Las claves de servicios de IA nunca deben almacenarse en el
+     JavaScript del navegador. Futura migración: browser -> /api/chat
+     -> backend -> proveedor IA. Por ahora todo es 100% local. */
+  const hbRoot = document.getElementById('hidrobot-root');
+  const hbFab = document.getElementById('hb-fab');
+  const hbPanel = document.getElementById('hb-panel');
+  const hbBody = document.getElementById('hb-body');
+  const hbChips = document.getElementById('hb-chips');
+  const hbForm = document.getElementById('hb-form');
+  const hbInput = document.getElementById('hb-input');
+  const hidroBotState = {open:false, greeted:false, typing:false};
+  const HB_CHIPS = ['Ver último recibo','Recibos pendientes','Consultar consumo','Reportar incidencia','Cortes de servicio','Necesito ayuda'];
+
+  /* ---------- HidroBot referencias ---------- */
+  function hbSessionActive(){ return viewDash.classList.contains('active') && recibos.length > 0; }
+  function hbTime(){ const d = new Date(); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
+  function scrollBotToBottom(){ hbBody.scrollTop = hbBody.scrollHeight; }
+
+  /* ---------- HidroBot renderer ---------- */
+  function addUserMessage(text){
+    const m = document.createElement('div');
+    m.className = 'hb-msg user';
+    const s = document.createElement('span');
+    s.textContent = text;
+    const t = document.createElement('span');
+    t.className = 'hb-time'; t.textContent = hbTime();
+    m.appendChild(s); m.appendChild(t);
+    hbBody.appendChild(m);
+    scrollBotToBottom();
+  }
+  function createBotAction(label, run){ return {label:label, run:run}; }
+  function addBotMessage(payload){
+    const data = (typeof payload === 'string') ? {text:payload} : payload;
+    const m = document.createElement('div');
+    m.className = 'hb-msg bot';
+    const s = document.createElement('span');
+    s.textContent = data.text;
+    const t = document.createElement('span');
+    t.className = 'hb-time'; t.textContent = hbTime();
+    m.appendChild(s); m.appendChild(t);
+    if(data.actions && data.actions.length){
+      const box = document.createElement('div');
+      box.className = 'hb-acts';
+      data.actions.forEach(a=>{
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'hb-act'; b.textContent = a.label;
+        b.addEventListener('click', ()=>a.run(b));
+        box.appendChild(b);
+      });
+      m.appendChild(box);
+    }
+    hbBody.appendChild(m);
+    scrollBotToBottom();
+  }
+  function showBotTyping(){
+    hidroBotState.typing = true;
+    const m = document.createElement('div');
+    m.className = 'hb-msg bot'; m.id = 'hb-typing';
+    if(isReduced()){
+      const s = document.createElement('span'); s.textContent = 'HidroBot está escribiendo…'; m.appendChild(s);
+    } else {
+      const dots = document.createElement('span');
+      dots.className = 'hb-typing'; dots.setAttribute('aria-hidden','true');
+      dots.appendChild(document.createElement('i'));
+      dots.appendChild(document.createElement('i'));
+      dots.appendChild(document.createElement('i'));
+      const sr = document.createElement('span');
+      sr.className = 'sr-only'; sr.textContent = 'HidroBot está escribiendo…';
+      m.appendChild(dots); m.appendChild(sr);
+    }
+    hbBody.appendChild(m);
+    scrollBotToBottom();
+  }
+  function hideBotTyping(){
+    const t = document.getElementById('hb-typing');
+    if(t) t.remove();
+    hidroBotState.typing = false;
+  }
+  function renderBotChips(){
+    hbChips.innerHTML = '';
+    HB_CHIPS.forEach(c=>{
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'hb-chip'; b.textContent = c;
+      b.addEventListener('click', ()=>submitBotText(c));
+      hbChips.appendChild(b);
+    });
+  }
+  function greetBot(){
+    addBotMessage('Hola, soy HidroBot, el asistente virtual de Hidro Mejora. Puedo ayudarte con tus recibos, consumo, incidencias, cortes de servicio y navegación dentro de la plataforma. ¿En qué puedo ayudarte?');
+    hidroBotState.greeted = true;
+  }
+  function resetBotChat(){
+    hbBody.innerHTML = '';
+    hidroBotState.greeted = false;
+    hidroBotState.typing = false;
+    renderBotChips();
+  }
+
+  /* ---------- HidroBot intents ---------- */
+  function normalizeBotText(text){
+    return (text || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim();
+  }
+  function bw(text, w){ return new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(text); }
+  // Mapa central de intenciones: el orden del arreglo define la prioridad
+  const HIDROBOT_INTENTS = [
+    {id:'cuts_district', desc:'Cortes filtrados por distrito de CORTES'},
+    {id:'no_water', desc:'Falta de agua (combinable con cortes)'},
+    {id:'low_pressure', desc:'Baja presión'},
+    {id:'leak', desc:'Fuga / rotura / aniego (mapea a categoría del modal)'},
+    {id:'last_receipt', desc:'Último recibo con datos de recibos[0]'},
+    {id:'pending_receipts', desc:'Recibos impagos y deuda acumulada'},
+    {id:'payment', desc:'Flujo de pago simulado'},
+    {id:'pdf', desc:'Copias PDF con jsPDF existente'},
+    {id:'receipts', desc:'Historial genérico de recibos'},
+    {id:'consumption', desc:'Consumo actual vs promedio6()'},
+    {id:'cuts', desc:'Módulo de cortes de servicio'},
+    {id:'my_incidents', desc:'Incidencias guardadas en el navegador'},
+    {id:'incident', desc:'Registro genérico de incidencia'},
+    {id:'service_status', desc:'Estado del suministro (demostrativo)'},
+    {id:'customer_service', desc:'Canales de atención'},
+    {id:'tutorial', desc:'Reinicia el tutorial existente'},
+    {id:'context_help', desc:'Ayuda según la página activa'},
+    {id:'greeting', desc:'Saludos'},
+    {id:'thanks', desc:'Agradecimientos'},
+    {id:'unknown', desc:'Fuera de alcance'}
+  ];
+  function districtHit(text){
+    const ds = CORTES.map(c=>c.distrito).filter((v,i,a)=>a.indexOf(v)===i);
+    for(const d of ds){
+      const n = normalizeBotText(d);
+      if(n === 'ate' || n === 'callao'){ if(bw(text, n)) return d; }
+      else if(text.indexOf(n) > -1) return d;
+    }
+    return null;
+  }
+  function detectBotIntent(raw){
+    const text = normalizeBotText(raw);
+    const has = (...ks)=>ks.some(k=>text.indexOf(k) > -1);
+    const cutWords = has('corte','cortes','mantenimiento','sin servicio','interrupcion');
+    const dist = districtHit(text);
+    if(dist && (cutWords || text.length < 30)) return {intent:'cuts_district', confidence:.95, data:dist};
+    if(has('no tengo agua','falta agua','sin agua','no sale agua','no hay agua')) return {intent:'no_water', confidence:.95};
+    if(has('baja presion','poca presion','sale poca agua','poca agua')) return {intent:'low_pressure', confidence:.93};
+    if(has('fuga','tuberia rota','rotura de tuberia','sale agua','aniego')) return {intent:'leak', confidence:.92};
+    if(has('ultimo recibo','ultima factura','factura actual','recibo actual','este mes','debo este mes','factura de este mes')) return {intent:'last_receipt', confidence:.92};
+    if(has('cuanto debo','que debo','que recibos debo','pendiente','pendientes','tengo deuda','deuda','vencido','vencidos')) return {intent:'pending_receipts', confidence:.9};
+    if(has('quiero pagar','cancelar recibo','cancelar un recibo') || bw(text,'pagar') || bw(text,'pago')) return {intent:'payment', confidence:.9};
+    if(has('descargar recibo','descargar pdf','descargar mi recibo','copia','duplicado','comprobante') || bw(text,'pdf')) return {intent:'pdf', confidence:.9};
+    if(has('mis recibos','ver recibos','recibos','historial','facturas') || bw(text,'recibo') || bw(text,'factura')) return {intent:'receipts', confidence:.87};
+    if(has('consumo','consumi','metros','cubicos','agua consumida') || bw(text,'m3') || text.indexOf('m³') > -1) return {intent:'consumption', confidence:.9};
+    if(cutWords) return {intent:'cuts', confidence:.88};
+    if(has('mis incidencias','mis reportes','que reporte')) return {intent:'my_incidents', confidence:.9};
+    if(has('incidencia','problema','reporte','reportar','falla')) return {intent:'incident', confidence:.85};
+    if(has('tengo agua','mi servicio','estado del suministro','esta activo','servicio activo')) return {intent:'service_status', confidence:.88};
+    if(has('atencion','soporte','reclamo','telefono','necesito ayuda') || bw(text,'ayuda')) return {intent:'customer_service', confidence:.88};
+    if(has('tutorial','como funciona','ensename','guia','como usar','como se usa')) return {intent:'tutorial', confidence:.9};
+    if(has('que puedo hacer','que hay aqui','opciones')) return {intent:'context_help', confidence:.85};
+    if(bw(text,'hola') || bw(text,'buenas') || has('buenos dias','buenas tardes') || bw(text,'hey')) return {intent:'greeting', confidence:.9};
+    if(bw(text,'gracias') || bw(text,'perfecto') || bw(text,'listo')) return {intent:'thanks', confidence:.85};
+    return {intent:'unknown', confidence:.3};
+  }
+
+  /* ---------- HidroBot actions ---------- */
+  function hbGo(page){
+    if(window.innerWidth < 700) minimizeBot();
+    openDashboardPage(page);
+  }
+  function hbUnpaid(){
+    return recibos.filter(r=>r.estado !== 'Pagado');
+  }
+  function handleBotIntent(found, rawText){
+    const id = found.intent;
+    const sup = supplyLabel.textContent;
+    const needData = ['last_receipt','pending_receipts','consumption','payment','pdf'].indexOf(id) > -1;
+    if(needData && recibos.length === 0){
+      return {text:'Aún no tengo datos de recibos disponibles en esta sesión.'};
+    }
+    if(id === 'greeting'){
+      return {text:'Hola. Soy HidroBot. Puedo ayudarte con recibos, consumo, incidencias, cortes y otras funciones de Hidro Mejora.'};
+    }
+    if(id === 'receipts'){
+      return {text:'En Recibos puedes buscar por mes, filtrar por año o estado, ver el detalle y descargar el PDF de cada recibo.',
+        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
+    }
+    if(id === 'customer_service'){
+      return {text:'Puedes consultar los canales y opciones disponibles en Atención al Cliente.',
+        actions:[createBotAction('Ir a Atención al Cliente', ()=>hbGo('ayuda'))]};
+    }
+    if(id === 'receipts'){
+      return {text:'En Recibos puedes buscar por mes, filtrar por año o estado, ver el detalle y descargar el PDF de cada recibo.',
+        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
+    }
+    if(id === 'last_receipt'){
+      const r = recibos[0];
+      if(!r) return {text:'Aún no tengo datos de recibos disponibles en esta sesión.'};
+      return {text:'Tu recibo más reciente corresponde a ' + r.etiqueta + '. Monto: ' + fmt(r.monto) +
+        '. Estado: ' + r.estado + '. Consumo: ' + r.consumo + '.',
+        actions:[createBotAction('Ver detalle', (b)=>{ minimizeBot(); abrirDetalle(r, b); }),
+                 createBotAction('Ver recibos', ()=>hbGo('historial'))]};
+    }
+    if(id === 'pending_receipts'){
+      const p = hbUnpaid();
+      const total = p.reduce((a,r)=>a + r.monto, 0);
+      if(!p.length) return {text:'No tienes recibos pendientes o vencidos. Todo al día.',
+        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
+      const uno = p.length === 1 ? 'recibo pendiente o vencido' : 'recibos pendientes o vencidos';
+      return {text:'Tienes ' + p.length + ' ' + uno + ' por un total de ' + fmt(total) + ' (datos demostrativos).',
+        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
+    }
+    if(id === 'consumption'){
+      const r = recibos[0];
+      const prom = promedio6();
+      let extra = '';
+      if(r.consumoM3 > prom) extra = ' Está por encima del promedio mostrado en el prototipo.';
+      return {text:'Tu último consumo registrado es de ' + r.consumoM3 + ' m³. El promedio de los últimos meses es de ' + prom + ' m³.' + extra,
+        actions:[createBotAction('Ver gráfico de consumo', ()=>hbGo('inicio'))]};
+    }
+    if(id === 'payment'){
+      return {text:'Puedes utilizar el flujo de pago simulado de Hidro Mejora. No se procesa dinero ni tarjetas reales.',
+        actions:[createBotAction('Ver recibos por pagar', (b)=>{ minimizeBot(); abrirCopias(true, b); })]};
+    }
+    if(id === 'pdf'){
+      return {text:'Puedes consultar y descargar los PDF simulados desde Obtener copias.',
+        actions:[createBotAction('Obtener copias', (b)=>{ minimizeBot(); abrirCopias(false, b); })]};
+    }
+    if(id === 'cuts_district'){
+      const dName = found.data;
+      const rows = CORTES.filter(c=>c.distrito === dName).slice(0, 3);
+      if(!rows.length) return {text:'Según los datos demostrativos, no encuentro registros para ' + dName + '. Información simulada del prototipo.'};
+      const det = rows.map(c=>c.zona + ' · ' + c.fecha + ' · ' + c.hora + ' · ' + c.estado).join(' | ');
+      const n = CORTES.filter(c=>c.distrito === dName).length;
+      return {text:'Según los datos demostrativos, encontré ' + n + ' registro(s) para ' + dName + ': ' + det + '. Información simulada del prototipo.',
+        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
+    }
+    if(id === 'cuts'){
+      return {text:'Puedes consultar los cortes programados, eventos en proceso y servicios restablecidos desde el módulo Cortes de servicio.',
+        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
+    }
+    if(id === 'no_water'){
+      const t = normalizeBotText(rawText);
+      const corta = t.indexOf('corte') > -1 || t.indexOf('cortes') > -1 || t.indexOf('mantenimiento') > -1 || t.indexOf('interrupcion') > -1;
+      const base = corta
+        ? 'Puedes revisar primero los cortes del prototipo o registrar una incidencia por falta de agua.'
+        : 'Puedes registrar el problema como una incidencia de falta de agua o revisar primero los cortes de servicio.';
+      return {text:base,
+        actions:[createBotAction('Revisar cortes', ()=>hbGo('cortes')),
+                 createBotAction('Reportar falta de agua', (b)=>{ minimizeBot(); openIncidentModal('Falta de agua', b); })]};
+    }
+    if(id === 'low_pressure'){
+      return {text:'Puedo abrir el formulario de incidencias con la categoría correspondiente.',
+        actions:[createBotAction('Reportar baja presión', (b)=>{ minimizeBot(); openIncidentModal('Baja presión', b); })]};
+    }
+    if(id === 'leak'){
+      const t = normalizeBotText(rawText);
+      const tipo = t.indexOf('aniego') > -1 ? 'Aniego' : (t.indexOf('rotura') > -1 ? 'Rotura de tubería' : 'Fuga de agua');
+      const label = tipo === 'Aniego' ? 'Reportar aniego' : (tipo === 'Rotura de tubería' ? 'Reportar rotura' : 'Reportar fuga');
+      return {text:'Puedo abrir el formulario de incidencias con la categoría correspondiente.',
+        actions:[createBotAction(label, (b)=>{ minimizeBot(); openIncidentModal(tipo, b); })]};
+    }
+    if(id === 'my_incidents'){
+      if(!incidencias.length) return {text:'Aún no tienes incidencias registradas en este navegador.',
+        actions:[createBotAction('Reportar incidencia', (b)=>{ minimizeBot(); openIncidentModal(null, b); })]};
+      const last = incidencias[0];
+      return {text:'Tienes ' + incidencias.length + ' incidencia(s) registrada(s) en este navegador. La más reciente: ' +
+        last.code + ' · ' + last.tipo + ' · ' + last.fecha + '.',
+        actions:[createBotAction('Ver incidencias', ()=>hbGo('incidencias'))]};
+    }
+    if(id === 'incident'){
+      return {text:'Puedo ayudarte a registrar una incidencia.',
+        actions:[createBotAction('Reportar incidencia', (b)=>{ minimizeBot(); openIncidentModal(null, b); })]};
+    }
+    if(id === 'service_status'){
+      return {text:'El estado mostrado para tu suministro ' + sup + ' en este prototipo es: Activo.'};
+    }
+    if(id === 'tutorial'){
+      return {text:'Puedo iniciar nuevamente el tutorial completo de Hidro Mejora.',
+        actions:[createBotAction('Iniciar tutorial', ()=>{ minimizeBot(); startTutorial(); })]};
+    }
+    if(id === 'context_help'){
+      const act = document.querySelector('.dash-sec.active');
+      const map = {
+        'sec-historial':'En Recibos puedes buscar por mes, filtrar por año o estado, ver el detalle y descargar el PDF de cada recibo.',
+        'sec-incidencias':'En Incidencias puedes registrar un reporte y revisar los reportes guardados en este navegador.',
+        'sec-cortes':'En Cortes puedes consultar interrupciones programadas, eventos en proceso y servicios restablecidos.',
+        'sec-ayuda':'En Atención al Cliente encuentras canales de orientación, reclamos y preguntas frecuentes.',
+        'sec-inicio':'En Inicio ves el resumen de tu suministro, acciones rápidas y los gráficos de consumo y gasto.'
+      };
+      const key = act ? act.id : 'sec-inicio';
+      return {text:map[key] || map['sec-inicio']};
+    }
+    if(id === 'thanks'){
+      return {text:'Con gusto. Si necesitas revisar otra función de Hidro Mejora, puedes preguntarme.'};
+    }
+    return {text:'No pude identificar exactamente esa consulta. Puedo ayudarte con recibos, pagos simulados, consumo, incidencias, cortes de servicio, tutorial y atención al cliente.',
+      actions:[createBotAction('Ver recibos', ()=>hbGo('historial')),
+               createBotAction('Reportar incidencia', (b)=>{ minimizeBot(); openIncidentModal(null, b); }),
+               createBotAction('Necesito ayuda', ()=>hbGo('ayuda'))]};
+  }
+  // Futura migración: sustituir el cuerpo de getHidroBotResponse por una
+  // llamada segura a un backend propio (POST /api/chat). Nunca exponer
+  // claves ni llamar directo al proveedor desde el navegador.
+  async function getHidroBotResponse(message){
+    return handleLocalBotMessage(message);
+  }
+  function handleLocalBotMessage(message){
+    return handleBotIntent(detectBotIntent(message), message);
+  }
+  function submitBotText(text){
+    if(!hbSessionActive() || hidroBotState.typing) return;
+    const clean = String(text || '').trim().slice(0, 500);
+    if(!clean) return;
+    addUserMessage(clean);
+    showBotTyping();
+    const delay = isReduced() ? 60 : 300 + Math.random() * 400;
+    setTimeout(async ()=>{
+      try{
+        const res = await getHidroBotResponse(clean);
+        hideBotTyping();
+        addBotMessage(res);
+      }catch(e){
+        hideBotTyping();
+        addBotMessage('Ocurrió un inconveniente al procesar tu consulta. Intenta de nuevo.');
+      }
+    }, delay);
+  }
+  function sendBotMessage(){
+    submitBotText(hbInput.value);
+    hbInput.value = '';
+    if(document.activeElement === hbInput) hbInput.focus();
+  }
+
+  /* ---------- HidroBot open / close ---------- */
+  function refocusFab(){
+    // La visibilidad del FAB vuelve con transición: enfocar cuando ya sea enfocable
+    setTimeout(()=>{ try{ hbFab.focus({preventScroll:true}); }catch(e){ try{ hbFab.focus(); }catch(_){} } }, isReduced() ? 0 : 120);
+  }
+  function openHidroBot(){
+    if(!hbSessionActive()) return;
+    hidroBotState.open = true;
+    hbPanel.classList.add('open');
+    hbPanel.setAttribute('aria-hidden','false');
+    hbFab.classList.add('hide');
+    hbFab.setAttribute('aria-expanded','true');
+    hbRoot.setAttribute('aria-hidden','false');
+    if(hbBody.children.length === 0) greetBot();
+    if(window.innerWidth > 700 && !isReduced()){
+      setTimeout(()=>{ try{ hbInput.focus({preventScroll:true}); }catch(e){ try{ hbInput.focus(); }catch(_){} } }, 120);
+    }
+  }
+  function minimizeBot(){
+    hidroBotState.open = false;
+    hbPanel.classList.remove('open');
+    hbPanel.setAttribute('aria-hidden','true');
+    hbFab.classList.remove('hide');
+    hbFab.setAttribute('aria-expanded','false');
+  }
+  function closeHidroBot(){ minimizeBot(); }
+  function toggleHidroBot(){ hidroBotState.open ? closeHidroBot() : openHidroBot(); }
+  function resetBotChat(){
+    hbBody.innerHTML = '';
+    renderBotChips();
+    hidroBotState.greeted = false;
+    hidroBotState.typing = false;
+    greetBot();
+  }
+  function syncHidroBotVisibility(){
+    const on = viewDash.classList.contains('active');
+    hbRoot.classList.toggle('show', on);
+    hbRoot.setAttribute('aria-hidden', on ? 'false' : 'true');
+    if(!on){
+      if(hidroBotState.open) minimizeBot();
+      resetBotChat();
+    }
+  }
+
+  hbFab.addEventListener('click', toggleHidroBot);
+  document.getElementById('hb-min').addEventListener('click', ()=>{ minimizeBot(); refocusFab(); });
+  document.getElementById('hb-close').addEventListener('click', ()=>{ closeHidroBot(); refocusFab(); });
+  document.getElementById('hb-clear').addEventListener('click', ()=>{ resetBotChat(); showToast('Conversación limpiada.'); });
+  hbForm.addEventListener('submit', e=>{ e.preventDefault(); sendBotMessage(); });
+  hbInput.addEventListener('keydown', e=>{
+    if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendBotMessage(); }
+  });
+  document.getElementById('btn-logout').addEventListener('click', ()=>{ minimizeBot(); resetBotChat(); });
+  document.addEventListener('keydown', e=>{
+    if(e.key !== 'Escape' || !hidroBotState.open) return;
+    if(document.querySelector('.overlay.open')) return;
+    if(typeof spotActive !== 'undefined' && spotActive) return;
+    e.stopImmediatePropagation();
+    minimizeBot();
+    refocusFab();
+  }, true);
+  if(window.MutationObserver && viewDash){
+    new MutationObserver(syncHidroBotVisibility).observe(viewDash, {attributes:true, attributeFilter:['class']});
+  }
+  renderBotChips();
+  syncHidroBotVisibility();
+
+  spotOverlay.classList.remove('open');
     spotOverlay.setAttribute('aria-hidden','true');
     spotPop.classList.remove('open');
     spotPop.setAttribute('aria-hidden','true');
     clearSpotlight();
-    if(done) showSuccess('Tutorial completado. Explora tus recibos y tu consumo.');
+    // Marcar visto solo si el tutorial estaba realmente activo
+    // (Finalizar, Omitir, Escape o clic fuera). Así el logout no marca nada.
+    if(wasActive) markTutorialSeen();
+    const refocusReplay = ()=>{
+      try{
+        const replay = document.getElementById('btn-replay-tutorial');
+        if(replay && replay.offsetParent !== null) replay.focus({preventScroll:true});
+      }catch(e){}
+    };
+    if(done){
+      // Navegar primero y restaurar el foco cuando Inicio ya esté visible
+      openDashboardPage('inicio').then(()=>{
+        showToast('Tutorial completado');
+        refocusReplay();
+      });
+    } else {
+      refocusReplay();
+    }
   }
   spotNext.addEventListener('click', ()=>{
     if(spotStep < SPOT_STEPS.length - 1){ spotStep++; renderSpot(); }
     else endSpotlight(true);
+  });
+  spotPrev.addEventListener('click', ()=>{
+    if(spotStep > 0){ spotStep--; renderSpot(); }
   });
   spotSkip.addEventListener('click', ()=>endSpotlight(false));
   spotOverlay.addEventListener('click', ()=>endSpotlight(false));
@@ -1351,7 +2357,7 @@
     let igv  = +(monto - agua - alc).toFixed(2);
     return {agua, alc, igv};
   }
-  function abrirDetalle(r){
+  function abrirDetalle(r, opener){
     selected = r;
     document.getElementById('detail-subtitle').textContent = r.etiqueta + ' · Suministro ' + supplyLabel.textContent;
     document.getElementById('d-monto').textContent = fmt(r.monto);
@@ -1379,7 +2385,7 @@
     const payBtn = document.getElementById('btn-pay-detail');
     if(r.estado==='Pagado'){ payBtn.hidden = true; }
     else { payBtn.hidden = false; payBtn.textContent = 'Pagar ahora · ' + fmt(r.monto); }
-    openModal(detModal);
+    openModal(detModal, opener);
     detClose.focus();
   }
   detClose.addEventListener('click', ()=>closeModal(detModal));
@@ -1522,16 +2528,20 @@
   }
   async function descargarReciboPDF(r, btn){
     if(!window.jspdf){ showToast('No se pudo cargar el generador PDF.'); return; }
+    if(btn && btn.dataset.busy === '1') return;
     const label = btn ? btn.textContent : null;
-    if(btn){ btn.disabled = true; btn.textContent = 'Generando…'; }
+    if(btn){ btn.dataset.busy = '1'; btn.disabled = true; btn.textContent = 'Generando PDF…'; }
     try{
       if(_logoCache === undefined) _logoCache = await loadLogoDataURL();
       const doc = generarReciboPDF(r);
       const sup = String(supplyLabel.textContent).replace(/[^0-9A-Za-z]/g,'') || 'demo';
       doc.save('SEDAPAL_Recibo_' + r.anio + '_' + pad(r.mes+1) + '_' + sup + '.pdf');
+      if(btn){ btn.textContent = 'PDF descargado'; }
       showToast('Recibo PDF descargado.');
     }catch(e){ showToast('No se pudo generar el PDF.'); }
-    if(btn){ btn.disabled = false; if(label !== null) btn.textContent = label; }
+    if(btn){
+      setTimeout(()=>{ btn.disabled = false; btn.dataset.busy = '0'; if(label !== null) btn.textContent = label; }, 1400);
+    }
   }
 
   document.getElementById('btn-pdf').addEventListener('click', ev=>{
@@ -1548,24 +2558,32 @@
     document.getElementById('pay-processing').hidden = s!=='processing';
     document.getElementById('pay-success').hidden = s!=='success';
   }
-  function abrirPago(r){
+  function abrirPago(r, opener){
     if(!r || r.estado==='Pagado'){ showToast('Este recibo ya está pagado.'); return; }
     payTarget = r;
     document.getElementById('pay-sub').textContent = r.etiqueta + ' · Suministro ' + supplyLabel.textContent;
     document.getElementById('pay-monto').textContent = fmt(r.monto);
-    document.getElementById('pay-confirm').textContent = 'Confirmar pago · ' + fmt(r.monto);
     showPayState('main');
-    openModal(payModal);
+    const cf = document.getElementById('pay-confirm');
+    cf.dataset.busy = '0';
+    cf.textContent = 'Confirmar pago · ' + fmt(r.monto);
+    openModal(payModal, opener);
   }
   document.querySelectorAll('.pay-opt input').forEach(radio=>{
     radio.addEventListener('change', ()=>{
       document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel', o.querySelector('input').checked));
     });
   });
-  document.getElementById('pay-confirm').addEventListener('click', ()=>{
+  document.getElementById('pay-confirm').addEventListener('click', ev=>{
+    const btn = ev.currentTarget;
     if(!payTarget || payTarget.estado==='Pagado') return;
+    if(btn.dataset.busy === '1') return;
+    btn.dataset.busy = '1';
+    btn.textContent = 'Procesando…';
     showPayState('processing');
     setTimeout(()=>{
+      btn.dataset.busy = '0';
+      btn.textContent = 'Confirmar pago · ' + fmt(payTarget ? payTarget.monto : 0);
       if(!payTarget) return;
       payTarget.estado = 'Pagado';
       renderCards();
@@ -1582,17 +2600,25 @@
     if(payTarget) descargarReciboPDF(payTarget, ev.currentTarget);
   });
   document.getElementById('pay-done').addEventListener('click', ()=>{
+    const wasDetail = selected && payTarget && selected.id===payTarget.id && detModal.classList.contains('open');
+    const r = payTarget;
     closeModal(payModal);
-    if(selected && payTarget && selected.id===payTarget.id && detModal.classList.contains('open')) abrirDetalle(selected);
+    if(wasDetail && r) setTimeout(()=>abrirDetalle(r), isReduced() ? 0 : 210);
     payTarget = null;
   });
   ['pay-cancel','pay-close'].forEach(id=>document.getElementById(id).addEventListener('click', ()=>{ closeModal(payModal); payTarget = null; }));
 
-  /* ---------- Obtener copias (reutiliza el generador PDF) ---------- */
-  function abrirCopias(soloPendientes){
+  /* ---------- Obtener copias / Pagar (mismo componente, contexto distinto) ---------- */
+  function abrirCopias(soloPendientes, opener){
     renderCopies(!!soloPendientes);
-    openModal(copiesModal);
+    document.getElementById('copies-title').textContent = soloPendientes ? 'Pagar recibos' : 'Obtener copias';
+    document.getElementById('copies-sub').textContent = soloPendientes
+      ? 'Selecciona un recibo pendiente o vencido para pagarlo'
+      : 'Consulta y descarga tus últimos recibos';
+    openModal(copiesModal, opener);
   }
+  /* ---------- Facturas: microinteracciones ---------- */
+  const mk = (t,c,aria)=>{ const b = document.createElement('button'); b.type='button'; b.className='btn-sm '+c; b.textContent=t; if(aria) b.setAttribute('aria-label',aria); return b; };
   function renderCopies(soloPendientes){
     const tb = document.getElementById('copies-tbody');
     if(!tb) return;
@@ -1602,22 +2628,22 @@
       tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted)">Sin recibos pendientes. Todo al día.</td></tr>';
       return;
     }
-    const mk = (t,c)=>{ const b = document.createElement('button'); b.type = 'button'; b.className = 'btn-sm ' + c; b.textContent = t; return b; };
-    rows.forEach(r=>{
+    rows.forEach((r,ri)=>{
       const tr = document.createElement('tr');
+      tr.style.setProperty('--row-delay', Math.min(ri*22, 240) + 'ms');
       tr.innerHTML = '<td><b>' + r.etiqueta + '</b></td><td>' + r.periodo + '</td>' +
         '<td><span class="badge ' + r.estado + '">' + r.estado + '</span></td>' +
         '<td class="num">' + fmt(r.monto) + '</td>';
       const td = document.createElement('td');
       const box = document.createElement('div'); box.className = 'tbl-actions';
-      const bV = mk('Ver','detail');
-      bV.addEventListener('click', ()=>{ closeModal(copiesModal); abrirDetalle(r); });
-      const bP = mk('PDF','pdfb');
+      const bV = mk('Ver','detail','Ver detalle de ' + r.etiqueta);
+      bV.addEventListener('click', ev=>{ const op = ev.currentTarget; closeModal(copiesModal); setTimeout(()=>abrirDetalle(r, op), isReduced() ? 0 : 200); });
+      const bP = mk('PDF','pdfb','Descargar PDF de ' + r.etiqueta);
       bP.addEventListener('click', ev=>descargarReciboPDF(r, ev.currentTarget));
       box.appendChild(bV); box.appendChild(bP);
       if(r.estado!=='Pagado'){
-        const bPay = mk('Pagar','payb');
-        bPay.addEventListener('click', ()=>{ closeModal(copiesModal); abrirPago(r); });
+        const bPay = mk('Pagar','payb','Pagar recibo de ' + r.etiqueta);
+        bPay.addEventListener('click', ev=>{ const op = ev.currentTarget; closeModal(copiesModal); setTimeout(()=>abrirPago(r, op), isReduced() ? 0 : 200); });
         box.appendChild(bPay);
       }
       td.appendChild(box); tr.appendChild(td);
@@ -1642,6 +2668,9 @@
     if(!list) return;
     list.innerHTML = '';
     document.getElementById('inc-empty').classList.toggle('show', !incidencias.length);
+    document.getElementById('inc-stat-total').textContent = incidencias.length;
+    document.getElementById('inc-stat-foto').textContent = incidencias.filter(i=>i.foto).length;
+    document.getElementById('inc-stat-geo').textContent = incidencias.filter(i=>i.coords).length;
     incidencias.forEach(inc=>{
       const d = document.createElement('div');
       d.className = 'inc-item'; d.setAttribute('role','listitem');
@@ -1652,13 +2681,13 @@
       list.appendChild(d);
     });
   }
-  function openIncidentModal(tipo){
+  function openIncidentModal(tipo, opener){
     const f = document.getElementById('inc-form');
     if(f) f.hidden = false;
     document.getElementById('inc-ok').hidden = true;
     if(tipo) document.getElementById('inc-tipo').value = tipo;
     document.getElementById('inc-sup').value = supplyLabel.textContent;
-    openModal(incModal);
+    openModal(incModal, opener);
     document.getElementById('inc-tipo').focus();
   }
   document.getElementById('btn-nueva-incidencia').addEventListener('click', ()=>openIncidentModal());
@@ -1684,21 +2713,32 @@
   });
   document.getElementById('inc-form').addEventListener('submit', ev=>{
     ev.preventDefault();
+    const form = ev.currentTarget;              // currentTarget solo es válido durante el dispatch
+    if(form.dataset.busy === '1') return;
     const tipo = document.getElementById('inc-tipo').value;
     const desc = document.getElementById('inc-desc').value.trim();
     const dir = document.getElementById('inc-dir').value.trim();
     if(desc.length < 10){ showToast('Describe la incidencia con al menos 10 caracteres.'); document.getElementById('inc-desc').focus(); return; }
     if(!dir){ showToast('Indica una dirección o referencia.'); document.getElementById('inc-dir').focus(); return; }
-    const code = 'INC-2026-' + Math.floor(100000 + Math.random()*900000);
-    incidencias.unshift({
-      code, tipo, desc, dir, sup:supplyLabel.textContent,
-      fecha:new Date().toLocaleDateString('es-PE'), coords:incCoords, foto:incFotoData
-    });
-    guardarInc(); renderInc();
-    document.getElementById('inc-form').hidden = true;
-    document.getElementById('inc-code').textContent = code;
-    document.getElementById('inc-ok').hidden = false;
-    showSuccess('Incidencia registrada correctamente.');
+    const btnSubmit = document.getElementById('inc-submit');
+    form.dataset.busy = '1';
+    btnSubmit.disabled = true; btnSubmit.textContent = 'Registrando…';
+    setTimeout(()=>{
+      form.dataset.busy = '0';
+      btnSubmit.disabled = false; btnSubmit.textContent = 'Registrar incidencia';
+      const code = 'INC-2026-' + Math.floor(100000 + Math.random()*900000);
+      incidencias.unshift({
+        code, tipo, desc, dir, sup:supplyLabel.textContent,
+        fecha:new Date().toLocaleDateString('es-PE'), coords:incCoords, foto:incFotoData
+      });
+      guardarInc(); renderInc();
+      document.getElementById('inc-form').hidden = true;
+      document.getElementById('inc-code').textContent = code;
+      const okBox = document.getElementById('inc-ok');
+      okBox.hidden = false;
+      okBox.classList.remove('content-fade'); void okBox.offsetWidth; okBox.classList.add('content-fade');
+      showSuccess('Incidencia registrada correctamente.');
+    }, 700);
   });
   document.getElementById('inc-again').addEventListener('click', ()=>{
     document.getElementById('inc-form').reset();
@@ -1709,7 +2749,11 @@
     document.getElementById('inc-form').hidden = false;
     document.getElementById('inc-ok').hidden = true;
   });
-  document.getElementById('inc-view').addEventListener('click', ()=>{ closeModal(incModal); showSection('incidencias'); });
+  // Espera al fin de la animación de cierre antes de navegar
+  document.getElementById('inc-view').addEventListener('click', ()=>{
+    closeModal(incModal);
+    setTimeout(()=>openDashboardPage('incidencias'), isReduced() ? 0 : 210);
+  });
 
   /* ---------- Cortes de servicio (simulados) ---------- */
   const CORTES = [
@@ -1728,28 +2772,51 @@
     list.innerHTML = '';
     const rows = CORTES.filter(c => !q || c.distrito.toLowerCase().indexOf(q)>-1 || c.zona.toLowerCase().indexOf(q)>-1);
     document.getElementById('cortes-empty').classList.toggle('show', !rows.length);
-    rows.forEach(c=>{
-      const d = document.createElement('div');
-      d.className = 'inc-item'; d.setAttribute('role','listitem');
-      d.innerHTML = '<div class="row"><span class="inc-code">' + c.distrito.toUpperCase() + '</span>' +
-        '<span class="badge ' + corteBadge(c.estado) + '">' + c.estado.toUpperCase() + '</span></div>' +
-        '<div class="inc-desc"><b>' + (c.estado==='Programado' ? 'Corte programado' : (c.estado==='En proceso' ? 'Incidencia en atención' : 'Servicio restablecido')) +
-        '</b> · ' + c.motivo + '</div>' +
-        '<div class="inc-meta">' + c.zona + ' · ' + c.fecha + ' · ' + c.hora + '</div>';
-      list.appendChild(d);
+    ['Programado','En proceso','Restablecido'].forEach(est=>{
+      const g = rows.filter(c=>c.estado===est);
+      if(!g.length) return;
+      const h = document.createElement('div');
+      h.className = 'corte-group';
+      h.innerHTML = '<h4>' + (est==='Programado' ? 'Cortes programados' : (est==='En proceso' ? 'En proceso' : 'Restablecidos')) +
+        ' <span class="count">' + g.length + '</span></h4>';
+      const grid = document.createElement('div');
+      grid.className = 'support-grid';
+      grid.setAttribute('role','list');
+      g.forEach(c=>{
+        const d = document.createElement('div');
+        d.className = 'inc-item'; d.setAttribute('role','listitem');
+        d.innerHTML = '<div class="row"><span class="inc-code">' + c.distrito.toUpperCase() + '</span>' +
+          '<span class="badge ' + corteBadge(c.estado) + '">' + c.estado.toUpperCase() + '</span></div>' +
+          '<div class="inc-desc"><b>' + (c.estado==='Programado' ? 'Corte programado' : (c.estado==='En proceso' ? 'Incidencia en atención' : 'Servicio restablecido')) +
+          '</b> · ' + c.motivo + '</div>' +
+          '<div class="inc-meta">' + c.zona + ' · ' + c.fecha + ' · ' + c.hora + '</div>';
+        grid.appendChild(d);
+      });
+      h.appendChild(grid);
+      list.appendChild(h);
     });
   }
   document.getElementById('search-distrito').addEventListener('input', ev=>renderCortes(ev.target.value));
 
-  /* ---------- Acciones rápidas ---------- */
+  /* ---------- Acciones rápidas: navegación vs. operación ---------- */
+  const QUICK_NAV = {consultar:'historial', cortes:'cortes'};
   document.querySelectorAll('.quick-card').forEach(b=>{
     b.addEventListener('click', ()=>{
       const a = b.dataset.action;
-      if(a==='pagar') abrirCopias(true);
-      else if(a==='copias') abrirCopias(false);
-      else if(a==='consultar') showSection('historial');
-      else if(a==='incidencia') openIncidentModal();
-      else if(a==='cortes') showSection('cortes');
+      if(b.dataset.busy === '1') return;               // evita doble clic
+      b.dataset.busy = '1';
+      b.classList.add('is-activating');
+      // Acciones que navegan a una sección
+      if(QUICK_NAV[a]){
+        openDashboardPage(QUICK_NAV[a], {focus: a==='consultar' ? 'search-mes' : 'search-distrito'});
+        setTimeout(()=>{ b.classList.remove('is-activating'); b.dataset.busy = '0'; }, 320);
+        return;
+      }
+      // Acciones operativas: modales
+      if(a==='pagar') abrirCopias(true, b);
+      else if(a==='copias') abrirCopias(false, b);
+      else if(a==='incidencia') openIncidentModal(null, b);
+      setTimeout(()=>{ b.classList.remove('is-activating'); b.dataset.busy = '0'; }, 220);
     });
   });
 
@@ -1758,14 +2825,25 @@
     formError.textContent = msg;
     formError.classList.add('show');
   }
+  // Normalización: solo dígitos, máximo 9, conservando la posición del cursor
+  inpSupply.addEventListener('input', ()=>{
+    const el = inpSupply;
+    const pos = el.selectionStart === null ? el.value.length : el.selectionStart;
+    const clean = el.value.replace(/\D/g, '').slice(0, 9);
+    if(clean !== el.value){
+      el.value = clean;
+      const np = Math.min(pos, clean.length);
+      try{ el.setSelectionRange(np, np); }catch(e){}
+    }
+  });
   form.addEventListener('submit', e=>{
     e.preventDefault();
     if(loading) return;
     const sup = inpSupply.value.trim();
     const pwd = inpPass.value;
     formError.classList.remove('show');
-    if(!/^\d[\d-]{5,11}$/.test(sup)){
-      showError('⚠ Ingresa un Número de Suministro válido (solo dígitos, 6 a 12 caracteres).');
+    if(!/^\d{7,9}$/.test(sup)){
+      showError('⚠ Ingrese un Número de Suministro válido de 7 a 9 dígitos.');
       inpSupply.focus(); return;
     }
     if(pwd.length < 4){
@@ -1774,14 +2852,36 @@
     }
     supplyLabel.textContent = sup;
     supplyHello.textContent = sup;
+    document.getElementById('side-supply').textContent = sup;
+    document.getElementById('cortes-supply').textContent = sup;
+    document.getElementById('ate-supply').textContent = sup;
     recibos = generarRecibos();
     currentFilter = 'Todos';
     searchQuery = ''; yearFilter = 'Todos';
     if(searchMes) searchMes.value = '';
     document.querySelectorAll('.chip-filter').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
     showView(viewDash);
+    const loginHash = location.hash.slice(1); // capturar antes de que showSkeletons actualice el hash
     showSkeletons();
-    setTimeout(()=>{ renderCards(); renderInc(); renderCortes(''); startTutorial(); }, 1500);
+    setTimeout(()=>{
+      // Crossfade: skeleton se desvanece y el contenido entra
+      cardsEl.classList.add('is-fading');
+      chartEl.classList.add('is-fading');
+      if(chartSpendEl) chartSpendEl.classList.add('is-fading');
+      setTimeout(()=>{
+        renderCards(); renderInc(); renderCortes('');
+        // Si la URL traía hash válido al iniciar sesión, abrir esa página (sin tutorial)
+        const hsec = Object.keys(HASH_SEC).find(k=>HASH_SEC[k] === loginHash);
+        if(hsec) openDashboardPage(hsec);
+        cardsEl.classList.add('content-fade');
+        chartEl.classList.add('content-fade');
+        if(chartSpendEl) chartSpendEl.classList.add('content-fade');
+        setTimeout(()=>{
+          [cardsEl, chartEl, chartSpendEl].forEach(e=>{ if(e) e.classList.remove('is-fading','content-fade'); });
+        }, 280);
+        if(!hsec && !hasSeenTutorial()) startTutorial();
+      }, isReduced() ? 0 : 160);
+    }, 1500);
   });
 
   document.getElementById('btn-logout').addEventListener('click', ()=>{
@@ -1797,6 +2897,8 @@
   document.getElementById('help-link').addEventListener('click', e=>{e.preventDefault();showToast('☎ Ayuda SEDAPAL: (01) 317-8000 (simulado).');});
   document.querySelectorAll('[data-call]').forEach(b=>b.addEventListener('click', ()=>showToast('📞 Conectando con (01) 317-8000 (simulado)…')));
   document.querySelectorAll('[data-claim]').forEach(b=>b.addEventListener('click', ()=>openIncidentModal('Facturación')));
+  document.querySelectorAll('[data-report]').forEach(b=>b.addEventListener('click', ()=>openIncidentModal()));
+  document.getElementById('btn-copies-head').addEventListener('click', ev=>abrirCopias(false, ev.currentTarget));
 
   document.querySelectorAll('.chip-filter').forEach(ch=>{
     ch.addEventListener('click', ()=>{
