@@ -9,22 +9,28 @@
   :root{
     --navy:#003366;
     --navy-dark:#00244a;
+    --navy-soft:#0d4a7d;
     --sky:#00A4E4;
-    --sky-dark:#008cc2;
-    --bg:#F4F4F4;
+    --sky-dark:#0074a3;
+    --sky-soft:#e8f5fc;
+    --sky-mist:#f2f8fc;
+    --bg:#edf2f7;
     --white:#ffffff;
-    --text:#1d2b36;
-    --muted:#6b7a89;
-    --green:#1e9e62;
+    --surface:#ffffff;
+    --text:#1e3446;
+    --muted:#4d6478;
+    --green:#15764c;
     --green-bg:#e6f6ee;
-    --red:#d63a3a;
+    --red:#bd343b;
     --red-bg:#fdecec;
-    --orange:#e67e00;
+    --orange:#9a5b00;
     --orange-bg:#fff3e0;
-    --border:#e2e8f0;
+    --border:#d7e2ec;
     --radius:14px;
-    --shadow:0 8px 28px rgba(0,51,102,.12);
-    --shadow-sm:0 2px 10px rgba(0,51,102,.08);
+    --shadow-xs:0 1px 3px rgba(0,51,102,.08);
+    --shadow-sm:0 2px 8px rgba(0,51,102,.08);
+    --shadow:0 8px 20px rgba(0,51,102,.10);
+    --shadow-md:0 12px 28px rgba(0,51,102,.14);
     --transition:.28s ease;
     /* Sistema de motion corporativo */
     --ease-standard:cubic-bezier(.4,0,.2,1);
@@ -71,7 +77,7 @@
   .brand{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:.6rem;margin-bottom:1.2rem}
   .brand-logo{width:150px;height:auto;object-fit:contain;display:block}
   .brand-text strong{display:block;color:var(--navy);font-size:1.4rem;letter-spacing:.06em;line-height:1.1}
-  .brand-text span{display:block;color:var(--sky-dark);font-weight:800;font-size:.95rem;letter-spacing:.04em}
+  .brand-text span{display:block;color:var(--sky-dark);font-weight:700;font-size:.95rem;letter-spacing:.04em}
   .brand-text small{color:#4c5f70;font-size:.78rem}
   .login-card h1{font-size:1.35rem;color:var(--navy);margin:.4rem 0 .3rem}
   .login-card p.subtitle{color:#4c5f70;font-size:.92rem;margin-bottom:1.25rem;line-height:1.6}
@@ -111,14 +117,14 @@
   /* ===== Dashboard SaaS: topbar + sidebar ===== */
   #view-dashboard{background:var(--bg)}
   .topbar{background:var(--navy);color:#fff;position:sticky;top:0;z-index:40;box-shadow:0 2px 14px rgba(0,0,0,.25)}
-  .topbar-inner{max-width:1280px;margin:0 auto;padding:.55rem 1rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
+  .topbar-inner{max-width:1280px;margin:0 auto;min-height:64px;padding:.55rem 1rem;display:flex;align-items:center;gap:.7rem;flex-wrap:wrap}
   .btn-menu{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);color:#fff;
     width:40px;height:40px;border-radius:10px;cursor:pointer;display:grid;place-items:center;transition:var(--transition)}
   .btn-menu:hover{background:var(--sky);border-color:var(--sky)}
   .btn-menu svg{width:20px;height:20px}
   .topbar .mini-brand{display:flex;align-items:center;gap:.6rem;min-width:0}
-  .topbar-logo{height:40px;width:auto;max-width:120px;object-fit:contain;display:block;flex:0 0 auto;
-    background:#fff;border-radius:8px;padding:2px 6px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .topbar-logo{height:40px;width:auto;max-width:132px;object-fit:contain;display:block;flex:0 0 auto;
+    background:transparent;padding:0;box-shadow:none;border-radius:10px}
   .topbar-right{margin-left:auto;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
   .mini-brand strong{font-size:1rem;letter-spacing:.04em;display:block;line-height:1.15}
   .mini-brand small{font-size:.74rem;opacity:.85;display:block}
@@ -133,7 +139,7 @@
     transition:width var(--duration-normal) var(--ease-out),flex-basis var(--duration-normal) var(--ease-out),padding var(--duration-normal) var(--ease-out)}
   /* Cabecera del panel */
   .side-head{padding:.1rem .5rem .8rem;max-height:140px;overflow:hidden}
-  .side-title{font-size:.8rem;font-weight:800;letter-spacing:.12em;color:#fff}
+  .side-title{font-size:.8rem;font-weight:700;letter-spacing:.12em;color:#fff}
   .side-supply{font-size:.76rem;color:#a9c3da;margin-top:.25rem}
   .side-supply b{color:#fff;font-weight:700}
   .side-status{display:flex;align-items:center;gap:.45rem;font-size:.76rem;color:#bfe8c9;margin-top:.3rem;font-weight:600}
@@ -142,7 +148,7 @@
   .sidebar nav{display:grid}
   .nav-group{display:grid;gap:5px;margin-top:20px}
   .nav-group:first-child{margin-top:12px}
-  .side-label{font-size:.66rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+  .side-label{font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
     color:rgba(219,231,243,.55);padding:0 .55rem;margin-bottom:1px;max-height:32px;overflow:hidden}
   .nav-item{position:relative;display:flex;align-items:center;gap:.65rem;width:100%;border:none;
     background:transparent;color:#dbe7f3;font:inherit;font-size:.9rem;font-weight:600;min-height:46px;
@@ -153,15 +159,15 @@
     transition:opacity var(--duration-fast) var(--ease-standard),max-width var(--duration-normal) var(--ease-out)}
   .nav-item svg{width:19px;height:19px;flex:0 0 19px;color:#8fb8d8;
     transition:color var(--duration-normal) var(--ease-standard)}
-  .nav-item:hover:not(.active){background:rgba(255,255,255,.06)}
-  .nav-item.active{background:rgba(0,164,228,.14);color:#fff;box-shadow:inset 3px 0 0 var(--sky)}
+  .nav-item:hover:not(.active){background:rgba(255,255,255,.09)}
+  .nav-item.active{background:rgba(0,164,228,.18);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--sky)}
   .nav-item.active svg{color:#5cd0f8}
   .shell{transition:padding var(--duration-normal) var(--ease-out)}
   /* Tarjeta de consumo dinámica */
   .side-cons{margin-top:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);
     border-radius:10px;padding:.7rem .75rem;max-height:240px;overflow:hidden}
-  .side-cons-title{font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(219,231,243,.6)}
-  .side-cons-value{font-size:1.4rem;font-weight:800;color:#fff;line-height:1.25;margin:.15rem 0 .05rem}
+  .side-cons-title{font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(219,231,243,.6)}
+  .side-cons-value{font-size:1.4rem;font-weight:700;color:#fff;line-height:1.25;margin:.15rem 0 .05rem}
   .side-cons-delta{font-size:.76rem;color:#a9c3da}
   .side-cons.ok .side-cons-value{color:#8fe3b4}
   .side-cons.warn .side-cons-value{color:#ffd9a3}
@@ -213,7 +219,7 @@
   @keyframes pageOut{from{opacity:1;transform:none}to{opacity:0;transform:translateY(4px)}}
   /* Encabezado de página interna */
   .page-header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin:0 0 1rem}
-  .page-crumb{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.15rem}
+  .page-crumb{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:.15rem}
   .page-title{color:var(--navy);font-size:1.35rem;font-weight:700;margin:0}
   .page-title:focus{outline:none}
   .page-title:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
@@ -224,7 +230,7 @@
   .mod-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:1rem}
   @media(min-width:900px){.mod-stats{grid-template-columns:repeat(4,1fr)}}
   .mod-stat{background:#fff;border:1px solid var(--border);border-radius:12px;padding:.7rem .9rem}
-  .mod-stat small{display:block;font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .mod-stat small{display:block;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .mod-stat strong{font-size:1.2rem;color:var(--navy)}
   /* Zona de estado del suministro */
   .service-status{display:flex;align-items:center;gap:.6rem;background:#fff;border:1px solid var(--border);
@@ -242,31 +248,31 @@
   .pre-contact dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.5rem;margin:0}
   .pre-contact dl>div{background:var(--bg);border-radius:8px;padding:.45rem .65rem}
   .pre-contact dt{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
-  .pre-contact dd{margin:0;font-weight:800;color:var(--navy);font-size:.92rem}
+  .pre-contact dd{margin:0;font-weight:700;color:var(--navy);font-size:.92rem}
   /* FAQ con details nativo */
   .faq details{background:#fff;border:1px solid var(--border);border-radius:10px;padding:.7rem .9rem;margin-bottom:.5rem}
   .faq summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:.88rem}
   .faq summary:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
   .faq p{font-size:.85rem;color:var(--muted);margin:.45rem 0 0}
-  .hero{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    border:1px solid var(--glass-border);border-radius:var(--radius);box-shadow:var(--shadow-sm);
-    padding:1.25rem;border-left:6px solid var(--sky);display:flex;gap:1rem;flex-wrap:wrap;
+  .hero{background:var(--surface);
+    border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);
+    padding:1.25rem;border-left:4px solid var(--sky);display:flex;gap:1rem;flex-wrap:wrap;
     align-items:center;justify-content:space-between;margin-bottom:1rem}
   .hero h2{color:var(--navy);font-size:1.28rem;margin-bottom:.25rem}
   .hero p{color:#4c5f70;font-size:.9rem;max-width:62ch}
   .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.7rem;margin-bottom:1rem}
-  .stat{background:rgba(255,255,255,.92);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    border:1px solid var(--glass-border);border-radius:12px;padding:.85rem .95rem;box-shadow:var(--shadow-sm);
+  .stat{background:var(--surface);
+    border:1px solid var(--border);border-radius:12px;padding:.85rem .95rem;box-shadow:var(--shadow-xs);
     transition:transform var(--duration-normal) var(--ease-out),box-shadow var(--duration-normal) var(--ease-out)}
   .stats.stagger .stat{animation:statIn 380ms var(--ease-out) backwards;animation-delay:var(--stagger-delay,0ms)}
   @keyframes statIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-  .stat:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+  .stat:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm)}
   .stat-top{display:flex;align-items:center;gap:.5rem;margin-bottom:.25rem}
   .stat-ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:0 0 30px;background:#eaf2fa;color:var(--navy)}
   .stat-ico svg{width:17px;height:17px}
   .stat-green .stat-ico{background:var(--green-bg);color:#0f7a48}
   .stat-orange .stat-ico{background:var(--orange-bg);color:#b25e00}
-  .stat small{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:800}
+  .stat small{display:block;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700}
   .stat strong{font-size:1.28rem;color:var(--navy);letter-spacing:-.01em}
   .stat.stat-green strong{color:var(--green)}
   .stat.stat-orange strong{color:var(--orange)}
@@ -282,9 +288,9 @@
   .chip-filter:active{transform:translateY(-1px)}
   .chip-filter.active,.chip-filter.active:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
   .cards{display:grid;grid-template-columns:1fr;gap:.85rem}
-  .card{background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    border:1px solid var(--glass-border);border-radius:var(--radius);padding:1rem 1.05rem;
-    box-shadow:var(--shadow-sm);transition:var(--transition);position:relative;overflow:hidden;
+  .card{background:var(--surface);
+    border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.05rem;
+    box-shadow:var(--shadow-xs);transition:var(--transition);position:relative;overflow:hidden;
     text-align:left;width:100%;font:inherit;color:inherit}
   .card-open{display:block;width:100%;background:none;border:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}
   .card-actions{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.65rem}
@@ -304,17 +310,17 @@
   .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--green)}
   .card[data-estado="Pendiente"]::before{background:var(--orange)}
   .card[data-estado="Vencido"]::before{background:var(--red)}
-  .card:hover,.card:focus-visible{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#9fd4ef;outline:none}
+  .card:hover,.card:focus-visible{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#9fc6e2;outline:none}
   .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.5rem}
-  .card-month{font-weight:800;color:var(--navy);font-size:1rem;text-transform:capitalize;display:flex;align-items:center;gap:.4rem}
+  .card-month{font-weight:700;color:var(--navy);font-size:1rem;text-transform:capitalize;display:flex;align-items:center;gap:.4rem}
   .card-month svg{width:15px;height:15px;color:var(--sky-dark)}
   .card-period{font-size:.78rem;color:var(--muted)}
-  .badge{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;
+  .badge{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
     padding:.28rem .65rem;border-radius:999px;white-space:nowrap}
   .badge.Pagado{background:var(--green-bg);color:#0c6b3e;border:1px solid #bfe8d2}
   .badge.Pendiente{background:var(--orange-bg);color:#9a5200;border:1px solid #ffd9a3}
   .badge.Vencido{background:var(--red-bg);color:#a11f1f;border:1px solid #f5c2c2}
-  .card-amount{font-size:1.45rem;font-weight:800;color:var(--text);letter-spacing:-.01em}
+  .card-amount{font-size:1.45rem;font-weight:700;color:var(--text);letter-spacing:-.01em}
   .card-amount small{font-size:.85rem;font-weight:600;color:var(--muted)}
   .card-meta{display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;font-size:.8rem;color:var(--muted)}
   .card-link{color:var(--sky-dark);font-weight:700;font-size:.82rem}
@@ -330,8 +336,8 @@
   .btn{transition:background-color var(--duration-normal) var(--ease-standard),color var(--duration-normal) var(--ease-standard),
     transform var(--duration-fast) var(--ease-out),box-shadow var(--duration-normal) var(--ease-out)}
   .support-grid{display:grid;grid-template-columns:1fr;gap:.8rem}
-  .support-card{background:rgba(255,255,255,.94);border:1px solid var(--glass-border);border-radius:var(--radius);
-    padding:1.1rem;box-shadow:var(--shadow-sm);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+  .support-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:1.1rem;box-shadow:var(--shadow-xs)}
   .support-card h4{color:var(--navy);display:flex;gap:.5rem;align-items:center;margin-bottom:.3rem}
   .support-card h4 svg{width:18px;height:18px;color:var(--sky-dark)}
   .support-card p{font-size:.87rem;color:#4c5f70;margin-bottom:.7rem}
@@ -380,14 +386,14 @@
   .detail-amount strong{font-size:1.5rem;color:var(--navy)}
 
   /* ===== Gráfico corporativo con ejes ===== */
-  .chart-card{background:rgba(255,255,255,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-    border:1px solid var(--glass-border);border-radius:var(--radius);box-shadow:var(--shadow-sm);
+  .chart-card{background:var(--surface);
+    border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-xs);
     padding:1.1rem 1.1rem 1rem;margin-bottom:.4rem}
   .chart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.7rem;margin-bottom:.6rem;flex-wrap:wrap}
   .chart-head h3{color:var(--navy);font-size:1.02rem;display:flex;align-items:center;gap:.45rem}
   .chart-head h3 svg{width:18px;height:18px;color:var(--sky-dark)}
   .chart-head p{color:var(--muted);font-size:.8rem}
-  .chart-avg-chip{background:#eaf6ff;color:var(--sky-dark);border:1px solid #bfe3f7;font-size:.75rem;font-weight:800;
+  .chart-avg-chip{background:var(--sky-soft);color:var(--sky-dark);border:1px solid #bfe3f7;font-size:.75rem;font-weight:700;
     padding:.3rem .7rem;border-radius:999px;white-space:nowrap}
   .chart-pro{display:flex;gap:.5rem}
   .y-axis{display:flex;flex-direction:column;justify-content:space-between;height:176px;padding:26px 0 0;
@@ -396,22 +402,22 @@
   .chart{position:relative;flex:1;display:flex;align-items:flex-end;gap:.55rem;height:210px;min-width:0;
     padding:26px 4px 0;border-left:2px solid var(--border);border-bottom:2px solid var(--border);
     background-image:linear-gradient(to top,rgba(0,51,102,.07) 1px,transparent 1px);background-size:100% 25%}
-  .chart-avg-line{position:absolute;left:0;right:0;border-top:2px dashed var(--orange);opacity:.9;pointer-events:none}
-  .chart-avg-line span{position:absolute;top:-20px;right:0;background:var(--orange-bg);color:#9a5200;
-    font-size:.66rem;font-weight:800;padding:.1rem .5rem;border-radius:999px;border:1px solid #ffd9a3}
+  .chart-avg-line{position:absolute;left:0;right:0;border-top:2px dashed var(--orange);opacity:.9;pointer-events:none;overflow:visible}
+  .chart-avg-line span{position:absolute;top:-20px;right:4px;background:var(--orange-bg);color:#7a4d00;
+    font-size:.66rem;font-weight:700;padding:.1rem .5rem;border-radius:999px;border:1px solid #ffd9a3;max-width:calc(100% - 8px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bar-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
   .bar-wrap{height:150px;width:100%;display:flex;align-items:flex-end;justify-content:center}
-  .bar{position:relative;width:min(50px,64%);min-height:8px;border:none;cursor:pointer;border-radius:10px 10px 5px 5px;
-    background:linear-gradient(180deg,#5ccbf5 0%,var(--sky) 42%,#00659b 78%,var(--navy) 100%);
-    box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 4px 12px rgba(0,164,228,.25);
+  .bar{position:relative;width:min(50px,64%);min-height:8px;border:none;cursor:pointer;border-radius:8px 8px 4px 4px;
+    background:linear-gradient(180deg,#3db4ec 0%,#00A4E4 100%);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 3px 8px rgba(0,116,163,.18);
     transition:transform var(--duration-normal) var(--ease-out),filter var(--duration-normal) var(--ease-standard),
       box-shadow var(--duration-normal) var(--ease-out);font:inherit;transform-origin:bottom center}
-  .chart-anim .bar{animation:barGrow 520ms var(--ease-out) both;animation-delay:var(--bar-delay,0ms)}
+  .chart-anim .bar{animation:barGrow 420ms var(--ease-out) both;animation-delay:var(--bar-delay,0ms)}
   @keyframes barGrow{from{transform:scaleY(0);opacity:.35}to{transform:scaleY(1);opacity:1}}
-  .bar:hover,.bar:focus-visible{filter:brightness(1.08);transform:translateY(-3px);
-    box-shadow:0 10px 20px rgba(0,164,228,.35);outline:2px solid var(--sky);outline-offset:2px}
-  .bar.is-max{background:linear-gradient(180deg,#8adcfb 0%,var(--sky) 45%,#005b8c 80%,var(--navy-dark) 100%)}
-  .bar.spend{background:linear-gradient(180deg,#3d8bd0 0%,var(--navy) 62%,var(--navy-dark) 100%)}
+  .bar:hover,.bar:focus-visible{filter:brightness(1.06);transform:translateY(-2px);
+    box-shadow:0 8px 16px rgba(0,116,163,.28);outline:2px solid var(--sky);outline-offset:2px}
+  .bar.is-max{background:linear-gradient(180deg,#00A4E4 0%,#0074a3 100%)}
+  .bar.spend{background:linear-gradient(180deg,#155a8f 0%,#003366 100%)}
   #btn-pay-detail[hidden]{display:none}
   .bar-tip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(5px);
     background:#111827;color:#fff;font-size:.74rem;font-weight:700;padding:.4rem .65rem;border-radius:9px;
@@ -422,9 +428,9 @@
   .bar-tip::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
     border:6px solid transparent;border-top-color:#111827}
   .bar-col:hover .bar-tip,.bar:focus-visible .bar-tip{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
-  .bar-val{margin-top:.4rem;font-size:.76rem;font-weight:800;color:var(--navy)}
+  .bar-val{margin-top:.4rem;font-size:.76rem;font-weight:700;color:var(--navy)}
   .bar-label{font-size:.68rem;color:var(--muted);text-transform:capitalize;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-  .x-axis-label{text-align:center;font-size:.7rem;font-weight:800;color:var(--muted);margin-top:.35rem;letter-spacing:.05em;text-transform:uppercase}
+  .x-axis-label{text-align:center;font-size:.7rem;font-weight:700;color:var(--muted);margin-top:.35rem;letter-spacing:.05em;text-transform:uppercase}
   .chart-legend{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.7rem;font-size:.76rem;color:var(--muted)}
   .chart-legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:.3rem;vertical-align:baseline}
 
@@ -471,13 +477,13 @@
   .inv-row{display:flex;justify-content:space-between;gap:.8rem;font-size:.86rem;padding:.28rem 0}
   .inv-row span{color:var(--muted)}
   .inv-row b{color:var(--navy)}
-  .inv-total{display:flex;justify-content:space-between;border-top:2px solid var(--navy);margin-top:.5rem;padding-top:.55rem;font-weight:800;color:var(--navy)}
+  .inv-total{display:flex;justify-content:space-between;border-top:2px solid var(--navy);margin-top:.5rem;padding-top:.55rem;font-weight:700;color:var(--navy)}
   .consumo-box{display:flex;align-items:center;justify-content:space-between;gap:.8rem;background:var(--bg);
     border-radius:12px;padding:.75rem .95rem;margin-bottom:.6rem}
   .consumo-box .k{font-size:.8rem;color:var(--muted);display:block}
   .consumo-box strong{font-size:1.15rem;color:var(--navy)}
   .consumo-box small{display:block;font-size:.72rem;color:var(--muted)}
-  .semaforo{display:inline-flex;align-items:center;gap:.45rem;font-size:.78rem;font-weight:800;
+  .semaforo{display:inline-flex;align-items:center;gap:.45rem;font-size:.78rem;font-weight:700;
     padding:.4rem .75rem;border-radius:999px;border:1px solid;white-space:nowrap;transition:var(--transition)}
   .semaforo::before{content:"";width:12px;height:12px;border-radius:50%;background:currentColor;
     box-shadow:0 0 0 4px rgba(0,0,0,.06);transition:var(--transition)}
@@ -518,7 +524,7 @@
       box-shadow var(--duration-normal) var(--ease-out),
       border-color var(--duration-normal) var(--ease-standard),
       background-color var(--duration-normal) var(--ease-standard)}
-  .quick-card:hover{transform:translateY(-4px);box-shadow:0 10px 26px rgba(0,51,102,.14);border-color:#a5d8f0}
+  .quick-card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#9fc6e2}
   .quick-card:active{transform:translateY(-1px) scale(.985);transition-duration:var(--duration-fast)}
   .quick-card:focus-visible{outline:none;border-color:var(--sky);
     box-shadow:0 0 0 4px rgba(0,164,228,.22),0 8px 20px rgba(0,51,102,.10)}
@@ -576,10 +582,10 @@
   .pay-ok h4{color:var(--navy);margin-bottom:.25rem}
   .pay-ok p{font-size:.86rem;color:var(--muted);margin-bottom:.7rem}
   .pay-code{display:inline-block;background:var(--bg);border:1px dashed #9fb3c8;border-radius:8px;
-    padding:.3rem .8rem;font-weight:800;color:var(--navy);letter-spacing:.04em;margin-bottom:.8rem}
+    padding:.3rem .8rem;font-weight:700;color:var(--navy);letter-spacing:.04em;margin-bottom:.8rem}
   .inc-item{background:#fff;border:1px solid var(--border);border-radius:12px;padding:.8rem .9rem;display:grid;gap:.3rem}
   .inc-item .row{display:flex;justify-content:space-between;gap:.6rem;align-items:center;flex-wrap:wrap}
-  .inc-code{font-weight:800;color:var(--navy);font-size:.85rem;letter-spacing:.03em}
+  .inc-code{font-weight:700;color:var(--navy);font-size:.85rem;letter-spacing:.03em}
   .inc-desc{font-size:.84rem;color:#4c5f70}
   .inc-meta{font-size:.76rem;color:var(--muted)}
   .foto-prev{max-width:100%;max-height:160px;border-radius:10px;border:1px solid var(--border);margin-top:.4rem}
@@ -607,7 +613,7 @@
     transition:opacity 240ms var(--ease-out),transform 240ms var(--ease-out),visibility 240ms}
   .hb-panel.open{opacity:1;visibility:visible;transform:none}
   .hb-head{background:var(--navy);color:#fff;padding:.8rem .9rem;display:flex;align-items:center;gap:.65rem}
-  .hb-avatar{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:var(--sky);display:grid;place-items:center;color:#fff}
+  .hb-avatar{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:var(--sky-dark);display:grid;place-items:center;color:#fff}
   .hb-avatar svg{width:22px;height:22px}
   .hb-id{flex:1;min-width:0}
   .hb-id b{display:block;font-size:.95rem;line-height:1.2}
@@ -728,7 +734,7 @@
     </div>
 
     <h1 id="login-title">Iniciar sesión</h1>
-    <p class="subtitle">Centraliza tu historial de agua potable: 12 recibos, consumo en m³ y descargas oficiales.</p>
+    <p class="subtitle">Centraliza tu historial de agua potable: 12 recibos, consumo en m³ y descarga de comprobantes en PDF.</p>
 
     <div id="form-error" class="form-error" role="alert"></div>
 
@@ -754,7 +760,7 @@
     <div class="login-foot">¿Olvidaste tu clave? <a href="#" id="forgot-link">Recupérala aquí</a> · <a href="#" id="help-link">Ayuda</a></div>
   </div>
   <div class="login-trust" aria-label="Respaldo institucional">
-    <span>🔒 Conexión segura</span><span>🏛 SEDAPAL · Lima, Perú</span><span>⚡ ERP comercial integrado</span>
+    <span>🔒 Conexión segura</span><span>🏛 SEDAPAL · Lima, Perú</span><span>⚡ Entorno demostrativo</span>
   </div>
   </div>
   <div class="login-visual" aria-hidden="true"></div>
@@ -825,7 +831,7 @@
         <div class="side-cons-delta" id="side-cons-delta">—</div>
         <button class="side-cta" id="side-cons-cta" type="button" hidden>Revisar consumo →</button>
       </div>
-      <div class="side-foot">Hidro Mejora · Beta v2.1</div>
+      <div class="side-foot">Hidro Mejora · Prototipo académico · Beta 2.1</div>
     </aside>
     <div class="scrim" id="scrim" aria-hidden="true"></div>
 
@@ -842,7 +848,7 @@
         <div class="hero">
           <div>
             <h2>Hola, suministro <span id="supply-hello">—</span> 👋</h2>
-            <p>Consulta tus últimos 12 recibos, analiza tu consumo en m³ y descarga tus comprobantes oficiales.</p>
+            <p>Consulta tus últimos 12 recibos, analiza tu consumo en m³ y descarga tus comprobantes del prototipo en PDF.</p>
           </div>
           <button class="btn btn-sky" id="btn-replay-tutorial" type="button">▶ Ver tutorial</button>
         </div>
@@ -918,16 +924,16 @@
               <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Consumo histórico</h3>
               <p>Metros cúbicos consumidos · últimos 6 meses · eje Y en m³</p>
             </div>
-            <span class="chart-avg-chip">Promedio: 15 m³</span>
+            <span class="chart-avg-chip" id="consumption-avg-chip">Promedio: —</span>
           </div>
           <div class="chart-pro">
-            <div class="y-axis" aria-hidden="true"><span><b>30</b> m³</span><span><b>20</b></span><span><b>10</b></span><span><b>0</b></span></div>
+            <div class="y-axis" id="consumption-y" aria-hidden="true"><span><b>30</b> m³</span><span><b>20</b></span><span><b>10</b></span><span><b>0</b></span></div>
             <div id="chart" class="chart" role="img" aria-label="Gráfico de barras del consumo de agua de los últimos 6 meses"></div>
           </div>
           <div class="x-axis-label">Meses · eje X</div>
           <div class="chart-legend">
             <span><i style="background:var(--sky)"></i>Consumo mensual (m³)</span>
-            <span><i style="background:var(--orange)"></i>Línea promedio 15 m³</span>
+            <span><i style="background:var(--orange)"></i><span id="consumption-legend">Línea promedio —</span></span>
           </div>
         </section>
 
@@ -946,7 +952,7 @@
           <div class="x-axis-label">Meses · eje X</div>
           <div class="chart-legend">
             <span><i style="background:var(--navy)"></i>Gasto mensual (S/)</span>
-            <span><i style="background:var(--orange)"></i>Línea promedio</span>
+            <span><i style="background:var(--orange)"></i><span id="spend-legend">Línea promedio</span></span>
           </div>
         </section>
       </div>
@@ -1088,7 +1094,7 @@
     </main>
   </div>
 
-  <footer class="page">© 2026 SEDAPAL · Hidro Mejora v2.0 — HTML5 + CSS3 + Vanilla JS · Optimizado para Debian</footer>
+  <footer class="page">Hidro Mejora · Prototipo académico · Beta 2.1</footer>
 </section>
 
 <!-- ============ SPOTLIGHT ONBOARDING AVANZADO ============ -->
@@ -1142,7 +1148,7 @@
         <div>
           <span class="k">💧 Consumo del mes</span>
           <strong id="d-consumo">—</strong>
-          <small>Promedio referencial: 15 m³</small>
+          <small id="d-promedio-ref">Promedio referencial: —</small>
         </div>
         <span id="d-semaforo" class="semaforo green">● Normal</span>
       </div>
@@ -1601,20 +1607,41 @@
     if(found && viewDash.classList.contains('active')) openDashboardPage(found);
   });
 
-  /* ---------- Datos simulados ---------- */
-  function generarRecibos(){
+  /* ---------- Datos simulados (deterministas por suministro) ---------- */
+  const APP_VERSION = '2.1';
+  function hmHash(str){
+    let h = 2166136261;
+    const s = String(str);
+    for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function hmRand(seed){
+    let a = seed >>> 0;
+    return function(){
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function generarRecibos(supply){
+    const sup = String(supply || supplyLabel.textContent || 'demo');
     const hoy = new Date(2026, 8, 28);
     const estadosFijos = ['Pagado','Pagado','Pagado','Pagado','Vencido','Pagado','Pagado','Pendiente','Pagado','Pagado','Pendiente','Pagado'];
+    const estacional = [1,0,-1,-2,-2,-1,0,1,2,3,2,1];
     const list = [];
-    let lecturaSig = 1520;
+    let lecturaSig = 1500 + (hmHash(sup) % 40);
     for(let i=0;i<12;i++){
       const d = new Date(hoy.getFullYear(), hoy.getMonth()-i, 1);
       const anio = d.getFullYear(), mes = d.getMonth();
-      const monto = +(45 + Math.random()*75 + (mes%3)*4).toFixed(2);
+      const rnd = hmRand(hmHash(sup + '|' + anio + '-' + mes));
+      const r1 = rnd(), r2 = rnd();
+      const consumoM3 = Math.min(30, Math.max(11, Math.round(18 + estacional[mes] + (r1 - 0.5) * 7)));
+      const cargoFijo = 24;
+      const monto = +((cargoFijo + consumoM3 * 2.55 + (r2 - 0.5) * 5 + (mes % 3) * 0.9).toFixed(2));
       const estado = i===0 ? 'Pendiente' : (i===1 ? 'Vencido' : estadosFijos[i % estadosFijos.length]);
       const emision = new Date(anio, mes, 5);
       const venc = new Date(anio, mes, 22);
-      const consumoM3 = Math.round(12 + Math.random()*18);
       const lecturaActual = lecturaSig;
       const lecturaAnterior = +(lecturaActual - consumoM3).toFixed(1);
       lecturaSig = lecturaAnterior;
@@ -1627,17 +1654,17 @@
         emision: pad(emision.getDate())+'/'+pad(emision.getMonth()+1)+'/'+emision.getFullYear(),
         vencimiento: pad(venc.getDate())+'/'+pad(venc.getMonth()+1)+'/'+venc.getFullYear(),
         consumoM3, consumo: consumoM3 + ' m³',
-        lecturaAnterior, lecturaActual
+        lecturaAnterior, lecturaActual, paymentCode: null
       });
     }
     return list;
   }
 
-  /* ---------- Skeletons (simula petición ERP 1.5s) ---------- */
+  /* ---------- Skeletons (carga demostrativa 1.5s) ---------- */
   function showSkeletons(){
     loading = true;
     btnLogin.disabled = true;
-    btnLoginText.textContent = 'Conectando con ERP…';
+    btnLoginText.textContent = 'Cargando información…';
     ['stat-last','stat-cons','stat-pend','stat-serv'].forEach(id=>{ document.getElementById(id).textContent = '···'; });
     openDashboardPage('inicio');
     cardsEl.innerHTML = '';
@@ -1825,7 +1852,26 @@
   function ultimos6(){ return recibos.slice(0,6).reverse(); }
   function promedio6(){
     const u = ultimos6();
-    return u.length ? +(u.reduce((a,r)=>a+r.consumoM3,0)/u.length).toFixed(1) : 15;
+    return u.length ? +(u.reduce((a,r)=>a+r.consumoM3,0)/u.length).toFixed(1) : 0;
+  }
+  function promedioGasto6(){
+    const u = ultimos6();
+    return u.length ? +(u.reduce((a,r)=>a+r.monto,0)/u.length).toFixed(2) : 0;
+  }
+  function niceCeil(v){
+    const n = Math.ceil(Number(v) || 0);
+    if(n <= 10) return 10;
+    if(n <= 20) return 20;
+    if(n <= 30) return 30;
+    if(n <= 40) return 40;
+    return Math.ceil(n / 10) * 10;
+  }
+  function renderConsumptionY(maxVal){
+    const y = document.getElementById('consumption-y');
+    if(!y) return;
+    const top = niceCeil(maxVal);
+    const mid2 = Math.round(top * 2 / 3), mid1 = Math.round(top / 3);
+    y.innerHTML = '<span><b>'+top+'</b> m³</span><span><b>'+mid2+'</b></span><span><b>'+mid1+'</b></span><span><b>0</b></span>';
   }
   function renderChart(){
     if(!chartEl) return;
@@ -1833,8 +1879,16 @@
       label:r.mesShort+' '+String(r.anio).slice(2), full:r.mesShort+' '+r.anio,
       value:r.consumoM3, tip:r.consumoM3+' m³ consumidos', ref:r
     }));
-    renderBarChart(chartEl, items, {avg:15, avgLabel:'15 m³ prom.', unit:'m³',
-      onBarClick:d=>showToast('💧 ' + d.ref.etiqueta + ': ' + d.ref.consumoM3 + ' m³')});
+    const avg = promedio6();
+    const maxVal = Math.max.apply(null, items.map(d=>d.value).concat([avg, 10]));
+    renderConsumptionY(maxVal);
+    const chip = document.getElementById('consumption-avg-chip');
+    if(chip) chip.textContent = 'Promedio: ' + avg + ' m³';
+    const legend = document.getElementById('consumption-legend');
+    if(legend) legend.textContent = 'Línea promedio ' + avg + ' m³';
+    chartEl.setAttribute('aria-label', 'Gráfico de barras del consumo de agua de los últimos 6 meses. Promedio: ' + avg + ' metros cúbicos.');
+    renderBarChart(chartEl, items, {avg:avg, avgLabel:avg + ' m³ prom.', unit:'m³', maxFloor:niceCeil(maxVal),
+      onBarClick:d=>showToast(d.ref.etiqueta + ': ' + d.ref.consumoM3 + ' m³')});
   }
   function renderSpendChart(){
     if(!chartSpendEl) return;
@@ -1842,17 +1896,20 @@
       label:r.mesShort+' '+String(r.anio).slice(2), full:r.mesShort+' '+r.anio,
       value:r.monto, tip:fmt(r.monto)+' facturados', ref:r
     }));
-    const avg = items.length ? +(items.reduce((a,d)=>a+d.value,0)/items.length).toFixed(2) : 0;
-    const max = Math.max.apply(null, items.map(d=>d.value).concat([10]));
+    const avg = promedioGasto6();
+    const max = Math.max.apply(null, items.map(d=>d.value).concat([avg, 10]));
     const step = Math.max(10, Math.ceil((max/3)/10)*10);
     const y = document.getElementById('spend-y');
     if(y) y.innerHTML = '<span><b>'+(step*3)+'</b> S/</span><span><b>'+(step*2)+
       '</b></span><span><b>'+step+'</b></span><span><b>0</b></span>';
     const chip = document.getElementById('spend-avg-chip');
     if(chip) chip.textContent = 'Promedio: ' + fmt(avg);
+    const legend = document.getElementById('spend-legend');
+    if(legend) legend.textContent = 'Línea promedio ' + fmt(avg);
+    chartSpendEl.setAttribute('aria-label', 'Gráfico de barras del gasto mensual en soles de los últimos 6 meses. Promedio: ' + fmt(avg) + '.');
     renderBarChart(chartSpendEl, items, {avg:avg, avgLabel:'Prom. '+fmt(avg), unit:'S/', barClass:'spend',
       fmtVal:v=>'S/ '+Math.round(v),
-      onBarClick:d=>showToast('💰 ' + d.ref.etiqueta + ': ' + fmt(d.ref.monto))});
+      onBarClick:d=>showToast(d.ref.etiqueta + ': ' + fmt(d.ref.monto))});
   }
 
   /* ---------- Spotlight avanzado (pulso + progreso + éxito) ---------- */
@@ -2406,6 +2463,8 @@
     document.getElementById('d-deuda').textContent = r.estado==='Pagado' ? 'S/ 0.00 (cancelado)' : fmt(r.monto);
     document.getElementById('d-lecturas').textContent = r.lecturaAnterior.toFixed(1) + ' → ' + r.lecturaActual.toFixed(1) + ' m³';
     document.getElementById('d-consumo').textContent = r.consumo;
+    const promRef = document.getElementById('d-promedio-ref');
+    if(promRef) promRef.textContent = 'Promedio referencial: ' + promedio6() + ' m³';
     const sem = document.getElementById('d-semaforo');
     const alerta = document.getElementById('d-alerta');
     if(r.consumoM3 > 20){ sem.className = 'semaforo red'; sem.textContent = '● Alto consumo'; alerta.hidden = false; }
@@ -2427,153 +2486,345 @@
     if(hidroBotState.open){ minimizeBot(); refocusFab(); }
   });
 
-  /* ---------- PDF real con jsPDF: recibo profesional ---------- */
-  const PDF_NAVY = [0,51,102], PDF_SKY = [0,164,228], PDF_ORANGE = [200,110,0];
-  const PDF_GREEN = [30,158,98], PDF_RED = [180,40,40], PDF_MUT = [110,120,130], PDF_DARK = [25,35,45];
+  /* ---------- PDF con jsPDF: comprobante demostrativo Hidro Mejora ---------- */
+  const PDF_W = 210, PDF_H = 297;
+  const PDF_MARGIN_X = 15, PDF_MARGIN_TOP = 14, PDF_MARGIN_BOTTOM = 16;
+  const PDF_NAVY = [0,51,102], PDF_NAVY_DEEP = [0,36,74], PDF_SKY = [0,164,228], PDF_SKY_DEEP = [0,116,163];
+  const PDF_BG = [242,248,252], PDF_BORDER = [215,226,236], PDF_MUT = [77,100,120], PDF_DARK = [30,52,70];
+  const PDF_GREEN = [21,118,76], PDF_GREEN_BG = [230,246,238], PDF_GREEN_BD = [169,226,194];
+  const PDF_ORANGE = [154,91,0], PDF_ORANGE_BG = [255,243,224], PDF_ORANGE_BD = [255,208,138];
+  const PDF_RED = [189,52,59], PDF_RED_BG = [253,236,236], PDF_RED_BD = [245,170,170];
   let _logoCache = undefined;
+  let _logoPromise = null;
+  function pdfText(value){
+    return String(value == null ? '' : value).normalize('NFC')
+      .replace(/[\u2010-\u2015\u2212]/g, '-').replace(/\u2192/g, ' a ')
+      .replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"')
+      .replace(/\u2026/g, '...').replace(/[^\x20-\x7e\xa0-\xff\n]/gu, '').trim();
+  }
+  function getImageFitDimensions(nw, nh, maxW, maxH){
+    const w = Math.max(1, nw), h = Math.max(1, nh);
+    const s = Math.min(maxW / w, maxH / h);
+    return {w:+(w * s).toFixed(2), h:+(h * s).toFixed(2)};
+  }
+  function pdfFileName(r, supply, mode){
+    const sup = String(supply).replace(/[^0-9A-Za-z]/g, '') || 'demo';
+    const tag = mode === 'payment' ? 'Pago' : 'Recibo';
+    return ('HidroMejora_' + tag + '_' + r.anio + '-' + pad(Number(r.mes) + 1) + '_' + sup)
+      .replace(/[^A-Za-z0-9_.-]/g, '_').slice(0, 120) + '.pdf';
+  }
   function loadLogoDataURL(){
     if(_logoCache !== undefined) return Promise.resolve(_logoCache);
-    return new Promise(resolve=>{
-      try{
-        const img = new Image();
-        let done = false;
-        const fin = v=>{ if(!done){ done = true; _logoCache = v; resolve(v); } };
-        img.onload = ()=>{
-          try{
-            const c = document.createElement('canvas');
-            c.width = 240; c.height = 240;
-            c.getContext('2d').drawImage(img, 0, 0, 240, 240);
-            fin(c.toDataURL('image/jpeg', 0.85));
-          }catch(e){ fin(null); }
-        };
-        img.onerror = ()=>fin(null);
-        img.src = 'assets/logo.png';
-        setTimeout(()=>fin(_logoCache === undefined ? null : _logoCache), 2500);
-      }catch(e){ _logoCache = null; resolve(null); }
+    if(_logoPromise) return _logoPromise;
+    _logoPromise = new Promise(resolve=>{
+      const img = new Image();
+      let done = false;
+      const timer = setTimeout(()=>finish(null), 2500);
+      function finish(value){
+        if(done) return;
+        done = true;
+        clearTimeout(timer);
+        img.onload = img.onerror = null;
+        _logoCache = value;
+        resolve(value);
+      }
+      img.onload = ()=>{
+        try{
+          const fit = getImageFitDimensions(img.naturalWidth || 240, img.naturalHeight || 240, 480, 480);
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(fit.w * 2));
+          canvas.height = Math.max(1, Math.round(fit.h * 2));
+          const ctx = canvas.getContext('2d');
+          if(!ctx) throw new Error('Canvas 2D no disponible.');
+          ctx.scale(2, 2);
+          ctx.drawImage(img, 0, 0, fit.w, fit.h);
+          finish({data:canvas.toDataURL('image/png'), width:fit.w, height:fit.h});
+        }catch(error){
+          console.warn('PDF: se continua sin logo.', error);
+          finish(null);
+        }
+      };
+      img.onerror = ()=>finish(null);
+      img.src = 'assets/logo.png';
     });
+    return _logoPromise;
   }
-  function generarReciboPDF(r){
+  function generarReciboPDF(r, options){
+    const opts = options || {};
+    const mode = opts.mode === 'payment' ? 'payment' : 'receipt';
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({unit:'mm', format:'a4'});
-    const W = 210;
+    const doc = new jsPDF({unit:'mm', format:'a4', compress:true});
+    const LM = PDF_MARGIN_X, RM = PDF_W - PDF_MARGIN_X;
+    const CW = RM - LM;
+    const supply = String(supplyLabel.textContent);
     const p = desglose(r.monto);
-    const estCol = r.estado==='Pagado' ? PDF_GREEN : (r.estado==='Vencido' ? PDF_RED : PDF_ORANGE);
-    const estTxt = r.estado==='Pagado' ? 'PAGADO' : (r.estado==='Vencido' ? 'VENCIDO' : 'PENDIENTE');
-    // Cabecera corporativa
-    doc.setFillColor(...PDF_NAVY); doc.rect(0, 0, W, 36, 'F');
-    if(_logoCache){ try{ doc.addImage(_logoCache, 'JPEG', 172, 5, 26, 26); }catch(e){} }
-    doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(16);
-    doc.text('SEDAPAL - Hidro Mejora', 14, 13);
-    doc.setFontSize(10); doc.setFont('helvetica','normal');
-    doc.text('Recibo de servicio de agua potable', 14, 20);
-    doc.setFontSize(9);
-    doc.text('Suministro: ' + supplyLabel.textContent, 14, 26);
-    doc.text('Recibo N: ' + r.numRecibo, 14, 31);
-    // Franja de prototipo
-    doc.setFontSize(8); doc.setTextColor(...PDF_MUT);
-    doc.text('Prototipo académico · Hidro Mejora — Documento simulado sin valor oficial', 14, 41);
-    // Datos del suministro
-    let y = 48;
-    doc.setTextColor(...PDF_NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(11);
-    doc.text('DATOS DEL SUMINISTRO', 14, y); y += 2;
-    doc.setDrawColor(...PDF_NAVY); doc.setLineWidth(0.6); doc.line(14, y, 196, y); y += 6;
-    doc.setFontSize(9);
-    const filas = [
-      ['Suministro:', supplyLabel.textContent, 'Categoría:', 'Doméstica'],
-      ['Titular:', 'Familia Demo (simulado)', 'Periodo:', r.etiqueta],
-      ['Dirección:', 'Av. Los Próceres 1234, Lima (simulada)', 'Emisión:', r.emision],
-      ['Lecturas (m³):', r.lecturaAnterior.toFixed(1) + ' → ' + r.lecturaActual.toFixed(1), 'Vencimiento:', r.vencimiento]
-    ];
-    filas.forEach(f=>{
-      doc.setTextColor(...PDF_DARK); doc.setFont('helvetica','bold'); doc.text(f[0], 14, y);
-      doc.setFont('helvetica','normal'); doc.text(String(f[1]), 52, y);
-      doc.setFont('helvetica','bold'); doc.text(f[2], 118, y);
-      doc.setFont('helvetica','normal'); doc.text(String(f[3]), 150, y);
-      y += 6;
-    });
-    // Total destacado + estado
-    y += 3;
-    doc.setFillColor(238,244,249); doc.roundedRect(14, y, 182, 26, 2, 2, 'F');
-    doc.setTextColor(...PDF_NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(11);
-    doc.text('TOTAL A PAGAR', 20, y + 9);
-    doc.setFontSize(20); doc.text('S/ ' + r.monto.toFixed(2), 20, y + 19);
-    doc.setFontSize(14); doc.setTextColor(...estCol);
-    doc.text(estTxt, 150, y + 12);
-    if(r.estado==='Pagado'){ doc.setFontSize(9); doc.setTextColor(...PDF_MUT); doc.text('Deuda: S/ 0.00', 150, y + 18); }
-    y += 34;
-    // Detalle de facturación
-    doc.setTextColor(...PDF_NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(11);
-    doc.text('DETALLE DE FACTURACIÓN', 14, y); y += 2;
-    doc.setDrawColor(...PDF_NAVY); doc.setLineWidth(0.6); doc.line(14, y, 196, y); y += 6;
-    doc.setFontSize(9.5);
-    [['Servicio de agua potable (60%)', p.agua], ['Servicio de alcantarillado (22%)', p.alc], ['IGV (18%)', p.igv]].forEach(row=>{
-      doc.setTextColor(...PDF_DARK); doc.setFont('helvetica','normal'); doc.text(row[0], 14, y);
-      doc.setFont('helvetica','bold'); doc.text('S/ ' + row[1].toFixed(2), 196, y, {align:'right'});
-      y += 6;
-    });
-    doc.setDrawColor(160,170,180); doc.setLineWidth(0.4); doc.line(14, y, 196, y); y += 6;
-    doc.setTextColor(...PDF_NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(11);
-    doc.text('TOTAL', 14, y);
-    doc.text('S/ ' + r.monto.toFixed(2), 196, y, {align:'right'});
-    y += 10;
-    // Consumo
-    doc.setFontSize(11); doc.text('CONSUMO DEL MES', 14, y); y += 2;
-    doc.setDrawColor(...PDF_NAVY); doc.setLineWidth(0.6); doc.line(14, y, 196, y); y += 6;
-    doc.setFontSize(9.5); doc.setFont('helvetica','normal'); doc.setTextColor(...PDF_DARK);
+    const paid = r.estado === 'Pagado';
+    const stateColor = paid ? PDF_GREEN : (r.estado === 'Vencido' ? PDF_RED : PDF_ORANGE);
+    const stateBg = paid ? PDF_GREEN_BG : (r.estado === 'Vencido' ? PDF_RED_BG : PDF_ORANGE_BG);
+    const stateBd = paid ? PDF_GREEN_BD : (r.estado === 'Vencido' ? PDF_RED_BD : PDF_ORANGE_BD);
+    const estTxt = paid ? 'PAGADO' : (r.estado === 'Vencido' ? 'VENCIDO' : 'PENDIENTE');
+    const isPayment = mode === 'payment' && paid;
+    const titleMain = isPayment ? 'COMPROBANTE DE PAGO DEMOSTRATIVO' : 'Resumen de recibo';
     const prom = promedio6();
-    const prev = recibos[r.id + 1];
-    const dif = prev ? (r.consumoM3 - prev.consumoM3) : null;
-    doc.text('Consumo mensual: ' + r.consumoM3 + ' m³', 14, y);
-    doc.text('Promedio últimos 6 meses: ' + prom + ' m³', 110, y); y += 6;
-    doc.text(dif === null ? 'Sin mes anterior para comparar.' :
-      ('Vs. mes anterior (' + prev.mesShort + '): ' + (dif > 0 ? '+' : '') + dif.toFixed(1) + ' m³'), 14, y);
-    y += 10;
-    // Gráfico de consumo últimos 6 meses
     const items = ultimos6();
+    const idx = recibos.findIndex(x=>x.numRecibo === r.numRecibo);
+    const prev = idx >= 0 ? recibos[idx + 1] : null;
+    const dif = prev ? +(r.consumoM3 - prev.consumoM3).toFixed(1) : null;
+    let y = PDF_MARGIN_TOP;
+    doc.setProperties({title:pdfText(titleMain + ' - ' + r.numRecibo),
+      subject:pdfText('Comprobante demostrativo del prototipo Hidro Mejora. Sin valor oficial.'),
+      author:'Hidro Mejora'});
+    function t(value, x, yy, o){
+      const c = o || {};
+      doc.setFont('helvetica', c.style || 'normal');
+      doc.setFontSize(c.size || 9);
+      doc.setTextColor(...(c.color || PDF_DARK));
+      doc.text(pdfText(value), x, yy, {align:c.align || 'left', maxWidth:c.maxWidth || undefined});
+    }
+    function divider(){
+      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3); doc.line(LM, y, RM, y);
+    }
+    function sectionTitle(label){
+      ensureSpace(14);
+      t(label, LM, y, {size:10.5, style:'bold', color:PDF_NAVY});
+      y += 1.8;
+      doc.setDrawColor(...PDF_SKY); doc.setLineWidth(0.5); doc.line(LM, y, LM + 26, y);
+      y += 3.8;
+    }
+    function badge(text, cx, yy){
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+      const w = doc.getTextWidth(pdfText(text)) + 10;
+      const x = Math.min(Math.max(cx - w / 2, LM), RM - w);
+      doc.setFillColor(...stateBg);
+      doc.setDrawColor(...stateBd); doc.setLineWidth(0.4);
+      try{ doc.roundedRect(x, yy - 5.5, w, 8, 3, 3, 'FD'); }
+      catch(e){ doc.rect(x, yy - 5.5, w, 8, 'FD'); }
+      doc.setTextColor(...stateColor);
+      doc.text(pdfText(text), x + w / 2, yy, {align:'center'});
+      return x + w;
+    }
+    function smallHeader(){
+      y = PDF_MARGIN_TOP;
+      doc.setFillColor(...PDF_NAVY); doc.rect(0, 0, PDF_W, 13, 'F');
+      doc.setFillColor(...PDF_SKY); doc.rect(0, 13, PDF_W, 1.2, 'F');
+      t('Hidro Mejora', LM, 6.5, {size:10, style:'bold', color:[255,255,255]});
+      t('Recibo ' + r.numRecibo + ' (continuacion)', RM, 6.5, {size:8, color:[214,228,240], align:'right'});
+      y = 20;
+    }
+    function ensureSpace(h){
+      if(y + h <= PDF_H - PDF_MARGIN_BOTTOM) return;
+      doc.addPage();
+      smallHeader();
+    }
+    // Cabecera: franja navy + linea sky + logo discreto + identidad + prototipo
+    doc.setFillColor(...PDF_NAVY); doc.rect(0, 0, PDF_W, 34, 'F');
+    doc.setFillColor(...PDF_SKY); doc.rect(0, 34, PDF_W, 1.4, 'F');
+    if(_logoCache){
+      try{
+        const fit = getImageFitDimensions(_logoCache.width, _logoCache.height, 26, 22);
+        const lx = RM - fit.w, ly = 6 + (22 - fit.h) / 2;
+        doc.addImage(_logoCache.data, 'PNG', lx, ly, fit.w, fit.h);
+      }catch(error){ console.warn('PDF: no se pudo insertar el logo.', error); }
+    } else {
+      t('HIDRO MEJORA', RM, 17, {size:11, style:'bold', color:[255,255,255], align:'right'});
+    }
+    t('HIDRO MEJORA', LM, 11, {size:16, style:'bold', color:[255,255,255]});
+    t(titleMain, LM, 18, {size:10.5, style:'bold', color:[186,224,245]});
+    doc.setFillColor(255,255,255);
+    doc.setDrawColor(186,224,245); doc.setLineWidth(0.3);
+    const protoTxt = 'PROTOTIPO ACADEMICO - ENTORNO DEMOSTRATIVO';
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
+    const protoW = doc.getTextWidth(protoTxt) + 7;
+    try{ doc.roundedRect(LM, 22.5, protoW, 6, 3, 3, 'FD'); }
+    catch(e){ doc.rect(LM, 22.5, protoW, 6, 'FD'); }
+    doc.setTextColor(...PDF_NAVY); doc.text(protoTxt, LM + 3.5, 26.5);
+    y = 42;
+    // Datos principales en tarjetas claras
+    sectionTitle('DATOS DEL RECIBO');
+    ensureSpace(30);
+    const gap = 4, colW = (CW - gap) / 2, cardH = 12.5;
+    const cards = [
+      ['SUMINISTRO', supply], ['PERIODO', r.etiqueta],
+      ['RECIBO', r.numRecibo], ['VENCIMIENTO', r.vencimiento]
+    ];
+    cards.forEach((c, i)=>{
+      const cx = LM + (i % 2) * (colW + gap);
+      const cy = y + Math.floor(i / 2) * (cardH + 3);
+      doc.setFillColor(...PDF_BG);
+      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
+      try{ doc.roundedRect(cx, cy, colW, cardH, 2, 2, 'FD'); }
+      catch(e){ doc.rect(cx, cy, colW, cardH, 'FD'); }
+    t(c[0], cx + 4, cy + 4.3, {size:7.5, style:'bold', color:PDF_MUT});
+      t(c[1], cx + 4, cy + 9.2, {size:9.5, style:'bold', color:PDF_NAVY, maxWidth:colW - 8});
+    });
+    y += (cardH + 3) * 2 + 3;
+    t('Emision: ' + r.emision + '   Categoria: Domestica (simulada)', LM, y, {size:8, color:PDF_MUT});
+    y += 2;
+    t('Titular y direccion simulados: Familia Demo - Av. Los Proceres 1234, Lima.', LM, y, {size:8, color:PDF_MUT});
+    y += 6;
+    // Monto principal + estado como badge
+    ensureSpace(34);
+    const montoLabel = paid ? 'MONTO DEL RECIBO' : (r.estado === 'Vencido' ? 'MONTO PENDIENTE' : 'MONTO A PAGAR');
+    doc.setFillColor(...PDF_BG);
+    doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
+    try{ doc.roundedRect(LM, y, CW, 27, 2.5, 2.5, 'FD'); }
+    catch(e){ doc.rect(LM, y, CW, 27, 'FD'); }
+    t(montoLabel, LM + 5, y + 7, {size:8, style:'bold', color:PDF_MUT});
+    t(fmt(r.monto), LM + 5, y + 18.5, {size:22, style:'bold', color:PDF_NAVY});
+    badge(estTxt, RM - 26, y + 10);
+    if(paid){
+      t('Deuda pendiente: S/ 0.00', RM, y + 19, {size:8.5, color:PDF_MUT, align:'right'});
+    } else {
+      t('Vence: ' + r.vencimiento, RM, y + 19, {size:8.5, color:PDF_MUT, align:'right'});
+    }
+    if(isPayment && r.paymentCode){
+      t('Codigo de operacion demostrativo: ' + r.paymentCode, LM + 5, y + 23.5, {size:7.5, color:PDF_MUT});
+    }
+    y += 32;
+    // Desglose demostrativo (60/22/18 referencial, total cuadra exacto)
+    sectionTitle('DESGLOSE DEMOSTRATIVO');
+    ensureSpace(34);
+    const rows = [
+      ['Servicio de agua (60% referencial)', p.agua],
+      ['Servicio de alcantarillado (22% referencial)', p.alc],
+      ['IGV (18% referencial)', p.igv]
+    ];
+    rows.forEach(row=>{
+      doc.setFillColor(255,255,255);
+      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.25);
+      try{ doc.roundedRect(LM, y, CW, 8.5, 1.5, 1.5, 'FD'); }
+      catch(e){ doc.rect(LM, y, CW, 8.5, 'FD'); }
+      t(row[0], LM + 4, y + 5.8, {size:9, color:PDF_DARK});
+      t(fmt(row[1]), RM - 4, y + 5.8, {size:9, style:'bold', color:PDF_NAVY, align:'right'});
+      y += 10;
+    });
+    doc.setFillColor(...PDF_NAVY);
+    try{ doc.roundedRect(LM, y, CW, 9.5, 1.5, 1.5, 'F'); }
+    catch(e){ doc.rect(LM, y, CW, 9.5, 'F'); }
+    t(paid ? 'MONTO DEL RECIBO' : 'DEUDA TOTAL', LM + 4, y + 6.3, {size:9.5, style:'bold', color:[255,255,255]});
+    t(fmt(r.monto), RM - 4, y + 6.3, {size:10, style:'bold', color:[255,255,255], align:'right'});
+    y += 13;
+    t('Distribucion referencial utilizada unicamente para el prototipo. No es la tarifa oficial.', LM, y, {size:7.5, color:PDF_MUT});
+    y += 6;
+    // Resumen de consumo destacado
+    sectionTitle('RESUMEN DE CONSUMO');
+    ensureSpace(30);
+    const consColor = r.consumoM3 > 20 ? PDF_RED : (r.consumoM3 > prom ? PDF_ORANGE : PDF_GREEN);
+    const consState = r.consumoM3 > 20 ? 'Consumo elevado' : (r.consumoM3 > prom ? 'Sobre el promedio' : 'Normal');
+    const c3gap = 4, c3w = (CW - c3gap * 2) / 3;
+    const consCards = [
+      ['CONSUMO', r.consumoM3 + ' m3'], ['PROMEDIO 6 MESES', prom + ' m3'],
+      ['VARIACION', dif === null ? 'Sin datos' : ((dif > 0 ? '+' : '') + dif.toFixed(1) + ' m3')]
+    ];
+    consCards.forEach((c, i)=>{
+      const cx = LM + i * (c3w + c3gap);
+      doc.setFillColor(...PDF_BG);
+      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
+      try{ doc.roundedRect(cx, y, c3w, cardH, 2, 2, 'FD'); }
+      catch(e){ doc.rect(cx, y, c3w, cardH, 'FD'); }
+      t(c[0], cx + 4, y + 4.3, {size:7.5, style:'bold', color:PDF_MUT});
+      t(c[1], cx + 4, y + 9.2, {size:9.5, style:'bold', color:PDF_NAVY, maxWidth:c3w - 8});
+    });
+    y += cardH + 4;
+    doc.setFillColor(...(r.consumoM3 > 20 ? PDF_RED_BG : (r.consumoM3 > prom ? PDF_ORANGE_BG : PDF_GREEN_BG)));
+    doc.setDrawColor(...(r.consumoM3 > 20 ? PDF_RED_BD : (r.consumoM3 > prom ? PDF_ORANGE_BD : PDF_GREEN_BD)));
+    doc.setLineWidth(0.35);
+    const indTxt = 'Indicador: ' + consState;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+    const indW = doc.getTextWidth(pdfText(indTxt)) + 9;
+    try{ doc.roundedRect(LM, y, indW, 7.5, 3.5, 3.5, 'FD'); }
+    catch(e){ doc.rect(LM, y, indW, 7.5, 'FD'); }
+    doc.setTextColor(...consColor); doc.text(pdfText(indTxt), LM + 4.5, y + 5.2);
+    t('Lectura anterior: ' + r.lecturaAnterior.toFixed(1) + ' m3   Lectura actual: ' + r.lecturaActual.toFixed(1) + ' m3', LM + indW + 4, y + 5.2, {size:8, color:PDF_MUT, maxWidth:CW - indW - 4});
+    y += 12;
+    // Grafico de consumo (barras sky, seleccionado navy, promedio naranja sobrio)
+    sectionTitle('CONSUMO ULTIMOS 6 MESES (m3)');
+    ensureSpace(62);
     const maxV = Math.max.apply(null, items.map(x=>x.consumoM3).concat([prom, 1]));
-    doc.setTextColor(...PDF_NAVY); doc.setFont('helvetica','bold'); doc.setFontSize(11);
-    doc.text('CONSUMO ÚLTIMOS 6 MESES (m³)', 14, y);
-    const gx = 14, gw = 182, gyBase = y + 44, gh = 36;
-    doc.setFontSize(7);
+    const gx = LM, gw = CW, gh = 32, gyBase = y + 42;
+    doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
+    doc.line(gx, y + 4, gx, gyBase);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
     items.forEach((x,i)=>{
       const slot = gw / items.length;
-      const bh = Math.max(2, (x.consumoM3/maxV) * gh);
-      const bx = gx + i*slot + 5, bw = slot - 10;
-      if(x.consumoM3 > prom) doc.setFillColor(...PDF_ORANGE); else doc.setFillColor(...PDF_SKY);
-      doc.rect(bx, gyBase - bh, bw, bh, 'F');
-      doc.setTextColor(...PDF_DARK); doc.setFont('helvetica','bold');
-      doc.text(String(x.consumoM3), bx + bw/2, gyBase - bh - 2, {align:'center'});
-      doc.setFont('helvetica','normal');
-      doc.text(x.mesShort, bx + bw/2, gyBase + 5, {align:'center'});
+      const bh = Math.max(2, (x.consumoM3 / maxV) * gh);
+      const bx = gx + i * slot + 4, bw = slot - 8;
+      const isCurrent = x.numRecibo === r.numRecibo;
+      if(isCurrent) doc.setFillColor(...PDF_NAVY);
+      else doc.setFillColor(...PDF_SKY);
+      try{ doc.roundedRect(bx, gyBase - bh, bw, bh, 1, 1, 'F'); }
+      catch(e){ doc.rect(bx, gyBase - bh, bw, bh, 'F'); }
+      doc.setTextColor(...PDF_DARK); doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
+      doc.text(pdfText(String(x.consumoM3)), bx + bw / 2, gyBase - bh - 2, {align:'center'});
+      doc.setFont('helvetica','normal'); doc.setTextColor(...PDF_MUT);
+      doc.text(pdfText(x.mesShort), bx + bw / 2, gyBase + 4.5, {align:'center'});
     });
-    doc.setDrawColor(150,160,170); doc.setLineWidth(0.4); doc.line(gx, gyBase, gx + gw, gyBase);
-    const ay = gyBase - (prom/maxV) * gh;
-    doc.setDrawColor(...PDF_ORANGE); doc.setLineWidth(0.5);
-    try{ doc.setLineDashPattern([2, 1.5], 0); }catch(e){}
+    doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.35); doc.line(gx, gyBase, gx + gw, gyBase);
+    const ay = gyBase - (prom / maxV) * gh;
+    doc.setDrawColor(...PDF_ORANGE); doc.setLineWidth(0.4);
+    try{ doc.setLineDashPattern([2, 1.5], 0); }catch(e){ console.warn('PDF: patron discontinuo no soportado.'); }
     doc.line(gx, ay, gx + gw, ay);
     try{ doc.setLineDashPattern([], 0); }catch(e){}
-    doc.setTextColor(...PDF_ORANGE); doc.setFont('helvetica','bold');
-    doc.text('Prom: ' + prom + ' m³', gx + gw, ay - 2, {align:'right'});
-    // Pie
-    doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(...PDF_MUT);
-    doc.text('Prototipo académico · Hidro Mejora — Suministro ' + supplyLabel.textContent + ' · Recibo ' + r.numRecibo, W/2, 288, {align:'center'});
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...PDF_ORANGE);
+    const avgLbl = 'Promedio ' + prom + ' m3';
+    const avgW = doc.getTextWidth(pdfText(avgLbl)) + 6;
+    doc.setFillColor(255,255,255);
+    try{ doc.roundedRect(gx + gw - avgW, ay - 6.5, avgW, 5.5, 2, 2, 'FD'); }
+    catch(e){ doc.rect(gx + gw - avgW, ay - 6.5, avgW, 5.5, 'FD'); }
+    doc.setDrawColor(...PDF_ORANGE_BD); doc.setLineWidth(0.3);
+    try{ doc.roundedRect(gx + gw - avgW, ay - 6.5, avgW, 5.5, 2, 2, 'D'); }catch(e){}
+    doc.setTextColor(...PDF_ORANGE);
+    doc.text(pdfText(avgLbl), gx + gw - 3, ay - 2.6, {align:'right'});
+    y = gyBase + 10;
+    t('Barras azul agua: consumo mensual. Barra navy: recibo actual. Linea discontinua: promedio.', LM, y, {size:7.5, color:PDF_MUT});
+    y += 5;
+    const avgGasto = promedioGasto6();
+    t('Monto actual: ' + fmt(r.monto) + '    Promedio ultimos 6 meses: ' + fmt(avgGasto), LM, y, {size:8.5, color:PDF_DARK});
+    y += 6;
+    divider(); y += 4;
+    // Pie + numeracion en todas las paginas
+    const totalPages = doc.getNumberOfPages();
+    for(let pg = 1; pg <= totalPages; pg++){
+      doc.setPage(pg);
+      const fy = PDF_H - 10;
+      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3); doc.line(LM, fy - 4, RM, fy - 4);
+      t('Hidro Mejora - Prototipo academico - Recibo ' + r.numRecibo, LM, fy, {size:7, color:PDF_MUT});
+      t('Pagina ' + pg + ' de ' + totalPages, RM, fy, {size:7, color:PDF_MUT, align:'right'});
+      t('Documento generado en entorno demostrativo - Sin valor oficial', LM, fy + 3.5, {size:7, color:PDF_MUT});
+    }
     return doc;
   }
-  async function descargarReciboPDF(r, btn){
-    if(!window.jspdf){ showToast('No se pudo cargar el generador PDF.'); return; }
+  async function descargarReciboPDF(r, btn, options){
+    if(!window.jspdf || typeof window.jspdf.jsPDF !== 'function'){
+      showToast('No se pudo cargar el generador PDF. Recarga la pagina e intentalo otra vez.');
+      return;
+    }
     if(btn && btn.dataset.busy === '1') return;
+    const mode = options && options.mode === 'payment' ? 'payment' : 'receipt';
+    if(mode === 'payment' && (!r || r.estado !== 'Pagado' || !r.paymentCode)){
+      showToast('La constancia esta disponible despues de registrar el pago.');
+      return;
+    }
+    if(!r || !Number.isFinite(r.monto) || r.monto < 0 || !Number.isFinite(r.consumoM3)){
+      showToast('El recibo contiene datos invalidos.');
+      return;
+    }
     const label = btn ? btn.textContent : null;
-    if(btn){ btn.dataset.busy = '1'; btn.disabled = true; btn.textContent = 'Generando PDF…'; }
+    if(btn){ btn.dataset.busy = '1'; btn.disabled = true; btn.setAttribute('aria-busy', 'true'); btn.textContent = 'Generando PDF…'; }
     try{
-      if(_logoCache === undefined) _logoCache = await loadLogoDataURL();
-      const doc = generarReciboPDF(r);
-      const sup = String(supplyLabel.textContent).replace(/[^0-9A-Za-z]/g,'') || 'demo';
-      doc.save('SEDAPAL_Recibo_' + r.anio + '_' + pad(r.mes+1) + '_' + sup + '.pdf');
+      await loadLogoDataURL();
+      if(!viewDash.classList.contains('active')) return;
+      const doc = generarReciboPDF(r, {mode:mode});
+      await doc.save(pdfFileName(r, supplyLabel.textContent, mode), {returnPromise:true});
       if(btn){ btn.textContent = 'PDF descargado'; }
-      showToast('Recibo PDF descargado.');
-    }catch(e){ showToast('No se pudo generar el PDF.'); }
-    if(btn){
-      setTimeout(()=>{ btn.disabled = false; btn.dataset.busy = '0'; if(label !== null) btn.textContent = label; }, 1400);
+      showToast(mode === 'payment' ? 'Constancia de pago descargada.' : 'Recibo PDF descargado.');
+    }catch(error){
+      console.error('No se pudo generar el comprobante PDF.', error);
+      showToast('No se pudo generar el PDF. Intentalo nuevamente.');
+    }finally{
+      if(btn){
+        setTimeout(()=>{ btn.disabled = false; btn.dataset.busy = '0'; btn.removeAttribute('aria-busy'); if(label !== null) btn.textContent = label; }, 1400);
+      }
     }
   }
 
@@ -2622,6 +2873,7 @@
       renderCards();
       if(copiesModal.classList.contains('open')) renderCopies(false);
       const code = 'PAG-' + payTarget.anio + '-' + Math.floor(100000 + Math.random()*900000);
+      payTarget.paymentCode = code;
       document.getElementById('pay-success-text').textContent =
         'Recibo ' + payTarget.etiqueta + ' cancelado por ' + fmt(payTarget.monto) + '. Deuda actual: S/ 0.00.';
       document.getElementById('pay-code').textContent = code;
@@ -2630,7 +2882,7 @@
     }, 1600);
   });
   document.getElementById('pay-constancia').addEventListener('click', ev=>{
-    if(payTarget) descargarReciboPDF(payTarget, ev.currentTarget);
+    if(payTarget) descargarReciboPDF(payTarget, ev.currentTarget, {mode:'payment'});
   });
   document.getElementById('pay-done').addEventListener('click', ()=>{
     const wasDetail = selected && payTarget && selected.id===payTarget.id && detModal.classList.contains('open');
@@ -2693,7 +2945,7 @@
   /* ---------- Incidencias (simulado + localStorage) ---------- */
   try{ incidencias = JSON.parse(localStorage.getItem('hm_inc') || '[]'); }catch(e){ incidencias = []; }
   function guardarInc(){
-    try{ localStorage.setItem('hm_inc', JSON.stringify(incidencias.map(i=>({code:i.code, tipo:i.tipo, desc:i.desc, dir:i.dir, sup:i.sup, fecha:i.fecha, coords:i.coords})))); }
+    try{ localStorage.setItem('hm_inc', JSON.stringify(incidencias.map(i=>({code:i.code, tipo:i.tipo, desc:i.desc, dir:i.dir, sup:i.sup, fecha:i.fecha, coords:i.coords, tieneFoto:!!(i.tieneFoto || i.foto)})))); }
     catch(e){}
   }
   function renderInc(){
@@ -2702,15 +2954,19 @@
     list.innerHTML = '';
     document.getElementById('inc-empty').classList.toggle('show', !incidencias.length);
     document.getElementById('inc-stat-total').textContent = incidencias.length;
-    document.getElementById('inc-stat-foto').textContent = incidencias.filter(i=>i.foto).length;
+    document.getElementById('inc-stat-foto').textContent = incidencias.filter(i=>i.tieneFoto).length;
     document.getElementById('inc-stat-geo').textContent = incidencias.filter(i=>i.coords).length;
     incidencias.forEach(inc=>{
       const d = document.createElement('div');
       d.className = 'inc-item'; d.setAttribute('role','listitem');
-      d.innerHTML = '<div class="row"><span class="inc-code">' + inc.code + '</span>' +
-        '<span class="badge info">' + inc.tipo + '</span></div>' +
-        '<div class="inc-desc">' + inc.desc + '</div>' +
-        '<div class="inc-meta">' + inc.fecha + ' · ' + inc.dir + (inc.coords ? ' · ' + inc.coords : '') + '</div>';
+      const row = document.createElement('div'); row.className = 'row';
+      const code = document.createElement('span'); code.className = 'inc-code'; code.textContent = inc.code;
+      const badge = document.createElement('span'); badge.className = 'badge info'; badge.textContent = inc.tipo;
+      row.appendChild(code); row.appendChild(badge);
+      const desc = document.createElement('div'); desc.className = 'inc-desc'; desc.textContent = inc.desc;
+      const meta = document.createElement('div'); meta.className = 'inc-meta';
+      meta.textContent = inc.fecha + ' · ' + inc.dir + (inc.coords ? ' · ' + inc.coords : '');
+      d.appendChild(row); d.appendChild(desc); d.appendChild(meta);
       list.appendChild(d);
     });
   }
@@ -2762,7 +3018,7 @@
       const code = 'INC-2026-' + Math.floor(100000 + Math.random()*900000);
       incidencias.unshift({
         code, tipo, desc, dir, sup:supplyLabel.textContent,
-        fecha:new Date().toLocaleDateString('es-PE'), coords:incCoords, foto:incFotoData
+        fecha:new Date().toLocaleDateString('es-PE'), coords:incCoords, foto:incFotoData, tieneFoto:!!incFotoData
       });
       guardarInc(); renderInc();
       document.getElementById('inc-form').hidden = true;
@@ -2888,7 +3144,7 @@
     document.getElementById('side-supply').textContent = sup;
     document.getElementById('cortes-supply').textContent = sup;
     document.getElementById('ate-supply').textContent = sup;
-    recibos = generarRecibos();
+    recibos = generarRecibos(sup);
     currentFilter = 'Todos';
     searchQuery = ''; yearFilter = 'Todos';
     if(searchMes) searchMes.value = '';
