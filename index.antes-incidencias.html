@@ -1017,7 +1017,7 @@
           <div class="mod-stat"><small>Con foto</small><strong id="inc-stat-foto">0</strong></div>
           <div class="mod-stat"><small>Con ubicación</small><strong id="inc-stat-geo">0</strong></div>
         </div>
-        <div class="disclaimer">Registro académico almacenado en la base de datos PostgreSQL del prototipo Hidro Mejora.</div>
+        <div class="disclaimer">Registro simulado con fines académicos. Las incidencias se conservan en este navegador (localStorage) y no se envían a ningún servidor.</div>
         <div id="inc-list" class="support-grid" role="list"></div>
         <div id="inc-empty" class="empty">Aún no registras incidencias. Usa “Reportar incidencia” para crear la primera.</div>
       </div>
@@ -3050,46 +3050,11 @@
   copiesModal.addEventListener('click', e=>{ if(e.target===copiesModal) closeModal(copiesModal); });
   incModal.addEventListener('click', e=>{ if(e.target===incModal) closeModal(incModal); });
 
-  /* ---------- Incidencias (PostgreSQL) ---------- */
-  function codigoIncidencia(idIncidencia, fechaRegistro){
-    let anio = '2026';
-    try{
-      const f = new Date(fechaRegistro);
-      if(!isNaN(f.getTime())) anio = String(f.getFullYear());
-    }catch(e){}
-    return 'INC-' + anio + '-' + String(idIncidencia).padStart(6, '0');
-  }
-  function adaptarIncidenciaAPI(api){
-    const lat = (api.latitud === null || api.latitud === undefined || api.latitud === '') ? null : api.latitud;
-    const lon = (api.longitud === null || api.longitud === undefined || api.longitud === '') ? null : api.longitud;
-    let coords = '';
-    if(lat !== null && lon !== null && lat !== '' && lon !== '') coords = lat + ', ' + lon;
-    let fecha = '';
-    try{
-      fecha = new Date(api.fecha_registro).toLocaleDateString('es-PE');
-    }catch(e){
-      fecha = String(api.fecha_registro || '');
-    }
-    return {
-      id: api.id_incidencia,
-      code: codigoIncidencia(api.id_incidencia, api.fecha_registro),
-      tipo: api.tipo,
-      desc: api.descripcion,
-      dir: api.referencia,
-      sup: supplyLabel.textContent,
-      fecha: fecha,
-      coords: coords,
-      foto: null,
-      tieneFoto: false
-    };
-  }
-  async function cargarIncidenciasDesdeAPI(numeroSuministro){
-    const sup = String(numeroSuministro || '').trim();
-    const resp = await fetch('/api/incidencias/' + encodeURIComponent(sup));
-    if(!resp.ok) throw new Error('API incidencias respondió ' + resp.status);
-    const data = await resp.json();
-    const lista = Array.isArray(data.incidencias) ? data.incidencias : [];
-    return lista.map(adaptarIncidenciaAPI);
+  /* ---------- Incidencias (simulado + localStorage) ---------- */
+  try{ incidencias = JSON.parse(localStorage.getItem('hm_inc') || '[]'); }catch(e){ incidencias = []; }
+  function guardarInc(){
+    try{ localStorage.setItem('hm_inc', JSON.stringify(incidencias.map(i=>({code:i.code, tipo:i.tipo, desc:i.desc, dir:i.dir, sup:i.sup, fecha:i.fecha, coords:i.coords, tieneFoto:!!(i.tieneFoto || i.foto)})))); }
+    catch(e){}
   }
   function renderInc(){
     const list = document.getElementById('inc-list');
@@ -3143,7 +3108,7 @@
       {timeout:8000}
     );
   });
-  document.getElementById('inc-form').addEventListener('submit', async ev=>{
+  document.getElementById('inc-form').addEventListener('submit', ev=>{
     ev.preventDefault();
     const form = ev.currentTarget;              // currentTarget solo es válido durante el dispatch
     if(form.dataset.busy === '1') return;
@@ -3154,52 +3119,23 @@
     if(!dir){ showToast('Indica una dirección o referencia.'); document.getElementById('inc-dir').focus(); return; }
     const btnSubmit = document.getElementById('inc-submit');
     form.dataset.busy = '1';
-    btnSubmit.disabled = true; btnSubmit.textContent = 'Registrando...';
-    let latitud = null;
-    let longitud = null;
-    if(incCoords){
-      const partes = String(incCoords).split(',');
-      if(partes.length === 2){
-        const lat = Number(partes[0].trim());
-        const lon = Number(partes[1].trim());
-        if(Number.isFinite(lat) && Number.isFinite(lon)){ latitud = lat; longitud = lon; }
-      }
-    }
-    try{
-      const resp = await fetch('/api/incidencias', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          numero_suministro: supplyLabel.textContent,
-          tipo: tipo,
-          descripcion: desc,
-          referencia: dir,
-          latitud: latitud,
-          longitud: longitud
-        })
-      });
-      if(!resp.ok) throw new Error('API incidencias respondió ' + resp.status);
-      const data = await resp.json();
-      if(!data || data.estado !== 'ok' || !data.incidencia) throw new Error('Respuesta de incidencia inválida');
-      const nueva = adaptarIncidenciaAPI(data.incidencia);
-      incidencias.unshift(nueva);
-      renderInc();
+    btnSubmit.disabled = true; btnSubmit.textContent = 'Registrando…';
+    setTimeout(()=>{
       form.dataset.busy = '0';
       btnSubmit.disabled = false; btnSubmit.textContent = 'Registrar incidencia';
+      const code = 'INC-2026-' + Math.floor(100000 + Math.random()*900000);
+      incidencias.unshift({
+        code, tipo, desc, dir, sup:supplyLabel.textContent,
+        fecha:new Date().toLocaleDateString('es-PE'), coords:incCoords, foto:incFotoData, tieneFoto:!!incFotoData
+      });
+      guardarInc(); renderInc();
       document.getElementById('inc-form').hidden = true;
-      document.getElementById('inc-code').textContent = nueva.code;
+      document.getElementById('inc-code').textContent = code;
       const okBox = document.getElementById('inc-ok');
       okBox.hidden = false;
       okBox.classList.remove('content-fade'); void okBox.offsetWidth; okBox.classList.add('content-fade');
       showSuccess('Incidencia registrada correctamente.');
-    }catch(err){
-      console.error('No se pudo registrar la incidencia.', err);
-      form.dataset.busy = '0';
-      btnSubmit.disabled = false; btnSubmit.textContent = 'Registrar incidencia';
-      showToast('No se pudo registrar la incidencia. Inténtalo nuevamente.');
-    }
+    }, 700);
   });
   document.getElementById('inc-again').addEventListener('click', ()=>{
     document.getElementById('inc-form').reset();
@@ -3382,12 +3318,6 @@
       console.error(MSG_ERROR_RECIBOS, err);
       recibos = [];
       recibosEstado = 'error';
-    }
-    try{
-      incidencias = await cargarIncidenciasDesdeAPI(sup);
-    }catch(err){
-      console.error('No se pudieron cargar las incidencias.', err);
-      incidencias = [];
     }
     // Crossfade: skeleton se desvanece y el contenido entra
     cardsEl.classList.add('is-fading');
