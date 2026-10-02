@@ -309,6 +309,7 @@
   .btn-sm:disabled{opacity:.55;cursor:not-allowed}
   .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--green)}
   .card[data-estado="Pendiente"]::before{background:var(--orange)}
+  .card[data-estado="Emitido"]::before{background:var(--sky)}
   .card[data-estado="Vencido"]::before{background:var(--red)}
   .card:hover,.card:focus-visible{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#9fc6e2;outline:none}
   .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.6rem;margin-bottom:.5rem}
@@ -320,6 +321,7 @@
   .badge.Pagado{background:var(--green-bg);color:#0c6b3e;border:1px solid #bfe8d2}
   .badge.Pendiente{background:var(--orange-bg);color:#9a5200;border:1px solid #ffd9a3}
   .badge.Vencido{background:var(--red-bg);color:#a11f1f;border:1px solid #f5c2c2}
+  .badge.Emitido{background:#e7f4fd;color:#0b5cab;border:1px solid #bfe0f5}
   .card-amount{font-size:1.45rem;font-weight:700;color:var(--text);letter-spacing:-.01em}
   .card-amount small{font-size:.85rem;font-weight:600;color:var(--muted)}
   .card-meta{display:flex;justify-content:space-between;align-items:center;margin-top:.6rem;font-size:.8rem;color:var(--muted)}
@@ -989,6 +991,7 @@
             <button class="chip-filter active" data-filter="Todos" type="button">Todos</button>
             <button class="chip-filter" data-filter="Pagado" type="button">Pagado</button>
             <button class="chip-filter" data-filter="Pendiente" type="button">Pendiente</button>
+            <button class="chip-filter" data-filter="Emitido" type="button">Emitido</button>
             <button class="chip-filter" data-filter="Vencido" type="button">Vencido</button>
           </div>
         </div>
@@ -1429,6 +1432,12 @@
   let incFotoData = null;
   let incCoords = '';
   let loading = false;
+  // Estado de la fuente real de recibos (API). Sin fallback simulado.
+  let recibosEstado = 'ok'; // 'cargando' | 'ok' | 'vacio' | 'error'
+  const MSG_CARGANDO_RECIBOS = 'Consultando recibos...';
+  const MSG_SIN_RECIBOS = 'No se encontraron recibos para este suministro.';
+  const MSG_ERROR_RECIBOS = 'No se pudo obtener la información de los recibos. Inténtalo nuevamente.';
+  const MSG_FILTRO_VACIO = 'No hay recibos con ese estado. Prueba con otro filtro.';
 
   /* ---------- Utilidades ---------- */
   const toastQueue = [];
@@ -1659,8 +1668,73 @@
     }
     return list;
   }
+  // NOTA: generarRecibos() queda como generador simulado legado y ya NO es
+  // la fuente del módulo Recibos. Se conserva sin uso para no romper otras
+  // referencias, pero el login ahora carga desde la API real.
 
-  /* ---------- Skeletons (carga demostrativa 1.5s) ---------- */
+  /* ---------- Recibos desde API real (Nginx -> /api/recibos/:suministro) ---------- */
+  function formatearFechaCorta(iso){
+    try{
+      const d = new Date(iso);
+      if(isNaN(d)) return '—';
+      return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();
+    }catch(e){ return '—'; }
+  }
+  function adaptarReciboAPI(api){
+    const montoNum = Number(api.monto);
+    const consumoNum = Number(api.consumo_m3);
+    const monto = Number.isFinite(montoNum) ? montoNum : 0;
+    const consumoM3 = Number.isFinite(consumoNum) ? consumoNum : 0;
+    let fechaEmi = null;
+    try{ fechaEmi = api.fecha_emision ? new Date(api.fecha_emision) : null; }catch(e){ fechaEmi = null; }
+    const emiValida = fechaEmi && !isNaN(fechaEmi);
+    let fechaVen = null;
+    try{ fechaVen = api.fecha_vencimiento ? new Date(api.fecha_vencimiento) : null; }catch(e){ fechaVen = null; }
+    const venValida = fechaVen && !isNaN(fechaVen);
+    // Año/mes para filtros y gráficos: desde fecha_emision real, con respaldo en periodo ("Octubre 2026").
+    let anio = emiValida ? fechaEmi.getFullYear() : new Date().getFullYear();
+    let mes = emiValida ? fechaEmi.getMonth() : 0;
+    const periodoRaw = (api.periodo != null ? String(api.periodo) : '').trim();
+    if(!emiValida && periodoRaw){
+      const y = periodoRaw.match(/\b(19|20)\d{2}\b/);
+      if(y) anio = Number(y[0]);
+      const low = periodoRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const idx = MESES.findIndex(m=>low.indexOf(m.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')) > -1);
+      if(idx >= 0) mes = idx;
+    }
+    const mesNombre = MESES[mes] || '';
+    const mesShort = MESES_SHORT[mes] || '';
+    const etiqueta = periodoRaw || (mesNombre + ' ' + anio);
+    const idStr = String(api.id_recibo != null ? api.id_recibo : (etiqueta + '|' + anio + '-' + mes));
+    return {
+      id: idStr,
+      id_recibo: idStr,
+      mesNombre: mesNombre, mesShort: mesShort, anio: anio, mes: mes,
+      etiqueta: etiqueta,
+      // La API no envía rango de facturación, se conserva su periodo tal cual sin inventar fechas.
+      periodo: etiqueta,
+      numRecibo: 'R-' + idStr,
+      monto: monto, estado: api.estado,
+      emision: emiValida ? formatearFechaCorta(api.fecha_emision) : '—',
+      vencimiento: venValida ? formatearFechaCorta(api.fecha_vencimiento) : '—',
+      fechaEmisionISO: api.fecha_emision || null,
+      fechaVencimientoISO: api.fecha_vencimiento || null,
+      consumoM3: consumoM3, consumo: consumoM3 + ' m³',
+      // La API actual no provee lecturas de medidor.
+      lecturaAnterior: null, lecturaActual: null, paymentCode: null
+    };
+  }
+  async function cargarRecibosDesdeAPI(numeroSuministro){
+    const sup = String(numeroSuministro || '').trim();
+    const resp = await fetch('/api/recibos/' + encodeURIComponent(sup));
+    if(!resp.ok) throw new Error('API recibos respondió ' + resp.status);
+    const data = await resp.json();
+    const lista = Array.isArray(data.recibos) ? data.recibos : [];
+    // Orden: más reciente primero (el backend ya ordena por fecha_emision DESC).
+    return lista.map(adaptarReciboAPI);
+  }
+
+  /* ---------- Skeletons (carga) ---------- */
   function showSkeletons(){
     loading = true;
     btnLogin.disabled = true;
@@ -1695,7 +1769,14 @@
 
   function actualizarSideCons(){
     const card = document.getElementById('side-cons');
-    if(!card || !recibos.length) return;
+    if(!card) return;
+    if(!recibos.length){
+      document.getElementById('side-cons-value').textContent = '—';
+      document.getElementById('side-cons-delta').textContent = 'Sin datos de consumo';
+      document.getElementById('side-cons-cta').hidden = true;
+      card.classList.remove('warn'); card.classList.remove('ok');
+      return;
+    }
     const ultimo = recibos[0];
     const prom = promedio6();
     const pct = prom > 0 ? Math.round(((ultimo.consumoM3 - prom) / prom) * 100) : 0;
@@ -1755,7 +1836,23 @@
     cardsEl.innerHTML = '';
     poblarAnios();
     const filtrados = recibosFiltrados();
-    emptyEl.classList.toggle('show', filtrados.length===0);
+    // Mensajes de estado de la fuente real (sin fallback simulado).
+    if(recibosEstado === 'cargando'){
+      emptyEl.textContent = MSG_CARGANDO_RECIBOS;
+      emptyEl.classList.add('show');
+    } else if(recibosEstado === 'error'){
+      emptyEl.textContent = MSG_ERROR_RECIBOS;
+      emptyEl.classList.add('show');
+    } else if(recibos.length === 0){
+      emptyEl.textContent = MSG_SIN_RECIBOS;
+      emptyEl.classList.add('show');
+    } else if(filtrados.length === 0){
+      emptyEl.textContent = MSG_FILTRO_VACIO;
+      emptyEl.classList.add('show');
+    } else {
+      emptyEl.textContent = MSG_FILTRO_VACIO;
+      emptyEl.classList.remove('show');
+    }
     filtrados.forEach(r=>{
       const impago = r.estado!=='Pagado';
       const art = document.createElement('article');
@@ -1786,12 +1883,16 @@
     if(ultimo){
       document.getElementById('stat-last').textContent = fmt(ultimo.monto);
       document.getElementById('stat-cons').textContent = ultimo.consumo;
+    } else {
+      document.getElementById('stat-last').textContent = '—';
+      document.getElementById('stat-cons').textContent = '—';
     }
     document.getElementById('stat-pend').textContent = recibos.filter(r=>r.estado!=='Pagado').length;
     document.getElementById('stat-serv').textContent = 'Activo';
     document.getElementById('rec-total').textContent = recibos.length;
     document.getElementById('rec-paid').textContent = recibos.filter(r=>r.estado==='Pagado').length;
-    document.getElementById('rec-pend').textContent = recibos.filter(r=>r.estado==='Pendiente').length;
+    // Emitido es impago no vencido: se agrupa con Pendiente para no perderlo en el resumen.
+    document.getElementById('rec-pend').textContent = recibos.filter(r=>r.estado==='Pendiente' || r.estado==='Emitido').length;
     document.getElementById('rec-venc').textContent = recibos.filter(r=>r.estado==='Vencido').length;
     document.getElementById('ate-last').textContent = ultimo ? (ultimo.etiqueta + ' · ' + fmt(ultimo.monto)) : '—';
     document.getElementById('ate-serv').textContent = 'Activo';
@@ -2461,7 +2562,10 @@
     document.getElementById('d-bar-alc').style.width = '22%';
     document.getElementById('d-bar-igv').style.width = '18%';
     document.getElementById('d-deuda').textContent = r.estado==='Pagado' ? 'S/ 0.00 (cancelado)' : fmt(r.monto);
-    document.getElementById('d-lecturas').textContent = r.lecturaAnterior.toFixed(1) + ' → ' + r.lecturaActual.toFixed(1) + ' m³';
+    // La API real no envía lecturas de medidor: mostrar "No disponible" sin romper el detalle.
+    document.getElementById('d-lecturas').textContent = (Number.isFinite(r.lecturaAnterior) && Number.isFinite(r.lecturaActual))
+      ? (Number(r.lecturaAnterior).toFixed(1) + ' → ' + Number(r.lecturaActual).toFixed(1) + ' m³')
+      : 'No disponible';
     document.getElementById('d-consumo').textContent = r.consumo;
     const promRef = document.getElementById('d-promedio-ref');
     if(promRef) promRef.textContent = 'Promedio referencial: ' + promedio6() + ' m³';
@@ -2735,7 +2839,11 @@
     try{ doc.roundedRect(LM, y, indW, 7.5, 3.5, 3.5, 'FD'); }
     catch(e){ doc.rect(LM, y, indW, 7.5, 'FD'); }
     doc.setTextColor(...consColor); doc.text(pdfText(indTxt), LM + 4.5, y + 5.2);
-    t('Lectura anterior: ' + r.lecturaAnterior.toFixed(1) + ' m3   Lectura actual: ' + r.lecturaActual.toFixed(1) + ' m3', LM + indW + 4, y + 5.2, {size:8, color:PDF_MUT, maxWidth:CW - indW - 4});
+    // La API real no envía lecturas: el PDF no debe romperse si faltan.
+    const lectTxt = (Number.isFinite(r.lecturaAnterior) && Number.isFinite(r.lecturaActual))
+      ? ('Lectura anterior: ' + Number(r.lecturaAnterior).toFixed(1) + ' m3   Lectura actual: ' + Number(r.lecturaActual).toFixed(1) + ' m3')
+      : 'Lecturas de medidor: No disponible';
+    t(lectTxt, LM + indW + 4, y + 5.2, {size:8, color:PDF_MUT, maxWidth:CW - indW - 4});
     y += 12;
     // Grafico de consumo (barras sky, seleccionado navy, promedio naranja sobrio)
     sectionTitle('CONSUMO ULTIMOS 6 MESES (m3)');
@@ -3109,7 +3217,7 @@
     });
   });
 
-  /* ---------- Login / Logout con skeleton 1.5s ---------- */
+  /* ---------- Login / Logout con skeleton + API real de recibos ---------- */
   function showError(msg){
     formError.textContent = msg;
     formError.classList.add('show');
@@ -3125,7 +3233,7 @@
       try{ el.setSelectionRange(np, np); }catch(e){}
     }
   });
-  form.addEventListener('submit', e=>{
+  form.addEventListener('submit', async e=>{
     e.preventDefault();
     if(loading) return;
     const sup = inpSupply.value.trim();
@@ -3144,33 +3252,51 @@
     document.getElementById('side-supply').textContent = sup;
     document.getElementById('cortes-supply').textContent = sup;
     document.getElementById('ate-supply').textContent = sup;
-    recibos = generarRecibos(sup);
+    // Fuente real: la sesión usa el suministro validado del login (sin valor fijo).
+    recibos = [];
+    recibosEstado = 'cargando';
     currentFilter = 'Todos';
     searchQuery = ''; yearFilter = 'Todos';
     if(searchMes) searchMes.value = '';
+    if(filterAnio) filterAnio.value = 'Todos';
     document.querySelectorAll('.chip-filter').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
     showView(viewDash);
     const loginHash = location.hash.slice(1); // capturar antes de que showSkeletons actualice el hash
     showSkeletons();
+    emptyEl.textContent = MSG_CARGANDO_RECIBOS;
+    emptyEl.classList.add('show');
+    // Consulta real a la API (Nginx -> backend -> PostgreSQL). Sin fallback simulado.
+    try{
+      const datos = await cargarRecibosDesdeAPI(sup);
+      if(!datos.length){
+        recibos = [];
+        recibosEstado = 'vacio';
+      } else {
+        recibos = datos;
+        recibosEstado = 'ok';
+      }
+    }catch(err){
+      console.error(MSG_ERROR_RECIBOS, err);
+      recibos = [];
+      recibosEstado = 'error';
+    }
+    // Crossfade: skeleton se desvanece y el contenido entra
+    cardsEl.classList.add('is-fading');
+    chartEl.classList.add('is-fading');
+    if(chartSpendEl) chartSpendEl.classList.add('is-fading');
     setTimeout(()=>{
-      // Crossfade: skeleton se desvanece y el contenido entra
-      cardsEl.classList.add('is-fading');
-      chartEl.classList.add('is-fading');
-      if(chartSpendEl) chartSpendEl.classList.add('is-fading');
+      renderCards(); renderInc(); renderCortes('');
+      // Si la URL traía hash válido al iniciar sesión, abrir esa página (sin tutorial)
+      const hsec = Object.keys(HASH_SEC).find(k=>HASH_SEC[k] === loginHash);
+      if(hsec) openDashboardPage(hsec);
+      cardsEl.classList.add('content-fade');
+      chartEl.classList.add('content-fade');
+      if(chartSpendEl) chartSpendEl.classList.add('content-fade');
       setTimeout(()=>{
-        renderCards(); renderInc(); renderCortes('');
-        // Si la URL traía hash válido al iniciar sesión, abrir esa página (sin tutorial)
-        const hsec = Object.keys(HASH_SEC).find(k=>HASH_SEC[k] === loginHash);
-        if(hsec) openDashboardPage(hsec);
-        cardsEl.classList.add('content-fade');
-        chartEl.classList.add('content-fade');
-        if(chartSpendEl) chartSpendEl.classList.add('content-fade');
-        setTimeout(()=>{
-          [cardsEl, chartEl, chartSpendEl].forEach(e=>{ if(e) e.classList.remove('is-fading','content-fade'); });
-        }, 280);
-        if(!hsec && !hasSeenTutorial()) startTutorial();
-      }, isReduced() ? 0 : 160);
-    }, 1500);
+        [cardsEl, chartEl, chartSpendEl].forEach(e=>{ if(e) e.classList.remove('is-fading','content-fade'); });
+      }, 280);
+      if(!hsec && !hasSeenTutorial()) startTutorial();
+    }, isReduced() ? 0 : 160);
   });
 
   // Flujo principal de logout (unico listener): incluye limpieza de HidroBot.
