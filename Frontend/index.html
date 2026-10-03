@@ -2314,7 +2314,7 @@
   function bw(text, w){ return new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(text); }
   // Mapa central de intenciones: el orden del arreglo define la prioridad
   const HIDROBOT_INTENTS = [
-    {id:'cuts_district', desc:'Cortes filtrados por distrito de CORTES'},
+    {id:'cuts_district', desc:'Cortes filtrados por distrito (datos de API)'},
     {id:'no_water', desc:'Falta de agua (combinable con cortes)'},
     {id:'low_pressure', desc:'Baja presión'},
     {id:'leak', desc:'Fuga / rotura / aniego (mapea a categoría del modal)'},
@@ -2336,7 +2336,7 @@
     {id:'unknown', desc:'Fuera de alcance'}
   ];
   function districtHit(text){
-    const ds = CORTES.map(c=>c.distrito).filter((v,i,a)=>a.indexOf(v)===i);
+    const ds = cortes.map(c=>c.distrito).filter((v,i,a)=>a.indexOf(v)===i);
     for(const d of ds){
       const n = normalizeBotText(d);
       if(n === 'ate' || n === 'callao'){ if(bw(text, n)) return d; }
@@ -2447,14 +2447,18 @@
     }
     if(id === 'cuts_district'){
       const dName = found.data;
-      const rows = CORTES.filter(c=>c.distrito === dName).slice(0, 3);
-      if(!rows.length) return {text:'Según los datos demostrativos, no encuentro registros para ' + dName + '. Información simulada del prototipo.'};
+      if(!cortes.length) return {text:'No hay cortes de servicio registrados para este suministro.',
+        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
+      const rows = cortes.filter(c=>c.distrito === dName).slice(0, 3);
+      if(!rows.length) return {text:'No encuentro registros para ' + dName + ' dentro del entorno demostrativo.'};
       const det = rows.map(c=>c.zona + ' · ' + c.fecha + ' · ' + c.hora + ' · ' + c.estado).join(' | ');
-      const n = CORTES.filter(c=>c.distrito === dName).length;
-      return {text:'Según los datos demostrativos, encontré ' + n + ' registro(s) para ' + dName + ': ' + det + '. Información simulada del prototipo.',
+      const n = cortes.filter(c=>c.distrito === dName).length;
+      return {text:'Encontré ' + n + ' registro(s) para ' + dName + ' dentro del entorno demostrativo: ' + det + '.',
         actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
     }
     if(id === 'cuts'){
+      if(!cortes.length) return {text:'No hay cortes de servicio registrados para este suministro.',
+        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
       return {text:'Puedes consultar los cortes programados, eventos en proceso y servicios restablecidos desde el módulo Cortes de servicio.',
         actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
     }
@@ -3498,23 +3502,53 @@ async function descargarConstanciaPDF(r, btn){
     setTimeout(()=>openDashboardPage('incidencias'), isReduced() ? 0 : 210);
   });
 
-  /* ---------- Cortes de servicio (simulados) ---------- */
-  const CORTES = [
-    {distrito:'Ate', zona:'Santa Clara', fecha:'28/09/2026', hora:'08:00 – 14:00', motivo:'Mantenimiento de red primaria', estado:'Programado'},
-    {distrito:'Comas', zona:'La Pascana', fecha:'28/09/2026', hora:'09:30 – 16:00', motivo:'Reparación de tubería matriz', estado:'En proceso'},
-    {distrito:'San Juan de Lurigancho', zona:'Canto Grande', fecha:'27/09/2026', hora:'07:00 – 18:30', motivo:'Rotura de tubería secundaria', estado:'Restablecido'},
-    {distrito:'Villa El Salvador', zona:'Sector 3, Grupo 12', fecha:'29/09/2026', hora:'08:00 – 13:00', motivo:'Empalme de nueva red', estado:'Programado'},
-    {distrito:'Callao', zona:'Ventanilla Alta', fecha:'28/09/2026', hora:'10:00 – 15:00', motivo:'Baja presión por mantenimiento', estado:'En proceso'},
-    {distrito:'Miraflores', zona:'Malecón Sur', fecha:'26/09/2026', hora:'22:00 – 04:00', motivo:'Lavado de reservorio', estado:'Restablecido'}
-  ];
+  /* ---------- Cortes de servicio (PostgreSQL, entorno demostrativo) ---------- */
+  let cortes = [];
+  function formatearFechaCorte(iso){
+    try{
+      const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if(m) return m[3] + '/' + m[2] + '/' + m[1];
+    }catch(e){}
+    return '—';
+  }
+  function adaptarCorteAPI(api){
+    return {
+      id: api.id_corte,
+      distrito: api.distrito,
+      zona: api.zona,
+      motivo: api.motivo,
+      fecha: formatearFechaCorte(api.fecha),
+      hora: api.hora || '',
+      estado: api.estado
+    };
+  }
+  async function cargarCortesDesdeAPI(numeroSuministro){
+    const sup = String(numeroSuministro || '').trim();
+    const resp = await fetch('/api/cortes/' + encodeURIComponent(sup));
+    if(!resp.ok) throw new Error('API cortes respondió ' + resp.status);
+    const data = await resp.json();
+    const lista = Array.isArray(data.cortes) ? data.cortes : [];
+    return lista.map(adaptarCorteAPI);
+  }
   function corteBadge(e){ return e==='Programado' ? 'info' : (e==='En proceso' ? 'Pendiente' : 'Pagado'); }
   function renderCortes(f){
     const list = document.getElementById('cortes-list');
     if(!list) return;
+    const emptyEl = document.getElementById('cortes-empty');
     const q = (f || '').trim().toLowerCase();
     list.innerHTML = '';
-    const rows = CORTES.filter(c => !q || c.distrito.toLowerCase().indexOf(q)>-1 || c.zona.toLowerCase().indexOf(q)>-1);
-    document.getElementById('cortes-empty').classList.toggle('show', !rows.length);
+    if(!cortes.length){
+      if(emptyEl){
+        emptyEl.textContent = 'No hay cortes de servicio registrados para este suministro. Información disponible dentro del entorno demostrativo de Hidro Mejora.';
+        emptyEl.classList.add('show');
+      }
+      return;
+    }
+    const rows = cortes.filter(c => !q || c.distrito.toLowerCase().indexOf(q)>-1 || c.zona.toLowerCase().indexOf(q)>-1);
+    if(emptyEl){
+      emptyEl.textContent = 'Sin registros para ese distrito.';
+      emptyEl.classList.toggle('show', !rows.length);
+    }
     ['Programado','En proceso','Restablecido'].forEach(est=>{
       const g = rows.filter(c=>c.estado===est);
       if(!g.length) return;
@@ -3770,6 +3804,12 @@ async function descargarConstanciaPDF(r, btn){
     }catch(err){
       console.error('No se pudieron cargar las incidencias.', err);
       incidencias = [];
+    }
+    try{
+      cortes = await cargarCortesDesdeAPI(sup);
+    }catch(err){
+      console.error('No se pudieron cargar los cortes de servicio.', err);
+      cortes = [];
     }
     // Crossfade: skeleton se desvanece y el contenido entra
     cardsEl.classList.add('is-fading');

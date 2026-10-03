@@ -86,3 +86,42 @@ CREATE TABLE incidencias (
         FOREIGN KEY (id_suministro)
         REFERENCES suministros(id_suministro)
 );
+
+
+-- CORTES DE SERVICIO (eventos demostrativos del prototipo)
+-- La relación con suministros es N:M mediante cortes_suministros:
+-- un corte puede afectar varios suministros y un suministro
+-- puede tener varios cortes.
+CREATE TABLE cortes_servicio (
+    id_corte BIGSERIAL PRIMARY KEY,
+
+    distrito VARCHAR(80) NOT NULL,
+    zona VARCHAR(120) NOT NULL,
+    motivo VARCHAR(200) NOT NULL,
+
+    fecha DATE NOT NULL,
+    hora VARCHAR(30),
+
+    estado VARCHAR(20) NOT NULL,
+
+    CONSTRAINT chk_estado_corte
+        CHECK (estado IN ('Programado', 'En proceso', 'Restablecido'))
+);
+
+
+-- RELACIÓN CORTES <-> SUMINISTROS (asociaciones demo del prototipo)
+CREATE TABLE cortes_suministros (
+    id_corte BIGINT NOT NULL,
+    id_suministro BIGINT NOT NULL,
+
+    CONSTRAINT pk_cortes_suministros
+        PRIMARY KEY (id_corte, id_suministro),
+
+    CONSTRAINT fk_cs_corte
+        FOREIGN KEY (id_corte)
+        REFERENCES cortes_servicio(id_corte),
+
+    CONSTRAINT fk_cs_suministro
+        FOREIGN KEY (id_suministro)
+        REFERENCES suministros(id_suministro)
+);

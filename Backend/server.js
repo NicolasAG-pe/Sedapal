@@ -688,6 +688,63 @@ app.get("/api/pagos/:suministro", async (req, res) => {
 
 
 // ==========================================
+// CONSULTAR CORTES DE SERVICIO POR SUMINISTRO
+// Avisos demostrativos del prototipo académico.
+// No provienen de sistemas oficiales.
+// ==========================================
+
+app.get("/api/cortes/:suministro", async (req, res) => {
+    try {
+        const numeroSuministro = String(req.params.suministro || '').trim();
+
+        if (!/^\d{7,9}$/.test(numeroSuministro)) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "Número de suministro inválido."
+            });
+        }
+
+        const consulta = `
+            SELECT
+              c.id_corte,
+              c.distrito,
+              c.zona,
+              c.motivo,
+              c.fecha,
+              c.hora,
+              c.estado
+            FROM cortes_suministros cs
+            JOIN cortes_servicio c
+              ON c.id_corte = cs.id_corte
+            JOIN suministros s
+              ON s.id_suministro = cs.id_suministro
+            WHERE s.numero_suministro = $1
+            ORDER BY c.fecha DESC, c.id_corte DESC;
+        `;
+
+        const resultado = await pool.query(
+            consulta,
+            [numeroSuministro]
+        );
+
+        res.json({
+            suministro: numeroSuministro,
+            cantidad: resultado.rowCount,
+            cortes: resultado.rows
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        res.status(500).json({
+            estado: "error",
+            mensaje: "Error interno del servidor."
+        });
+    }
+});
+
+
+// ==========================================
 // INICIO DEL SERVIDOR
 // ==========================================
 
