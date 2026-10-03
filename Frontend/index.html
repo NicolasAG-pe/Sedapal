@@ -870,6 +870,13 @@
             <span>Atención al Cliente</span>
           </button>
         </div>
+        <div class="nav-group">
+          <div class="side-label" aria-hidden="true">Cuenta</div>
+          <button class="nav-item" data-sec="perfil" data-tip="Mi perfil" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+            <span>Mi perfil</span>
+          </button>
+        </div>
       </nav>
       <div class="side-cons ok" id="side-cons" aria-live="polite">
         <div class="side-cons-title">Consumo este mes</div>
@@ -1107,6 +1114,30 @@
         </div>
         <div id="pay-list" class="cards" role="list"></div>
         <div id="pay-empty" class="empty">No hay pagos registrados para este suministro.</div>
+      </div>
+
+      <!-- PERFIL -->
+      <div class="dash-sec" id="sec-perfil" aria-label="Mi perfil">
+        <div class="page-header">
+          <div>
+            <div class="page-crumb">Hidro Mejora / Cuenta</div>
+            <h2 class="page-title" tabindex="-1">Mi perfil</h2>
+            <p class="page-desc">Consulta los datos de tu cuenta.</p>
+          </div>
+        </div>
+        <div class="pre-contact" aria-label="Datos de la cuenta">
+          <h4>Datos de la cuenta</h4>
+          <dl>
+            <div><dt>Correo</dt><dd id="pf-correo">—</dd></div>
+            <div><dt>Número de suministro</dt><dd id="pf-suministro">—</dd></div>
+            <div><dt>Fecha de registro</dt><dd id="pf-fecha">—</dd></div>
+          </dl>
+        </div>
+        <div class="support-card" aria-label="Seguridad de la cuenta">
+          <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Seguridad</h4>
+          <p>Mantén tu cuenta protegida con una contraseña segura.</p>
+          <button class="btn btn-sky" id="btn-change-pass" type="button">Cambiar contraseña</button>
+        </div>
       </div>
 
       <!-- AYUDA -->
@@ -1380,6 +1411,41 @@
   </div>
 </div>
 
+<!-- ============ MODAL: CAMBIAR CONTRASEÑA ============ -->
+<div id="pass-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="pass-title" aria-hidden="true">
+  <div class="dialog">
+    <div class="dialog-head">
+      <div><h3 id="pass-title">Cambiar contraseña</h3><p>Actualiza la clave de tu cuenta</p></div>
+      <button class="icon-btn" id="pass-close" type="button" aria-label="Cerrar cambio de contraseña">✕</button>
+    </div>
+    <div class="dialog-body">
+      <form id="pass-form" novalidate>
+        <div id="pass-error" class="form-error" role="alert"></div>
+        <div class="field">
+          <label for="pass-actual">Contraseña actual</label>
+          <input type="password" id="pass-actual" name="pass-actual" autocomplete="current-password"
+                 placeholder="••••••••" required />
+        </div>
+        <div class="field">
+          <label for="pass-nueva">Nueva contraseña</label>
+          <input type="password" id="pass-nueva" name="pass-nueva" autocomplete="new-password"
+                 placeholder="Mínimo 8 caracteres, letra y número" minlength="8" required />
+        </div>
+        <div class="field">
+          <label for="pass-confirm">Confirmar nueva contraseña</label>
+          <input type="password" id="pass-confirm" name="pass-confirm" autocomplete="new-password"
+                 placeholder="Repite la nueva contraseña" minlength="8" required />
+        </div>
+        <button class="btn btn-ghost" id="pass-toggle" type="button" style="width:100%;margin-bottom:.6rem">Mostrar contraseñas</button>
+        <div class="dialog-actions">
+          <button class="btn btn-ghost" id="pass-cancel" type="button">Cancelar</button>
+          <button class="btn btn-primary" id="pass-submit" type="submit"><span id="pass-submit-text">Actualizar contraseña</span></button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="toast-success" class="toast-success" role="status" aria-live="polite" aria-hidden="true">
   <span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg></span>
@@ -1474,6 +1540,7 @@
   const copiesModal = document.getElementById('copies-modal');
   const incModal = document.getElementById('incident-modal');
   const fotoModal = document.getElementById('foto-modal');
+  const passModal = document.getElementById('pass-modal');
 
   const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const MESES_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -1614,7 +1681,7 @@
   function pad(n){ return String(n).padStart(2,'0'); }
 
   /* ---------- Router interno del dashboard: una sola página activa ---------- */
-  const HASH_SEC = {inicio:'inicio', historial:'recibos', incidencias:'incidencias', cortes:'cortes', pagos:'pagos', ayuda:'atencion'};
+  const HASH_SEC = {inicio:'inicio', historial:'recibos', incidencias:'incidencias', cortes:'cortes', pagos:'pagos', perfil:'perfil', ayuda:'atencion'};
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const isReduced = ()=>reduceMotion.matches;
   const mainContent = document.getElementById('main-content');
@@ -2752,7 +2819,7 @@
   // Escape global unico: prioridad 1) modal, 2) tutorial, 3) HidroBot.
   document.addEventListener('keydown', e=>{
     if(e.key !== 'Escape') return;
-    if(document.querySelector('.overlay.open,.overlay.closing')){ [detModal,payModal,copiesModal,incModal,fotoModal].forEach(closeModal); return; }
+    if(document.querySelector('.overlay.open,.overlay.closing')){ [detModal,payModal,copiesModal,incModal,fotoModal,passModal].forEach(closeModal); return; }
     if(spotActive){ endSpotlight(false); return; }
     if(hidroBotState.open){ minimizeBot(); refocusFab(); }
   });
@@ -3425,6 +3492,104 @@ async function descargarConstanciaPDF(r, btn){
   document.getElementById('foto-done').addEventListener('click', ()=>closeModal(fotoModal));
   fotoModal.addEventListener('click', e=>{ if(e.target===fotoModal) closeModal(fotoModal); });
 
+  /* ---------- Mi perfil + cambio de contraseña ---------- */
+  function mostrarPerfilVacio(){
+    document.getElementById('pf-correo').textContent = '—';
+    document.getElementById('pf-suministro').textContent = '—';
+    document.getElementById('pf-fecha').textContent = '—';
+  }
+  async function cargarPerfil(){
+    const sup = String(supplyLabel.textContent || '').trim();
+    mostrarPerfilVacio();
+    if(!/^\d{7,9}$/.test(sup)) return;
+    document.getElementById('pf-suministro').textContent = sup;
+    try{
+      const resp = await fetch('/api/perfil/' + encodeURIComponent(sup));
+      if(!resp.ok) throw new Error('API perfil respondió ' + resp.status);
+      const data = await resp.json();
+      document.getElementById('pf-correo').textContent = data.correo || '—';
+      document.getElementById('pf-fecha').textContent = formatearFechaCorta(data.fecha_registro);
+    }catch(err){
+      console.error('No se pudo cargar el perfil.', err);
+      showToast('No se pudo cargar la información del perfil.');
+    }
+  }
+  document.querySelector('[data-sec="perfil"]').addEventListener('click', ()=>cargarPerfil());
+  function abrirPassModal(opener){
+    document.getElementById('pass-error').classList.remove('show');
+    document.getElementById('pass-form').reset();
+    const btn = document.getElementById('pass-submit');
+    btn.disabled = false;
+    btn.dataset.busy = '0';
+    document.getElementById('pass-submit-text').textContent = 'Actualizar contraseña';
+    document.getElementById('pass-toggle').textContent = 'Mostrar contraseñas';
+    openModal(passModal, opener);
+  }
+  document.getElementById('btn-change-pass').addEventListener('click', ev=>abrirPassModal(ev.currentTarget));
+  document.getElementById('pass-close').addEventListener('click', ()=>closeModal(passModal));
+  document.getElementById('pass-cancel').addEventListener('click', ()=>closeModal(passModal));
+  passModal.addEventListener('click', e=>{ if(e.target===passModal) closeModal(passModal); });
+  document.getElementById('pass-toggle').addEventListener('click', ev=>{
+    const btn = ev.currentTarget;
+    const mostrar = document.getElementById('pass-actual').type === 'password';
+    ['pass-actual','pass-nueva','pass-confirm'].forEach(id=>{ document.getElementById(id).type = mostrar ? 'text' : 'password'; });
+    btn.textContent = mostrar ? 'Ocultar contraseñas' : 'Mostrar contraseñas';
+  });
+  document.getElementById('pass-form').addEventListener('submit', async ev=>{
+    ev.preventDefault();
+    const btn = document.getElementById('pass-submit');
+    if(btn.dataset.busy === '1') return;
+    const errBox = document.getElementById('pass-error');
+    errBox.classList.remove('show');
+    const actual = document.getElementById('pass-actual').value;
+    const nueva = document.getElementById('pass-nueva').value;
+    const confirm = document.getElementById('pass-confirm').value;
+    let msg = null;
+    if(!actual) msg = '⚠ Ingresa tu contraseña actual.';
+    else if(nueva.length < 8) msg = '⚠ La contraseña nueva debe tener al menos 8 caracteres.';
+    else if(!/[A-Za-z]/.test(nueva) || !/[0-9]/.test(nueva)) msg = '⚠ La contraseña nueva debe contener al menos una letra y un número.';
+    else if(nueva !== confirm) msg = '⚠ La confirmación no coincide con la contraseña nueva.';
+    else if(nueva === actual) msg = '⚠ La contraseña nueva no debe ser idéntica a la actual.';
+    if(msg){
+      errBox.textContent = msg;
+      errBox.classList.add('show');
+      return;
+    }
+    btn.dataset.busy = '1';
+    btn.disabled = true;
+    document.getElementById('pass-submit-text').textContent = 'Actualizando...';
+    try{
+      const resp = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          numero_suministro: String(supplyLabel.textContent || '').trim(),
+          password_actual: actual,
+          password_nueva: nueva,
+          password_confirmacion: confirm
+        })
+      });
+      const data = await resp.json().catch(()=>null);
+      if(!resp.ok || !data || data.estado !== 'ok'){
+        errBox.textContent = '⚠ ' + ((data && data.mensaje) || 'No se pudo actualizar la contraseña.');
+        errBox.classList.add('show');
+        btn.dataset.busy = '0';
+        btn.disabled = false;
+        document.getElementById('pass-submit-text').textContent = 'Actualizar contraseña';
+        return;
+      }
+      closeModal(passModal);
+      showSuccess('Contraseña actualizada correctamente.');
+    }catch(err){
+      console.error('No se pudo actualizar la contraseña.', err);
+      errBox.textContent = '⚠ No se pudo conectar con el servidor. Inténtalo nuevamente.';
+      errBox.classList.add('show');
+      btn.dataset.busy = '0';
+      btn.disabled = false;
+      document.getElementById('pass-submit-text').textContent = 'Actualizar contraseña';
+    }
+  });
+
   /* ---------- Incidencias (PostgreSQL) ---------- */
   function codigoIncidencia(idIncidencia, fechaRegistro){
     let anio = '2026';
@@ -4076,7 +4241,7 @@ async function descargarConstanciaPDF(r, btn){
   // Flujo principal de logout (unico listener): incluye limpieza de HidroBot.
   document.getElementById('btn-logout').addEventListener('click', ()=>{
     resetHidroBotSession();
-    [detModal,payModal,copiesModal,incModal,fotoModal].forEach(closeModal);
+    [detModal,payModal,copiesModal,incModal,fotoModal,passModal].forEach(closeModal);
     endSpotlight(false, {markSeen:false});
     showView(viewLogin);
     inpPass.value = '';

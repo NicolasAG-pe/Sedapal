@@ -439,6 +439,148 @@ app.post("/api/auth/register", async (req, res) => {
 
 
 // ==========================================
+// PERFIL DE USUARIO (solo datos no sensibles)
+// ==========================================
+
+app.get("/api/perfil/:suministro", async (req, res) => {
+    try {
+        const numeroSuministro = String(req.params.suministro || '').trim();
+
+        if (!/^\d{7,9}$/.test(numeroSuministro)) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "Número de suministro inválido."
+            });
+        }
+
+        const resultado = await pool.query(
+            `SELECT
+               u.correo,
+               s.numero_suministro,
+               u.fecha_registro
+             FROM suministros s
+             JOIN usuarios u ON u.id_usuario = s.id_usuario
+             WHERE s.numero_suministro = $1
+             LIMIT 1;`,
+            [numeroSuministro]
+        );
+
+        if (resultado.rowCount === 0) {
+            return res.status(404).json({
+                estado: "error",
+                mensaje: "Suministro no encontrado."
+            });
+        }
+
+        return res.json(resultado.rows[0]);
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            estado: "error",
+            mensaje: "Error interno del servidor."
+        });
+    }
+});
+
+
+// ==========================================
+// CAMBIO DE CONTRASEÑA (verifica la actual)
+// ==========================================
+
+app.post("/api/auth/change-password", async (req, res) => {
+    try {
+        const { numero_suministro, password_actual, password_nueva, password_confirmacion } = req.body || {};
+
+        const suministroNormalizado = String(numero_suministro || '').trim();
+
+        if (!/^\d{7,9}$/.test(suministroNormalizado)) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "Número de suministro inválido."
+            });
+        }
+
+        if (typeof password_actual !== 'string' || password_actual.length === 0) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "La contraseña actual es obligatoria."
+            });
+        }
+
+        if (typeof password_nueva !== 'string' || password_nueva.length < 8) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "La contraseña nueva debe tener al menos 8 caracteres."
+            });
+        }
+
+        if (!/[A-Za-z]/.test(password_nueva) || !/[0-9]/.test(password_nueva)) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "La contraseña nueva debe contener al menos una letra y un número."
+            });
+        }
+
+        if (password_nueva !== password_confirmacion) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "La confirmación no coincide con la contraseña nueva."
+            });
+        }
+
+        if (password_nueva === password_actual) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "La contraseña nueva no debe ser idéntica a la actual."
+            });
+        }
+
+        const resultado = await pool.query(
+            `SELECT
+               u.id_usuario,
+               u.clave_hash
+             FROM suministros s
+             JOIN usuarios u ON u.id_usuario = s.id_usuario
+             WHERE s.numero_suministro = $1
+             LIMIT 1;`,
+            [suministroNormalizado]
+        );
+
+        if (resultado.rowCount === 0 || !verificarClave(password_actual, resultado.rows[0].clave_hash)) {
+            return res.status(401).json({
+                estado: "error",
+                mensaje: "No fue posible validar las credenciales actuales."
+            });
+        }
+
+        const nuevoHash = generarClaveHash(password_nueva);
+
+        await pool.query(
+            `UPDATE usuarios
+             SET clave_hash = $1
+             WHERE id_usuario = $2;`,
+            [nuevoHash, resultado.rows[0].id_usuario]
+        );
+
+        return res.json({
+            estado: "ok",
+            mensaje: "Contraseña actualizada correctamente."
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            estado: "error",
+            mensaje: "Error interno del servidor."
+        });
+    }
+});
+
+
+// ==========================================
 // REGISTRAR INCIDENCIA (foto opcional en BYTEA)
 // NOTA: sin sesión/token de servidor por diseño actual;
 // el endpoint identifica por suministro, igual que el resto.
