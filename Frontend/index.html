@@ -105,6 +105,12 @@
   .login-foot{margin-top:1.1rem;text-align:center;font-size:.8rem;color:#4c5f70}
   .login-foot a{color:var(--sky-dark);font-weight:700;text-decoration:none}
   .login-foot a:hover{text-decoration:underline}
+  .auth-switch{margin-top:1.1rem;text-align:center;font-size:.85rem;color:#4c5f70}
+  .auth-switch a{color:var(--sky-dark);font-weight:700;text-decoration:none}
+  .auth-switch a:hover{text-decoration:underline}
+  .auth-switch[hidden]{display:none}
+  #register-form[hidden]{display:none}
+  .proto-note{font-size:.74rem;color:var(--muted);background:#f6f9fb;border-radius:10px;padding:.55rem .75rem;margin-bottom:.9rem}
   .demo-box{margin-top:1rem;background:rgba(240,247,253,.85);border:1px dashed #6fbfe8;border-radius:10px;
     padding:.6rem .8rem;font-size:.8rem;color:#174a68}
   .login-trust{display:flex;gap:.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap;
@@ -123,7 +129,7 @@
   .btn-menu:hover{background:var(--sky);border-color:var(--sky)}
   .btn-menu svg{width:20px;height:20px}
   .topbar .mini-brand{display:flex;align-items:center;gap:.6rem;min-width:0}
-  .topbar-logo{height:40px;width:auto;max-width:132px;object-fit:contain;display:block;flex:0 0 auto;
+  .topbar-logo{height:42px;width:auto;max-width:132px;object-fit:contain;display:block;flex:0 0 auto;
     background:transparent;padding:0;box-shadow:none;border-radius:10px}
   .topbar-right{margin-left:auto;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
   .mini-brand strong{font-size:1rem;letter-spacing:.04em;display:block;line-height:1.15}
@@ -421,6 +427,7 @@
   .bar.is-max{background:linear-gradient(180deg,#00A4E4 0%,#0074a3 100%)}
   .bar.spend{background:linear-gradient(180deg,#155a8f 0%,#003366 100%)}
   #btn-pay-detail[hidden]{display:none}
+  #btn-constancia[hidden]{display:none}
   .bar-tip{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%) translateY(5px);
     background:#111827;color:#fff;font-size:.74rem;font-weight:700;padding:.4rem .65rem;border-radius:9px;
     white-space:nowrap;opacity:0;visibility:hidden;transition:opacity var(--duration-fast) var(--ease-standard),
@@ -727,7 +734,7 @@
   <div class="login-panel">
   <div class="login-card" role="form" aria-labelledby="login-title">
     <div class="brand" aria-label="Logotipo SEDAPAL">
-      <img src="assets/logo.png" alt="Logotipo SEDAPAL" class="brand-logo">
+      <img src="assets/LogoSedapal.png" alt="Logotipo Sedapal Hidro Mejora" class="brand-logo">
       <div class="brand-text">
         <strong>SEDAPAL</strong>
         <span>Hidro Mejora</span>
@@ -759,6 +766,38 @@
     </form>
 
     <div class="demo-box">💡 <b>Acceso demo:</b> ingresa cualquier suministro (ej. <b>5894213</b>) y clave de 4+ caracteres.</div>
+    <div class="auth-switch" id="auth-to-register">¿No tienes una cuenta? <a href="#" id="show-register">Crear cuenta</a></div>
+
+    <form id="register-form" novalidate hidden>
+      <div id="reg-error" class="form-error" role="alert"></div>
+      <div class="field">
+        <label for="reg-correo">Correo electrónico</label>
+        <input type="email" id="reg-correo" name="reg-correo" autocomplete="email"
+               placeholder="usuario@correo.com" maxlength="120" required />
+      </div>
+      <div class="field">
+        <label for="reg-suministro">Número de suministro</label>
+        <input type="text" id="reg-suministro" name="reg-suministro" inputmode="numeric" autocomplete="off"
+               placeholder="Ej. 987654321" maxlength="9" required />
+        <div class="hint">Ingresa tu código de suministro de 7 a 9 dígitos.</div>
+      </div>
+      <div class="field">
+        <label for="reg-pass">Contraseña</label>
+        <input type="password" id="reg-pass" name="reg-pass" autocomplete="new-password"
+               placeholder="Mínimo 8 caracteres, letra y número" minlength="8" required />
+      </div>
+      <div class="field">
+        <label for="reg-pass2">Confirmar contraseña</label>
+        <input type="password" id="reg-pass2" name="reg-pass2" autocomplete="new-password"
+               placeholder="Repite tu contraseña" minlength="8" required />
+      </div>
+      <div class="proto-note">En este prototipo académico, la validación del titular del suministro no está conectada a los sistemas oficiales de SEDAPAL.</div>
+      <button type="submit" class="btn btn-primary" id="btn-register">
+        <span id="btn-register-text">Crear cuenta</span>
+      </button>
+    </form>
+    <div class="auth-switch" id="auth-to-login" hidden>¿Ya tienes una cuenta? <a href="#" id="show-login">Iniciar sesión</a></div>
+
     <div class="login-foot">¿Olvidaste tu clave? <a href="#" id="forgot-link">Recupérala aquí</a> · <a href="#" id="help-link">Ayuda</a></div>
   </div>
   <div class="login-trust" aria-label="Respaldo institucional">
@@ -776,7 +815,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
       <div class="mini-brand">
-        <img src="assets/logo.png" alt="Logotipo SEDAPAL" class="topbar-logo">
+        <img src="assets/LogoSedapal.png" alt="Logotipo Sedapal Hidro Mejora" class="topbar-logo">
         <div>
           <strong>SEDAPAL · Hidro Mejora</strong>
           <small>Plataforma corporativa</small>
@@ -1160,7 +1199,8 @@
       <div class="dialog-actions">
         <button class="btn btn-ghost" id="detail-close-2" type="button">Cerrar</button>
         <button class="btn btn-sky" id="btn-pay-detail" type="button">Pagar ahora</button>
-        <button class="btn btn-primary" id="btn-pdf" type="button">⬇ Descargar PDF</button>
+        <button class="btn btn-primary" id="btn-pdf" type="button">Descargar recibo</button>
+        <button class="btn btn-primary" id="btn-constancia" type="button" hidden>Constancia de pago</button>
       </div>
     </div>
   </div>
@@ -1189,7 +1229,7 @@
       </div>
       <div id="pay-processing" hidden style="text-align:center">
         <div class="spinner" aria-hidden="true"></div>
-        <p style="font-size:.88rem;color:var(--muted)">Procesando pago de forma simulada…</p>
+        <p style="font-size:.88rem;color:var(--muted)">Procesando pago…</p>
       </div>
       <div id="pay-success" hidden>
         <div class="pay-ok">
@@ -1346,6 +1386,19 @@
   const formError = document.getElementById('form-error');
   const btnLogin = document.getElementById('btn-login');
   const btnLoginText = document.getElementById('btn-login-text');
+  const loginTitle = document.getElementById('login-title');
+  const regForm = document.getElementById('register-form');
+  const regError = document.getElementById('reg-error');
+  const regCorreo = document.getElementById('reg-correo');
+  const regSuministro = document.getElementById('reg-suministro');
+  const regPass = document.getElementById('reg-pass');
+  const regPass2 = document.getElementById('reg-pass2');
+  const btnRegister = document.getElementById('btn-register');
+  const btnRegisterText = document.getElementById('btn-register-text');
+  const authToRegister = document.getElementById('auth-to-register');
+  const authToLogin = document.getElementById('auth-to-login');
+  const loginFoot = document.querySelector('.login-foot');
+  const demoBox = document.querySelector('.demo-box');
   const supplyLabel = document.getElementById('supply-label');
   const supplyHello = document.getElementById('supply-hello');
   const cardsEl = document.getElementById('cards');
@@ -1675,9 +1728,12 @@
   /* ---------- Recibos desde API real (Nginx -> /api/recibos/:suministro) ---------- */
   function formatearFechaCorta(iso){
     try{
-      const d = new Date(iso);
+      const s = String(iso);
+      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if(m) return m[3] + '/' + m[2] + '/' + m[1];
+      const d = new Date(s);
       if(isNaN(d)) return '—';
-      return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();
+      return pad(d.getUTCDate())+'/'+pad(d.getUTCMonth()+1)+'/'+d.getUTCFullYear();
     }catch(e){ return '—'; }
   }
   function adaptarReciboAPI(api){
@@ -1691,11 +1747,22 @@
     let fechaVen = null;
     try{ fechaVen = api.fecha_vencimiento ? new Date(api.fecha_vencimiento) : null; }catch(e){ fechaVen = null; }
     const venValida = fechaVen && !isNaN(fechaVen);
-    // Año/mes para filtros y gráficos: desde fecha_emision real, con respaldo en periodo ("Octubre 2026").
-    let anio = emiValida ? fechaEmi.getFullYear() : new Date().getFullYear();
-    let mes = emiValida ? fechaEmi.getMonth() : 0;
+    // Año/mes para filtros y gráficos: desde fecha_emision real (YYYY-MM-DD
+    // directo del ISO para evitar desfase por zona horaria), con respaldo
+    // en periodo ("Octubre 2026").
+    let anio = new Date().getFullYear();
+    let mes = 0;
+    let fechaValida = false;
+    try{
+      const m = api.fecha_emision ? String(api.fecha_emision).match(/^(\d{4})-(\d{2})-(\d{2})/) : null;
+      if(m){
+        anio = Number(m[1]); mes = Number(m[2]) - 1; fechaValida = true;
+      } else if(emiValida){
+        anio = fechaEmi.getUTCFullYear(); mes = fechaEmi.getUTCMonth(); fechaValida = true;
+      }
+    }catch(e){}
     const periodoRaw = (api.periodo != null ? String(api.periodo) : '').trim();
-    if(!emiValida && periodoRaw){
+    if(!fechaValida && periodoRaw){
       const y = periodoRaw.match(/\b(19|20)\d{2}\b/);
       if(y) anio = Number(y[0]);
       const low = periodoRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -1869,14 +1936,16 @@
         '<span class="card-meta"><span>Vence: '+r.vencimiento+' · '+r.consumo+'</span></span></button>' +
         '<div class="card-actions">' +
         '<button type="button" class="btn-sm detail" data-act="detail">Ver detalle</button>' +
-        '<button type="button" class="btn-sm pdfb" data-act="pdf">Descargar PDF</button>' +
-        (impago ? '<button type="button" class="btn-sm payb" data-act="pay">Pagar</button>' : '') +
+        '<button type="button" class="btn-sm pdfb" data-act="pdf">Descargar recibo</button>' +
+        (impago ? '<button type="button" class="btn-sm payb" data-act="pay">Pagar</button>' : '<button type="button" class="btn-sm detail" data-act="const">Constancia de pago</button>') +
         '</div>';
       art.querySelector('.card-open').addEventListener('click', ev=>abrirDetalle(r, ev.currentTarget));
       art.querySelector('[data-act="detail"]').addEventListener('click', ev=>abrirDetalle(r, ev.currentTarget));
       art.querySelector('[data-act="pdf"]').addEventListener('click', ev=>descargarReciboPDF(r, ev.currentTarget));
       const payB = art.querySelector('[data-act="pay"]');
       if(payB) payB.addEventListener('click', ev=>abrirPago(r, ev.currentTarget));
+      const constB = art.querySelector('[data-act="const"]');
+      if(constB) constB.addEventListener('click', ev=>descargarConstanciaPDF(r, ev.currentTarget));
       cardsEl.appendChild(art);
     });
     const ultimo = recibos[0];
@@ -2125,7 +2194,11 @@
   const HB_CHIPS = ['Ver último recibo','Recibos pendientes','Consultar consumo','Reportar incidencia','Cortes de servicio','Necesito ayuda'];
 
   /* ---------- HidroBot referencias ---------- */
-  function hbSessionActive(){ return viewDash.classList.contains('active') && recibos.length > 0; }
+  // Listo cuando la vista está activa y la carga inicial terminó, aunque las
+  // listas vengan vacías: cantidad 0 es "datos cargados sin registros", no error.
+  function hbDatosListos(){ return !loading && recibosEstado !== 'cargando'; }
+  function hbSessionActive(){ return viewDash.classList.contains('active') && hbDatosListos(); }
+  function hbHuboErrorCarga(){ return recibosEstado === 'error'; }
   function hbTime(){ const d = new Date(); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
   function scrollBotToBottom(){ hbBody.scrollTop = hbBody.scrollHeight; }
 
@@ -2199,7 +2272,13 @@
     });
   }
   function greetBot(){
-    addBotMessage('Hola, soy HidroBot, el asistente virtual de Hidro Mejora. Puedo ayudarte con tus recibos, consumo, incidencias, cortes de servicio y navegación dentro de la plataforma. ¿En qué puedo ayudarte?');
+    if(hbHuboErrorCarga()){
+      addBotMessage('Hola, soy HidroBot. No fue posible cargar toda la información de tu suministro, pero puedes seguir utilizándome para consultas generales y navegación dentro de la plataforma.');
+    } else if(recibos.length === 0){
+      addBotMessage('Hola, soy HidroBot, el asistente virtual de Hidro Mejora. Tu suministro está registrado correctamente, pero todavía no hay recibos ni datos de consumo disponibles. Puedo ayudarte con incidencias, cortes de servicio y navegación dentro de la plataforma. ¿En qué puedo ayudarte?');
+    } else {
+      addBotMessage('Hola, soy HidroBot, el asistente virtual de Hidro Mejora. Ya cargué la información de tu suministro y puedo ayudarte con tus recibos, consumo, incidencias, cortes de servicio y navegación dentro de la plataforma. ¿En qué puedo ayudarte?');
+    }
     hidroBotState.greeted = true;
   }
   function resetBotChat(opts){
@@ -2282,7 +2361,7 @@
     if(has('descargar recibo','descargar pdf','descargar mi recibo','copia','duplicado','comprobante') || bw(text,'pdf')) return {intent:'pdf', confidence:.9};
     if(has('mis recibos','ver recibos','recibos','historial','facturas') || bw(text,'recibo') || bw(text,'factura')) return {intent:'receipts', confidence:.87};
     if(cutWords) return {intent:'cuts', confidence:.88};
-    if(has('mis incidencias','mis reportes','que reporte')) return {intent:'my_incidents', confidence:.9};
+    if(has('mis incidencias','mis reportes','que reporte','tengo incidencias','tengo incidencia','tengo reportes','ver incidencias','incidencias registradas')) return {intent:'my_incidents', confidence:.9};
     if(has('incidencia','problema','reporte','reportar','falla')) return {intent:'incident', confidence:.85};
     if(has('tengo agua','mi servicio','estado del suministro','esta activo','servicio activo')) return {intent:'service_status', confidence:.88};
     if(has('atencion','soporte','reclamo','telefono','necesito ayuda') || bw(text,'ayuda')) return {intent:'customer_service', confidence:.88};
@@ -2305,8 +2384,22 @@
     const id = found.intent;
     const sup = supplyLabel.textContent;
     const needData = ['last_receipt','pending_receipts','consumption','payment','pdf'].indexOf(id) > -1;
-    if(needData && recibos.length === 0){
-      return {text:'Aún no tengo datos de recibos disponibles en esta sesión.'};
+    // Array vacío (cantidad 0) = datos cargados sin registros, NO es error.
+    // Solo un fallo real de API produce el mensaje controlado de error.
+    if(needData && hbHuboErrorCarga()){
+      return {text:'No fue posible cargar toda la información del suministro. Puedes seguir usando HidroBot para consultas generales.'};
+    }
+    if(id === 'pending_receipts' && recibos.length === 0){
+      return {text:'Aún no hay recibos disponibles para este suministro.',
+        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
+    }
+    if(id === 'consumption' && recibos.length === 0){
+      return {text:'Aún no hay información de consumo disponible para este suministro.',
+        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
+    }
+    if((id === 'last_receipt' || id === 'payment' || id === 'pdf') && recibos.length === 0){
+      return {text:'Aún no hay recibos disponibles para este suministro.',
+        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
     }
     if(id === 'greeting'){
       return {text:'Hola. Soy HidroBot. Puedo ayudarte con recibos, consumo, incidencias, cortes y otras funciones de Hidro Mejora.'};
@@ -2321,7 +2414,7 @@
     }
     if(id === 'last_receipt'){
       const r = recibos[0];
-      if(!r) return {text:'Aún no tengo datos de recibos disponibles en esta sesión.'};
+      if(!r) return {text:'Aún no hay recibos disponibles para este suministro.'};
       return {text:'Tu recibo más reciente corresponde a ' + r.etiqueta + '. Monto: ' + fmt(r.monto) +
         '. Estado: ' + r.estado + '. Consumo: ' + r.consumo + '.',
         actions:[createBotAction('Ver detalle', (b)=>{ minimizeBot(); abrirDetalle(r, b); }),
@@ -2387,10 +2480,10 @@
         actions:[createBotAction(label, (b)=>{ minimizeBot(); openIncidentModal(tipo, b); })]};
     }
     if(id === 'my_incidents'){
-      if(!incidencias.length) return {text:'Aún no tienes incidencias registradas en este navegador.',
+      if(!incidencias.length) return {text:'Aún no tienes incidencias registradas para este suministro.',
         actions:[createBotAction('Reportar incidencia', (b)=>{ minimizeBot(); openIncidentModal(null, b); })]};
       const last = incidencias[0];
-      return {text:'Tienes ' + incidencias.length + ' incidencia(s) registrada(s) en este navegador. La más reciente: ' +
+      return {text:'Tienes ' + incidencias.length + ' incidencia(s) registrada(s) para este suministro. La más reciente: ' +
         last.code + ' · ' + last.tipo + ' · ' + last.fecha + '.',
         actions:[createBotAction('Ver incidencias', ()=>hbGo('incidencias'))]};
     }
@@ -2575,8 +2668,9 @@
     else if(r.consumoM3 > 15){ sem.className = 'semaforo orange'; sem.textContent = '● Sobre el promedio'; alerta.hidden = true; }
     else { sem.className = 'semaforo green'; sem.textContent = '● Normal'; alerta.hidden = true; }
     const payBtn = document.getElementById('btn-pay-detail');
-    if(r.estado==='Pagado'){ payBtn.hidden = true; }
-    else { payBtn.hidden = false; payBtn.textContent = 'Pagar ahora · ' + fmt(r.monto); }
+    const constBtn = document.getElementById('btn-constancia');
+    if(r.estado==='Pagado'){ payBtn.hidden = true; constBtn.hidden = false; }
+    else { payBtn.hidden = false; payBtn.textContent = 'Pagar ahora · ' + fmt(r.monto); constBtn.hidden = true; }
     openModal(detModal, opener);
     detClose.focus();
   }
@@ -2611,11 +2705,35 @@
     const s = Math.min(maxW / w, maxH / h);
     return {w:+(w * s).toFixed(2), h:+(h * s).toFixed(2)};
   }
-  function pdfFileName(r, supply, mode){
-    const sup = String(supply).replace(/[^0-9A-Za-z]/g, '') || 'demo';
-    const tag = mode === 'payment' ? 'Pago' : 'Recibo';
-    return ('HidroMejora_' + tag + '_' + r.anio + '-' + pad(Number(r.mes) + 1) + '_' + sup)
-      .replace(/[^A-Za-z0-9_.-]/g, '_').slice(0, 120) + '.pdf';
+  function getReciboYYYYMM(r){
+    try{
+      const iso = r.fechaEmisionISO || r.fecha_emision || null;
+      if(iso){
+        const m = String(iso).match(/^(\d{4})-(\d{2})/);
+        if(m) return m[1] + '-' + m[2];
+        const d = new Date(iso);
+        if(!isNaN(d)) return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1);
+      }
+    }catch(e){}
+    const anio = Number(r.anio);
+    const mes = Number(r.mes);
+    if(Number.isFinite(anio) && Number.isFinite(mes)) return anio + '-' + pad(mes + 1);
+    return 'sin-fecha';
+  }
+  function reciboFileName(r, supply){
+    const sup = String(supply || '').replace(/[^0-9A-Za-z]/g, '') || 'demo';
+    return 'Recibo-' + sup + '-' + getReciboYYYYMM(r) + '.pdf';
+  }
+  function constanciaFileName(r, supply){
+    const sup = String(supply || '').replace(/[^0-9A-Za-z]/g, '') || 'demo';
+    return 'Constancia-Pago-' + sup + '-' + getReciboYYYYMM(r) + '.pdf';
+  }
+  function formatearFechaPago(iso){
+    try{
+      const d = new Date(iso);
+      if(isNaN(d)) return '—';
+      return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear();
+    }catch(e){ return '—'; }
   }
   function loadLogoDataURL(){
     if(_logoCache !== undefined) return Promise.resolve(_logoCache);
@@ -2649,34 +2767,43 @@
         }
       };
       img.onerror = ()=>finish(null);
-      img.src = 'assets/logo.png';
+      img.src = 'assets/LogoSedapal.png';
     });
     return _logoPromise;
   }
-  function generarReciboPDF(r, options){
-    const opts = options || {};
-    const mode = opts.mode === 'payment' ? 'payment' : 'receipt';
+    function drawPdfLogo(doc, x, y, w){
+    if(!_logoCache || !_logoCache.data) return 0;
+    try{
+      const ratio = (_logoCache.height || 1) / (_logoCache.width || 1);
+      const h = +(w * ratio).toFixed(2);
+      doc.addImage(_logoCache.data, 'PNG', x, y, w, h);
+      return h;
+    }catch(error){
+      console.warn('PDF: no se pudo insertar el logo.', error);
+      return 0;
+    }
+  }
+  function generarReciboPDF(r){
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({unit:'mm', format:'a4', compress:true});
     const LM = PDF_MARGIN_X, RM = PDF_W - PDF_MARGIN_X;
     const CW = RM - LM;
-    const supply = String(supplyLabel.textContent);
+    const supply = String(supplyLabel.textContent || '').trim();
     const p = desglose(r.monto);
     const paid = r.estado === 'Pagado';
     const stateColor = paid ? PDF_GREEN : (r.estado === 'Vencido' ? PDF_RED : PDF_ORANGE);
     const stateBg = paid ? PDF_GREEN_BG : (r.estado === 'Vencido' ? PDF_RED_BG : PDF_ORANGE_BG);
-    const stateBd = paid ? PDF_GREEN_BD : (r.estado === 'Vencido' ? PDF_RED_BD : PDF_ORANGE_BD);
-    const estTxt = paid ? 'PAGADO' : (r.estado === 'Vencido' ? 'VENCIDO' : 'PENDIENTE');
-    const isPayment = mode === 'payment' && paid;
-    const titleMain = isPayment ? 'COMPROBANTE DE PAGO DEMOSTRATIVO' : 'Resumen de recibo';
+    const stateTxt = paid ? 'PAGADO' : (r.estado === 'Vencido' ? 'VENCIDO' : (r.estado === 'Emitido' ? 'EMITIDO' : 'PENDIENTE'));
+    const stateMark = paid ? '✓ ' + stateTxt : stateTxt;
     const prom = promedio6();
     const items = ultimos6();
-    const idx = recibos.findIndex(x=>x.numRecibo === r.numRecibo);
+    const idx = recibos.findIndex(x=>String(x.id_recibo) === String(r.id_recibo));
     const prev = idx >= 0 ? recibos[idx + 1] : null;
     const dif = prev ? +(r.consumoM3 - prev.consumoM3).toFixed(1) : null;
-    let y = PDF_MARGIN_TOP;
-    doc.setProperties({title:pdfText(titleMain + ' - ' + r.numRecibo),
-      subject:pdfText('Comprobante demostrativo del prototipo Hidro Mejora. Sin valor oficial.'),
+    const difTxt = dif === null ? 'Sin datos' : ((dif > 0 ? '+' : '') + dif.toFixed(1) + ' m³');
+    let y = 12;
+    doc.setProperties({title:pdfText('Recibo de servicio - ' + r.numRecibo),
+      subject:pdfText('Recibo demostrativo del prototipo Hidro Mejora. Sin valor oficial.'),
       author:'Hidro Mejora'});
     function t(value, x, yy, o){
       const c = o || {};
@@ -2685,234 +2812,256 @@
       doc.setTextColor(...(c.color || PDF_DARK));
       doc.text(pdfText(value), x, yy, {align:c.align || 'left', maxWidth:c.maxWidth || undefined});
     }
-    function divider(){
-      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3); doc.line(LM, y, RM, y);
+    function hairline(yy, color){
+      doc.setDrawColor(...(color || PDF_BORDER)); doc.setLineWidth(0.3);
+      doc.line(LM, yy, RM, yy);
     }
     function sectionTitle(label){
-      ensureSpace(14);
-      t(label, LM, y, {size:10.5, style:'bold', color:PDF_NAVY});
-      y += 1.8;
-      doc.setDrawColor(...PDF_SKY); doc.setLineWidth(0.5); doc.line(LM, y, LM + 26, y);
-      y += 3.8;
-    }
-    function badge(text, cx, yy){
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-      const w = doc.getTextWidth(pdfText(text)) + 10;
-      const x = Math.min(Math.max(cx - w / 2, LM), RM - w);
-      doc.setFillColor(...stateBg);
-      doc.setDrawColor(...stateBd); doc.setLineWidth(0.4);
-      try{ doc.roundedRect(x, yy - 5.5, w, 8, 3, 3, 'FD'); }
-      catch(e){ doc.rect(x, yy - 5.5, w, 8, 'FD'); }
-      doc.setTextColor(...stateColor);
-      doc.text(pdfText(text), x + w / 2, yy, {align:'center'});
-      return x + w;
-    }
-    function smallHeader(){
-      y = PDF_MARGIN_TOP;
-      doc.setFillColor(...PDF_NAVY); doc.rect(0, 0, PDF_W, 13, 'F');
-      doc.setFillColor(...PDF_SKY); doc.rect(0, 13, PDF_W, 1.2, 'F');
-      t('Hidro Mejora', LM, 6.5, {size:10, style:'bold', color:[255,255,255]});
-      t('Recibo ' + r.numRecibo + ' (continuacion)', RM, 6.5, {size:8, color:[214,228,240], align:'right'});
-      y = 20;
+      t(label, LM, y, {size:8, style:'bold', color:PDF_NAVY});
+      y += 1.6;
+      doc.setDrawColor(...PDF_SKY); doc.setLineWidth(0.5);
+      doc.line(LM, y, LM + 18, y);
+      y += 5;
     }
     function ensureSpace(h){
-      if(y + h <= PDF_H - PDF_MARGIN_BOTTOM) return;
+      if(y + h <= PDF_H - 16) return;
       doc.addPage();
-      smallHeader();
+      y = 14;
     }
-    // Cabecera: franja navy + linea sky + logo discreto + identidad + prototipo
-    doc.setFillColor(...PDF_NAVY); doc.rect(0, 0, PDF_W, 34, 'F');
-    doc.setFillColor(...PDF_SKY); doc.rect(0, 34, PDF_W, 1.4, 'F');
-    if(_logoCache){
-      try{
-        const fit = getImageFitDimensions(_logoCache.width, _logoCache.height, 26, 22);
-        const lx = RM - fit.w, ly = 6 + (22 - fit.h) / 2;
-        doc.addImage(_logoCache.data, 'PNG', lx, ly, fit.w, fit.h);
-      }catch(error){ console.warn('PDF: no se pudo insertar el logo.', error); }
-    } else {
-      t('HIDRO MEJORA', RM, 17, {size:11, style:'bold', color:[255,255,255], align:'right'});
-    }
-    t('HIDRO MEJORA', LM, 11, {size:16, style:'bold', color:[255,255,255]});
-    t(titleMain, LM, 18, {size:10.5, style:'bold', color:[186,224,245]});
-    doc.setFillColor(255,255,255);
-    doc.setDrawColor(186,224,245); doc.setLineWidth(0.3);
-    const protoTxt = 'PROTOTIPO ACADEMICO - ENTORNO DEMOSTRATIVO';
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
-    const protoW = doc.getTextWidth(protoTxt) + 7;
-    try{ doc.roundedRect(LM, 22.5, protoW, 6, 3, 3, 'FD'); }
-    catch(e){ doc.rect(LM, 22.5, protoW, 6, 'FD'); }
-    doc.setTextColor(...PDF_NAVY); doc.text(protoTxt, LM + 3.5, 26.5);
-    y = 42;
-    // Datos principales en tarjetas claras
-    sectionTitle('DATOS DEL RECIBO');
+    // ---------- Header: logo + identidad + datos del documento ----------
+    const logoW = 30;
+    const logoH = drawPdfLogo(doc, LM, 10, logoW) || 0;
+    const headX = LM + logoW + 6;
+    t('HIDRO MEJORA', headX, 19, {size:12.5, style:'bold', color:PDF_NAVY});
+    t('Plataforma de gestión de servicios', headX, 24, {size:7.8, color:PDF_MUT});
+    t('RECIBO DE SERVICIO', RM, 17, {size:10, style:'bold', color:PDF_NAVY, align:'right'});
+    t('Periodo   ' + r.etiqueta, RM, 22, {size:8.5, color:PDF_DARK, align:'right'});
+    t('Recibo   ' + r.numRecibo, RM, 26.5, {size:8.5, color:PDF_DARK, align:'right'});
+    t('Prototipo académico · Entorno demostrativo', RM, 31, {size:6.5, color:PDF_MUT, align:'right'});
+    y = Math.max(10 + logoH, 33) + 4;
+    doc.setDrawColor(...PDF_SKY); doc.setLineWidth(0.4);
+    doc.line(LM, y, RM, y);
+    y += 7;
+    // ---------- Datos del servicio: dos columnas con separadores ----------
+    sectionTitle('DATOS DEL SERVICIO');
     ensureSpace(30);
-    const gap = 4, colW = (CW - gap) / 2, cardH = 12.5;
-    const cards = [
-      ['SUMINISTRO', supply], ['PERIODO', r.etiqueta],
-      ['RECIBO', r.numRecibo], ['VENCIMIENTO', r.vencimiento]
-    ];
-    cards.forEach((c, i)=>{
-      const cx = LM + (i % 2) * (colW + gap);
-      const cy = y + Math.floor(i / 2) * (cardH + 3);
-      doc.setFillColor(...PDF_BG);
-      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
-      try{ doc.roundedRect(cx, cy, colW, cardH, 2, 2, 'FD'); }
-      catch(e){ doc.rect(cx, cy, colW, cardH, 'FD'); }
-    t(c[0], cx + 4, cy + 4.3, {size:7.5, style:'bold', color:PDF_MUT});
-      t(c[1], cx + 4, cy + 9.2, {size:9.5, style:'bold', color:PDF_NAVY, maxWidth:colW - 8});
-    });
-    y += (cardH + 3) * 2 + 3;
-    t('Emision: ' + r.emision + '   Categoria: Domestica (simulada)', LM, y, {size:8, color:PDF_MUT});
-    y += 2;
-    t('Titular y direccion simulados: Familia Demo - Av. Los Proceres 1234, Lima.', LM, y, {size:8, color:PDF_MUT});
-    y += 6;
-    // Monto principal + estado como badge
-    ensureSpace(34);
-    const montoLabel = paid ? 'MONTO DEL RECIBO' : (r.estado === 'Vencido' ? 'MONTO PENDIENTE' : 'MONTO A PAGAR');
-    doc.setFillColor(...PDF_BG);
-    doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
-    try{ doc.roundedRect(LM, y, CW, 27, 2.5, 2.5, 'FD'); }
-    catch(e){ doc.rect(LM, y, CW, 27, 'FD'); }
-    t(montoLabel, LM + 5, y + 7, {size:8, style:'bold', color:PDF_MUT});
-    t(fmt(r.monto), LM + 5, y + 18.5, {size:22, style:'bold', color:PDF_NAVY});
-    badge(estTxt, RM - 26, y + 10);
+    const midX = LM + CW / 2;
+    function dataRow(x, label, value){
+      t(label.toUpperCase(), x, y, {size:7, style:'bold', color:PDF_MUT});
+      t(value, x, y + 5, {size:10, style:'bold', color:PDF_NAVY, maxWidth:(CW / 2) - 4});
+    }
+    dataRow(LM, 'Suministro', supply);
+    dataRow(midX, 'Recibo', r.numRecibo);
+    y += 10;
+    doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.2);
+    doc.line(LM, y, midX - 3, y);
+    doc.line(midX + 3, y, RM, y);
+    y += 5;
+    dataRow(LM, 'Fecha de emisión', r.emision);
+    dataRow(midX, 'Fecha de vencimiento', r.vencimiento);
+    y += 10;
+    doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.2);
+    doc.line(LM, y, midX - 3, y);
+    doc.line(midX + 3, y, RM, y);
+    y += 8;
+    // ---------- Monto: elemento principal ----------
+    ensureSpace(30);
+    doc.setDrawColor(...PDF_SKY); doc.setLineWidth(0.9);
+    doc.line(LM, y, LM, y + 22);
+    t('TOTAL DEL PERIODO', LM + 5, y + 5.5, {size:8, style:'bold', color:PDF_MUT});
+    t(fmt(r.monto), LM + 5, y + 17.5, {size:26, style:'bold', color:PDF_NAVY});
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
+    const pillTxt = stateMark;
+    const pillW = doc.getTextWidth(pdfText(pillTxt)) + 10;
+    const pillX = RM - pillW, pillY = y + 3;
+    doc.setFillColor(...stateBg);
+    doc.setDrawColor(...stateBg); doc.setLineWidth(0.3);
+    try{ doc.roundedRect(pillX, pillY, pillW, 8, 4, 4, 'FD'); }
+    catch(e){ doc.rect(pillX, pillY, pillW, 8, 'FD'); }
+    doc.setTextColor(...stateColor);
+    doc.text(pdfText(pillTxt), pillX + pillW / 2, pillY + 5.5, {align:'center'});
     if(paid){
-      t('Deuda pendiente: S/ 0.00', RM, y + 19, {size:8.5, color:PDF_MUT, align:'right'});
+      t('Deuda pendiente', RM, y + 16.5, {size:8, color:PDF_MUT, align:'right'});
+      t('S/ 0.00', RM, y + 21, {size:8, style:'bold', color:PDF_MUT, align:'right'});
     } else {
-      t('Vence: ' + r.vencimiento, RM, y + 19, {size:8.5, color:PDF_MUT, align:'right'});
+      t('Vence el ' + r.vencimiento, RM, y + 18.5, {size:8, color:PDF_MUT, align:'right'});
     }
-    if(isPayment && r.paymentCode){
-      t('Codigo de operacion demostrativo: ' + r.paymentCode, LM + 5, y + 23.5, {size:7.5, color:PDF_MUT});
-    }
-    y += 32;
-    // Desglose demostrativo (60/22/18 referencial, total cuadra exacto)
-    sectionTitle('DESGLOSE DEMOSTRATIVO');
-    ensureSpace(34);
+    y += 28;
+    // ---------- Desglose: tabla limpia ----------
+    sectionTitle('DESGLOSE');
+    ensureSpace(44);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+    doc.setTextColor(...PDF_MUT);
+    doc.text(pdfText('CONCEPTO'), LM + 2, y);
+    doc.text(pdfText('IMPORTE'), RM - 2, y, {align:'right'});
+    y += 3.5;
+    hairline(y);
+    y += 5;
     const rows = [
-      ['Servicio de agua (60% referencial)', p.agua],
-      ['Servicio de alcantarillado (22% referencial)', p.alc],
-      ['IGV (18% referencial)', p.igv]
+      ['Servicio de agua', p.agua],
+      ['Servicio de alcantarillado', p.alc],
+      ['IGV', p.igv]
     ];
     rows.forEach(row=>{
-      doc.setFillColor(255,255,255);
-      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.25);
-      try{ doc.roundedRect(LM, y, CW, 8.5, 1.5, 1.5, 'FD'); }
-      catch(e){ doc.rect(LM, y, CW, 8.5, 'FD'); }
-      t(row[0], LM + 4, y + 5.8, {size:9, color:PDF_DARK});
-      t(fmt(row[1]), RM - 4, y + 5.8, {size:9, style:'bold', color:PDF_NAVY, align:'right'});
-      y += 10;
+      t(row[0], LM + 2, y, {size:9, color:PDF_DARK});
+      t(fmt(row[1]), RM - 2, y, {size:9, style:'bold', color:PDF_NAVY, align:'right'});
+      y += 5;
+      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.2);
+      doc.line(LM + 2, y, RM - 2, y);
+      y += 4.5;
     });
-    doc.setFillColor(...PDF_NAVY);
-    try{ doc.roundedRect(LM, y, CW, 9.5, 1.5, 1.5, 'F'); }
-    catch(e){ doc.rect(LM, y, CW, 9.5, 'F'); }
-    t(paid ? 'MONTO DEL RECIBO' : 'DEUDA TOTAL', LM + 4, y + 6.3, {size:9.5, style:'bold', color:[255,255,255]});
-    t(fmt(r.monto), RM - 4, y + 6.3, {size:10, style:'bold', color:[255,255,255], align:'right'});
-    y += 13;
-    t('Distribucion referencial utilizada unicamente para el prototipo. No es la tarifa oficial.', LM, y, {size:7.5, color:PDF_MUT});
+    y += 1;
+    doc.setDrawColor(...PDF_NAVY); doc.setLineWidth(0.6);
+    doc.line(LM, y, RM, y);
+    y += 5.5;
+    t('TOTAL', LM + 2, y, {size:10, style:'bold', color:PDF_NAVY});
+    t(fmt(r.monto), RM - 2, y, {size:10.5, style:'bold', color:PDF_NAVY, align:'right'});
     y += 6;
-    // Resumen de consumo destacado
-    sectionTitle('RESUMEN DE CONSUMO');
-    ensureSpace(30);
-    const consColor = r.consumoM3 > 20 ? PDF_RED : (r.consumoM3 > prom ? PDF_ORANGE : PDF_GREEN);
-    const consState = r.consumoM3 > 20 ? 'Consumo elevado' : (r.consumoM3 > prom ? 'Sobre el promedio' : 'Normal');
-    const c3gap = 4, c3w = (CW - c3gap * 2) / 3;
-    const consCards = [
-      ['CONSUMO', r.consumoM3 + ' m3'], ['PROMEDIO 6 MESES', prom + ' m3'],
-      ['VARIACION', dif === null ? 'Sin datos' : ((dif > 0 ? '+' : '') + dif.toFixed(1) + ' m3')]
+    t('Distribución referencial utilizada únicamente para el prototipo académico.', LM, y, {size:7, color:PDF_MUT});
+    y += 3.5;
+    t('No representa la tarifa oficial de SEDAPAL.', LM, y, {size:7, color:PDF_MUT});
+    y += 8;
+    // ---------- Consumo: métricas + gráfico compacto ----------
+    sectionTitle('CONSUMO');
+    ensureSpace(58);
+    const mGap = 6, mW = (CW - mGap * 2) / 3;
+    const metrics = [
+      [r.consumoM3 + ' m³', 'Consumo actual'],
+      [prom + ' m³', 'Promedio 6 meses'],
+      [difTxt, 'Variación']
     ];
-    consCards.forEach((c, i)=>{
-      const cx = LM + i * (c3w + c3gap);
-      doc.setFillColor(...PDF_BG);
-      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
-      try{ doc.roundedRect(cx, y, c3w, cardH, 2, 2, 'FD'); }
-      catch(e){ doc.rect(cx, y, c3w, cardH, 'FD'); }
-      t(c[0], cx + 4, y + 4.3, {size:7.5, style:'bold', color:PDF_MUT});
-      t(c[1], cx + 4, y + 9.2, {size:9.5, style:'bold', color:PDF_NAVY, maxWidth:c3w - 8});
+    metrics.forEach((m, i)=>{
+      const cx = LM + i * (mW + mGap);
+      t(m[0], cx, y, {size:15, style:'bold', color:PDF_NAVY});
+      t(m[1], cx, y + 5, {size:7.5, color:PDF_MUT});
     });
-    y += cardH + 4;
-    doc.setFillColor(...(r.consumoM3 > 20 ? PDF_RED_BG : (r.consumoM3 > prom ? PDF_ORANGE_BG : PDF_GREEN_BG)));
-    doc.setDrawColor(...(r.consumoM3 > 20 ? PDF_RED_BD : (r.consumoM3 > prom ? PDF_ORANGE_BD : PDF_GREEN_BD)));
-    doc.setLineWidth(0.35);
-    const indTxt = 'Indicador: ' + consState;
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-    const indW = doc.getTextWidth(pdfText(indTxt)) + 9;
-    try{ doc.roundedRect(LM, y, indW, 7.5, 3.5, 3.5, 'FD'); }
-    catch(e){ doc.rect(LM, y, indW, 7.5, 'FD'); }
-    doc.setTextColor(...consColor); doc.text(pdfText(indTxt), LM + 4.5, y + 5.2);
-    // La API real no envía lecturas: el PDF no debe romperse si faltan.
-    const lectTxt = (Number.isFinite(r.lecturaAnterior) && Number.isFinite(r.lecturaActual))
-      ? ('Lectura anterior: ' + Number(r.lecturaAnterior).toFixed(1) + ' m3   Lectura actual: ' + Number(r.lecturaActual).toFixed(1) + ' m3')
-      : 'Lecturas de medidor: No disponible';
-    t(lectTxt, LM + indW + 4, y + 5.2, {size:8, color:PDF_MUT, maxWidth:CW - indW - 4});
     y += 12;
-    // Grafico de consumo (barras sky, seleccionado navy, promedio naranja sobrio)
-    sectionTitle('CONSUMO ULTIMOS 6 MESES (m3)');
-    ensureSpace(62);
     const maxV = Math.max.apply(null, items.map(x=>x.consumoM3).concat([prom, 1]));
-    const gx = LM, gw = CW, gh = 32, gyBase = y + 42;
+    const gx = LM, gw = CW, gh = 24, gyBase = y + 30;
+    ensureSpace((gyBase + 8) - y);
     doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
-    doc.line(gx, y + 4, gx, gyBase);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+    doc.line(gx, y, gx, gyBase);
     items.forEach((x,i)=>{
       const slot = gw / items.length;
-      const bh = Math.max(2, (x.consumoM3 / maxV) * gh);
-      const bx = gx + i * slot + 4, bw = slot - 8;
-      const isCurrent = x.numRecibo === r.numRecibo;
+      const bh = Math.max(1.5, (x.consumoM3 / maxV) * (gh - 4));
+      const bw = Math.min(22, slot - 10);
+      const bx = gx + i * slot + (slot - bw) / 2;
+      const isCurrent = String(x.id_recibo) === String(r.id_recibo);
       if(isCurrent) doc.setFillColor(...PDF_NAVY);
       else doc.setFillColor(...PDF_SKY);
       try{ doc.roundedRect(bx, gyBase - bh, bw, bh, 1, 1, 'F'); }
       catch(e){ doc.rect(bx, gyBase - bh, bw, bh, 'F'); }
-      doc.setTextColor(...PDF_DARK); doc.setFont('helvetica','bold'); doc.setFontSize(7.5);
-      doc.text(pdfText(String(x.consumoM3)), bx + bw / 2, gyBase - bh - 2, {align:'center'});
+      doc.setTextColor(...PDF_DARK); doc.setFont('helvetica','bold'); doc.setFontSize(7);
+      doc.text(pdfText(String(x.consumoM3)), bx + bw / 2, gyBase - bh - 1.8, {align:'center'});
       doc.setFont('helvetica','normal'); doc.setTextColor(...PDF_MUT);
-      doc.text(pdfText(x.mesShort), bx + bw / 2, gyBase + 4.5, {align:'center'});
+      doc.text(pdfText(x.mesShort), bx + bw / 2, gyBase + 4.2, {align:'center'});
     });
-    doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.35); doc.line(gx, gyBase, gx + gw, gyBase);
-    const ay = gyBase - (prom / maxV) * gh;
-    doc.setDrawColor(...PDF_ORANGE); doc.setLineWidth(0.4);
-    try{ doc.setLineDashPattern([2, 1.5], 0); }catch(e){ console.warn('PDF: patron discontinuo no soportado.'); }
+    doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
+    doc.line(gx, gyBase, gx + gw, gyBase);
+    const ay = gyBase - (prom / maxV) * (gh - 4);
+    doc.setDrawColor(180, 190, 200); doc.setLineWidth(0.3);
+    try{ doc.setLineDashPattern([2, 1.5], 0); }catch(e){}
     doc.line(gx, ay, gx + gw, ay);
     try{ doc.setLineDashPattern([], 0); }catch(e){}
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(...PDF_ORANGE);
-    const avgLbl = 'Promedio ' + prom + ' m3';
-    const avgW = doc.getTextWidth(pdfText(avgLbl)) + 6;
-    doc.setFillColor(255,255,255);
-    try{ doc.roundedRect(gx + gw - avgW, ay - 6.5, avgW, 5.5, 2, 2, 'FD'); }
-    catch(e){ doc.rect(gx + gw - avgW, ay - 6.5, avgW, 5.5, 'FD'); }
-    doc.setDrawColor(...PDF_ORANGE_BD); doc.setLineWidth(0.3);
-    try{ doc.roundedRect(gx + gw - avgW, ay - 6.5, avgW, 5.5, 2, 2, 'D'); }catch(e){}
-    doc.setTextColor(...PDF_ORANGE);
-    doc.text(pdfText(avgLbl), gx + gw - 3, ay - 2.6, {align:'right'});
-    y = gyBase + 10;
-    t('Barras azul agua: consumo mensual. Barra navy: recibo actual. Linea discontinua: promedio.', LM, y, {size:7.5, color:PDF_MUT});
-    y += 5;
-    const avgGasto = promedioGasto6();
-    t('Monto actual: ' + fmt(r.monto) + '    Promedio ultimos 6 meses: ' + fmt(avgGasto), LM, y, {size:8.5, color:PDF_DARK});
-    y += 6;
-    divider(); y += 4;
-    // Pie + numeracion en todas las paginas
-    const totalPages = doc.getNumberOfPages();
-    for(let pg = 1; pg <= totalPages; pg++){
-      doc.setPage(pg);
-      const fy = PDF_H - 10;
-      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3); doc.line(LM, fy - 4, RM, fy - 4);
-      t('Hidro Mejora - Prototipo academico - Recibo ' + r.numRecibo, LM, fy, {size:7, color:PDF_MUT});
-      t('Pagina ' + pg + ' de ' + totalPages, RM, fy, {size:7, color:PDF_MUT, align:'right'});
-      t('Documento generado en entorno demostrativo - Sin valor oficial', LM, fy + 3.5, {size:7, color:PDF_MUT});
-    }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(...PDF_MUT);
+    doc.text(pdfText(String(prom)), gx - 2, ay + 1.5, {align:'right'});
+    y = gyBase + 8;
+    // ---------- Footer ----------
+    const fy = PDF_H - 10;
+    if(y > fy - 8){ doc.addPage(); y = 14; }
+    doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
+    doc.line(LM, fy - 4, RM, fy - 4);
+    t('Hidro Mejora · Prototipo académico', LM, fy, {size:7, color:PDF_MUT});
+    t('Página 1 de 1', RM, fy, {size:7, color:PDF_MUT, align:'right'});
+    t('Documento sin valor oficial', LM, fy + 3.5, {size:7, color:PDF_MUT});
     return doc;
   }
-  async function descargarReciboPDF(r, btn, options){
+  function generarConstanciaPDF(pago, r, supply){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({unit:'mm', format:'a4', compress:true});
+    const LM = PDF_MARGIN_X, RM = PDF_W - PDF_MARGIN_X;
+    const CW = RM - LM;
+    const sup = String(supply || '').trim();
+    const montoNum = Number(pago.monto);
+    const monto = Number.isFinite(montoNum) ? montoNum : r.monto;
+    const metodo = String(pago.metodo || '—');
+    const codigo = String(pago.codigo_operacion || '—');
+    const fechaPago = formatearFechaPago(pago.fecha_pago);
+    let y = 14;
+    doc.setProperties({title:pdfText('Constancia de pago - ' + r.numRecibo),
+      subject:pdfText('Constancia demostrativa del prototipo Hidro Mejora. Sin valor oficial.'),
+      author:'Hidro Mejora'});
+    function t(value, x, yy, o){
+      const c = o || {};
+      doc.setFont('helvetica', c.style || 'normal');
+      doc.setFontSize(c.size || 9);
+      doc.setTextColor(...(c.color || PDF_DARK));
+      doc.text(pdfText(value), x, yy, {align:c.align || 'left', maxWidth:c.maxWidth || undefined});
+    }
+    function hairline(yy){
+      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
+      doc.line(LM, yy, RM, yy);
+    }
+    // ---------- Encabezado centrado con logo ----------
+    const logoW = 30;
+    const logoH = drawPdfLogo(doc, (PDF_W - logoW) / 2, y, logoW) || 0;
+    y += logoH + 5;
+    t('HIDRO MEJORA', PDF_W / 2, y, {size:12, style:'bold', color:PDF_NAVY, align:'center'});
+    y += 6;
+    t('CONSTANCIA DE PAGO', PDF_W / 2, y, {size:10, style:'bold', color:PDF_NAVY, align:'center'});
+    y += 6;
+    hairline(y);
+    y += 9;
+    // ---------- Confirmación ----------
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+    doc.setTextColor(...PDF_GREEN);
+    doc.text(pdfText('✓ PAGO REGISTRADO'), PDF_W / 2, y, {align:'center'});
+    y += 9;
+    t(fmt(monto), PDF_W / 2, y, {size:24, style:'bold', color:PDF_NAVY, align:'center'});
+    y += 7;
+    t(r.etiqueta + ' · ' + r.numRecibo, PDF_W / 2, y, {size:9, color:PDF_MUT, align:'center'});
+    y += 8;
+    hairline(y);
+    y += 8;
+    // ---------- Detalle: etiqueta izquierda, valor derecha ----------
+    function kvRow(label, value){
+      t(label.toUpperCase(), LM, y, {size:7.5, style:'bold', color:PDF_MUT});
+      t(value, RM, y, {size:9.5, style:'bold', color:PDF_NAVY, align:'right', maxWidth:CW - 60});
+      y += 6;
+      doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.2);
+      doc.line(LM, y, RM, y);
+      y += 6;
+    }
+    kvRow('Suministro', sup);
+    kvRow('Fecha de pago', fechaPago);
+    kvRow('Método', metodo);
+    // ---------- Código de operación ----------
+    t('CÓDIGO DE OPERACIÓN', PDF_W / 2, y, {size:7.5, style:'bold', color:PDF_MUT, align:'center'});
+    y += 7;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12.5);
+    doc.setTextColor(...PDF_NAVY);
+    doc.text(pdfText(codigo), PDF_W / 2, y, {align:'center'});
+    y += 7;
+    hairline(y);
+    y += 8;
+    t('Esta operación fue registrada correctamente', PDF_W / 2, y, {size:8, color:PDF_MUT, align:'center'});
+    y += 4.5;
+    t('en el sistema Hidro Mejora.', PDF_W / 2, y, {size:8, color:PDF_MUT, align:'center'});
+    // ---------- Footer ----------
+    const fy = PDF_H - 10;
+    doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
+    doc.line(LM, fy - 4, RM, fy - 4);
+    t('Hidro Mejora · Prototipo académico', LM, fy, {size:7, color:PDF_MUT});
+    t('Página 1 de 1', RM, fy, {size:7, color:PDF_MUT, align:'right'});
+    t('Documento sin valor oficial', LM, fy + 3.5, {size:7, color:PDF_MUT});
+    return doc;
+  }
+  async function descargarReciboPDF(r, btn){
     if(!window.jspdf || typeof window.jspdf.jsPDF !== 'function'){
       showToast('No se pudo cargar el generador PDF. Recarga la pagina e intentalo otra vez.');
       return;
     }
     if(btn && btn.dataset.busy === '1') return;
-    const mode = options && options.mode === 'payment' ? 'payment' : 'receipt';
-    if(mode === 'payment' && (!r || r.estado !== 'Pagado' || !r.paymentCode)){
-      showToast('La constancia esta disponible despues de registrar el pago.');
-      return;
-    }
     if(!r || !Number.isFinite(r.monto) || r.monto < 0 || !Number.isFinite(r.consumoM3)){
       showToast('El recibo contiene datos invalidos.');
       return;
@@ -2922,13 +3071,55 @@
     try{
       await loadLogoDataURL();
       if(!viewDash.classList.contains('active')) return;
-      const doc = generarReciboPDF(r, {mode:mode});
-      await doc.save(pdfFileName(r, supplyLabel.textContent, mode), {returnPromise:true});
-      if(btn){ btn.textContent = 'PDF descargado'; }
-      showToast(mode === 'payment' ? 'Constancia de pago descargada.' : 'Recibo PDF descargado.');
+      const doc = generarReciboPDF(r);
+      await doc.save(reciboFileName(r, supplyLabel.textContent), {returnPromise:true});
+      if(btn){ btn.textContent = 'Recibo descargado'; }
+      showToast('Recibo PDF descargado.');
     }catch(error){
-      console.error('No se pudo generar el comprobante PDF.', error);
+      console.error('No se pudo generar el recibo PDF.', error);
       showToast('No se pudo generar el PDF. Intentalo nuevamente.');
+    }finally{
+      if(btn){
+        setTimeout(()=>{ btn.disabled = false; btn.dataset.busy = '0'; btn.removeAttribute('aria-busy'); if(label !== null) btn.textContent = label; }, 1400);
+      }
+    }
+  }
+async function descargarConstanciaPDF(r, btn){
+    if(!window.jspdf || typeof window.jspdf.jsPDF !== 'function'){
+      showToast('No se pudo cargar el generador PDF. Recarga la pagina e intentalo otra vez.');
+      return;
+    }
+    if(btn && btn.dataset.busy === '1') return;
+    if(!r){
+      showToast('Recibo inválido.');
+      return;
+    }
+    const label = btn ? btn.textContent : null;
+    if(btn){ btn.dataset.busy = '1'; btn.disabled = true; btn.setAttribute('aria-busy', 'true'); btn.textContent = 'Generando constancia…'; }
+    try{
+      const supply = String(supplyLabel.textContent || '').trim();
+      if(!/^\d{7,9}$/.test(supply)){
+        showToast('Número de suministro inválido.');
+        return;
+      }
+      const resp = await fetch('/api/pagos/' + encodeURIComponent(supply));
+      if(!resp.ok) throw new Error('API pagos respondió ' + resp.status);
+      const data = await resp.json();
+      const lista = Array.isArray(data.pagos) ? data.pagos : [];
+      const pago = lista.find(x=>String(x.id_recibo) === String(r.id_recibo));
+      if(!pago){
+        showToast('No se encontró un pago registrado para este recibo.');
+        return;
+      }
+      await loadLogoDataURL();
+      if(!viewDash.classList.contains('active')) return;
+      const doc = generarConstanciaPDF(pago, r, supply);
+      await doc.save(constanciaFileName(r, supply), {returnPromise:true});
+      if(btn){ btn.textContent = 'Constancia descargada'; }
+      showToast('Constancia de pago descargada.');
+    }catch(error){
+      console.error('No se pudo generar la constancia PDF.', error);
+      showToast('No se pudo generar la constancia. Intentalo nuevamente.');
     }finally{
       if(btn){
         setTimeout(()=>{ btn.disabled = false; btn.dataset.busy = '0'; btn.removeAttribute('aria-busy'); if(label !== null) btn.textContent = label; }, 1400);
@@ -2940,11 +3131,15 @@
     if(!selected) return;
     descargarReciboPDF(selected, ev.currentTarget);
   });
+  document.getElementById('btn-constancia').addEventListener('click', ev=>{
+    if(!selected) return;
+    descargarConstanciaPDF(selected, ev.currentTarget);
+  });
   document.getElementById('btn-pay-detail').addEventListener('click', ()=>{
     if(selected && selected.estado!=='Pagado') abrirPago(selected);
   });
 
-  /* ---------- Pago en línea (simulado) ---------- */
+  /* ---------- Pago en línea real contra PostgreSQL ---------- */
   function showPayState(s){
     document.getElementById('pay-main').hidden = s!=='main';
     document.getElementById('pay-processing').hidden = s!=='processing';
@@ -2958,6 +3153,7 @@
     showPayState('main');
     const cf = document.getElementById('pay-confirm');
     cf.dataset.busy = '0';
+    cf.disabled = false;
     cf.textContent = 'Confirmar pago · ' + fmt(r.monto);
     openModal(payModal, opener);
   }
@@ -2966,31 +3162,113 @@
       document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel', o.querySelector('input').checked));
     });
   });
-  document.getElementById('pay-confirm').addEventListener('click', ev=>{
+  document.getElementById('pay-confirm').addEventListener('click', async ev=>{
     const btn = ev.currentTarget;
     if(!payTarget || payTarget.estado==='Pagado') return;
     if(btn.dataset.busy === '1') return;
+    const target = payTarget;
+    const supply = String(supplyLabel.textContent || '').trim();
+    const metodoEl = document.querySelector('input[name="pay-method"]:checked');
+    const metodo = metodoEl ? String(metodoEl.value || '').trim() : '';
+    if(!/^\d{7,9}$/.test(supply)){
+      showToast('Número de suministro inválido.');
+      return;
+    }
+    if(!metodo){
+      showToast('Selecciona un método de pago.');
+      return;
+    }
+    const idRecibo = Number(target.id_recibo);
+    if(!Number.isInteger(idRecibo) || idRecibo <= 0){
+      showToast('Recibo inválido.');
+      return;
+    }
     btn.dataset.busy = '1';
-    btn.textContent = 'Procesando…';
+    btn.disabled = true;
+    btn.textContent = 'Procesando...';
     showPayState('processing');
-    setTimeout(()=>{
-      btn.dataset.busy = '0';
-      btn.textContent = 'Confirmar pago · ' + fmt(payTarget ? payTarget.monto : 0);
-      if(!payTarget) return;
-      payTarget.estado = 'Pagado';
-      renderCards();
-      if(copiesModal.classList.contains('open')) renderCopies(false);
-      const code = 'PAG-' + payTarget.anio + '-' + Math.floor(100000 + Math.random()*900000);
-      payTarget.paymentCode = code;
+    try{
+      const resp = await fetch('/api/pagos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          numero_suministro: supply,
+          id_recibo: idRecibo,
+          metodo: metodo
+        })
+      });
+      const data = await resp.json().catch(()=>null);
+      if(resp.status === 409){
+        showPayState('main');
+        btn.dataset.busy = '0';
+        btn.disabled = false;
+        btn.textContent = 'Confirmar pago · ' + fmt(target.monto);
+        showToast((data && data.mensaje) || 'El recibo ya se encuentra pagado.');
+        try{
+          const datos = await cargarRecibosDesdeAPI(supply);
+          recibos = datos;
+          recibosEstado = datos.length ? 'ok' : 'vacio';
+          renderCards();
+          if(copiesModal.classList.contains('open')) renderCopies(false);
+        }catch(e){}
+        return;
+      }
+      if(!resp.ok || !data || data.estado !== 'ok' || !data.pago){
+        showPayState('main');
+        btn.dataset.busy = '0';
+        btn.disabled = false;
+        btn.textContent = 'Confirmar pago · ' + fmt(target.monto);
+        showToast((data && data.mensaje) || 'No se pudo registrar el pago. Inténtalo nuevamente.');
+        return;
+      }
+      // Éxito: PostgreSQL es la fuente de verdad. Nunca generar código en frontend.
+      const codigoReal = data.pago.codigo_operacion;
+      const montoReal = Number(data.pago.monto);
+      target.paymentCode = codigoReal;
+      target.estado = 'Pagado';
+      if(Number.isFinite(montoReal)) target.monto = montoReal;
       document.getElementById('pay-success-text').textContent =
-        'Recibo ' + payTarget.etiqueta + ' cancelado por ' + fmt(payTarget.monto) + '. Deuda actual: S/ 0.00.';
-      document.getElementById('pay-code').textContent = code;
+        'Recibo ' + target.etiqueta + ' cancelado por ' + fmt(target.monto) + '. Deuda actual: S/ 0.00.';
+      document.getElementById('pay-code').textContent = codigoReal;
       showPayState('success');
       showSuccess('Pago registrado. El recibo ahora figura como Pagado.');
-    }, 1600);
+      btn.dataset.busy = '0';
+      btn.disabled = false;
+      btn.textContent = 'Confirmar pago · ' + fmt(target.monto);
+      // Recargar lista real desde PostgreSQL y conservar el código para el PDF.
+      try{
+        const datos = await cargarRecibosDesdeAPI(supply);
+        recibos = datos;
+        recibosEstado = datos.length ? 'ok' : 'vacio';
+        const actualizado = recibos.find(r=>String(r.id_recibo) === String(idRecibo));
+        if(actualizado) actualizado.paymentCode = codigoReal;
+        // Mantener payTarget apuntando al objeto actualizado para la constancia PDF.
+        const nuevoTarget = recibos.find(r=>String(r.id_recibo) === String(idRecibo));
+        if(nuevoTarget) payTarget = nuevoTarget;
+        renderCards();
+        if(copiesModal.classList.contains('open')) renderCopies(false);
+        if(selected && String(selected.id_recibo) === String(idRecibo)){
+          selected.estado = 'Pagado';
+          selected.paymentCode = codigoReal;
+        }
+      }catch(err){
+        console.error('No se pudo recargar recibos tras el pago.', err);
+        renderCards();
+        if(copiesModal.classList.contains('open')) renderCopies(false);
+      }
+    }catch(err){
+      console.error('No se pudo registrar el pago.', err);
+      showPayState('main');
+      btn.dataset.busy = '0';
+      btn.disabled = false;
+      if(payTarget) btn.textContent = 'Confirmar pago · ' + fmt(payTarget.monto);
+      showToast('No se pudo registrar el pago. Inténtalo nuevamente.');
+    }
   });
   document.getElementById('pay-constancia').addEventListener('click', ev=>{
-    if(payTarget) descargarReciboPDF(payTarget, ev.currentTarget, {mode:'payment'});
+    if(payTarget) descargarConstanciaPDF(payTarget, ev.currentTarget);
   });
   document.getElementById('pay-done').addEventListener('click', ()=>{
     const wasDetail = selected && payTarget && selected.id===payTarget.id && detModal.classList.contains('open');
@@ -3031,13 +3309,17 @@
       const box = document.createElement('div'); box.className = 'tbl-actions';
       const bV = mk('Ver','detail','Ver detalle de ' + r.etiqueta);
       bV.addEventListener('click', ev=>{ const op = ev.currentTarget; closeModal(copiesModal); setTimeout(()=>abrirDetalle(r, op), isReduced() ? 0 : 200); });
-      const bP = mk('PDF','pdfb','Descargar PDF de ' + r.etiqueta);
+      const bP = mk('Recibo','pdfb','Descargar recibo de ' + r.etiqueta);
       bP.addEventListener('click', ev=>descargarReciboPDF(r, ev.currentTarget));
       box.appendChild(bV); box.appendChild(bP);
       if(r.estado!=='Pagado'){
         const bPay = mk('Pagar','payb','Pagar recibo de ' + r.etiqueta);
         bPay.addEventListener('click', ev=>{ const op = ev.currentTarget; closeModal(copiesModal); setTimeout(()=>abrirPago(r, op), isReduced() ? 0 : 200); });
         box.appendChild(bPay);
+      } else {
+        const bC = mk('Constancia','detail','Constancia de pago de ' + r.etiqueta);
+        bC.addEventListener('click', ev=>descargarConstanciaPDF(r, ev.currentTarget));
+        box.appendChild(bC);
       }
       td.appendChild(box); tr.appendChild(td);
       tb.appendChild(tr);
@@ -3287,14 +3569,114 @@
     formError.classList.add('show');
   }
   // Normalización: solo dígitos, máximo 9, conservando la posición del cursor
-  inpSupply.addEventListener('input', ()=>{
-    const el = inpSupply;
+  function soloDigitosSuministro(el){
     const pos = el.selectionStart === null ? el.value.length : el.selectionStart;
     const clean = el.value.replace(/\D/g, '').slice(0, 9);
     if(clean !== el.value){
       el.value = clean;
       const np = Math.min(pos, clean.length);
       try{ el.setSelectionRange(np, np); }catch(e){}
+    }
+  }
+  inpSupply.addEventListener('input', ()=>soloDigitosSuministro(inpSupply));
+  regSuministro.addEventListener('input', ()=>soloDigitosSuministro(regSuministro));
+
+  /* ---------- Alternar Login / Registro (misma pantalla) ---------- */
+  function showRegError(msg){
+    regError.textContent = msg;
+    regError.classList.add('show');
+  }
+  function mostrarRegistro(){
+    form.hidden = true;
+    if(demoBox) demoBox.hidden = true;
+    if(loginFoot) loginFoot.hidden = true;
+    authToRegister.hidden = true;
+    regForm.hidden = false;
+    authToLogin.hidden = false;
+    regError.classList.remove('show');
+    loginTitle.textContent = 'Crear cuenta';
+    regCorreo.focus();
+  }
+  function mostrarLogin(){
+    regForm.hidden = true;
+    authToLogin.hidden = true;
+    form.hidden = false;
+    if(demoBox) demoBox.hidden = false;
+    if(loginFoot) loginFoot.hidden = false;
+    authToRegister.hidden = false;
+    formError.classList.remove('show');
+    loginTitle.textContent = 'Iniciar sesión';
+    inpSupply.focus();
+  }
+  document.getElementById('show-register').addEventListener('click', e=>{ e.preventDefault(); mostrarRegistro(); });
+  document.getElementById('show-login').addEventListener('click', e=>{ e.preventDefault(); mostrarLogin(); });
+
+  function validarRegistro(correo, suministro, pass, pass2){
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)){
+      return '⚠ Ingresa un correo electrónico válido.';
+    }
+    if(!/^\d{7,9}$/.test(suministro)){
+      return '⚠ Ingresa un Número de Suministro válido de 7 a 9 dígitos.';
+    }
+    if(pass.length < 8){
+      return '⚠ La contraseña debe tener al menos 8 caracteres.';
+    }
+    if(!/[A-Za-z]/.test(pass) || !/[0-9]/.test(pass)){
+      return '⚠ La contraseña debe contener al menos una letra y un número.';
+    }
+    if(pass !== pass2){
+      return '⚠ Las contraseñas no coinciden.';
+    }
+    return null;
+  }
+  regForm.addEventListener('submit', async e=>{
+    e.preventDefault();
+    if(btnRegister.disabled) return;
+    const correo = regCorreo.value.trim();
+    const suministro = regSuministro.value.trim();
+    const pass = regPass.value;
+    const pass2 = regPass2.value;
+    regError.classList.remove('show');
+    const msg = validarRegistro(correo, suministro, pass, pass2);
+    if(msg){
+      showRegError(msg);
+      return;
+    }
+    btnRegister.disabled = true;
+    btnRegisterText.textContent = 'Creando cuenta...';
+    try{
+      const resp = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          correo: correo,
+          numero_suministro: suministro,
+          password: pass
+        })
+      });
+      const data = await resp.json().catch(()=>null);
+      if(!resp.ok || !data || data.estado !== 'ok'){
+        showRegError('⚠ ' + ((data && data.mensaje) || 'No se pudo crear la cuenta. Inténtalo nuevamente.'));
+        btnRegister.disabled = false;
+        btnRegisterText.textContent = 'Crear cuenta';
+        return;
+      }
+      showSuccess('Cuenta creada correctamente. Ya puedes iniciar sesión.');
+      regPass.value = '';
+      regPass2.value = '';
+      btnRegister.disabled = false;
+      btnRegisterText.textContent = 'Crear cuenta';
+      mostrarLogin();
+      inpSupply.value = (data.usuario && data.usuario.numero_suministro) || suministro;
+      inpPass.value = '';
+      inpPass.focus();
+    }catch(err){
+      console.error('No se pudo crear la cuenta.', err);
+      showRegError('⚠ No se pudo conectar con el servidor. Inténtalo nuevamente.');
+      btnRegister.disabled = false;
+      btnRegisterText.textContent = 'Crear cuenta';
     }
   });
   form.addEventListener('submit', async e=>{

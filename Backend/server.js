@@ -164,6 +164,14 @@ function verificarClave(password, almacenado){
 }
 
 
+function generarClaveHash(password){
+  const salt = crypto.randomBytes(16).toString('hex');
+  const hash = crypto.scryptSync(password, salt, 64).toString('hex');
+
+  return 'scrypt$' + salt + '$' + hash;
+}
+
+
 // ==========================================
 // AUTENTICACIÓN DE USUARIO POR SUMINISTRO
 // ==========================================
@@ -236,6 +244,138 @@ app.post("/api/auth/login", async (req, res) => {
             estado: "error",
             mensaje: "Error interno del servidor."
         });
+    }
+});
+
+
+// ==========================================
+// REGISTRO DE USUARIO + SUMINISTRO
+// Prototipo académico: el suministro informado por
+// el usuario no se valida contra sistemas oficiales.
+// ==========================================
+
+app.post("/api/auth/register", async (req, res) => {
+    let cliente = null;
+
+    try {
+        const { correo, numero_suministro, password } = req.body || {};
+
+        const correoNormalizado = String(correo || '').trim().toLowerCase();
+        const suministroNormalizado = String(numero_suministro || '').trim();
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoNormalizado) || correoNormalizado.length > 120) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "Correo electrónico inválido."
+            });
+        }
+
+        if (!/^\d{7,9}$/.test(suministroNormalizado)) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "Número de suministro inválido. Debe tener entre 7 y 9 dígitos."
+            });
+        }
+
+        if (typeof password !== 'string' || password.length < 8) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "La contraseña debe tener al menos 8 caracteres."
+            });
+        }
+
+        if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "La contraseña debe contener al menos una letra y un número."
+            });
+        }
+
+        cliente = await pool.connect();
+        await cliente.query('BEGIN');
+
+        const correoExistente = await cliente.query(
+            `SELECT id_usuario FROM usuarios WHERE correo = $1 LIMIT 1;`,
+            [correoNormalizado]
+        );
+
+        if (correoExistente.rowCount > 0) {
+            await cliente.query('ROLLBACK');
+            return res.status(409).json({
+                estado: "error",
+                mensaje: "El correo ya se encuentra registrado."
+            });
+        }
+
+        const suministroExistente = await cliente.query(
+            `SELECT id_suministro FROM suministros WHERE numero_suministro = $1 LIMIT 1;`,
+            [suministroNormalizado]
+        );
+
+        if (suministroExistente.rowCount > 0) {
+            await cliente.query('ROLLBACK');
+            return res.status(409).json({
+                estado: "error",
+                mensaje: "El número de suministro ya se encuentra registrado."
+            });
+        }
+
+        const claveHash = generarClaveHash(password);
+
+        const usuarioResultado = await cliente.query(
+            `INSERT INTO usuarios (correo, clave_hash)
+             VALUES ($1, $2)
+             RETURNING id_usuario, correo;`,
+            [correoNormalizado, claveHash]
+        );
+
+        const idUsuario = usuarioResultado.rows[0].id_usuario;
+
+        await cliente.query(
+            `INSERT INTO suministros (numero_suministro, id_usuario)
+             VALUES ($1, $2);`,
+            [suministroNormalizado, idUsuario]
+        );
+
+        await cliente.query('COMMIT');
+
+        return res.status(201).json({
+            estado: "ok",
+            mensaje: "Cuenta creada correctamente.",
+            usuario: {
+                id_usuario: idUsuario,
+                correo: correoNormalizado,
+                numero_suministro: suministroNormalizado
+            }
+        });
+
+    } catch (error) {
+        if (cliente) {
+            try { await cliente.query('ROLLBACK'); } catch (e) {}
+        }
+
+        if (error && error.code === '23505') {
+            const restriccion = String(error.constraint || '');
+            const esCorreo = restriccion.indexOf('usuarios') > -1 || /correo/i.test(restriccion);
+
+            return res.status(409).json({
+                estado: "error",
+                mensaje: esCorreo
+                    ? "El correo ya se encuentra registrado."
+                    : "El número de suministro ya se encuentra registrado."
+            });
+        }
+
+        console.error(error);
+
+        return res.status(500).json({
+            estado: "error",
+            mensaje: "Error interno del servidor."
+        });
+    } finally {
+        if (cliente) {
+            try { cliente.release(); } catch (e) {}
+        }
     }
 });
 
@@ -345,7 +485,10 @@ app.post("/api/incidencias", async (req, res) => {
 
 
 // ==========================================
-// REGISTRAR PAGO SIMULADO
+// REGISTRAR PAGO REAL EN POSTGRESQL
+// Movimiento bancario SIMULADO con fines académicos.
+// Todo lo demás es real: monto desde DB, código en
+// backend, fecha, método, cambio a Pagado, historial.
 // ==========================================
 
 app.post("/api/pagos", async (req, res) => {
@@ -379,24 +522,26 @@ app.post("/api/pagos", async (req, res) => {
 
         cliente = await pool.connect();
 
+        await cliente.query('BEGIN');
+
         const reciboResultado = await cliente.query(
             `SELECT
                r.id_recibo,
                r.monto,
                r.estado,
+               r.periodo,
                s.numero_suministro
              FROM recibos r
              JOIN suministros s
                ON s.id_suministro = r.id_suministro
              WHERE r.id_recibo = $1
                AND s.numero_suministro = $2
-             LIMIT 1;`,
+             FOR UPDATE;`,
             [idRecibo, String(numero_suministro).trim()]
         );
 
         if (reciboResultado.rowCount === 0) {
-            cliente.release();
-            cliente = null;
+            await cliente.query('ROLLBACK');
             return res.status(404).json({
                 estado: "error",
                 mensaje: "Recibo no encontrado."
@@ -406,20 +551,18 @@ app.post("/api/pagos", async (req, res) => {
         const recibo = reciboResultado.rows[0];
 
         if (recibo.estado === 'Pagado') {
-            cliente.release();
-            cliente = null;
+            await cliente.query('ROLLBACK');
             return res.status(409).json({
                 estado: "error",
                 mensaje: "El recibo ya se encuentra pagado."
             });
         }
 
-        const anioActual = new Date().getFullYear();
-        const codigoOperacion = 'HM-PAG-' + anioActual + '-' + String(crypto.randomInt(0, 1000000)).padStart(6, '0');
-
-        await cliente.query('BEGIN');
-
-        const pagoResultado = await cliente.query(
+        // El monto se obtiene de PostgreSQL, nunca del frontend.
+        // El código se deriva del id_pago (PK) para garantizar
+        // unicidad con formato HM-PAG-2026-000002. No se genera
+        // en el navegador ni se acepta desde el cliente.
+        const pagoProvisional = await cliente.query(
             `INSERT INTO pagos (
                id_recibo,
                monto,
@@ -438,8 +581,26 @@ app.post("/api/pagos", async (req, res) => {
                 idRecibo,
                 recibo.monto,
                 String(metodo).trim(),
-                codigoOperacion
+                'PENDIENTE'
             ]
+        );
+
+        const idPago = pagoProvisional.rows[0].id_pago;
+        const anioActual = new Date().getFullYear();
+        const codigoOperacion = 'HM-PAG-' + anioActual + '-' + String(idPago).padStart(6, '0');
+
+        const pagoResultado = await cliente.query(
+            `UPDATE pagos
+             SET codigo_operacion = $1
+             WHERE id_pago = $2
+             RETURNING
+               id_pago,
+               id_recibo,
+               monto,
+               metodo,
+               codigo_operacion,
+               fecha_pago;`,
+            [codigoOperacion, idPago]
         );
 
         await cliente.query(
@@ -450,8 +611,6 @@ app.post("/api/pagos", async (req, res) => {
         );
 
         await cliente.query('COMMIT');
-        cliente.release();
-        cliente = null;
 
         return res.status(201).json({
             estado: "ok",
@@ -465,7 +624,6 @@ app.post("/api/pagos", async (req, res) => {
     } catch (error) {
         if (cliente) {
             try { await cliente.query('ROLLBACK'); } catch (e) {}
-            cliente.release();
         }
         console.error(error);
 
@@ -473,6 +631,10 @@ app.post("/api/pagos", async (req, res) => {
             estado: "error",
             mensaje: "Error interno del servidor."
         });
+    } finally {
+        if (cliente) {
+            try { cliente.release(); } catch (e) {}
+        }
     }
 });
 
