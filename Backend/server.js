@@ -964,6 +964,56 @@ app.get("/api/pagos/:suministro", async (req, res) => {
 
 
 // ==========================================
+// CATÁLOGO GENERAL DE CORTES ACTIVOS/PROGRAMADOS
+// Avisos demostrativos del prototipo académico.
+// Misma lógica temporal que por suministro.
+// Los finalizados se guardan pero no se listan.
+// ==========================================
+
+app.get("/api/cortes", async (req, res) => {
+    try {
+        const consulta = `
+            SELECT
+              c.id_corte,
+              c.alcance,
+              c.distrito,
+              c.zona,
+              c.motivo,
+              c.fecha_inicio,
+              c.fecha_fin,
+              CASE
+                WHEN NOW() < c.fecha_inicio THEN 'Programado'
+                WHEN NOW() > c.fecha_fin THEN 'Finalizado'
+                ELSE 'En proceso'
+              END AS estado
+            FROM cortes_servicio c
+            WHERE c.alcance IN ('Zona', 'General')
+              AND c.fecha_inicio IS NOT NULL
+              AND c.fecha_fin IS NOT NULL
+              AND NOW() <= c.fecha_fin
+            ORDER BY c.fecha_inicio ASC;
+        `;
+
+        const resultado = await pool.query(consulta);
+
+        res.json({
+            actualizado_en: new Date().toISOString(),
+            cantidad: resultado.rowCount,
+            cortes: resultado.rows
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            estado: "error",
+            mensaje: "Error interno del servidor."
+        });
+    }
+});
+
+
+// ==========================================
 // CONSULTAR CORTES DE SERVICIO POR SUMINISTRO
 // Avisos demostrativos del prototipo académico.
 // No provienen de sistemas oficiales.

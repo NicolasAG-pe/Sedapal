@@ -1083,6 +1083,23 @@
           </div>
         </div>
         <div class="service-status"><span class="dot" aria-hidden="true"></span><span>Servicio de tu suministro&nbsp;<b>Activo</b>&nbsp;· Suministro&nbsp;<b id="cortes-supply">—</b></span></div>
+        <div class="filter-row" role="tablist" aria-label="Vista de cortes" style="margin-bottom:.8rem">
+          <button class="chip-filter active" id="tab-cortes-mios" role="tab" aria-selected="true" type="button">Mi suministro</button>
+          <button class="chip-filter" id="tab-cortes-todos" role="tab" aria-selected="false" type="button">Todos los cortes</button>
+        </div>
+        <div id="cortes-cat-filters" hidden>
+          <div class="section-head" style="margin-top:0">
+            <h3 style="font-size:.9rem">Filtrar por estado</h3>
+            <div class="filter-row" role="group" aria-label="Filtrar cortes por estado">
+              <button class="chip-filter active" data-cfilter="Todos" type="button">Todos</button>
+              <button class="chip-filter" data-cfilter="Programado" type="button">Programados</button>
+              <button class="chip-filter" data-cfilter="En proceso" type="button">En proceso</button>
+            </div>
+          </div>
+          <div class="toolbar" style="margin-bottom:.8rem">
+            <select id="cortes-distrito" class="year-select" aria-label="Filtrar por distrito"><option value="Todos">Todos los distritos</option></select>
+          </div>
+        </div>
         <div class="section-head">
           <h3>Buscar por distrito</h3>
           <div class="toolbar">
@@ -2444,6 +2461,7 @@
     {id:'receipts', desc:'Historial genérico de recibos'},
     {id:'consumption', desc:'Consumo actual vs promedio6()'},
     {id:'cuts', desc:'Módulo de cortes de servicio'},
+    {id:'cuts_all', desc:'Catálogo general de cortes (datos de API)'},
     {id:'cuts_end', desc:'Fin del corte más próximo (datos de API)'},
     {id:'my_incidents', desc:'Incidencias guardadas en el navegador'},
     {id:'incident', desc:'Registro genérico de incidencia'},
@@ -2456,7 +2474,7 @@
     {id:'unknown', desc:'Fuera de alcance'}
   ];
   function districtHit(text){
-    const ds = cortes.map(c=>c.distrito).filter(v=>v).filter((v,i,a)=>a.indexOf(v)===i);
+    const ds = cortesGeneral.map(c=>c.distrito).filter(v=>v).filter((v,i,a)=>a.indexOf(v)===i);
     for(const d of ds){
       const n = normalizeBotText(d);
       if(n === 'ate' || n === 'callao'){ if(bw(text, n)) return d; }
@@ -2484,6 +2502,7 @@
     if(has('descargar recibo','descargar pdf','descargar mi recibo','copia','duplicado','comprobante') || bw(text,'pdf')) return {intent:'pdf', confidence:.9};
     if(has('mis recibos','ver recibos','recibos','historial','facturas') || bw(text,'recibo') || bw(text,'factura')) return {intent:'receipts', confidence:.87};
     if(has('cuando termina','cuando terminan','cuando acaban','hasta cuando','cuando vuelve','a que hora termina')) return {intent:'cuts_end', confidence:.93};
+    if(has('que cortes hay','cuales cortes hay','lista de cortes','todos los cortes','que cortes existen')) return {intent:'cuts_all', confidence:.92};
     if(cutWords) return {intent:'cuts', confidence:.88};
     if(has('mis incidencias','mis reportes','que reporte','tengo incidencias','tengo incidencia','tengo reportes','ver incidencias','incidencias registradas')) return {intent:'my_incidents', confidence:.9};
     if(has('incidencia','problema','reporte','reportar','falla')) return {intent:'incident', confidence:.85};
@@ -2588,13 +2607,20 @@
     }
     if(id === 'cuts_district'){
       const dName = found.data;
-      if(!cortes.length) return {text:'No hay cortes de servicio activos o programados para tu suministro.',
-        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
-      const rows = cortes.filter(c=>c.distrito === dName).slice(0, 3);
-      if(!rows.length) return {text:'No encuentro registros para ' + dName + ' dentro del entorno demostrativo.'};
-      const det = rows.map(c=>[c.zona, c.fecha, c.estado].filter(Boolean).join(' · ')).join(' | ');
-      const n = cortes.filter(c=>c.distrito === dName).length;
+      if(!cortesGeneral.length) return {text:'No hay cortes activos o programados registrados para ese distrito.'};
+      const rows = cortesGeneral.filter(c=>c.distrito === dName).slice(0, 3);
+      if(!rows.length) return {text:'No hay cortes activos o programados registrados para ese distrito.'};
+      const det = rows.map(c=>[(c.zona || 'Cobertura general'), c.fecha, c.estado].filter(Boolean).join(' · ')).join(' | ');
+      const n = cortesGeneral.filter(c=>c.distrito === dName).length;
       return {text:'Encontré ' + n + ' registro(s) para ' + dName + ' dentro del entorno demostrativo: ' + det + '.',
+        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
+    }
+    if(id === 'cuts_all'){
+      if(!cortesGeneral.length) return {text:'No hay cortes de servicio activos o programados en este momento.',
+        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
+      const resumen = cortesGeneral.slice(0, 3).map(c=>((c.alcance === 'General' ? 'Aviso general' : c.distrito) + ' · ' + c.estado)).join(' | ');
+      const mas = cortesGeneral.length > 3 ? ' Y ' + (cortesGeneral.length - 3) + ' más.' : '';
+      return {text:'Hay ' + cortesGeneral.length + ' aviso(s) activos o programados: ' + resumen + '.' + mas,
         actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
     }
     if(id === 'cuts'){
@@ -3827,6 +3853,11 @@ async function descargarConstanciaPDF(r, btn){
   let cortes = [];
   let cortesError = false;
   let cortesTimer = null;
+  let cortesTab = 'mios'; // 'mios' | 'todos'
+  let cortesGeneral = [];
+  let cortesGeneralError = false;
+  let catEstado = 'Todos';
+  let catDistrito = 'Todos';
   function formatearFechaHoraCorte(iso){
     try{
       const d = new Date(iso);
@@ -3879,6 +3910,15 @@ async function descargarConstanciaPDF(r, btn){
     if(upd) upd.textContent = 'Última actualización: ' + horaLimaCorta(new Date());
     return lista.map(adaptarCorteAPI);
   }
+  async function cargarCatalogoCortes(){
+    const resp = await fetch('/api/cortes');
+    if(!resp.ok) throw new Error('API catálogo de cortes respondió ' + resp.status);
+    const data = await resp.json();
+    const lista = Array.isArray(data.cortes) ? data.cortes : [];
+    const upd = document.getElementById('cortes-updated');
+    if(upd) upd.textContent = 'Última actualización: ' + horaLimaCorta(new Date());
+    return lista.map(adaptarCorteAPI);
+  }
   async function refrescarCortes(){
     const sup = String(supplyLabel.textContent || '').trim();
     if(!/^\d{7,9}$/.test(sup)) return;
@@ -3888,6 +3928,13 @@ async function descargarConstanciaPDF(r, btn){
     }catch(err){
       console.error('No se pudieron actualizar los cortes de servicio.', err);
       cortesError = true;
+    }
+    try{
+      cortesGeneral = await cargarCatalogoCortes();
+      cortesGeneralError = false;
+    }catch(err){
+      console.error('No se pudo actualizar el catálogo de cortes.', err);
+      cortesGeneralError = true;
     }
     const buscador = document.getElementById('search-distrito');
     renderCortes(buscador ? buscador.value : '');
@@ -3908,6 +3955,20 @@ async function descargarConstanciaPDF(r, btn){
     const list = document.getElementById('cortes-list');
     if(!list) return;
     const emptyEl = document.getElementById('cortes-empty');
+    const tabMios = document.getElementById('tab-cortes-mios');
+    const tabTodos = document.getElementById('tab-cortes-todos');
+    const catBox = document.getElementById('cortes-cat-filters');
+    const esTodos = cortesTab === 'todos';
+    if(tabMios){
+      tabMios.classList.toggle('active', !esTodos);
+      tabMios.setAttribute('aria-selected', !esTodos ? 'true' : 'false');
+    }
+    if(tabTodos){
+      tabTodos.classList.toggle('active', esTodos);
+      tabTodos.setAttribute('aria-selected', esTodos ? 'true' : 'false');
+    }
+    if(catBox) catBox.hidden = !esTodos;
+    if(esTodos) return renderCatalogo(f);
     const q = (f || '').trim().toLowerCase();
     list.innerHTML = '';
     if(!cortes.length){
@@ -3950,7 +4011,118 @@ async function descargarConstanciaPDF(r, btn){
       list.appendChild(h);
     });
   }
+  function poblarDistritosCortes(){
+    const sel = document.getElementById('cortes-distrito');
+    if(!sel) return;
+    const actual = sel.value || 'Todos';
+    const distritos = [];
+    cortesGeneral.forEach(c=>{ if(c.distrito && distritos.indexOf(c.distrito) < 0) distritos.push(c.distrito); });
+    distritos.sort();
+    sel.innerHTML = '<option value="Todos">Todos los distritos</option>';
+    distritos.forEach(d=>{
+      const o = document.createElement('option');
+      o.value = d; o.textContent = d;
+      sel.appendChild(o);
+    });
+    sel.value = (actual === 'Todos' || distritos.indexOf(actual) >= 0) ? actual : 'Todos';
+    catDistrito = sel.value;
+  }
+  function pintarGrupoCortes(list, titulo, grupo){
+    if(!grupo.length) return;
+    const h = document.createElement('div');
+    h.className = 'corte-group';
+    h.innerHTML = '<h4>' + titulo + ' <span class="count">' + grupo.length + '</span></h4>';
+    const grid = document.createElement('div');
+    grid.className = 'support-grid';
+    grid.setAttribute('role','list');
+    grupo.forEach(c=>{
+      const esGeneral = c.alcance === 'General';
+      const tituloCard = esGeneral ? 'AVISO GENERAL' : String(c.distrito || '').toUpperCase();
+      const detalle = [(esGeneral ? 'Cobertura general' : c.zona), c.fecha].filter(Boolean).join(' · ');
+      const d = document.createElement('div');
+      d.className = 'inc-item'; d.setAttribute('role','listitem');
+      d.innerHTML = '<div class="row"><span class="inc-code">' + tituloCard + '</span>' +
+        '<span class="badge ' + corteBadge(c.estado) + '">' + c.estado.toUpperCase() + '</span></div>' +
+        '<div class="inc-desc"><b>' + (c.estado==='Programado' ? 'Corte programado' : (c.estado==='En proceso' ? 'Incidencia en atención' : 'Servicio restablecido')) +
+        '</b> · ' + c.motivo + '</div>' +
+        '<div class="inc-meta">' + detalle + '</div>' +
+        '<div class="inc-meta">Alcance: ' + (esGeneral ? 'General' : 'Zona') + '</div>';
+      grid.appendChild(d);
+    });
+    h.appendChild(grid);
+    list.appendChild(h);
+  }
+  function renderCatalogo(f){
+    const list = document.getElementById('cortes-list');
+    const emptyEl = document.getElementById('cortes-empty');
+    const q = (f || '').trim().toLowerCase();
+    list.innerHTML = '';
+    poblarDistritosCortes();
+    if(cortesGeneralError && !cortesGeneral.length){
+      if(emptyEl){
+        emptyEl.textContent = 'No fue posible cargar el catálogo de cortes. Inténtalo nuevamente.';
+        emptyEl.classList.add('show');
+      }
+      return;
+    }
+    if(!cortesGeneral.length){
+      if(emptyEl){
+        emptyEl.textContent = 'No hay cortes de servicio activos o programados en este momento.';
+        emptyEl.classList.add('show');
+      }
+      return;
+    }
+    const rows = cortesGeneral.filter(c =>
+      (catEstado === 'Todos' || c.estado === catEstado) &&
+      (catDistrito === 'Todos' || c.distrito === catDistrito) &&
+      (!q || (c.distrito && c.distrito.toLowerCase().indexOf(q) > -1) ||
+        (c.zona && c.zona.toLowerCase().indexOf(q) > -1) ||
+        (c.motivo && c.motivo.toLowerCase().indexOf(q) > -1))
+    );
+    if(!rows.length){
+      if(emptyEl){
+        emptyEl.textContent = 'Sin resultados para esos filtros. Prueba con otra búsqueda.';
+        emptyEl.classList.add('show');
+      }
+      return;
+    }
+    if(emptyEl) emptyEl.classList.remove('show');
+    pintarGrupoCortes(list, 'Cortes programados', rows.filter(c=>c.estado==='Programado'));
+    pintarGrupoCortes(list, 'En proceso', rows.filter(c=>c.estado==='En proceso'));
+    pintarGrupoCortes(list, 'Finalizados', rows.filter(c=>c.estado==='Finalizado'));
+  }
   document.getElementById('search-distrito').addEventListener('input', ev=>renderCortes(ev.target.value));
+  document.getElementById('tab-cortes-mios').addEventListener('click', ()=>{
+    if(cortesTab === 'mios') return;
+    cortesTab = 'mios';
+    renderCortes(document.getElementById('search-distrito').value);
+  });
+  document.getElementById('tab-cortes-todos').addEventListener('click', async ()=>{
+    if(cortesTab === 'todos') return;
+    cortesTab = 'todos';
+    if(!cortesGeneral.length && !cortesGeneralError){
+      try{
+        cortesGeneral = await cargarCatalogoCortes();
+        cortesGeneralError = false;
+      }catch(err){
+        console.error('No se pudo cargar el catálogo de cortes.', err);
+        cortesGeneralError = true;
+      }
+    }
+    renderCortes(document.getElementById('search-distrito').value);
+  });
+  document.querySelectorAll('[data-cfilter]').forEach(ch=>{
+    ch.addEventListener('click', ()=>{
+      document.querySelectorAll('[data-cfilter]').forEach(c=>c.classList.remove('active'));
+      ch.classList.add('active');
+      catEstado = ch.dataset.cfilter;
+      renderCortes(document.getElementById('search-distrito').value);
+    });
+  });
+  document.getElementById('cortes-distrito').addEventListener('change', ev=>{
+    catDistrito = ev.target.value;
+    renderCortes(document.getElementById('search-distrito').value);
+  });
 
   /* ---------- Historial de pagos (PostgreSQL, fuente de verdad) ---------- */
   let pagos = [];
@@ -4292,6 +4464,14 @@ async function descargarConstanciaPDF(r, btn){
       console.error('No se pudieron cargar los cortes de servicio.', err);
       cortes = [];
       cortesError = true;
+    }
+    try{
+      cortesGeneral = await cargarCatalogoCortes();
+      cortesGeneralError = false;
+    }catch(err){
+      console.error('No se pudo cargar el catálogo de cortes.', err);
+      cortesGeneral = [];
+      cortesGeneralError = true;
     }
     payEstado = 'cargando';
     try{
