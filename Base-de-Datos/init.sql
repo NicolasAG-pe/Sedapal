@@ -14,11 +14,14 @@ CREATE TABLE usuarios (
 );
 
 
--- SUMINISTROS
+-- SUMINISTROS (ubicación DEMO opcional del prototipo)
 CREATE TABLE suministros (
     id_suministro BIGSERIAL PRIMARY KEY,
     numero_suministro VARCHAR(20) UNIQUE NOT NULL,
     id_usuario BIGINT NOT NULL,
+
+    distrito VARCHAR(100),
+    zona VARCHAR(150),
 
     CONSTRAINT fk_suministro_usuario
         FOREIGN KEY (id_usuario)
@@ -95,20 +98,30 @@ CREATE TABLE incidencias (
 -- La relación con suministros es N:M mediante cortes_suministros:
 -- un corte puede afectar varios suministros y un suministro
 -- puede tener varios cortes.
+-- Modelo vigente: alcance + fecha_inicio/fecha_fin (TIMESTAMPTZ).
+-- Las columnas fecha/hora/estado son LEGADO y ya no se usan.
 CREATE TABLE cortes_servicio (
     id_corte BIGSERIAL PRIMARY KEY,
 
-    distrito VARCHAR(80) NOT NULL,
-    zona VARCHAR(120) NOT NULL,
+    alcance VARCHAR(20),
+
+    distrito VARCHAR(80),
+    zona VARCHAR(120),
     motivo VARCHAR(200) NOT NULL,
 
-    fecha DATE NOT NULL,
+    fecha_inicio TIMESTAMPTZ,
+    fecha_fin TIMESTAMPTZ,
+
+    fecha DATE,
     hora VARCHAR(30),
 
-    estado VARCHAR(20) NOT NULL,
+    estado VARCHAR(20),
+
+    CONSTRAINT chk_alcance_corte
+        CHECK (alcance IS NULL OR alcance IN ('Zona', 'General')),
 
     CONSTRAINT chk_estado_corte
-        CHECK (estado IN ('Programado', 'En proceso', 'Restablecido'))
+        CHECK (estado IS NULL OR estado IN ('Programado', 'En proceso', 'Restablecido'))
 );
 
 

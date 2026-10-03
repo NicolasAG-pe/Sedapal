@@ -967,6 +967,10 @@ app.get("/api/pagos/:suministro", async (req, res) => {
 // CONSULTAR CORTES DE SERVICIO POR SUMINISTRO
 // Avisos demostrativos del prototipo académico.
 // No provienen de sistemas oficiales.
+// Fuente: zona del suministro + avisos generales.
+// El estado se calcula por tiempo (CASE), sin
+// actualizar filas. Los finalizados se guardan
+// pero no aparecen en la vista activa.
 // ==========================================
 
 app.get("/api/cortes/:suministro", async (req, res) => {
@@ -980,31 +984,62 @@ app.get("/api/cortes/:suministro", async (req, res) => {
             });
         }
 
+        const suministroResultado = await pool.query(
+            `SELECT distrito, zona
+             FROM suministros
+             WHERE numero_suministro = $1
+             LIMIT 1;`,
+            [numeroSuministro]
+        );
+
+        const distritoSuministro = suministroResultado.rowCount > 0
+            ? suministroResultado.rows[0].distrito
+            : null;
+        const zonaSuministro = suministroResultado.rowCount > 0
+            ? suministroResultado.rows[0].zona
+            : null;
+
         const consulta = `
             SELECT
               c.id_corte,
+              c.alcance,
               c.distrito,
               c.zona,
               c.motivo,
-              c.fecha,
-              c.hora,
-              c.estado
-            FROM cortes_suministros cs
-            JOIN cortes_servicio c
-              ON c.id_corte = cs.id_corte
-            JOIN suministros s
-              ON s.id_suministro = cs.id_suministro
-            WHERE s.numero_suministro = $1
-            ORDER BY c.fecha DESC, c.id_corte DESC;
+              c.fecha_inicio,
+              c.fecha_fin,
+              CASE
+                WHEN NOW() < c.fecha_inicio THEN 'Programado'
+                WHEN NOW() > c.fecha_fin THEN 'Finalizado'
+                ELSE 'En proceso'
+              END AS estado
+            FROM cortes_servicio c
+            WHERE c.alcance IN ('Zona', 'General')
+              AND c.fecha_inicio IS NOT NULL
+              AND c.fecha_fin IS NOT NULL
+              AND NOW() <= c.fecha_fin
+              AND (
+                c.alcance = 'General'
+                OR (
+                  $1::text IS NOT NULL AND $2::text IS NOT NULL
+                  AND c.distrito = $1 AND c.zona = $2
+                )
+              )
+            ORDER BY c.fecha_inicio ASC;
         `;
 
         const resultado = await pool.query(
             consulta,
-            [numeroSuministro]
+            [distritoSuministro, zonaSuministro]
         );
 
         res.json({
             suministro: numeroSuministro,
+            ubicacion: {
+                distrito: distritoSuministro,
+                zona: zonaSuministro
+            },
+            actualizado_en: new Date().toISOString(),
             cantidad: resultado.rowCount,
             cortes: resultado.rows
         });
