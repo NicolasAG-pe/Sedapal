@@ -7,7 +7,8 @@ const app = express();
 const PORT = 3000;
 
 app.use(cors());
-app.use(express.json());
+// Límite acotado: fotografías de incidencias hasta 2 MB + overhead base64.
+app.use(express.json({ limit: '3mb' }));
 
 const pool = new Pool({
     host: process.env.DB_HOST || "db",
@@ -113,6 +114,7 @@ app.get("/api/incidencias/:suministro", async (req, res) => {
                 i.referencia,
                 i.latitud,
                 i.longitud,
+                (i.foto IS NOT NULL) AS tiene_foto,
                 i.fecha_registro
             FROM incidencias i
             JOIN suministros s
@@ -141,6 +143,62 @@ app.get("/api/incidencias/:suministro", async (req, res) => {
         });
     }
 
+});
+
+
+// ==========================================
+// FOTOGRAFÍA DE INCIDENCIA (bytes reales)
+// Sin sesión/token por diseño actual; mismo
+// nivel de acceso que el resto del prototipo.
+// ==========================================
+
+app.get("/api/incidencias/:id/foto", async (req, res) => {
+    try {
+        const idIncidencia = Number(req.params.id);
+
+        if (!Number.isInteger(idIncidencia) || idIncidencia <= 0) {
+            return res.status(404).json({
+                estado: "error",
+                mensaje: "Fotografía no encontrada."
+            });
+        }
+
+        const resultado = await pool.query(
+            `SELECT foto, foto_mime
+             FROM incidencias
+             WHERE id_incidencia = $1
+             LIMIT 1;`,
+            [idIncidencia]
+        );
+
+        if (resultado.rowCount === 0 || !resultado.rows[0].foto) {
+            return res.status(404).json({
+                estado: "error",
+                mensaje: "Fotografía no encontrada."
+            });
+        }
+
+        const mime = String(resultado.rows[0].foto_mime || '').toLowerCase();
+
+        if (FOTO_MIMES_PERMITIDOS.indexOf(mime) === -1) {
+            return res.status(404).json({
+                estado: "error",
+                mensaje: "Fotografía no encontrada."
+            });
+        }
+
+        res.set('Content-Type', mime);
+        res.set('Content-Length', String(resultado.rows[0].foto.length));
+        return res.send(resultado.rows[0].foto);
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            estado: "error",
+            mensaje: "Error interno del servidor."
+        });
+    }
 });
 
 
@@ -381,12 +439,72 @@ app.post("/api/auth/register", async (req, res) => {
 
 
 // ==========================================
-// REGISTRAR INCIDENCIA
+// REGISTRAR INCIDENCIA (foto opcional en BYTEA)
+// NOTA: sin sesión/token de servidor por diseño actual;
+// el endpoint identifica por suministro, igual que el resto.
+// ==========================================
+
+const FOTO_MIMES_PERMITIDOS = ['image/jpeg', 'image/png', 'image/webp'];
+const FOTO_MAX_BYTES = 2 * 1024 * 1024;
+
+function validarFotoIncidencia(fotoBase64, fotoMime){
+    if (fotoBase64 === null || fotoBase64 === undefined || fotoBase64 === '') {
+        return { foto: null, mime: null };
+    }
+
+    if (typeof fotoBase64 !== 'string' || fotoBase64.length > 4 * 1024 * 1024) {
+        return { error: 'La imagen supera el tamaño máximo permitido de 2 MB.' };
+    }
+
+    const coincidencia = fotoBase64.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,([A-Za-z0-9+/=\s]+)$/);
+
+    if (!coincidencia) {
+        return { error: 'Formato de imagen inválido.' };
+    }
+
+    const mimeReal = coincidencia[1].toLowerCase();
+
+    if (FOTO_MIMES_PERMITIDOS.indexOf(mimeReal) === -1) {
+        return { error: 'Formato de imagen no permitido. Solo JPG, PNG o WebP.' };
+    }
+
+    if (fotoMime !== null && fotoMime !== undefined && fotoMime !== '' &&
+        String(fotoMime).toLowerCase() !== mimeReal) {
+        return { error: 'Formato de imagen no permitido. Solo JPG, PNG o WebP.' };
+    }
+
+    let bytes;
+
+    try {
+        bytes = Buffer.from(coincidencia[2].replace(/\s/g, ''), 'base64');
+    } catch (e) {
+        return { error: 'Formato de imagen inválido.' };
+    }
+
+    if (bytes.length === 0 || bytes.length > FOTO_MAX_BYTES) {
+        return { error: 'La imagen supera el tamaño máximo permitido de 2 MB.' };
+    }
+
+    const esJpeg = bytes.length > 2 && bytes[0] === 0xFF && bytes[1] === 0xD8;
+    const esPng = bytes.length > 8 && bytes[0] === 0x89 && bytes[1] === 0x50 &&
+        bytes[2] === 0x4E && bytes[3] === 0x47;
+    const esWebp = bytes.length > 12 && bytes.toString('ascii', 0, 4) === 'RIFF' &&
+        bytes.toString('ascii', 8, 12) === 'WEBP';
+    const coherente = (mimeReal === 'image/jpeg' && esJpeg) ||
+        (mimeReal === 'image/png' && esPng) ||
+        (mimeReal === 'image/webp' && esWebp);
+
+    if (!coherente) {
+        return { error: 'Formato de imagen inválido.' };
+    }
+
+    return { foto: bytes, mime: mimeReal };
+}
 // ==========================================
 
 app.post("/api/incidencias", async (req, res) => {
     try {
-        const { numero_suministro, tipo, descripcion, referencia, latitud, longitud } = req.body || {};
+        const { numero_suministro, tipo, descripcion, referencia, latitud, longitud, foto_base64, foto_mime } = req.body || {};
 
         if (!/^\d{7,9}$/.test(String(numero_suministro || '').trim())) {
             return res.status(400).json({
@@ -413,6 +531,17 @@ app.post("/api/incidencias", async (req, res) => {
             return res.status(400).json({
                 estado: "error",
                 mensaje: "La referencia es obligatoria."
+            });
+        }
+
+        const fotoValidada = validarFotoIncidencia(foto_base64, foto_mime);
+
+        if (fotoValidada.error) {
+            const esTamano = fotoValidada.error.indexOf('2 MB') > -1;
+
+            return res.status(esTamano ? 413 : 400).json({
+                estado: "error",
+                mensaje: fotoValidada.error
             });
         }
 
@@ -447,9 +576,11 @@ app.post("/api/incidencias", async (req, res) => {
               descripcion,
               referencia,
               latitud,
-              longitud
+              longitud,
+              foto,
+              foto_mime
             )
-            VALUES ($1,$2,$3,$4,$5,$6)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
             RETURNING
               id_incidencia,
               tipo,
@@ -457,6 +588,7 @@ app.post("/api/incidencias", async (req, res) => {
               referencia,
               latitud,
               longitud,
+              (foto IS NOT NULL) AS tiene_foto,
               fecha_registro;`,
             [
                 idSuministro,
@@ -464,7 +596,9 @@ app.post("/api/incidencias", async (req, res) => {
                 String(descripcion).trim(),
                 String(referencia).trim(),
                 Number.isFinite(latitudValor) ? latitudValor : null,
-                Number.isFinite(longitudValor) ? longitudValor : null
+                Number.isFinite(longitudValor) ? longitudValor : null,
+                fotoValidada.foto,
+                fotoValidada.mime
             ]
         );
 

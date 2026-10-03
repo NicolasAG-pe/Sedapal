@@ -598,6 +598,7 @@
   .inc-desc{font-size:.84rem;color:#4c5f70}
   .inc-meta{font-size:.76rem;color:var(--muted)}
   .foto-prev{max-width:100%;max-height:160px;border-radius:10px;border:1px solid var(--border);margin-top:.4rem}
+  .foto-full{max-width:100%;max-height:60vh;object-fit:contain;border-radius:10px;border:1px solid var(--border);display:block;margin:0 auto}
   .coords{font-size:.76rem;color:var(--muted)}
   .disclaimer{font-size:.76rem;color:var(--muted);background:#f6f9fb;border-radius:10px;padding:.55rem .75rem;margin-bottom:.8rem}
   .badge.info{background:#e7f4fd;color:#0b5cab;border:1px solid #bfe0f5}
@@ -1335,6 +1336,22 @@
   </div>
 </div>
 
+<!-- ============ MODAL: FOTO DE INCIDENCIA ============ -->
+<div id="foto-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="foto-title" aria-hidden="true">
+  <div class="dialog">
+    <div class="dialog-head">
+      <div><h3 id="foto-title">Fotografía de la incidencia</h3><p id="foto-sub">—</p></div>
+      <button class="icon-btn" id="foto-close" type="button" aria-label="Cerrar fotografía">✕</button>
+    </div>
+    <div class="dialog-body">
+      <img id="foto-img" class="foto-full" alt="Fotografía de la incidencia" />
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" id="foto-done" type="button">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="toast-success" class="toast-success" role="status" aria-live="polite" aria-hidden="true">
   <span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg></span>
@@ -1428,6 +1445,7 @@
   const payModal = document.getElementById('pay-modal');
   const copiesModal = document.getElementById('copies-modal');
   const incModal = document.getElementById('incident-modal');
+  const fotoModal = document.getElementById('foto-modal');
 
   const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const MESES_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -2683,7 +2701,7 @@
   // Escape global unico: prioridad 1) modal, 2) tutorial, 3) HidroBot.
   document.addEventListener('keydown', e=>{
     if(e.key !== 'Escape') return;
-    if(document.querySelector('.overlay.open,.overlay.closing')){ [detModal,payModal,copiesModal,incModal].forEach(closeModal); return; }
+    if(document.querySelector('.overlay.open,.overlay.closing')){ [detModal,payModal,copiesModal,incModal,fotoModal].forEach(closeModal); return; }
     if(spotActive){ endSpotlight(false); return; }
     if(hidroBotState.open){ minimizeBot(); refocusFab(); }
   });
@@ -3335,6 +3353,17 @@ async function descargarConstanciaPDF(r, btn){
   payModal.addEventListener('click', e=>{ if(e.target===payModal){ closeModal(payModal); payTarget = null; } });
   copiesModal.addEventListener('click', e=>{ if(e.target===copiesModal) closeModal(copiesModal); });
   incModal.addEventListener('click', e=>{ if(e.target===incModal) closeModal(incModal); });
+  function abrirFotoIncidencia(inc){
+    if(!inc) return;
+    document.getElementById('foto-sub').textContent = inc.code + ' · ' + inc.tipo;
+    const img = document.getElementById('foto-img');
+    img.removeAttribute('src');
+    img.src = '/api/incidencias/' + encodeURIComponent(String(inc.id)) + '/foto';
+    openModal(fotoModal);
+  }
+  document.getElementById('foto-close').addEventListener('click', ()=>closeModal(fotoModal));
+  document.getElementById('foto-done').addEventListener('click', ()=>closeModal(fotoModal));
+  fotoModal.addEventListener('click', e=>{ if(e.target===fotoModal) closeModal(fotoModal); });
 
   /* ---------- Incidencias (PostgreSQL) ---------- */
   function codigoIncidencia(idIncidencia, fechaRegistro){
@@ -3366,7 +3395,7 @@ async function descargarConstanciaPDF(r, btn){
       fecha: fecha,
       coords: coords,
       foto: null,
-      tieneFoto: false
+      tieneFoto: api.tiene_foto === true
     };
   }
   async function cargarIncidenciasDesdeAPI(numeroSuministro){
@@ -3396,6 +3425,15 @@ async function descargarConstanciaPDF(r, btn){
       const meta = document.createElement('div'); meta.className = 'inc-meta';
       meta.textContent = inc.fecha + ' · ' + inc.dir + (inc.coords ? ' · ' + inc.coords : '');
       d.appendChild(row); d.appendChild(desc); d.appendChild(meta);
+      if(inc.tieneFoto){
+        const box = document.createElement('div'); box.className = 'tbl-actions';
+        const bF = document.createElement('button');
+        bF.type = 'button'; bF.className = 'btn-sm detail'; bF.textContent = 'Ver foto';
+        bF.setAttribute('aria-label', 'Ver fotografía de ' + inc.code);
+        bF.addEventListener('click', ()=>abrirFotoIncidencia(inc));
+        box.appendChild(bF);
+        d.appendChild(box);
+      }
       list.appendChild(d);
     });
   }
@@ -3414,7 +3452,19 @@ async function descargarConstanciaPDF(r, btn){
   document.getElementById('inc-foto').addEventListener('change', ev=>{
     const file = ev.target.files && ev.target.files[0];
     const prev = document.getElementById('inc-foto-prev');
-    if(!file){ incFotoData = null; prev.hidden = true; prev.removeAttribute('src'); return; }
+    const limpiar = ()=>{ incFotoData = null; ev.target.value = ''; prev.hidden = true; prev.removeAttribute('src'); };
+    if(!file){ limpiar(); return; }
+    const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+    if(tiposPermitidos.indexOf(file.type) === -1){
+      limpiar();
+      showToast('Formato no permitido. Solo JPG, PNG o WebP.');
+      return;
+    }
+    if(file.size > 2 * 1024 * 1024){
+      limpiar();
+      showToast('La imagen supera el tamaño máximo permitido de 2 MB.');
+      return;
+    }
     const rd = new FileReader();
     rd.onload = ()=>{ incFotoData = rd.result; prev.src = rd.result; prev.hidden = false; };
     rd.readAsDataURL(file);
@@ -3452,6 +3502,13 @@ async function descargarConstanciaPDF(r, btn){
       }
     }
     try{
+      let fotoBase64 = null;
+      let fotoMime = null;
+      if(typeof incFotoData === 'string' && incFotoData.indexOf('data:image/') === 0){
+        fotoBase64 = incFotoData;
+        const mm = incFotoData.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,/);
+        if(mm) fotoMime = mm[1].toLowerCase();
+      }
       const resp = await fetch('/api/incidencias', {
         method: 'POST',
         headers: {
@@ -3463,17 +3520,31 @@ async function descargarConstanciaPDF(r, btn){
           descripcion: desc,
           referencia: dir,
           latitud: latitud,
-          longitud: longitud
+          longitud: longitud,
+          foto_base64: fotoBase64,
+          foto_mime: fotoMime
         })
       });
-      if(!resp.ok) throw new Error('API incidencias respondió ' + resp.status);
-      const data = await resp.json();
+      const data = await resp.json().catch(()=>null);
+      if(!resp.ok){
+        throw new Error((data && data.mensaje) || ('API incidencias respondió ' + resp.status));
+      }
       if(!data || data.estado !== 'ok' || !data.incidencia) throw new Error('Respuesta de incidencia inválida');
       const nueva = adaptarIncidenciaAPI(data.incidencia);
-      incidencias.unshift(nueva);
+      try{
+        incidencias = await cargarIncidenciasDesdeAPI(supplyLabel.textContent);
+      }catch(reloadErr){
+        console.error('No se pudo recargar incidencias, se usa el registro creado.', reloadErr);
+        incidencias.unshift(nueva);
+      }
       renderInc();
       form.dataset.busy = '0';
       btnSubmit.disabled = false; btnSubmit.textContent = 'Registrar incidencia';
+      document.getElementById('inc-form').reset();
+      incFotoData = null; incCoords = '';
+      document.getElementById('inc-foto-prev').hidden = true;
+      document.getElementById('inc-foto-prev').removeAttribute('src');
+      document.getElementById('inc-coords').textContent = 'Sin ubicación compartida.';
       document.getElementById('inc-form').hidden = true;
       document.getElementById('inc-code').textContent = nueva.code;
       const okBox = document.getElementById('inc-ok');
@@ -3484,7 +3555,7 @@ async function descargarConstanciaPDF(r, btn){
       console.error('No se pudo registrar la incidencia.', err);
       form.dataset.busy = '0';
       btnSubmit.disabled = false; btnSubmit.textContent = 'Registrar incidencia';
-      showToast('No se pudo registrar la incidencia. Inténtalo nuevamente.');
+      showToast(err && err.message ? err.message : 'No se pudo registrar la incidencia. Inténtalo nuevamente.');
     }
   });
   document.getElementById('inc-again').addEventListener('click', ()=>{
@@ -3833,7 +3904,7 @@ async function descargarConstanciaPDF(r, btn){
   // Flujo principal de logout (unico listener): incluye limpieza de HidroBot.
   document.getElementById('btn-logout').addEventListener('click', ()=>{
     resetHidroBotSession();
-    [detModal,payModal,copiesModal,incModal].forEach(closeModal);
+    [detModal,payModal,copiesModal,incModal,fotoModal].forEach(closeModal);
     endSpotlight(false, {markSeen:false});
     showView(viewLogin);
     inpPass.value = '';

@@ -80,6 +80,9 @@ CREATE TABLE incidencias (
     latitud NUMERIC(10,7),
     longitud NUMERIC(10,7),
 
+    foto BYTEA,
+    foto_mime VARCHAR(50),
+
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_incidencia_suministro
