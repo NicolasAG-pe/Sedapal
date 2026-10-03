@@ -1,5 +1,5 @@
 .env
 node_modules/
-backend/node_modules/
+Backend/node_modules/
 *.log
 index.backup*.html
