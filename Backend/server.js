@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const { Pool } = require("pg");
 
 const app = express();
@@ -9,6 +10,14 @@ const PORT = 3000;
 app.use(cors());
 // Límite acotado: fotografías de incidencias hasta 2 MB + overhead base64.
 app.use(express.json({ limit: '3mb' }));
+
+function obtenerSecretoAuth(){
+    return process.env.AUTH_TOKEN_SECRET || '';
+}
+
+if (!obtenerSecretoAuth()) {
+    console.error('Falta AUTH_TOKEN_SECRET: las rutas protegidas responderán 401.');
+}
 
 const pool = new Pool({
     host: process.env.DB_HOST || "db",
@@ -231,6 +240,59 @@ function generarClaveHash(password){
 
 
 // ==========================================
+// AUTENTICACIÓN POR TOKEN (JWT 8h, rol en token)
+// ==========================================
+
+function generarTokenAcceso(datos){
+    return jwt.sign(
+        {
+            id_usuario: datos.id_usuario,
+            id_suministro: datos.id_suministro,
+            numero_suministro: datos.numero_suministro,
+            rol: datos.rol
+        },
+        obtenerSecretoAuth(),
+        { expiresIn: '8h' }
+    );
+}
+
+function requiereAuth(req, res, next){
+    const autorizacion = req.headers.authorization || '';
+    const partes = autorizacion.split(' ');
+
+    if (partes.length !== 2 || partes[0] !== 'Bearer' || !partes[1]) {
+        return res.status(401).json({
+            estado: "error",
+            mensaje: "Autenticación requerida."
+        });
+    }
+
+    try {
+        req.user = jwt.verify(partes[1], obtenerSecretoAuth());
+        return next();
+    } catch (e) {
+        return res.status(401).json({
+            estado: "error",
+            mensaje: "Autenticación requerida."
+        });
+    }
+}
+
+function requiereAdmin(req, res, next){
+    requiereAuth(req, res, () => {
+        if (!req.user || req.user.rol !== 'admin') {
+            return res.status(403).json({
+                estado: "error",
+                mensaje: "Acceso denegado."
+            });
+        }
+
+        return next();
+    });
+}
+
+
+// ==========================================
 // AUTENTICACIÓN DE USUARIO POR SUMINISTRO
 // ==========================================
 
@@ -257,6 +319,7 @@ app.post("/api/auth/login", async (req, res) => {
               u.id_usuario,
               u.correo,
               u.clave_hash,
+              u.rol,
               s.id_suministro,
               s.numero_suministro
             FROM suministros s
@@ -285,9 +348,11 @@ app.post("/api/auth/login", async (req, res) => {
 
         return res.status(200).json({
             estado: "ok",
+            token: generarTokenAcceso(fila),
             usuario: {
                 id_usuario: fila.id_usuario,
-                correo: fila.correo
+                correo: fila.correo,
+                rol: fila.rol
             },
             suministro: {
                 id_suministro: fila.id_suministro,
@@ -990,6 +1055,7 @@ app.get("/api/cortes", async (req, res) => {
             WHERE c.alcance IN ('Zona', 'General')
               AND c.fecha_inicio IS NOT NULL
               AND c.fecha_fin IS NOT NULL
+              AND NOT COALESCE(c.cancelado, FALSE)
               AND NOW() <= c.fecha_fin
             ORDER BY c.fecha_inicio ASC;
         `;
@@ -1067,6 +1133,7 @@ app.get("/api/cortes/:suministro", async (req, res) => {
             WHERE c.alcance IN ('Zona', 'General')
               AND c.fecha_inicio IS NOT NULL
               AND c.fecha_fin IS NOT NULL
+              AND NOT COALESCE(c.cancelado, FALSE)
               AND NOW() <= c.fecha_fin
               AND (
                 c.alcance = 'General'
@@ -1097,7 +1164,247 @@ app.get("/api/cortes/:suministro", async (req, res) => {
     } catch (error) {
         console.error(error);
 
-        res.status(500).json({
+        return res.status(500).json({
+            estado: "error",
+            mensaje: "Error interno del servidor."
+        });
+    }
+});
+
+
+// ==========================================
+// ADMINISTRACIÓN DE CORTES (solo admin)
+// ==========================================
+
+function validarCorteAdmin(body){
+    const alcance = String((body || {}).alcance || '').trim();
+    const motivo = String((body || {}).motivo || '').trim();
+    const inicio = new Date((body || {}).fecha_inicio);
+    const fin = new Date((body || {}).fecha_fin);
+
+    if (alcance !== 'Zona' && alcance !== 'General') {
+        return { error: 'Alcance inválido. Debe ser Zona o General.' };
+    }
+
+    if (!motivo || motivo.length > 200) {
+        return { error: 'El motivo es obligatorio (máximo 200 caracteres).' };
+    }
+
+    if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
+        return { error: 'Fechas de inicio y fin inválidas.' };
+    }
+
+    if (fin <= inicio) {
+        return { error: 'La fecha de fin debe ser posterior a la fecha de inicio.' };
+    }
+
+    let distrito = null;
+    let zona = null;
+
+    if (alcance === 'Zona') {
+        distrito = String((body || {}).distrito || '').trim();
+        zona = String((body || {}).zona || '').trim();
+
+        if (!distrito || !zona) {
+            return { error: 'Distrito y zona son obligatorios para alcance Zona.' };
+        }
+
+        if (distrito.length > 80 || zona.length > 120) {
+            return { error: 'Distrito o zona demasiado largos.' };
+        }
+    }
+
+    return { alcance, motivo, distrito, zona, inicio, fin };
+}
+
+function filaCorteAdmin(fila){
+    let estado = 'En proceso';
+
+    if (fila.cancelado) {
+        estado = 'Cancelado';
+    } else if (fila.fecha_inicio && new Date() < new Date(fila.fecha_inicio)) {
+        estado = 'Programado';
+    } else if (fila.fecha_fin && new Date() > new Date(fila.fecha_fin)) {
+        estado = 'Finalizado';
+    }
+
+    return {
+        id_corte: fila.id_corte,
+        alcance: fila.alcance,
+        distrito: fila.distrito,
+        zona: fila.zona,
+        motivo: fila.motivo,
+        fecha_inicio: fila.fecha_inicio,
+        fecha_fin: fila.fecha_fin,
+        cancelado: !!fila.cancelado,
+        estado: estado
+    };
+}
+
+app.get("/api/admin/cortes", requiereAdmin, async (req, res) => {
+    try {
+        const resultado = await pool.query(
+            `SELECT
+               id_corte, alcance, distrito, zona, motivo,
+               fecha_inicio, fecha_fin, cancelado
+             FROM cortes_servicio
+             WHERE alcance IN ('Zona', 'General')
+             ORDER BY cancelado ASC, fecha_inicio DESC NULLS LAST;`
+        );
+
+        res.json({
+            cantidad: resultado.rowCount,
+            cortes: resultado.rows.map(filaCorteAdmin)
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            estado: "error",
+            mensaje: "Error interno del servidor."
+        });
+    }
+});
+
+app.post("/api/admin/cortes", requiereAdmin, async (req, res) => {
+    try {
+        const validado = validarCorteAdmin(req.body);
+
+        if (validado.error) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: validado.error
+            });
+        }
+
+        const insertado = await pool.query(
+            `INSERT INTO cortes_servicio
+               (alcance, distrito, zona, motivo, fecha_inicio, fecha_fin, cancelado)
+             VALUES ($1, $2, $3, $4, $5, $6, FALSE)
+             RETURNING
+               id_corte, alcance, distrito, zona, motivo,
+               fecha_inicio, fecha_fin, cancelado;`,
+            [validado.alcance, validado.distrito, validado.zona, validado.motivo, validado.inicio, validado.fin]
+        );
+
+        return res.status(201).json({
+            estado: "ok",
+            corte: filaCorteAdmin(insertado.rows[0])
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            estado: "error",
+            mensaje: "Error interno del servidor."
+        });
+    }
+});
+
+app.patch("/api/admin/cortes/:id/cancelar", requiereAdmin, async (req, res) => {
+    try {
+        const idCorte = Number(req.params.id);
+
+        if (!Number.isInteger(idCorte) || idCorte <= 0) {
+            return res.status(404).json({
+                estado: "error",
+                mensaje: "Corte no encontrado."
+            });
+        }
+
+        const resultado = await pool.query(
+            `UPDATE cortes_servicio
+             SET cancelado = TRUE
+             WHERE id_corte = $1
+             RETURNING
+               id_corte, alcance, distrito, zona, motivo,
+               fecha_inicio, fecha_fin, cancelado;`,
+            [idCorte]
+        );
+
+        if (resultado.rowCount === 0) {
+            return res.status(404).json({
+                estado: "error",
+                mensaje: "Corte no encontrado."
+            });
+        }
+
+        return res.json({
+            estado: "ok",
+            corte: filaCorteAdmin(resultado.rows[0])
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            estado: "error",
+            mensaje: "Error interno del servidor."
+        });
+    }
+});
+
+app.patch("/api/admin/cortes/:id", requiereAdmin, async (req, res) => {
+    try {
+        const idCorte = Number(req.params.id);
+
+        if (!Number.isInteger(idCorte) || idCorte <= 0) {
+            return res.status(404).json({
+                estado: "error",
+                mensaje: "Corte no encontrado."
+            });
+        }
+
+        const actual = await pool.query(
+            `SELECT cancelado FROM cortes_servicio WHERE id_corte = $1 LIMIT 1;`,
+            [idCorte]
+        );
+
+        if (actual.rowCount === 0) {
+            return res.status(404).json({
+                estado: "error",
+                mensaje: "Corte no encontrado."
+            });
+        }
+
+        if (actual.rows[0].cancelado) {
+            return res.status(409).json({
+                estado: "error",
+                mensaje: "No se puede editar un corte cancelado."
+            });
+        }
+
+        const validado = validarCorteAdmin(req.body);
+
+        if (validado.error) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: validado.error
+            });
+        }
+
+        const resultado = await pool.query(
+            `UPDATE cortes_servicio
+             SET alcance = $1, distrito = $2, zona = $3, motivo = $4,
+                 fecha_inicio = $5, fecha_fin = $6
+             WHERE id_corte = $7
+             RETURNING
+               id_corte, alcance, distrito, zona, motivo,
+               fecha_inicio, fecha_fin, cancelado;`,
+            [validado.alcance, validado.distrito, validado.zona, validado.motivo, validado.inicio, validado.fin, idCorte]
+        );
+
+        return res.json({
+            estado: "ok",
+            corte: filaCorteAdmin(resultado.rows[0])
+        });
+
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
             estado: "error",
             mensaje: "Error interno del servidor."
         });

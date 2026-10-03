@@ -5,12 +5,16 @@
 -- ==========================================
 
 
--- USUARIOS
+-- USUARIOS (rol: 'usuario' normal o 'admin' del panel)
 CREATE TABLE usuarios (
     id_usuario BIGSERIAL PRIMARY KEY,
     correo VARCHAR(120) UNIQUE NOT NULL,
     clave_hash VARCHAR(255) NOT NULL,
-    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    rol VARCHAR(20) NOT NULL DEFAULT 'usuario',
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_rol_usuario
+        CHECK (rol IN ('usuario', 'admin'))
 );
 
 
@@ -111,6 +115,8 @@ CREATE TABLE cortes_servicio (
 
     fecha_inicio TIMESTAMPTZ,
     fecha_fin TIMESTAMPTZ,
+
+    cancelado BOOLEAN NOT NULL DEFAULT FALSE,
 
     fecha DATE,
     hora VARCHAR(30),

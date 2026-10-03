@@ -153,6 +153,7 @@
   /* Grupos de navegación */
   .sidebar nav{display:grid}
   .nav-group{display:grid;gap:5px;margin-top:20px}
+  .nav-group[hidden]{display:none}
   .nav-group:first-child{margin-top:12px}
   .side-label{font-size:.66rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
     color:rgba(219,231,243,.55);padding:0 .55rem;margin-bottom:1px;max-height:32px;overflow:hidden}
@@ -877,6 +878,13 @@
             <span>Mi perfil</span>
           </button>
         </div>
+        <div class="nav-group" id="nav-admin-section" hidden>
+          <div class="side-label" aria-hidden="true">Administración</div>
+          <button class="nav-item" data-sec="admin" data-tip="Panel administrativo" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/><path d="M9.5 12l2 2 3.5-4"/></svg>
+            <span>Panel administrativo</span>
+          </button>
+        </div>
       </nav>
       <div class="side-cons ok" id="side-cons" aria-live="polite">
         <div class="side-cons-title">Consumo este mes</div>
@@ -1158,6 +1166,65 @@
           <p>Mantén tu cuenta protegida con una contraseña segura.</p>
           <button class="btn btn-sky" id="btn-change-pass" type="button">Cambiar contraseña</button>
         </div>
+      </div>
+
+      <!-- ADMIN -->
+      <div class="dash-sec" id="sec-admin" aria-label="Panel administrativo">
+        <div class="page-header">
+          <div>
+            <div class="page-crumb">Hidro Mejora / Administración</div>
+            <h2 class="page-title" tabindex="-1">Panel administrativo</h2>
+            <p class="page-desc">Gestión de cortes de servicio del prototipo.</p>
+          </div>
+          <div class="page-actions">
+            <button class="btn btn-sky" id="btn-nuevo-corte" type="button">+ Nuevo corte</button>
+          </div>
+        </div>
+        <div class="mod-stats" aria-label="Resumen de cortes" style="grid-template-columns:repeat(4,1fr)">
+          <div class="mod-stat"><small>Programados</small><strong id="adm-stat-prog">0</strong></div>
+          <div class="mod-stat"><small>En proceso</small><strong id="adm-stat-proc">0</strong></div>
+          <div class="mod-stat"><small>Finalizados</small><strong id="adm-stat-fin">0</strong></div>
+          <div class="mod-stat"><small>Cancelados</small><strong id="adm-stat-canc">0</strong></div>
+        </div>
+        <div class="support-card" id="admin-corte-form-card" hidden aria-label="Formulario de corte">
+          <h4 id="admin-corte-form-title">Nuevo corte de servicio</h4>
+          <div id="admin-corte-error" class="form-error" role="alert"></div>
+          <form id="admin-corte-form" novalidate>
+            <div class="field">
+              <label for="adm-alcance">Alcance</label>
+              <select id="adm-alcance" required>
+                <option value="Zona">Zona</option>
+                <option value="General">General</option>
+              </select>
+            </div>
+            <div class="field" id="adm-distrito-wrap">
+              <label for="adm-distrito">Distrito</label>
+              <input type="text" id="adm-distrito" maxlength="80" placeholder="Ej. Ate" />
+            </div>
+            <div class="field" id="adm-zona-wrap">
+              <label for="adm-zona">Zona</label>
+              <input type="text" id="adm-zona" maxlength="120" placeholder="Ej. Santa Clara" />
+            </div>
+            <div class="field">
+              <label for="adm-motivo">Motivo</label>
+              <input type="text" id="adm-motivo" maxlength="200" placeholder="Ej. Mantenimiento preventivo" required />
+            </div>
+            <div class="field">
+              <label for="adm-inicio">Fecha/hora inicio</label>
+              <input type="datetime-local" id="adm-inicio" required />
+            </div>
+            <div class="field">
+              <label for="adm-fin">Fecha/hora fin</label>
+              <input type="datetime-local" id="adm-fin" required />
+            </div>
+            <div class="dialog-actions">
+              <button class="btn btn-ghost" id="admin-corte-cancel" type="button">Cancelar</button>
+              <button class="btn btn-primary" id="admin-corte-submit" type="submit"><span id="admin-corte-submit-text">Publicar corte</span></button>
+            </div>
+          </form>
+        </div>
+        <div id="admin-cortes-list" class="support-grid" role="list"></div>
+        <div id="admin-cortes-empty" class="empty">Sin cortes registrados.</div>
       </div>
 
       <!-- AYUDA -->
@@ -1466,6 +1533,23 @@
   </div>
 </div>
 
+<!-- ============ MODAL: CONFIRMACIÓN GENÉRICA ============ -->
+<div id="confirm-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true">
+  <div class="dialog">
+    <div class="dialog-head">
+      <div><h3 id="confirm-title">Confirmar acción</h3><p id="confirm-sub">—</p></div>
+      <button class="icon-btn" id="confirm-close" type="button" aria-label="Cerrar confirmación">✕</button>
+    </div>
+    <div class="dialog-body">
+      <p id="confirm-text" style="font-size:.9rem;color:var(--text)">¿Deseas continuar?</p>
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" id="confirm-cancel" type="button">Cancelar</button>
+        <button class="btn btn-primary" id="confirm-ok" type="button">Aceptar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <div id="toast-success" class="toast-success" role="status" aria-live="polite" aria-hidden="true">
   <span class="ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg></span>
@@ -1561,6 +1645,56 @@
   const incModal = document.getElementById('incident-modal');
   const fotoModal = document.getElementById('foto-modal');
   const passModal = document.getElementById('pass-modal');
+  const confirmModal = document.getElementById('confirm-modal');
+
+  /* ---------- Sesión con token (sessionStorage, no permanente) ---------- */
+  const SESION_TOKEN_KEY = 'hm_token';
+  const SESION_ROL_KEY = 'hm_rol';
+  function guardarSesion(token, rol){
+    try{
+      sessionStorage.setItem(SESION_TOKEN_KEY, token || '');
+      sessionStorage.setItem(SESION_ROL_KEY, rol || 'usuario');
+    }catch(e){}
+  }
+  function obtenerToken(){
+    try{ return sessionStorage.getItem(SESION_TOKEN_KEY) || ''; }
+    catch(e){ return ''; }
+  }
+  function obtenerRol(){
+    try{ return sessionStorage.getItem(SESION_ROL_KEY) || 'usuario'; }
+    catch(e){ return 'usuario'; }
+  }
+  function limpiarSesion(){
+    try{
+      sessionStorage.removeItem(SESION_TOKEN_KEY);
+      sessionStorage.removeItem(SESION_ROL_KEY);
+    }catch(e){}
+  }
+  function esAdmin(){ return obtenerRol() === 'admin'; }
+  function cerrarSesionPorAuth(){
+    limpiarSesion();
+    stopCortesPolling();
+    resetHidroBotSession();
+    [detModal,payModal,copiesModal,incModal,fotoModal,passModal,confirmModal].forEach(closeModal);
+    endSpotlight(false, {markSeen:false});
+    aplicarVisibilidadAdmin();
+    showView(viewLogin);
+    showToast('Sesión terminada. Inicia sesión nuevamente.');
+  }
+  async function apiFetch(url, options){
+    const o = options || {};
+    const headers = Object.assign({}, o.headers || {});
+    const token = obtenerToken();
+    if(token) headers['Authorization'] = 'Bearer ' + token;
+    const resp = await fetch(url, Object.assign({}, o, {headers: headers}));
+    if(resp.status === 401) cerrarSesionPorAuth();
+    return resp;
+  }
+  function aplicarVisibilidadAdmin(){
+    const admin = esAdmin();
+    const navAdmin = document.getElementById('nav-admin-section');
+    if(navAdmin) navAdmin.hidden = !admin;
+  }
 
   const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const MESES_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
@@ -1701,7 +1835,7 @@
   function pad(n){ return String(n).padStart(2,'0'); }
 
   /* ---------- Router interno del dashboard: una sola página activa ---------- */
-  const HASH_SEC = {inicio:'inicio', historial:'recibos', incidencias:'incidencias', cortes:'cortes', pagos:'pagos', perfil:'perfil', ayuda:'atencion'};
+  const HASH_SEC = {inicio:'inicio', historial:'recibos', incidencias:'incidencias', cortes:'cortes', pagos:'pagos', perfil:'perfil', admin:'admin', ayuda:'atencion'};
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const isReduced = ()=>reduceMotion.matches;
   const mainContent = document.getElementById('main-content');
@@ -3641,6 +3775,226 @@ async function descargarConstanciaPDF(r, btn){
     }
   });
 
+  /* ---------- Panel administrativo: cortes (solo admin) ---------- */
+  let adminCortes = [];
+  let adminEditId = null;
+  let confirmarAccion = null;
+  function pedirConfirmacion(titulo, texto, alAceptar){
+    document.getElementById('confirm-title').textContent = titulo;
+    document.getElementById('confirm-sub').textContent = 'Panel administrativo';
+    document.getElementById('confirm-text').textContent = texto;
+    confirmarAccion = alAceptar;
+    openModal(confirmModal);
+  }
+  document.getElementById('confirm-close').addEventListener('click', ()=>{ confirmarAccion = null; closeModal(confirmModal); });
+  document.getElementById('confirm-cancel').addEventListener('click', ()=>{ confirmarAccion = null; closeModal(confirmModal); });
+  document.getElementById('confirm-ok').addEventListener('click', ()=>{
+    const fn = confirmarAccion;
+    confirmarAccion = null;
+    closeModal(confirmModal);
+    if(fn) fn();
+  });
+  confirmModal.addEventListener('click', e=>{ if(e.target===confirmModal){ confirmarAccion = null; closeModal(confirmModal); } });
+  function limaInputValor(iso){
+    try{
+      const d = new Date(iso);
+      if(isNaN(d)) return '';
+      const partes = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Lima',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).formatToParts(d);
+      const g = t=>((partes.find(p=>p.type===t) || {}).value || '');
+      return g('year') + '-' + g('month') + '-' + g('day') + 'T' + g('hour') + ':' + g('minute');
+    }catch(e){ return ''; }
+  }
+  function limaISODesdeInput(valor){
+    if(!valor) return null;
+    const d = new Date(valor + ':00-05:00');
+    if(isNaN(d)) return null;
+    return d.toISOString();
+  }
+  function mostrarFormCorte(editar){
+    document.getElementById('admin-corte-form-card').hidden = false;
+    document.getElementById('admin-corte-error').classList.remove('show');
+    document.getElementById('admin-corte-form-title').textContent = editar ? 'Editar corte de servicio' : 'Nuevo corte de servicio';
+    document.getElementById('admin-corte-submit-text').textContent = editar ? 'Guardar cambios' : 'Publicar corte';
+    aplicarAlcanceCorte();
+    document.getElementById('adm-motivo').focus();
+  }
+  function ocultarFormCorte(){
+    document.getElementById('admin-corte-form-card').hidden = true;
+    document.getElementById('admin-corte-form').reset();
+    adminEditId = null;
+  }
+  function aplicarAlcanceCorte(){
+    const esGeneral = document.getElementById('adm-alcance').value === 'General';
+    document.getElementById('adm-distrito').disabled = esGeneral;
+    document.getElementById('adm-zona').disabled = esGeneral;
+    document.getElementById('adm-distrito-wrap').style.opacity = esGeneral ? '.5' : '1';
+    document.getElementById('adm-zona-wrap').style.opacity = esGeneral ? '.5' : '1';
+  }
+  document.getElementById('btn-nuevo-corte').addEventListener('click', ()=>{
+    adminEditId = null;
+    document.getElementById('admin-corte-form').reset();
+    mostrarFormCorte(false);
+  });
+  document.getElementById('admin-corte-cancel').addEventListener('click', ocultarFormCorte);
+  document.getElementById('adm-alcance').addEventListener('change', aplicarAlcanceCorte);
+  async function cargarAdminCortes(){
+    const list = document.getElementById('admin-cortes-list');
+    const emptyEl = document.getElementById('admin-cortes-empty');
+    try{
+      const resp = await apiFetch('/api/admin/cortes');
+      if(!resp.ok) throw new Error('API admin cortes respondió ' + resp.status);
+      const data = await resp.json();
+      adminCortes = Array.isArray(data.cortes) ? data.cortes : [];
+    }catch(err){
+      console.error('No se pudieron cargar los cortes del panel.', err);
+      adminCortes = [];
+      if(emptyEl){
+        emptyEl.textContent = 'No fue posible cargar los cortes. Inténtalo nuevamente.';
+        emptyEl.classList.add('show');
+      }
+      if(list) list.innerHTML = '';
+      document.getElementById('adm-stat-prog').textContent = '—';
+      document.getElementById('adm-stat-proc').textContent = '—';
+      document.getElementById('adm-stat-fin').textContent = '—';
+      document.getElementById('adm-stat-canc').textContent = '—';
+      return;
+    }
+    document.getElementById('adm-stat-prog').textContent = adminCortes.filter(c=>c.estado==='Programado').length;
+    document.getElementById('adm-stat-proc').textContent = adminCortes.filter(c=>c.estado==='En proceso').length;
+    document.getElementById('adm-stat-fin').textContent = adminCortes.filter(c=>c.estado==='Finalizado').length;
+    document.getElementById('adm-stat-canc').textContent = adminCortes.filter(c=>c.estado==='Cancelado').length;
+    if(list) list.innerHTML = '';
+    if(!adminCortes.length){
+      if(emptyEl){
+        emptyEl.textContent = 'Sin cortes registrados.';
+        emptyEl.classList.add('show');
+      }
+      return;
+    }
+    if(emptyEl) emptyEl.classList.remove('show');
+    adminCortes.forEach(c=>{
+      const d = document.createElement('div');
+      d.className = 'inc-item'; d.setAttribute('role','listitem');
+      const titulo = c.alcance === 'General' ? 'AVISO GENERAL' : String(c.distrito || '').toUpperCase();
+      const zonaTxt = c.alcance === 'General' ? 'Cobertura general' : (c.zona || '');
+      const badgeCls = c.estado === 'Programado' ? 'info' : (c.estado === 'En proceso' ? 'Pendiente' : (c.estado === 'Finalizado' ? 'Pagado' : ''));
+      const row = document.createElement('div'); row.className = 'row';
+      const code = document.createElement('span'); code.className = 'inc-code'; code.textContent = '#' + c.id_corte + ' · ' + titulo;
+      const badge = document.createElement('span'); badge.className = ('badge ' + badgeCls).trim(); badge.textContent = String(c.estado || '').toUpperCase();
+      row.appendChild(code); row.appendChild(badge);
+      const desc = document.createElement('div'); desc.className = 'inc-desc'; desc.textContent = c.motivo;
+      const meta = document.createElement('div'); meta.className = 'inc-meta';
+      meta.textContent = zonaTxt + ' · Inicio ' + formatearFechaHoraCorte(c.fecha_inicio) + ' · Fin ' + formatearFechaHoraCorte(c.fecha_fin);
+      d.appendChild(row); d.appendChild(desc); d.appendChild(meta);
+      const box = document.createElement('div'); box.className = 'tbl-actions';
+      if(!c.cancelado){
+        const bE = document.createElement('button');
+        bE.type = 'button'; bE.className = 'btn-sm detail'; bE.textContent = 'Editar';
+        bE.addEventListener('click', ()=>editarCorteAdmin(c.id_corte));
+        box.appendChild(bE);
+        if(c.estado !== 'Finalizado'){
+          const bC = document.createElement('button');
+          bC.type = 'button'; bC.className = 'btn-sm payb'; bC.textContent = 'Cancelar';
+          bC.addEventListener('click', ()=>pedirConfirmacion('Cancelar corte', '¿Deseas cancelar este aviso de corte?', ()=>cancelarCorteAdmin(c.id_corte)));
+          box.appendChild(bC);
+        }
+      }
+      if(box.children.length) d.appendChild(box);
+      list.appendChild(d);
+    });
+  }
+  function editarCorteAdmin(id){
+    const c = adminCortes.find(x=>String(x.id_corte) === String(id));
+    if(!c) return;
+    adminEditId = c.id_corte;
+    document.getElementById('adm-alcance').value = c.alcance;
+    document.getElementById('adm-distrito').value = c.distrito || '';
+    document.getElementById('adm-zona').value = c.zona || '';
+    document.getElementById('adm-motivo').value = c.motivo || '';
+    document.getElementById('adm-inicio').value = limaInputValor(c.fecha_inicio);
+    document.getElementById('adm-fin').value = limaInputValor(c.fecha_fin);
+    mostrarFormCorte(true);
+  }
+  async function cancelarCorteAdmin(id){
+    try{
+      const resp = await apiFetch('/api/admin/cortes/' + encodeURIComponent(String(id)) + '/cancelar', {method: 'PATCH'});
+      if(!resp.ok) throw new Error('API cancelar respondió ' + resp.status);
+      showSuccess('Aviso de corte cancelado.');
+      ocultarFormCorte();
+      await cargarAdminCortes();
+    }catch(err){
+      console.error('No se pudo cancelar el corte.', err);
+      showToast('No se pudo cancelar el aviso. Inténtalo nuevamente.');
+    }
+  }
+  document.getElementById('admin-corte-form').addEventListener('submit', async ev=>{
+    ev.preventDefault();
+    const btn = document.getElementById('admin-corte-submit');
+    if(btn.dataset.busy === '1') return;
+    const errBox = document.getElementById('admin-corte-error');
+    errBox.classList.remove('show');
+    const alcance = document.getElementById('adm-alcance').value;
+    const distrito = document.getElementById('adm-distrito').value.trim();
+    const zona = document.getElementById('adm-zona').value.trim();
+    const motivo = document.getElementById('adm-motivo').value.trim();
+    const inicioISO = limaISODesdeInput(document.getElementById('adm-inicio').value);
+    const finISO = limaISODesdeInput(document.getElementById('adm-fin').value);
+    let msg = null;
+    if(alcance !== 'Zona' && alcance !== 'General') msg = '⚠ Alcance inválido.';
+    else if(!motivo) msg = '⚠ El motivo es obligatorio.';
+    else if(!inicioISO || !finISO) msg = '⚠ Indica inicio y fin válidos.';
+    else if(new Date(finISO) <= new Date(inicioISO)) msg = '⚠ El fin debe ser posterior al inicio.';
+    else if(alcance === 'Zona' && (!distrito || !zona)) msg = '⚠ Distrito y zona son obligatorios.';
+    if(msg){
+      errBox.textContent = msg;
+      errBox.classList.add('show');
+      return;
+    }
+    btn.dataset.busy = '1';
+    btn.disabled = true;
+    document.getElementById('admin-corte-submit-text').textContent = adminEditId ? 'Guardando...' : 'Publicando...';
+    try{
+      const esEdicion = !!adminEditId;
+      const url = esEdicion ? '/api/admin/cortes/' + encodeURIComponent(String(adminEditId)) : '/api/admin/cortes';
+      const resp = await apiFetch(url, {
+        method: esEdicion ? 'PATCH' : 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          alcance: alcance,
+          distrito: alcance === 'Zona' ? distrito : null,
+          zona: alcance === 'Zona' ? zona : null,
+          motivo: motivo,
+          fecha_inicio: inicioISO,
+          fecha_fin: finISO
+        })
+      });
+      const data = await resp.json().catch(()=>null);
+      if(!resp.ok || !data || data.estado !== 'ok'){
+        errBox.textContent = '⚠ ' + ((data && data.mensaje) || 'No se pudo guardar el aviso.');
+        errBox.classList.add('show');
+        btn.dataset.busy = '0';
+        btn.disabled = false;
+        document.getElementById('admin-corte-submit-text').textContent = esEdicion ? 'Guardar cambios' : 'Publicar corte';
+        return;
+      }
+      ocultarFormCorte();
+      showSuccess(esEdicion ? 'Aviso actualizado correctamente.' : 'Aviso publicado correctamente.');
+      await cargarAdminCortes();
+    }catch(err){
+      console.error('No se pudo guardar el aviso de corte.', err);
+      errBox.textContent = '⚠ No se pudo conectar con el servidor.';
+      errBox.classList.add('show');
+      btn.dataset.busy = '0';
+      btn.disabled = false;
+      document.getElementById('admin-corte-submit-text').textContent = adminEditId ? 'Guardar cambios' : 'Publicar corte';
+    }
+  });
+  document.querySelector('[data-sec="admin"]').addEventListener('click', ()=>{ if(esAdmin()) cargarAdminCortes(); });
+
   /* ---------- Incidencias (PostgreSQL) ---------- */
   function codigoIncidencia(idIncidencia, fechaRegistro){
     let anio = '2026';
@@ -4412,6 +4766,8 @@ async function descargarConstanciaPDF(r, btn){
         btnLoginText.textContent = 'Iniciar Sesión';
         return;
       }
+      guardarSesion(authData.token, authData.usuario && authData.usuario.rol);
+      aplicarVisibilidadAdmin();
     }catch(err){
       showError('No se pudo conectar con el servidor. Inténtalo nuevamente.');
       btnLogin.disabled = false;
@@ -4505,6 +4861,8 @@ async function descargarConstanciaPDF(r, btn){
   // Flujo principal de logout (unico listener): incluye limpieza de HidroBot.
   document.getElementById('btn-logout').addEventListener('click', ()=>{
     stopCortesPolling();
+    limpiarSesion();
+    aplicarVisibilidadAdmin();
     resetHidroBotSession();
     [detModal,payModal,copiesModal,incModal,fotoModal,passModal].forEach(closeModal);
     endSpotlight(false, {markSeen:false});
@@ -4536,6 +4894,7 @@ async function descargarConstanciaPDF(r, btn){
   spotOverlay.classList.remove('open');
   spotPop.classList.remove('open');
 
+  aplicarVisibilidadAdmin();
   initHidroBot();
 })();
 </script>
