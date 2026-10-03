@@ -1,7 +1,8 @@
 services:
 
   web:
-    build: .
+    build:
+      context: ./Frontend
     ports:
       - "8080:80"
     depends_on:
@@ -11,7 +12,7 @@ services:
 
   backend:
     build:
-      context: ./backend
+      context: ./Backend
 
     environment:
       DB_HOST: db
@@ -43,7 +44,7 @@ services:
 
     volumes:
       - postgres_data:/var/lib/postgresql
-      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./Base-de-Datos/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
 
     healthcheck:
       test:

@@ -1,5 +1,9 @@
 .env
 node_modules/
-backend/node_modules/
+Backend/node_modules/
 *.log
 index.backup*.html
+
+Frontend/backups/
+Backend/backups/
+Base-de-Datos/seed.sql
