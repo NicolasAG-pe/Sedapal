@@ -858,6 +858,10 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>
             <span>Cortes de servicio</span>
           </button>
+          <button class="nav-item" data-sec="pagos" data-tip="Historial de pagos" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20M6 15h4"/></svg>
+            <span>Historial de pagos</span>
+          </button>
         </div>
         <div class="nav-group">
           <div class="side-label" aria-hidden="true">Soporte</div>
@@ -1079,6 +1083,30 @@
         <div class="disclaimer">Información <b>simulada</b> para el prototipo. No se afirma que estos cortes afecten tu suministro.</div>
         <div id="cortes-list" class="support-grid" role="list"></div>
         <div id="cortes-empty" class="empty">Sin registros para ese distrito.</div>
+      </div>
+
+      <!-- PAGOS -->
+      <div class="dash-sec" id="sec-pagos" aria-label="Historial de pagos">
+        <div class="page-header">
+          <div>
+            <div class="page-crumb">Hidro Mejora / Pagos</div>
+            <h2 class="page-title" tabindex="-1">Historial de pagos</h2>
+            <p class="page-desc">Consulta las operaciones registradas para tu suministro.</p>
+          </div>
+        </div>
+        <div class="mod-stats" aria-label="Resumen de pagos" style="grid-template-columns:repeat(3,1fr)">
+          <div class="mod-stat"><small>Pagos registrados</small><strong id="pay-total-count">0</strong></div>
+          <div class="mod-stat"><small>Total pagado</small><strong id="pay-total-monto">S/ 0.00</strong></div>
+          <div class="mod-stat"><small>Último pago</small><strong id="pay-last-fecha">—</strong></div>
+        </div>
+        <div class="section-head">
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20M6 15h4"/></svg>Operaciones</h3>
+          <div class="toolbar">
+            <input type="search" id="pay-search" class="search-input" placeholder="Buscar por periodo o código…" aria-label="Buscar pagos por periodo o código" />
+          </div>
+        </div>
+        <div id="pay-list" class="cards" role="list"></div>
+        <div id="pay-empty" class="empty">No hay pagos registrados para este suministro.</div>
       </div>
 
       <!-- AYUDA -->
@@ -1586,7 +1614,7 @@
   function pad(n){ return String(n).padStart(2,'0'); }
 
   /* ---------- Router interno del dashboard: una sola página activa ---------- */
-  const HASH_SEC = {inicio:'inicio', historial:'recibos', incidencias:'incidencias', cortes:'cortes', ayuda:'atencion'};
+  const HASH_SEC = {inicio:'inicio', historial:'recibos', incidencias:'incidencias', cortes:'cortes', pagos:'pagos', ayuda:'atencion'};
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const isReduced = ()=>reduceMotion.matches;
   const mainContent = document.getElementById('main-content');
@@ -2338,6 +2366,9 @@
     {id:'leak', desc:'Fuga / rotura / aniego (mapea a categoría del modal)'},
     {id:'last_receipt', desc:'Último recibo con datos de recibos[0]'},
     {id:'pending_receipts', desc:'Recibos impagos y deuda acumulada'},
+    {id:'last_payment', desc:'Último pago registrado (datos de API)'},
+    {id:'payments_count', desc:'Cantidad de pagos e historial (datos de API)'},
+    {id:'payment_code', desc:'Código de operación del pago (datos de API)'},
     {id:'payment', desc:'Flujo de pago simulado'},
     {id:'pdf', desc:'Copias PDF con jsPDF existente'},
     {id:'receipts', desc:'Historial genérico de recibos'},
@@ -2375,6 +2406,9 @@
     if(has('consumo','consumi','consumiste','consumir','metros','cubico','cubicos','agua consumida') || bw(text,'m3') || text.indexOf('m\u00b3') > -1) return {intent:'consumption', confidence:.93};
     if(has('ultimo recibo','ultima factura','factura actual','recibo actual','factura de este mes','recibo de este mes','factura este mes','recibo este mes','debo este mes','deuda de este mes')) return {intent:'last_receipt', confidence:.92};
     if(has('cuanto debo','que debo','que recibos debo','pendiente','pendientes','tengo deuda','deuda','vencido','vencidos')) return {intent:'pending_receipts', confidence:.9};
+    if(has('ultimo pago','ultima operacion','ultimo abono','ultimo comprobante')) return {intent:'last_payment', confidence:.92};
+    if(has('cuantos pagos','cuantos abonos','tengo pagos','mis pagos','historial de pagos')) return {intent:'payments_count', confidence:.9};
+    if(has('codigo de operacion','codigo de pago','codigo operacion','mi codigo')) return {intent:'payment_code', confidence:.92};
     if(has('quiero pagar','cancelar recibo','cancelar un recibo') || bw(text,'pagar') || bw(text,'pago')) return {intent:'payment', confidence:.9};
     if(has('descargar recibo','descargar pdf','descargar mi recibo','copia','duplicado','comprobante') || bw(text,'pdf')) return {intent:'pdf', confidence:.9};
     if(has('mis recibos','ver recibos','recibos','historial','facturas') || bw(text,'recibo') || bw(text,'factura')) return {intent:'receipts', confidence:.87};
@@ -2446,6 +2480,23 @@
       const uno = p.length === 1 ? 'recibo pendiente o vencido' : 'recibos pendientes o vencidos';
       return {text:'Tienes ' + p.length + ' ' + uno + ' por un total de ' + fmt(total) + ' (datos demostrativos).',
         actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
+    }
+    if(id === 'last_payment' || id === 'payments_count' || id === 'payment_code'){
+      if(!pagos.length) return {text:'Aún no hay pagos registrados para este suministro.',
+        actions:[createBotAction('Ver historial de pagos', ()=>hbGo('pagos'))]};
+      const ultimo = pagos[0];
+      if(id === 'payments_count'){
+        const totalPagado = pagos.reduce((a,x)=>a + (Number.isFinite(x.monto) ? x.monto : 0), 0);
+        const uno = pagos.length === 1 ? 'pago registrado' : 'pagos registrados';
+        return {text:'Tienes ' + pagos.length + ' ' + uno + ' por un total de ' + fmt(totalPagado) + '.',
+          actions:[createBotAction('Ver historial de pagos', ()=>hbGo('pagos'))]};
+      }
+      if(id === 'payment_code'){
+        return {text:'El código de operación de tu último pago (' + ultimo.periodo + ') es ' + ultimo.codigo + '.',
+          actions:[createBotAction('Ver historial de pagos', ()=>hbGo('pagos'))]};
+      }
+      return {text:'Tu último pago fue de ' + fmt(ultimo.monto) + ' por ' + ultimo.periodo + ' (' + ultimo.metodo + ', ' + ultimo.fecha + '). Código: ' + ultimo.codigo + '.',
+        actions:[createBotAction('Ver historial de pagos', ()=>hbGo('pagos'))]};
     }
     if(id === 'consumption'){
       const r = recibos[0];
@@ -3275,6 +3326,15 @@ async function descargarConstanciaPDF(r, btn){
           selected.estado = 'Pagado';
           selected.paymentCode = codigoReal;
         }
+        try{
+          pagos = await cargarPagosDesdeAPI(supply);
+          payEstado = pagos.length ? 'ok' : 'vacio';
+        }catch(payErr){
+          console.error('No se pudieron recargar pagos tras el pago.', payErr);
+          pagos = [];
+          payEstado = 'error';
+        }
+        renderPagos();
       }catch(err){
         console.error('No se pudo recargar recibos tras el pago.', err);
         renderCards();
@@ -3646,6 +3706,109 @@ async function descargarConstanciaPDF(r, btn){
   }
   document.getElementById('search-distrito').addEventListener('input', ev=>renderCortes(ev.target.value));
 
+  /* ---------- Historial de pagos (PostgreSQL, fuente de verdad) ---------- */
+  let pagos = [];
+  let payQuery = '';
+  let payEstado = 'ok'; // 'cargando' | 'ok' | 'vacio' | 'error'
+  function adaptarPagoAPI(api){
+    const montoNum = Number(api.monto);
+    const monto = Number.isFinite(montoNum) ? montoNum : 0;
+    const periodo = (api.periodo != null ? String(api.periodo) : '').trim();
+    let anio = new Date().getFullYear();
+    let mes = 0;
+    const y = periodo.match(/\b(19|20)\d{2}\b/);
+    if(y) anio = Number(y[0]);
+    const low = periodo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const idx = MESES.findIndex(m=>low.indexOf(m.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')) > -1);
+    if(idx >= 0) mes = idx;
+    return {
+      id_pago: api.id_pago,
+      id_recibo: String(api.id_recibo != null ? api.id_recibo : ''),
+      monto: monto,
+      metodo: api.metodo || '—',
+      codigo: api.codigo_operacion || '—',
+      periodo: periodo || '—',
+      fecha: formatearFechaCorta(api.fecha_pago),
+      fechaISO: api.fecha_pago || null,
+      anio: anio,
+      mes: mes
+    };
+  }
+  async function cargarPagosDesdeAPI(numeroSuministro){
+    const sup = String(numeroSuministro || '').trim();
+    const resp = await fetch('/api/pagos/' + encodeURIComponent(sup));
+    if(!resp.ok) throw new Error('API pagos respondió ' + resp.status);
+    const data = await resp.json();
+    const lista = Array.isArray(data.pagos) ? data.pagos : [];
+    return lista.map(adaptarPagoAPI);
+  }
+  function reciboLiteDesdePago(pg){
+    return {
+      id: pg.id_recibo,
+      id_recibo: pg.id_recibo,
+      etiqueta: pg.periodo,
+      periodo: pg.periodo,
+      numRecibo: 'R-' + pg.id_recibo,
+      anio: pg.anio,
+      mes: pg.mes,
+      monto: pg.monto,
+      estado: 'Pagado'
+    };
+  }
+  function renderPagos(){
+    const list = document.getElementById('pay-list');
+    const emptyEl = document.getElementById('pay-empty');
+    if(!list || !emptyEl) return;
+    document.getElementById('pay-total-count').textContent = pagos.length;
+    const total = pagos.reduce((a,p)=>a + (Number.isFinite(p.monto) ? p.monto : 0), 0);
+    document.getElementById('pay-total-monto').textContent = fmt(total);
+    document.getElementById('pay-last-fecha').textContent = pagos.length ? pagos[0].fecha : 'Sin registros';
+    list.innerHTML = '';
+    if(payEstado === 'cargando'){
+      emptyEl.textContent = 'Consultando pagos...';
+      emptyEl.classList.add('show');
+      return;
+    }
+    if(payEstado === 'error'){
+      emptyEl.textContent = 'No fue posible cargar el historial de pagos.';
+      emptyEl.classList.add('show');
+      return;
+    }
+    if(!pagos.length){
+      emptyEl.textContent = 'No hay pagos registrados para este suministro.';
+      emptyEl.classList.add('show');
+      return;
+    }
+    const q = payQuery.trim().toLowerCase();
+    const filtrados = pagos.filter(p =>
+      !q || p.periodo.toLowerCase().indexOf(q) > -1 || String(p.codigo).toLowerCase().indexOf(q) > -1
+    );
+    if(!filtrados.length){
+      emptyEl.textContent = 'Sin resultados para esa búsqueda. Prueba con otro periodo o código.';
+      emptyEl.classList.add('show');
+      return;
+    }
+    emptyEl.classList.remove('show');
+    filtrados.forEach(pg=>{
+      const art = document.createElement('article');
+      art.className = 'card';
+      art.dataset.estado = 'Pagado';
+      art.setAttribute('role','listitem');
+      art.innerHTML =
+        '<div class="card-top"><span><span class="card-month">' + pg.periodo + '</span></span>' +
+        '<span class="badge Pagado">PAGADO</span></div>' +
+        '<div class="card-amount">' + fmt(pg.monto) + ' <small>/ pago</small></div>' +
+        '<div class="card-meta"><span>' + pg.metodo + ' · ' + pg.fecha + '</span></div>' +
+        '<div class="card-meta"><span>Código: <b>' + pg.codigo + '</b></span></div>' +
+        '<div class="card-actions">' +
+        '<button type="button" class="btn-sm detail" data-act="const">Ver constancia</button>' +
+        '</div>';
+      art.querySelector('[data-act="const"]').addEventListener('click', ev=>descargarConstanciaPDF(reciboLiteDesdePago(pg), ev.currentTarget));
+      list.appendChild(art);
+    });
+  }
+  document.getElementById('pay-search').addEventListener('input', ev=>{ payQuery = ev.target.value; renderPagos(); });
+
   /* ---------- Acciones rápidas: navegación vs. operación ---------- */
   const QUICK_NAV = {consultar:'historial', cortes:'cortes'};
   document.querySelectorAll('.quick-card').forEach(b=>{
@@ -3882,12 +4045,21 @@ async function descargarConstanciaPDF(r, btn){
       console.error('No se pudieron cargar los cortes de servicio.', err);
       cortes = [];
     }
+    payEstado = 'cargando';
+    try{
+      pagos = await cargarPagosDesdeAPI(sup);
+      payEstado = pagos.length ? 'ok' : 'vacio';
+    }catch(err){
+      console.error('No se pudieron cargar los pagos.', err);
+      pagos = [];
+      payEstado = 'error';
+    }
     // Crossfade: skeleton se desvanece y el contenido entra
     cardsEl.classList.add('is-fading');
     chartEl.classList.add('is-fading');
     if(chartSpendEl) chartSpendEl.classList.add('is-fading');
     setTimeout(()=>{
-      renderCards(); renderInc(); renderCortes('');
+      renderCards(); renderInc(); renderCortes(''); renderPagos();
       // Si la URL traía hash válido al iniciar sesión, abrir esa página (sin tutorial)
       const hsec = Object.keys(HASH_SEC).find(k=>HASH_SEC[k] === loginHash);
       if(hsec) openDashboardPage(hsec);
