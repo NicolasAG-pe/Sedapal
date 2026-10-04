@@ -6,12 +6,14 @@
 
 
 -- USUARIOS (rol: 'usuario' normal o 'admin' del panel)
+-- activo: FALSE bloquea login con 403 (cuentas deshabilitadas por admin).
 CREATE TABLE usuarios (
     id_usuario BIGSERIAL PRIMARY KEY,
     correo VARCHAR(120) UNIQUE NOT NULL,
     clave_hash VARCHAR(255) NOT NULL,
     rol VARCHAR(20) NOT NULL DEFAULT 'usuario',
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    activo BOOLEAN NOT NULL DEFAULT TRUE,
 
     CONSTRAINT chk_rol_usuario
         CHECK (rol IN ('usuario', 'admin'))
@@ -49,7 +51,7 @@ CREATE TABLE recibos (
     estado VARCHAR(20) NOT NULL,
 
     CONSTRAINT chk_estado_recibo
-        CHECK (estado IN ('Emitido', 'Pendiente', 'Pagado', 'Vencido')),
+        CHECK (estado IN ('Emitido', 'Pendiente', 'Pagado', 'Vencido', 'Anulado')),
 
     CONSTRAINT fk_recibo_suministro
         FOREIGN KEY (id_suministro)
@@ -90,7 +92,12 @@ CREATE TABLE incidencias (
     foto BYTEA,
     foto_mime VARCHAR(50),
 
+    estado VARCHAR(30) NOT NULL DEFAULT 'Registrada',
+
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_estado_incidencia
+        CHECK (estado IN ('Registrada', 'En revisión', 'Resuelta')),
 
     CONSTRAINT fk_incidencia_suministro
         FOREIGN KEY (id_suministro)
@@ -132,6 +139,8 @@ CREATE TABLE cortes_servicio (
 
 
 -- RELACIÓN CORTES <-> SUMINISTROS (asociaciones demo del prototipo)
+-- LEGACY: el modelo vigente es dinámico por distrito/zona + avisos generales.
+-- Se conserva por compatibilidad; no crear nuevas filas desde el panel.
 CREATE TABLE cortes_suministros (
     id_corte BIGINT NOT NULL,
     id_suministro BIGINT NOT NULL,
@@ -147,3 +156,50 @@ CREATE TABLE cortes_suministros (
         FOREIGN KEY (id_suministro)
         REFERENCES suministros(id_suministro)
 );
+
+
+-- SOLICITUDES DE ATENCIÓN AL CLIENTE (persistentes, sin borrado físico)
+CREATE TABLE solicitudes_atencion (
+    id_solicitud BIGSERIAL PRIMARY KEY,
+    id_suministro BIGINT NOT NULL,
+    categoria VARCHAR(80) NOT NULL,
+    asunto VARCHAR(150) NOT NULL,
+    descripcion TEXT NOT NULL,
+    estado VARCHAR(20) NOT NULL DEFAULT 'Registrada',
+    respuesta TEXT NULL,
+    fecha_registro TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_estado_solicitud
+        CHECK (estado IN ('Registrada', 'En atención', 'Respondida', 'Cerrada')),
+
+    CONSTRAINT fk_solicitud_suministro
+        FOREIGN KEY (id_suministro)
+        REFERENCES suministros(id_suministro)
+);
+CREATE INDEX idx_solicitudes_suministro ON solicitudes_atencion(id_suministro);
+CREATE INDEX idx_solicitudes_estado ON solicitudes_atencion(estado);
+
+
+-- NOTIFICACIONES INTERNAS (solo dentro de la app, sin push/Firebase)
+-- alcance 'Usuario' => id_suministro obligatorio.
+-- alcance 'General' => id_suministro NULL (visible para todos).
+CREATE TABLE notificaciones (
+    id_notificacion BIGSERIAL PRIMARY KEY,
+    id_suministro BIGINT NULL,
+    alcance VARCHAR(20) NOT NULL DEFAULT 'Usuario',
+    titulo VARCHAR(150) NOT NULL,
+    mensaje TEXT NOT NULL,
+    tipo VARCHAR(40) NOT NULL DEFAULT 'general',
+    leida BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_registro TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT chk_alcance_notificacion
+        CHECK (alcance IN ('Usuario', 'General')),
+
+    CONSTRAINT fk_notificacion_suministro
+        FOREIGN KEY (id_suministro)
+        REFERENCES suministros(id_suministro)
+);
+CREATE INDEX idx_notif_suministro ON notificaciones(id_suministro);
+CREATE INDEX idx_notif_fecha ON notificaciones(fecha_registro DESC);
