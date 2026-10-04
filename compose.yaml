@@ -3,8 +3,10 @@ services:
   web:
     build:
       context: ./Frontend
+    # WEB_PORT configurable: 8080 en desarrollo, 80 en producción
+    # (ver WEB_PORT=80 en .env.production.example). No tocar 3000/5432.
     ports:
-      - "8080:80"
+      - "${WEB_PORT:-8080}:80"
     depends_on:
       backend:
         condition: service_healthy
