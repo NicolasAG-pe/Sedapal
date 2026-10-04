@@ -755,12 +755,13 @@
   .side-status{font-size:.76rem}
   .side-status .dot{box-shadow:0 0 0 3px rgba(52,211,153,.18)}
   .side-foot{font-size:.68rem}
-  /* --- Header: marca + badge Beta discreto --- */
+  /* --- Header: marca limpia sin badges --- */
   .mini-brand-text{display:flex;flex-direction:column;gap:.15rem;min-width:0}
   .mini-brand-sub{display:flex;align-items:center;gap:.45rem}
-  .beta-badge{font-size:.64rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
-    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.35);color:#fff;
-    padding:.12rem .55rem;border-radius:999px;white-space:nowrap;line-height:1.6}
+  .supply-chip svg{width:16px;height:16px;flex:0 0 16px}
+  /* --- Login: pie de marca discreto --- */
+  .login-foot-brand{margin-top:1.25rem;text-align:center;color:var(--navy);font-weight:800;font-size:.85rem;letter-spacing:.02em}
+  .login-foot-brand small{display:block;color:var(--muted);font-weight:600;font-size:.72rem;margin-top:.15rem}
   /* --- Tarjetas: radio/padding/sombra unificados --- */
   .stat,.mod-stat,.support-card,.quick-card,.inc-item,.chart-card,.pre-contact,.invoice{
     border-radius:var(--radius-md)}
@@ -886,14 +887,13 @@
     <div class="brand" aria-label="Logotipo SEDAPAL">
       <img src="assets/LogoSedapal.png" alt="Logotipo Sedapal Hidro Mejora" class="brand-logo">
       <div class="brand-text">
-        <strong>SEDAPAL</strong>
-        <span>Hidro Mejora</span>
-        <small>Plataforma corporativa de facturación</small>
+        <strong>HIDRO MEJORA</strong>
+        <span>Gestión de servicios de agua</span>
       </div>
     </div>
 
     <h1 id="login-title">Iniciar sesión</h1>
-    <p class="subtitle">Centraliza tu historial de agua potable: 12 recibos, consumo en m³ y descarga de comprobantes en PDF.</p>
+    <p class="subtitle">Consulta tus recibos, pagos, consumo y solicitudes desde un solo lugar.</p>
 
     <div id="form-error" class="form-error" role="alert"></div>
 
@@ -915,7 +915,6 @@
       </button>
     </form>
 
-    <div class="demo-box">💡 <b>Acceso:</b> ingresa tu suministro registrado (9 dígitos) y tu contraseña para acceder a tu cuenta.</div>
     <div class="auth-switch" id="auth-to-register">¿No tienes una cuenta? <a href="#" id="show-register">Crear cuenta</a></div>
 
     <form id="register-form" novalidate hidden>
@@ -950,9 +949,7 @@
 
     <div class="login-foot">¿Olvidaste tu clave? <a href="#" id="forgot-link">Recupérala aquí</a> · <a href="#" id="help-link">Ayuda</a></div>
   </div>
-  <div class="login-trust" aria-label="Respaldo institucional">
-    <span>🔒 Conexión segura</span><span>🏛 SEDAPAL · Lima, Perú</span><span>⭐ Beta 1.0</span>
-  </div>
+  <div class="login-foot-brand">Hidro Mejora<br><small>Versión Beta 1.0</small></div>
   </div>
   <div class="login-visual" aria-hidden="true"></div>
 </section>
@@ -968,12 +965,12 @@
         <img src="assets/LogoSedapal.png" alt="Logotipo Sedapal Hidro Mejora" class="topbar-logo">
         <div class="mini-brand-text">
           <strong>HIDRO MEJORA</strong>
-          <span class="mini-brand-sub"><small>Plataforma de servicios</small><span class="beta-badge">Beta 1.0</span></span>
+          <span class="mini-brand-sub"><small>Plataforma de servicios</small></span>
         </div>
       </div>
       <div class="topbar-right">
-      <span class="supply-chip" title="Suministro activo">💧 Suministro <b id="supply-label">—</b></span>
-      <button id="btn-notif" class="btn-menu" type="button" aria-label="Ver notificaciones" title="Notificaciones" hidden>🔔<b id="notif-count" class="notif-badge" hidden>0</b></button>
+      <span class="supply-chip" title="Suministro activo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c3 4.2 6 7.6 6 11a6 6 0 1 1-12 0c0-3.4 3-6.8 6-11z"/></svg>Suministro <b id="supply-label">—</b></span>
+      <button id="btn-notif" class="btn-menu" type="button" aria-label="Ver notificaciones" title="Notificaciones" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><b id="notif-count" class="notif-badge" hidden>0</b></button>
       <button id="btn-logout" class="btn btn-logout" type="button">Cerrar sesión</button>
       </div>
     </div>
@@ -1039,9 +1036,9 @@
         </div>
         <div class="nav-group" id="nav-admin-principal" hidden>
           <div class="side-label" aria-hidden="true">Principal</div>
-          <button class="nav-item" data-sec="admin" data-tip="Dashboard administrativo" type="button">
+          <button class="nav-item" data-sec="admin" data-tip="Resumen administrativo" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
-            <span>Dashboard administrativo</span>
+            <span>Resumen</span>
           </button>
         </div>
         <div class="nav-group" id="nav-admin-gestion" hidden>
@@ -1088,7 +1085,6 @@
         <div class="side-cons-delta" id="side-cons-delta">—</div>
         <button class="side-cta" id="side-cons-cta" type="button" hidden>Revisar consumo →</button>
       </div>
-      <div class="side-foot">Hidro Mejora · Beta 1.0</div>
     </aside>
     <div class="scrim" id="scrim" aria-hidden="true"></div>
 
@@ -1105,9 +1101,9 @@
         <div class="hero">
           <div>
             <h2>Hola, suministro <span id="supply-hello">—</span> 👋</h2>
-            <p>Consulta tus últimos 12 recibos, analiza tu consumo en m³ y descarga tus comprobantes en PDF.</p>
+            <p>Consulta tus recibos, analiza tu consumo en m³ y descarga tus comprobantes en PDF.</p>
           </div>
-          <button class="btn btn-sky" id="btn-replay-tutorial" type="button">▶ Ver tutorial</button>
+          <button class="btn btn-sky" id="btn-replay-tutorial" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg>Ver tutorial</button>
         </div>
 
         <div class="stats" aria-label="Resumen de cuenta">
@@ -1147,7 +1143,7 @@
             <button class="quick-card" type="button" data-action="copias">
               <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></svg></span>
               <span class="quick-body">
-                <span><b>Obtener copias</b><small>Consulta y descarga tus 12 recibos.</small></span>
+                <span><b>Obtener copias</b><small>Consulta y descarga tus recibos.</small></span>
                 <svg class="quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
               </span>
             </button>
@@ -1234,7 +1230,7 @@
         </div>
         <div id="receipt-filters">
         <div class="section-head">
-          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></svg>Últimos 12 recibos</h3>
+          <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></svg>Historial de recibos</h3>
           <div class="toolbar">
             <input type="search" id="search-mes" class="search-input" placeholder="Buscar por mes…" aria-label="Buscar recibos por mes" maxlength="20" />
             <select id="filter-anio" class="year-select" aria-label="Filtrar por año"><option value="Todos">Todos los años</option></select>
@@ -1366,11 +1362,11 @@
       </div>
 
       <!-- ADMIN -->
-      <div class="dash-sec" id="sec-admin" aria-label="Dashboard administrativo">
+      <div class="dash-sec" id="sec-admin" aria-label="Resumen administrativo">
         <div class="page-header">
           <div>
             <div class="page-crumb">Hidro Mejora / Administración</div>
-            <h2 class="page-title" tabindex="-1">Dashboard administrativo</h2>
+            <h2 class="page-title" tabindex="-1">Resumen administrativo</h2>
             <p class="page-desc">Resumen operativo de tu servicio.</p>
           </div>
         </div>
@@ -1583,7 +1579,7 @@
           <div>
             <div class="page-crumb">Hidro Mejora / Administración / Usuarios</div>
             <h2 class="page-title" tabindex="-1">Usuarios y suministros</h2>
-            <p class="page-desc">Cuentas registradas, ubicación y actividad. Sin contraseñas ni cambio de rol desde el panel.</p>
+            <p class="page-desc">Consulta y administra las cuentas y suministros registrados.</p>
           </div>
         </div>
         <div class="mod-stats" aria-label="Resumen de usuarios" style="grid-template-columns:repeat(5,1fr)">
@@ -1643,7 +1639,7 @@
           <div>
             <div class="page-crumb">Hidro Mejora / Administración / Pagos</div>
             <h2 class="page-title" tabindex="-1">Pagos</h2>
-            <p class="page-desc">Consulta de operaciones reales. El panel no crea ni modifica pagos.</p>
+            <p class="page-desc">Consulta las operaciones registradas por los usuarios.</p>
           </div>
         </div>
         <div class="mod-stats" aria-label="Resumen de pagos" style="grid-template-columns:repeat(4,1fr)">
@@ -1672,7 +1668,7 @@
           <div>
             <div class="page-crumb">Hidro Mejora / Administración / Atención</div>
             <h2 class="page-title" tabindex="-1">Atención al cliente</h2>
-            <p class="page-desc">Solicitudes persistentes de los usuarios. Sin borrado físico.</p>
+            <p class="page-desc">Gestiona y responde las solicitudes de atención de los usuarios.</p>
           </div>
         </div>
         <div class="mod-stats" aria-label="Resumen de solicitudes" style="grid-template-columns:repeat(5,1fr)">
@@ -1830,7 +1826,7 @@
           <div>
             <div class="page-crumb">Hidro Mejora / Notificaciones</div>
             <h2 class="page-title" tabindex="-1">Notificaciones</h2>
-            <p class="page-desc">Avisos internos de la app: recibos, incidencias, atención y cortes generales.</p>
+            <p class="page-desc">Consulta avisos sobre recibos, incidencias, atención y cortes de servicio.</p>
           </div>
         </div>
         <div class="mod-stats" aria-label="Resumen de notificaciones" style="grid-template-columns:repeat(2,1fr)">
@@ -1843,7 +1839,7 @@
     </main>
   </div>
 
-  <footer class="page">Hidro Mejora · Beta 1.0</footer>
+  <footer class="page">Hidro Mejora · Versión Beta 1.0</footer>
 </section>
 
 <!-- ============ SPOTLIGHT ONBOARDING AVANZADO ============ -->
@@ -1887,15 +1883,15 @@
         <div class="inv-track" aria-hidden="true">
           <i class="t-agua" id="d-bar-agua" style="width:60%"></i><i class="t-alc" id="d-bar-alc" style="width:22%"></i><i class="t-igv" id="d-bar-igv" style="width:18%"></i>
         </div>
-        <div class="inv-row"><span>💧 Servicio de Agua (60%)</span><b id="d-agua">—</b></div>
+        <div class="inv-row"><span>Servicio de Agua (60%)</span><b id="d-agua">—</b></div>
         <div class="inv-row"><span>🚿 Servicio de Alcantarillado (22%)</span><b id="d-alc">—</b></div>
-        <div class="inv-row"><span>🏛 IGV (18%)</span><b id="d-igv">—</b></div>
+        <div class="inv-row"><span>IGV (18%)</span><b id="d-igv">—</b></div>
         <div class="inv-total"><span>Monto de la deuda</span><b id="d-deuda">—</b></div>
       </div>
 
       <div class="consumo-box">
         <div>
-          <span class="k">💧 Consumo del mes</span>
+          <span class="k">Consumo del mes</span>
           <strong id="d-consumo">—</strong>
           <small id="d-promedio-ref">Promedio referencial: —</small>
         </div>
@@ -1924,11 +1920,11 @@
       <div id="pay-main">
         <div class="pay-amount"><span>Monto a pagar</span><strong id="pay-monto">S/ 0.00</strong></div>
         <div class="pay-methods" role="radiogroup" aria-label="Método de pago">
-          <label class="pay-opt sel"><input type="radio" name="pay-method" value="Tarjeta" checked /><span><b>Tarjeta</b><small>Débito o crédito · sin cargos reales.</small></span></label>
-          <label class="pay-opt"><input type="radio" name="pay-method" value="Banca móvil" /><span><b>Banca móvil</b><small>Transferencia desde tu banco · sin cargos reales.</small></span></label>
-          <label class="pay-opt"><input type="radio" name="pay-method" value="Billetera digital" /><span><b>Billetera digital</b><small>Yape / Plin · sin cargos reales.</small></span></label>
+          <label class="pay-opt sel"><input type="radio" name="pay-method" value="Tarjeta" checked /><span><b>Tarjeta</b><small>Débito o crédito</small></span></label>
+          <label class="pay-opt"><input type="radio" name="pay-method" value="Banca móvil" /><span><b>Banca móvil</b><small>Transferencia desde tu banco</small></span></label>
+          <label class="pay-opt"><input type="radio" name="pay-method" value="Billetera digital" /><span><b>Billetera digital</b><small>Yape / Plin</small></span></label>
         </div>
-        <div class="pay-note">Pago seguro: no se procesa ninguna tarjeta real ni se almacena información sensible.</div>
+        <div class="pay-note">Esta versión registra la operación en Hidro Mejora y no realiza cargos bancarios.</div>
         <div class="dialog-actions">
           <button class="btn btn-ghost" id="pay-cancel" type="button">Cancelar</button>
           <button class="btn btn-primary" id="pay-confirm" type="button">Confirmar pago</button>
@@ -2364,30 +2360,27 @@
     if(vieja) vieja.hidden = true;
     const bell = document.getElementById('btn-notif');
     if(bell) bell.hidden = admin;
+    // Admin: sidebar sin bloques de cliente (suministro, servicio activo, consumo).
+    const sideHead = document.querySelector('.side-head');
+    if(sideHead) sideHead.hidden = admin;
+    const sideCons = document.getElementById('side-cons');
+    if(sideCons) sideCons.hidden = admin;
     aplicarHeaderPorRol(admin);
   }
   function aplicarHeaderPorRol(admin){
     const fuerte = document.querySelector('.mini-brand strong');
     const pequeno = document.querySelector('.mini-brand small');
     const chip = document.querySelector('.topbar-right .supply-chip');
-    let insignia = document.getElementById('rol-badge');
+    const vieja = document.getElementById('rol-badge');
+    if(vieja) vieja.remove();
     if(admin){
-      if(fuerte) fuerte.textContent = 'HIDRO MEJORA · ADMINISTRACIÓN';
+      if(fuerte) fuerte.textContent = 'HIDRO MEJORA';
       if(pequeno) pequeno.textContent = 'Panel administrativo';
       if(chip) chip.hidden = true;
-      if(!insignia && pequeno && pequeno.parentNode){
-        insignia = document.createElement('span');
-        insignia.id = 'rol-badge';
-        insignia.className = 'supply-chip';
-        insignia.textContent = 'Administrador';
-        pequeno.parentNode.appendChild(insignia);
-      }
-      if(insignia) insignia.hidden = false;
     } else {
       if(fuerte) fuerte.textContent = 'HIDRO MEJORA';
       if(pequeno) pequeno.textContent = 'Plataforma de servicios';
       if(chip) chip.hidden = false;
-      if(insignia) insignia.hidden = true;
     }
   }
 
@@ -3836,7 +3829,7 @@
     t('RECIBO DE SERVICIO', RM, 17, {size:10, style:'bold', color:PDF_NAVY, align:'right'});
     t('Periodo   ' + r.etiqueta, RM, 22, {size:8.5, color:PDF_DARK, align:'right'});
     t('Recibo   ' + r.numRecibo, RM, 26.5, {size:8.5, color:PDF_DARK, align:'right'});
-    t('Hidro Mejora · Beta 1.0', RM, 31, {size:6.5, color:PDF_MUT, align:'right'});
+    t('Hidro Mejora', RM, 31, {size:6.5, color:PDF_MUT, align:'right'});
     y = Math.max(10 + logoH, 33) + 4;
     doc.setDrawColor(...PDF_SKY); doc.setLineWidth(0.4);
     doc.line(LM, y, RM, y);
@@ -3970,7 +3963,7 @@
     if(y > fy - 8){ doc.addPage(); y = 14; }
     doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
     doc.line(LM, fy - 4, RM, fy - 4);
-    t('Hidro Mejora · Beta 1.0', LM, fy, {size:7, color:PDF_MUT});
+    t('Hidro Mejora', LM, fy, {size:7, color:PDF_MUT});
     t('Página 1 de 1', RM, fy, {size:7, color:PDF_MUT, align:'right'});
     t('Documento sin valor oficial', LM, fy + 3.5, {size:7, color:PDF_MUT});
     return doc;
@@ -4050,7 +4043,7 @@
     const fy = PDF_H - 10;
     doc.setDrawColor(...PDF_BORDER); doc.setLineWidth(0.3);
     doc.line(LM, fy - 4, RM, fy - 4);
-    t('Hidro Mejora · Beta 1.0', LM, fy, {size:7, color:PDF_MUT});
+    t('Hidro Mejora', LM, fy, {size:7, color:PDF_MUT});
     t('Página 1 de 1', RM, fy, {size:7, color:PDF_MUT, align:'right'});
     t('Documento sin valor oficial', LM, fy + 3.5, {size:7, color:PDF_MUT});
     return doc;
@@ -6596,9 +6589,9 @@ async function descargarConstanciaPDF(r, btn){
   });
 
   document.getElementById('btn-replay-tutorial').addEventListener('click', startTutorial);
-  document.getElementById('forgot-link').addEventListener('click', e=>{e.preventDefault();showToast('📧 Te enviamos un enlace de recuperación a tu correo registrado.');});
-  document.getElementById('help-link').addEventListener('click', e=>{e.preventDefault();showToast('☎ Ayuda SEDAPAL: (01) 317-8000.');});
-  document.querySelectorAll('[data-call]').forEach(b=>b.addEventListener('click', ()=>showToast('📞 Conectando con (01) 317-8000…')));
+  document.getElementById('forgot-link').addEventListener('click', e=>{e.preventDefault();showToast('Te enviamos un enlace de recuperación a tu correo registrado.');});
+  document.getElementById('help-link').addEventListener('click', e=>{e.preventDefault();showToast('Ayuda SEDAPAL: (01) 317-8000.');});
+  document.querySelectorAll('[data-call]').forEach(b=>b.addEventListener('click', ()=>showToast('Conectando con (01) 317-8000…')));
   document.querySelectorAll('[data-claim]').forEach(b=>b.addEventListener('click', ()=>openIncidentModal('Facturación')));
   document.querySelectorAll('[data-report]').forEach(b=>b.addEventListener('click', ()=>openIncidentModal()));
   document.getElementById('btn-copies-head').addEventListener('click', ev=>abrirCopias(false, ev.currentTarget));
