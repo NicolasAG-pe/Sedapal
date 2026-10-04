@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#003366" />
 <meta name="description" content="SEDAPAL - Hidro Mejora: plataforma corporativa de historial de facturación de agua potable." />
 <title>SEDAPAL · Hidro Mejora — Plataforma Corporativa</title>
 <style>
@@ -711,13 +712,19 @@
     .btn-logout{padding:.45rem .8rem;font-size:.8rem}
   }
   @media(max-width:899px){
-    .shell{padding:.9rem .9rem 2rem}
-    .sidebar{position:fixed;top:0;left:0;bottom:0;border-radius:0 18px 18px 0;z-index:80;width:270px;flex:none;
-      transform:translateX(-105%);transition:transform var(--duration-normal) var(--ease-out),width var(--duration-normal) var(--ease-out);padding-top:1.2rem}
-    .shell.nav-open .sidebar{transform:none}
+    .shell{padding:.9rem .9rem calc(2rem + env(safe-area-inset-bottom,0px))}
+    /* Drawer móvil: panel independiente del documento, con scroll propio.
+       Solo transform/opacity en la animación (sin width/height/left). */
+    .sidebar{position:fixed;top:0;left:0;bottom:0;border-radius:0 18px 18px 0;z-index:80;width:min(300px,84vw);flex:none;
+      height:100vh;height:100dvh;max-height:100vh;max-height:100dvh;
+      overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;
+      transform:translateX(-102%);transition:transform 220ms var(--ease-out);padding-top:1.2rem;
+      padding-bottom:calc(1.2rem + env(safe-area-inset-bottom,0px));will-change:transform;scrollbar-width:thin}
+    .shell.nav-open .sidebar{transform:translateX(0)}
     .scrim{display:block;position:fixed;inset:0;background:rgba(0,20,42,.55);z-index:70;
-      opacity:0;visibility:hidden;transition:opacity var(--duration-normal) var(--ease-standard),visibility var(--duration-normal) var(--ease-standard)}
+      opacity:0;visibility:hidden;transition:opacity 200ms var(--ease-standard),visibility 200ms var(--ease-standard);touch-action:none}
     .shell.nav-open .scrim{opacity:1;visibility:visible}
+    main.dashboard{padding-bottom:calc(100px + env(safe-area-inset-bottom,0px))}
   }
   @media(min-width:1150px){
     .cards{grid-template-columns:repeat(3,1fr)}
@@ -864,6 +871,134 @@
     .quick-arrow{opacity:.85}
     .card:hover,.stat:hover,.quick-card:hover{transform:none}
   }
+  /* ===== Corrección responsive móvil controlada (drawer + scroll + header + pantallas) =====
+     Solo móvil: desktop >=900px conserva layout actual. */
+  /* Body bloqueado por drawer: fijado vía JS (position:fixed; top:-scrollY). Sin saltos visuales. */
+  body.drawer-open{overflow:hidden}
+  body.drawer-open #hidrobot-root .hb-fab,
+  body.drawer-open #hidrobot-root .hb-panel{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+  #hidrobot-root .hb-fab,#hidrobot-root .hb-panel{transition:opacity 200ms var(--ease-standard),visibility 200ms var(--ease-standard),transform 220ms var(--ease-out)}
+  /* Jerarquía: contenido < HidroBot(60) < scrim(70)/drawer(80) < spotlight(90) < modal(100) < toast(300) */
+  .hb-fab,.hb-panel{z-index:60}
+  /* Logout móvil: oculto por defecto; solo el drawer <900px lo muestra */
+  #btn-logout-mobile{display:none}
+  /* Feedback táctil nav-item: respuesta inmediata sin romper desktop */
+  @media(max-width:899px){
+    .nav-item{transition:background-color 160ms var(--ease-standard),color 160ms var(--ease-standard),transform 120ms var(--ease-out)}
+    .nav-item:active{transform:scale(.98)}
+    .nav-item svg{transition:color 160ms var(--ease-standard)}
+    /* Stagger drawer móvil: solo transform+opacity, 210ms, delay = índice*30ms.
+       Índice genérico --nav-index asignado por JS solo a visibles (ambos roles).
+       Se re-ejecuta en cada transición cerrado→abierto vía .shell.nav-open. */
+    @keyframes navIconIn{from{opacity:0;transform:translateX(-8px) scale(.88) rotate(-2deg)}to{opacity:1;transform:translateX(0) scale(1) rotate(0)}}
+    @keyframes navTextIn{from{opacity:0;transform:translateX(-4px)}to{opacity:1;transform:none}}
+    @keyframes navLabelIn{from{opacity:0}to{opacity:1}}
+    @keyframes navTap{0%{transform:scale(1)}40%{transform:scale(1.08) translateY(-1px)}100%{transform:scale(1)}}
+    .shell.nav-open .sidebar .nav-item svg{animation:navIconIn 210ms var(--ease-out) both;animation-delay:calc(var(--nav-index,0)*30ms + 60ms)}
+    .shell.nav-open .sidebar .nav-item span{animation:navTextIn 200ms var(--ease-out) both;animation-delay:calc(var(--nav-index,0)*30ms + 90ms)}
+    .shell.nav-open .sidebar .side-label{animation:navLabelIn 180ms var(--ease-standard) both;animation-delay:calc(var(--nav-group-index,0)*30ms + 40ms)}
+    .nav-item.tap-pop svg{animation:navTap 160ms var(--ease-out)}
+    .dash-sec.page-enter{animation:pageInMobile 200ms var(--ease-out) both}
+    @keyframes pageInMobile{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+    main.dashboard{min-width:0;overflow-x:clip}
+    /* Cortes: apilar updated + buscador; buscador full-width; tabs táctiles */
+    #sec-cortes .section-head{flex-direction:column;align-items:stretch;gap:.55rem}
+    #sec-cortes .section-head .toolbar{width:100%;display:grid;gap:.45rem}
+    #sec-cortes #search-distrito{width:100%;min-width:0;max-width:100%;min-height:44px}
+    #sec-cortes #cortes-updated{align-self:flex-start;min-height:1.2em}
+    #sec-cortes .chip-filter{min-height:44px}
+    /* Altura viewport móvil con fallback: evita saltos por toolbar de Chrome */
+    .view{min-height:100vh;min-height:100dvh}
+    #view-login{min-height:100vh;min-height:100dvh}
+    .dash-sec{min-height:calc(100vh - 240px);min-height:calc(100dvh - 240px)}
+    /* Drawer: botón logout solo móvil (desktop usa #btn-logout superior).
+       Base oculta por defecto; <900px la muestra, >=900px la oculta. */
+    #btn-logout-mobile{display:flex}
+  }
+  @media(min-width:900px){
+    #btn-logout-mobile{display:none!important}
+    /* Desktop: sin cascada; solo micro-feedback discreto al seleccionar */
+    @keyframes navTap{0%{transform:scale(1)}40%{transform:scale(1.08) translateY(-1px)}100%{transform:scale(1)}}
+    .sidebar .nav-item svg{transition:transform 150ms var(--ease-out),color 160ms var(--ease-standard)}
+    .sidebar .nav-item:active svg{transform:scale(1.05)}
+    .sidebar .nav-item.tap-pop svg{animation:navTap 160ms var(--ease-out)}
+  }
+  /* Header móvil <=640px: fila1 [menú][logo+HIDRO][campana], fila2 [suministro]; logout va al drawer */
+  @media(max-width:640px){
+    .topbar{padding-bottom:calc(.15rem + env(safe-area-inset-top,0px))}
+    .topbar-inner{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"menu brand notif" "supply supply supply";gap:.45rem .55rem;align-items:center;padding:.55rem .7rem}
+    #btn-menu{grid-area:menu;width:44px;height:44px}
+    .mini-brand{grid-area:brand;min-width:0}
+    .topbar-right{display:contents}
+    #btn-notif{grid-area:notif;width:44px;height:44px;justify-self:end}
+    .supply-chip{grid-area:supply;justify-self:start;max-width:100%;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .supply-chip b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #btn-logout{display:none}
+    .topbar-logo{height:34px;max-width:104px}
+    .mini-brand strong{font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  }
+  /* Pantallas estrechas: sin overflow horizontal, grids robustos */
+  @media(max-width:640px){
+    .toolbar{min-width:0;max-width:100%}
+    .search-input,.year-select{min-width:0;max-width:100%}
+    .mod-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .pre-contact dl{grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr))}
+    .pre-contact dl>div{min-width:0;overflow:hidden}
+    .pre-contact dd{overflow-wrap:anywhere;word-break:break-word;min-width:0}
+    .support-grid{min-width:0}
+    .support-card{min-width:0;overflow-wrap:break-word}
+    .page-actions .btn{min-height:44px}
+    .chip-filter{min-height:44px}
+    .icon-btn{width:44px;height:44px;flex-basis:44px}
+    .dialog{max-width:calc(100vw - 1.5rem);max-height:92vh;max-height:90dvh}
+    .dialog-body{overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+  }
+  @media(max-width:430px){
+    /* Perfil y Atención: 1 columna para que ningún dato se salga */
+    .pre-contact dl{grid-template-columns:minmax(0,1fr)}
+    #sec-perfil .pre-contact dd,#sec-ayuda .pre-contact dd{font-size:.88rem}
+    /* Login: logo moderado + menos aire vertical; links con wrap elegante */
+    .brand-logo{width:150px;max-width:150px;height:auto}
+    .brand{gap:.45rem;margin-bottom:.9rem}
+    .login-card{padding:1.5rem 1.1rem}
+    .login-card h1{margin-top:.2rem}
+    .login-foot{display:flex;flex-wrap:wrap;justify-content:center;gap:.3rem .6rem;line-height:1.6}
+    .login-trust{gap:.4rem}
+    .field input,.field select,.field textarea{width:100%}
+    /* HidroBot móvil: FAB razonable con safe-area y sin tapar última tarjeta */
+    .hb-fab{width:52px;height:52px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+    .hb-fab svg{width:25px;height:25px}
+  }
+  /* Campana: press + pulse sutil del badge (sin animación constante) */
+  #btn-notif{transition:transform 150ms var(--ease-out)}
+  @keyframes bellPress{0%{transform:scale(1)}40%{transform:scale(.92)}100%{transform:scale(1)}}
+  #btn-notif.bell-press{animation:bellPress 180ms var(--ease-out)}
+  @keyframes badgePulse{0%{transform:scale(1)}40%{transform:scale(1.25)}100%{transform:scale(1)}}
+  .notif-badge.pulse{animation:badgePulse 600ms var(--ease-out)}
+  /* Login: entrada con vida, solo una vez (body.login-seen la desactiva). Total ~600ms. */
+  @keyframes loginLogo{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes loginFadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  body:not(.login-seen) #view-login.active .brand-logo{animation:loginLogo 480ms var(--ease-out) both}
+  body:not(.login-seen) #view-login.active .brand-text strong{animation:loginFadeUp 420ms var(--ease-out) both;animation-delay:90ms}
+  body:not(.login-seen) #view-login.active .brand-text span{animation:loginFadeUp 420ms var(--ease-out) both;animation-delay:150ms}
+  body:not(.login-seen) #view-login.active #login-title,body:not(.login-seen) #view-login.active .subtitle{animation:loginFadeUp 400ms var(--ease-out) both;animation-delay:210ms}
+  body:not(.login-seen) #view-login.active #login-form .field:nth-of-type(1){animation:loginFadeUp 380ms var(--ease-out) both;animation-delay:280ms}
+  body:not(.login-seen) #view-login.active #login-form .field:nth-of-type(2){animation:loginFadeUp 380ms var(--ease-out) both;animation-delay:330ms}
+  body:not(.login-seen) #view-login.active #btn-login{animation:loginFadeUp 400ms var(--ease-out) both;animation-delay:410ms}
+  body:not(.login-seen) #view-login.active .auth-switch,body:not(.login-seen) #view-login.active .login-foot,body:not(.login-seen) #view-login.active .login-trust{animation:loginFadeUp 380ms var(--ease-out) both;animation-delay:480ms}
+  /* Botón login: táctil + éxito breve (~150ms) antes del dashboard */
+  #btn-login:active{transform:scale(.985)}
+  #btn-login.login-success{background:var(--green);border-color:var(--green)}
+  /* Dashboard tras login: header fade + contenido 8px + cards stagger mínimo */
+  @keyframes dashFade{from{opacity:0}to{opacity:1}}
+  @keyframes dashRise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  body.dash-enter #view-dashboard .topbar{animation:dashFade 240ms var(--ease-standard) both}
+  body.dash-enter #view-dashboard .page-header{animation:dashRise 220ms var(--ease-out) both}
+  body.dash-enter #view-dashboard .hero{animation:dashRise 220ms var(--ease-out) both;animation-delay:60ms}
+  body.dash-enter #view-dashboard .stats .stat:nth-child(1){animation:dashRise 220ms var(--ease-out) both;animation-delay:100ms}
+  body.dash-enter #view-dashboard .stats .stat:nth-child(2){animation:dashRise 220ms var(--ease-out) both;animation-delay:130ms}
+  body.dash-enter #view-dashboard .stats .stat:nth-child(3){animation:dashRise 220ms var(--ease-out) both;animation-delay:160ms}
+  body.dash-enter #view-dashboard .stats .stat:nth-child(4){animation:dashRise 220ms var(--ease-out) both;animation-delay:190ms}
   @media(prefers-reduced-motion:reduce){
     *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
     .dash-sec.active,.view.active{opacity:1;transform:none}
@@ -874,6 +1009,16 @@
     .hb-panel{transform:none}
     .hb-typing i{animation:none}
     .hb-fab:hover{transform:none}
+    .shell.nav-open .sidebar .nav-item svg,.shell.nav-open .sidebar .nav-item span,
+    .shell.nav-open .sidebar .side-label,.nav-item.tap-pop svg{animation:none!important;opacity:1!important;transform:none!important}
+    #btn-notif.bell-press,.notif-badge.pulse{animation:none!important}
+    body:not(.login-seen) #view-login.active .brand-logo,body:not(.login-seen) #view-login.active .brand-text strong,
+    body:not(.login-seen) #view-login.active .brand-text span,body:not(.login-seen) #view-login.active #login-title,
+    body:not(.login-seen) #view-login.active .subtitle,body:not(.login-seen) #view-login.active #login-form .field,
+    body:not(.login-seen) #view-login.active #btn-login,body:not(.login-seen) #view-login.active .auth-switch,
+    body:not(.login-seen) #view-login.active .login-foot,body:not(.login-seen) #view-login.active .login-trust,
+    body.dash-enter #view-dashboard .topbar,body.dash-enter #view-dashboard .page-header,
+    body.dash-enter #view-dashboard .hero,body.dash-enter #view-dashboard .stats .stat{animation:none!important}
   }
 </style>
 </head>
@@ -1076,6 +1221,12 @@
           <button class="nav-item" data-sec="admin-cuenta" data-tip="Mi cuenta" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
             <span>Mi cuenta</span>
+          </button>
+        </div>
+        <div class="nav-group" id="nav-mobile-account" aria-label="Cerrar sesión">
+          <button class="nav-item" id="btn-logout-mobile" type="button" data-tip="Cerrar sesión">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+            <span>Cerrar sesión</span>
           </button>
         </div>
       </nav>
@@ -2140,6 +2291,7 @@
   </section>
 </div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script src="assets/vendor/jspdf.umd.min.js"></script>
 <script>
 (function(){
@@ -2227,18 +2379,35 @@
     }catch(e){}
   }
   function esAdmin(){ return obtenerRol() === 'admin'; }
-  function cerrarSesionPorAuth(){
+  /* Cierre de sesión central (única lógica): desktop + móvil + expiración 401.
+     Limpia JWT, polling, drawer/nav-open, body lock, overlays, HidroBot y vuelve al login. */
+  function cerrarSesionCompleta(mensaje){
+    try{ detenerTiempoReal(); }catch(e){}
+    try{ stopCortesPolling(); }catch(e){}
     limpiarSesion();
-    stopCortesPolling();
     try{ if(typeof pintarContadorNotif === 'function') pintarContadorNotif(0); }catch(e){}
     try{ if(typeof misSolicitudes !== 'undefined') misSolicitudes = []; }catch(e){}
     try{ if(typeof notificaciones !== 'undefined') notificaciones = []; }catch(e){}
-    resetHidroBotSession();
-    [detModal,payModal,copiesModal,incModal,fotoModal,passModal,confirmModal].forEach(closeModal);
-    endSpotlight(false, {markSeen:false});
-    aplicarVisibilidadAdmin();
+    try{ closeMobileNav({restore:false, immediate:true}); }catch(e){}
+    try{ [detModal,payModal,copiesModal,incModal,fotoModal,passModal,confirmModal].forEach(closeModal); }catch(e){}
+    try{ endSpotlight(false, {markSeen:false}); }catch(e){}
+    try{ aplicarVisibilidadAdmin(); }catch(e){}
+    try{ resetHidroBotSession(); }catch(e){}
+    try{ navLock = false; }catch(e){}
+    try{
+      const bl = document.getElementById('btn-login');
+      const bt = document.getElementById('btn-login-text');
+      if(bl){ bl.disabled = false; bl.classList.remove('login-success'); }
+      if(bt) bt.textContent = 'Iniciar Sesión';
+      document.body.classList.remove('dash-enter');
+    }catch(e){}
     showView(viewLogin);
-    showToast('Sesión terminada. Inicia sesión nuevamente.');
+    try{ inpPass.value = ''; }catch(e){}
+    try{ inpSupply.focus(); }catch(e){}
+    showToast(mensaje || 'Sesión cerrada correctamente.');
+  }
+  function cerrarSesionPorAuth(){
+    cerrarSesionCompleta('Sesión terminada. Inicia sesión nuevamente.');
   }
   /* ---------- API base para WEB vs ANDROID (sin romper web) ----------
      WEB actual: API_BASE = '' (URLs relativas /api/... vía Nginx).
@@ -2345,6 +2514,234 @@
     const resp = await fetch(apiUrl(url), Object.assign({}, o, {headers: headers}));
     if(resp.status === 401) cerrarSesionPorAuth();
     return resp;
+  }
+  /* ============================================================
+     TIEMPO REAL (Socket.IO). REST + PostgreSQL = fuente de verdad.
+     El socket solo avisa "algo cambió" (payloads mínimos) y aquí se
+     reconsulta por REST. Sin socket, la app sigue con REST+polling.
+     Máximo 1 socket por pestaña; sin listeners duplicados.
+     ============================================================ */
+  let socketTiempoReal = null;
+  let rtConectadoAntes = false;
+  const rtTimers = {};
+  // Misma regla que apiUrl(): mismo origen en web/Cloudflare, host
+  // configurado en Android futuro. Sin hardcodear dominios.
+  function socketBaseUrl(){
+    const base = (typeof window.HM_API_BASE === 'string') ? window.HM_API_BASE : '';
+    if(base) return base.replace(/\/$/, '');
+    return '';
+  }
+  function moduloVisible(id){
+    const el = document.getElementById(id);
+    return !!(el && el.classList.contains('active'));
+  }
+  function programarSync(clave, fn, ms){
+    try{
+      if(rtTimers[clave]) clearTimeout(rtTimers[clave]);
+      rtTimers[clave] = setTimeout(()=>{ rtTimers[clave] = null; try{ fn(); }catch(e){} }, ms || 150);
+    }catch(e){}
+  }
+  function rtSoloSesionActiva(){
+    try{ return !!obtenerToken() && viewDash.classList.contains('active'); }
+    catch(e){ return false; }
+  }
+  /* ----- Recargas REST reutilizando los cargadores existentes ----- */
+  async function rtRecargarRecibosInicio(){
+    if(!obtenerToken() || esAdmin()) return;
+    try{
+      const datos = await cargarRecibosDesdeAPI();
+      recibos = datos;
+      recibosEstado = datos.length ? 'ok' : 'vacio';
+      if(typeof renderCards === 'function') renderCards();
+      if(typeof renderChart === 'function') renderChart();
+      if(typeof renderSpendChart === 'function') renderSpendChart();
+      if(typeof actualizarSideCons === 'function') actualizarSideCons();
+    }catch(e){}
+  }
+  async function rtRecargarIncidencias(){
+    if(!obtenerToken() || esAdmin()) return;
+    try{
+      incidencias = await cargarIncidenciasDesdeAPI();
+      if(typeof renderInc === 'function') renderInc();
+    }catch(e){}
+  }
+  async function rtRecargarAtencion(){
+    if(!obtenerToken() || esAdmin()) return;
+    try{ await cargarMisSolicitudes(); }catch(e){}
+  }
+  async function rtRecargarPagos(){
+    if(!obtenerToken() || esAdmin()) return;
+    try{
+      pagos = await cargarPagosDesdeAPI();
+      payEstado = pagos.length ? 'ok' : 'vacio';
+      if(typeof renderPagos === 'function') renderPagos();
+    }catch(e){}
+  }
+  function rtRecargarNotif(){
+    if(esAdmin()) return;
+    try{
+      const p = cargarNotificaciones();
+      if(p && typeof p.catch === 'function') p.catch(()=>{});
+    }catch(e){}
+  }
+  /* ----- Sincronización por tipo de evento (pocos GET, con debounce) ----- */
+  function sincronizarUsuarioPorEvento(tipo){
+    if(!rtSoloSesionActiva() || esAdmin()) return;
+    switch(tipo){
+      case 'incidencia':
+        programarSync('inc', ()=>{ rtRecargarIncidencias(); rtRecargarNotif(); });
+        break;
+      case 'atencion':
+        programarSync('ate', ()=>{ rtRecargarAtencion(); rtRecargarNotif(); });
+        break;
+      case 'recibo':
+        programarSync('rec', ()=>{ rtRecargarRecibosInicio(); rtRecargarNotif(); });
+        break;
+      case 'pago':
+        programarSync('pag', ()=>{ rtRecargarRecibosInicio(); rtRecargarPagos(); rtRecargarNotif(); });
+        break;
+      case 'corte':
+        programarSync('cor', ()=>{ try{ refrescarCortes(); }catch(e){} });
+        break;
+      case 'notificacion':
+        programarSync('not', ()=>{ rtRecargarNotif(); });
+        break;
+      case 'perfil':
+        programarSync('per', ()=>{ try{ cargarPerfil(); }catch(e){} });
+        break;
+      default:
+        programarSync('gen', ()=>{ rtRecargarNotif(); });
+        break;
+    }
+  }
+  function sincronizarAdminPorEvento(tipo){
+    if(!rtSoloSesionActiva() || !esAdmin()) return;
+    switch(tipo){
+      case 'incidencia':
+        programarSync('ainc', ()=>{
+          if(moduloVisible('sec-admin-incidencias')){ try{ cargarAdminIncidencias(); }catch(e){} }
+          if(moduloVisible('sec-admin')){ try{ cargarDashboardAdmin(); }catch(e){} }
+        });
+        break;
+      case 'atencion':
+        programarSync('aate', ()=>{
+          if(moduloVisible('sec-admin-atencion')){ try{ cargarAdminAtencion(); }catch(e){} }
+          if(moduloVisible('sec-admin')){ try{ cargarDashboardAdmin(); }catch(e){} }
+        });
+        break;
+      case 'pago':
+        programarSync('apag', ()=>{
+          if(moduloVisible('sec-admin-pagos')){ try{ cargarAdminPagos(); }catch(e){} }
+          if(moduloVisible('sec-admin')){ try{ cargarDashboardAdmin(); }catch(e){} }
+        });
+        break;
+      case 'corte':
+        programarSync('acor', ()=>{
+          if(moduloVisible('sec-admin-cortes')){ try{ cargarAdminCortes(); }catch(e){} }
+          if(moduloVisible('sec-admin')){ try{ cargarDashboardAdmin(); }catch(e){} }
+        });
+        break;
+      case 'recibo':
+        programarSync('arec', ()=>{
+          if(moduloVisible('sec-admin-recibos')){ try{ cargarAdminRecibos(); }catch(e){} }
+          if(moduloVisible('sec-admin')){ try{ cargarDashboardAdmin(); }catch(e){} }
+        });
+        break;
+      default:
+        break;
+    }
+  }
+  // Tras reconectar no se asume nada: sincronización REST del módulo visible.
+  function sincronizarTrasReconexion(){
+    if(!rtSoloSesionActiva()) return;
+    try{
+      if(!esAdmin()) rtRecargarNotif();
+      if(!esAdmin()){
+        if(moduloVisible('sec-incidencias')) rtRecargarIncidencias();
+        else if(moduloVisible('sec-ayuda')) rtRecargarAtencion();
+        else if(moduloVisible('sec-cortes')){ try{ refrescarCortes(); }catch(e){} }
+        else if(moduloVisible('sec-historial') || moduloVisible('sec-inicio')) rtRecargarRecibosInicio();
+        else if(moduloVisible('sec-pagos')) rtRecargarPagos();
+        else if(moduloVisible('sec-perfil')){ try{ cargarPerfil(); }catch(e){} }
+      } else {
+        if(moduloVisible('sec-admin-incidencias')){ try{ cargarAdminIncidencias(); }catch(e){} }
+        else if(moduloVisible('sec-admin-atencion')){ try{ cargarAdminAtencion(); }catch(e){} }
+        else if(moduloVisible('sec-admin-cortes')){ try{ cargarAdminCortes(); }catch(e){} }
+        else if(moduloVisible('sec-admin-pagos')){ try{ cargarAdminPagos(); }catch(e){} }
+        else if(moduloVisible('sec-admin-recibos')){ try{ cargarAdminRecibos(); }catch(e){} }
+        else if(moduloVisible('sec-admin')){ try{ cargarDashboardAdmin(); }catch(e){} }
+      }
+    }catch(e){}
+  }
+  function registrarEventosTiempoReal(){
+    const s = socketTiempoReal;
+    if(!s) return;
+    try{ s.removeAllListeners(); }catch(e){}
+    // Sin bucles: estos handlers solo hacen GET. Los POST/PATCH son los
+    // únicos que emiten en el backend, y nunca desde un handler de aquí.
+    s.on('connect', ()=>{
+      if(rtConectadoAntes) sincronizarTrasReconexion();
+      rtConectadoAntes = true;
+    });
+    s.on('connect_error', (err)=>{
+      try{ console.info('Tiempo real no disponible; se continúa con REST.', err && err.message ? err.message : ''); }catch(e){}
+    });
+    s.on('incidencia:nueva', ()=>{ sincronizarAdminPorEvento('incidencia'); if(!esAdmin()) sincronizarUsuarioPorEvento('incidencia'); });
+    s.on('incidencia:actualizada', ()=>{ sincronizarUsuarioPorEvento('incidencia'); sincronizarAdminPorEvento('incidencia'); });
+    s.on('atencion:nueva', ()=>{ sincronizarAdminPorEvento('atencion'); if(!esAdmin()) sincronizarUsuarioPorEvento('atencion'); });
+    s.on('atencion:actualizada', ()=>{ sincronizarUsuarioPorEvento('atencion'); sincronizarAdminPorEvento('atencion'); });
+    s.on('recibo:nuevo', ()=>{ sincronizarUsuarioPorEvento('recibo'); sincronizarAdminPorEvento('recibo'); });
+    s.on('recibo:actualizado', ()=>{ sincronizarUsuarioPorEvento('recibo'); sincronizarAdminPorEvento('recibo'); });
+    s.on('pago:registrado', ()=>{ sincronizarUsuarioPorEvento('pago'); });
+    s.on('pago:nuevo', ()=>{ sincronizarAdminPorEvento('pago'); });
+    s.on('corte:actualizado', ()=>{ sincronizarUsuarioPorEvento('corte'); sincronizarAdminPorEvento('corte'); });
+    s.on('notificacion:nueva', ()=>{ sincronizarUsuarioPorEvento('notificacion'); });
+    s.on('perfil:actualizado', ()=>{ sincronizarUsuarioPorEvento('perfil'); });
+    s.on('sesion:invalidada', ()=>{
+      try{ showToast('Tu sesión fue desactivada por un administrador.'); }catch(e){}
+      try{ detenerTiempoReal(); }catch(e){}
+      try{ cerrarSesionCompleta('Sesión terminada. Inicia sesión nuevamente.'); }catch(e){}
+    });
+  }
+  function iniciarTiempoReal(){
+    try{ detenerTiempoReal(true); }catch(e){}
+    rtConectadoAntes = false;
+    let token = '';
+    try{ token = obtenerToken(); }catch(e){}
+    if(!token) return;
+    if(typeof io === 'undefined'){
+      try{ console.info('Tiempo real no disponible (sin cliente socket.io); se continúa con REST.'); }catch(e){}
+      return;
+    }
+    try{
+      const base = socketBaseUrl();
+      const opts = {
+        auth: { token: token },
+        path: '/socket.io/',
+        reconnection: true,
+        reconnectionAttempts: Infinity,
+        reconnectionDelay: 1000,
+        reconnectionDelayMax: 8000,
+        timeout: 10000,
+        transports: ['polling', 'websocket']
+      };
+      socketTiempoReal = base ? io(base, opts) : io(opts);
+      registrarEventosTiempoReal();
+    }catch(e){
+      try{ console.info('No se pudo iniciar el tiempo real; se continúa con REST.'); }catch(err){}
+      socketTiempoReal = null;
+    }
+  }
+  function detenerTiempoReal(){
+    try{
+      Object.keys(rtTimers).forEach(k=>{ clearTimeout(rtTimers[k]); delete rtTimers[k]; });
+    }catch(e){}
+    rtConectadoAntes = false;
+    if(socketTiempoReal){
+      try{ socketTiempoReal.removeAllListeners(); }catch(e){}
+      try{ socketTiempoReal.disconnect(); }catch(e){}
+      socketTiempoReal = null;
+    }
   }
   function aplicarVisibilidadAdmin(){
     const admin = esAdmin();
@@ -2476,7 +2873,54 @@
     }, 3600);
   }
   function anyModalOpen(){ return !!document.querySelector('.overlay.open, .overlay.closing'); }
-  function lockScroll(on){ document.body.style.overflow = on ? 'hidden' : ''; }
+  function isDrawerLocked(){ return document.body.dataset.drawerLocked === '1'; }
+  /* Bloqueo robusto del documento para drawer móvil (Chrome Android + toolbar dinámica).
+     Guarda scrollY, fija body con top:-scrollY para que el fondo no se mueva ni encadene scroll.
+     No interfiere con modales: lockScroll() respeta el bloqueo del drawer. */
+  function lockPageForDrawer(){
+    if(isDrawerLocked()) return;
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    document.body.dataset.drawerLocked = '1';
+    document.body.dataset.drawerScrollY = String(y);
+    document.body.style.position = 'fixed';
+    document.body.style.top = (-y) + 'px';
+    document.body.style.left = '0';
+    document.body.style.right = '0';
+    document.body.style.width = '100%';
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.classList.add('drawer-open');
+  }
+  function unlockPageForDrawer(restore){
+    if(!isDrawerLocked()) { document.body.classList.remove('drawer-open'); return; }
+    const doRestore = restore !== false;
+    const y = parseInt(document.body.dataset.drawerScrollY || '0', 10) || 0;
+    document.body.dataset.drawerLocked = '';
+    document.body.style.position = '';
+    document.body.style.top = '';
+    document.body.style.left = '';
+    document.body.style.right = '';
+    document.body.style.width = '';
+    document.body.classList.remove('drawer-open');
+    if(!anyModalOpen()){
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    } else {
+      document.body.style.overflow = 'hidden';
+    }
+    if(doRestore) window.scrollTo(0, y);
+  }
+  let drawerUnlockTimer = null;
+  function cancelDrawerUnlock(){
+    if(drawerUnlockTimer){ clearTimeout(drawerUnlockTimer); drawerUnlockTimer = null; }
+  }
+  function lockScroll(on){
+    if(isDrawerLocked()){
+      if(on) document.body.style.overflow = 'hidden';
+      return;
+    }
+    document.body.style.overflow = on ? 'hidden' : '';
+  }
   function openModal(m, opener){
     if(!m.classList.contains('open')){
       const o = opener || (document.activeElement && document.activeElement !== document.body ? document.activeElement : null);
@@ -2535,9 +2979,61 @@
     if(e.key==='Enter' || e.key===' ') kbNav = true;
   }, true);
   document.addEventListener('pointerdown', ()=>{ kbNav = false; }, true);
-  function closeMobileNav(){
+  function isMobileViewport(){ return window.innerWidth < 900; }
+  /* Stagger genérico: índices secuenciales solo sobre visibles (usuario y admin).
+     Sin hardcodeo por nombre; ocultos (display:none/hidden) no ocupan delay. */
+  function isNavVisible(el){
+    if(!el || !sidebar.contains(el)) return false;
+    let n = el;
+    while(n && n !== document.body){
+      if(n.hidden) return false;
+      n = n.parentElement;
+    }
+    try{
+      const cs = getComputedStyle(el);
+      if(cs.display === 'none' || cs.visibility === 'hidden') return false;
+    }catch(e){}
+    let p = el.parentElement;
+    while(p && p !== sidebar && p !== document.body){
+      if(p.hidden) return false;
+      try{ if(getComputedStyle(p).display === 'none') return false; }catch(e){}
+      p = p.parentElement;
+    }
+    return true;
+  }
+  function assignNavStagger(){
+    try{
+      const items = Array.prototype.slice.call(sidebar.querySelectorAll('.nav-item')).filter(isNavVisible);
+      items.forEach((el, i)=>{ el.style.setProperty('--nav-index', String(i)); });
+      const labels = Array.prototype.slice.call(sidebar.querySelectorAll('.side-label')).filter(isNavVisible);
+      labels.forEach((el, i)=>{ el.style.setProperty('--nav-group-index', String(i)); });
+    }catch(e){}
+  }
+  function openMobileNav(){
+    if(!isMobileViewport()) return;
+    cancelDrawerUnlock();
+    assignNavStagger();
+    shell.classList.add('nav-open');
+    btnMenu.setAttribute('aria-expanded','true');
+    lockPageForDrawer();
+    try{ sidebar.scrollTop = 0; }catch(e){}
+  }
+  /* Cierre diferido: primero la animación (~200ms) y después se restaura el body/scroll,
+     para que el fondo no se mueva durante el cierre. Navegar usa restore:false. */
+  function closeMobileNav(opts){
+    const o = opts || {};
+    const restore = o.restore !== false;
+    const immediate = o.immediate === true;
+    if(!shell.classList.contains('nav-open')){
+      btnMenu.setAttribute('aria-expanded','false');
+      if(isDrawerLocked() && !isMobileViewport()) unlockPageForDrawer(restore);
+      return;
+    }
     shell.classList.remove('nav-open');
     btnMenu.setAttribute('aria-expanded','false');
+    cancelDrawerUnlock();
+    if(immediate || isReduced()){ unlockPageForDrawer(restore); return; }
+    drawerUnlockTimer = setTimeout(()=>{ drawerUnlockTimer = null; unlockPageForDrawer(restore); }, 200);
   }
   function syncSidebar(name){
     document.querySelectorAll('.nav-item').forEach(n=>{
@@ -2555,7 +3051,8 @@
     if(!t) return;
     try{ t.focus({preventScroll:true}); }catch(e){ try{ t.focus(); }catch(_){} }
   }
-  /* Cambia de vista: salida breve -> swap -> entrada. Reset de scroll instantáneo. */
+  /* Cambia de vista: salida breve -> swap -> entrada. Reset de scroll instantáneo.
+     IDEMPOTENTE: si target === current no se oculta ni se hace page-exit; solo refresh suave. */
   function openDashboardPage(pageName, options){
     const o = options || {};
     const target = document.getElementById('sec-' + pageName);
@@ -2578,10 +3075,13 @@
     };
 
     if(current === target){
-      closeMobileNav();
+      // Misma sección: mantener visible, sin page-exit; micro-entrada + scroll suave; anti-taps rápidos.
+      if(navLock) return Promise.resolve(target);
+      closeMobileNav({restore:false});
       syncSidebar(pageName);
       updateHash(pageName);
-      window.scrollTo({top:0, behavior:'instant'});
+      try{ window.scrollTo({top:0, behavior: isReduced() ? 'auto' : 'smooth'}); }
+      catch(e){ window.scrollTo(0,0); }
       if(!isReduced()){ target.classList.remove('page-enter'); void target.offsetWidth; target.classList.add('page-enter'); }
       const f = o.focus ? document.getElementById(o.focus) : null;
       if(f) setTimeout(()=>{ try{ f.focus({preventScroll:true}); }catch(e){ f.focus(); } }, 60);
@@ -2590,7 +3090,9 @@
     }
     if(navLock) return Promise.resolve(target);
     navLock = true;
-    closeMobileNav();
+    // Seguridad: nunca dejar navLock activo más de 600ms aunque una transición falle.
+    setTimeout(()=>{ navLock = false; }, 600);
+    closeMobileNav({restore:false});
     syncSidebar(pageName);
     updateHash(pageName);
 
@@ -2608,25 +3110,51 @@
     });
   }
   document.querySelectorAll('.nav-item').forEach(n=>{
-    n.addEventListener('click', ()=>openDashboardPage(n.dataset.sec));
+    if(n.id === 'btn-logout-mobile') return;
+    n.addEventListener('click', ()=>{
+      try{
+        n.classList.remove('tap-pop');
+        void n.offsetWidth;
+        n.classList.add('tap-pop');
+        setTimeout(()=>{ n.classList.remove('tap-pop'); }, 220);
+      }catch(e){}
+      openDashboardPage(n.dataset.sec);
+    });
   });
   document.getElementById('side-cons-cta').addEventListener('click', ()=>openDashboardPage('inicio'));
   btnMenu.addEventListener('click', ()=>{
-    if(window.innerWidth < 900){
-      const open = shell.classList.toggle('nav-open');
-      btnMenu.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if(isMobileViewport()){
+      if(shell.classList.contains('nav-open')) closeMobileNav();
+      else openMobileNav();
     } else {
       viewDash.classList.toggle('side-collapsed');
     }
   });
-  document.getElementById('scrim').addEventListener('click', closeMobileNav);
+  document.getElementById('scrim').addEventListener('click', ()=>closeMobileNav());
+  /* Limpieza al cambiar desktop <-> móvil sin recargar: sin drawer colgado ni body fijo. */
+  (function(){
+    const mq = window.matchMedia('(min-width: 900px)');
+    const cleanup = ()=>{
+      if(mq.matches){
+        if(shell.classList.contains('nav-open')) shell.classList.remove('nav-open');
+        btnMenu.setAttribute('aria-expanded','false');
+        cancelDrawerUnlock();
+        if(isDrawerLocked()) unlockPageForDrawer();
+      }
+    };
+    if(mq.addEventListener) mq.addEventListener('change', cleanup);
+    else if(mq.addListener) mq.addListener(cleanup);
+    window.addEventListener('resize', ()=>{
+      if(window.innerWidth >= 900 && shell.classList.contains('nav-open')) cleanup();
+    });
+  })();
   window.addEventListener('hashchange', ()=>{
     const found = Object.keys(HASH_SEC).find(k=>HASH_SEC[k] === location.hash.slice(1));
     if(found && viewDash.classList.contains('active')) openDashboardPage(found);
   });
 
   /* ---------- Constantes de la app ---------- */
-  const APP_VERSION = '2.1';
+  const APP_VERSION = '1.0'; // Beta 1.0 (coherente con el footer y login visibles).
   // FASE 32: se eliminó código muerto (hmHash, hmRand, generarRecibos).
   // La fuente de recibos es PostgreSQL vía /api/me/recibos (JWT).
 
@@ -3668,11 +4196,13 @@
   }
   detClose.addEventListener('click', ()=>closeModal(detModal));
   detClose2.addEventListener('click', ()=>closeModal(detModal));
-  // Escape global unico: prioridad 1) modal, 2) tutorial, 3) HidroBot.
+  // Escape global unico: prioridad 1) modal, 2) tutorial, 3) drawer móvil, 4) HidroBot.
+  // (Estructura lista para futuro botón atrás Android/Capacitor: llamar a closeMobileNav(). Sin Capacitor ahora.)
   document.addEventListener('keydown', e=>{
     if(e.key !== 'Escape') return;
     if(document.querySelector('.overlay.open,.overlay.closing')){ [detModal,payModal,copiesModal,incModal,fotoModal,passModal].forEach(closeModal); return; }
     if(spotActive){ endSpotlight(false); return; }
+    if(shell.classList.contains('nav-open')){ closeMobileNav(); btnMenu.focus(); return; }
     if(hidroBotState.open){ minimizeBot(); refocusFab(); }
   });
 
@@ -4692,7 +5222,16 @@ async function descargarConstanciaPDF(r, btn){
   document.querySelector('[data-sec="admin-recibos"]').addEventListener('click', ()=>{ if(esAdmin()) cargarAdminRecibos(); });
   document.querySelector('[data-sec="notificaciones"]').addEventListener('click', ()=>{ if(!esAdmin()) cargarNotificaciones(); });
   document.querySelector('[data-sec="ayuda"]').addEventListener('click', ()=>{ if(!esAdmin()) cargarMisSolicitudes(); });
-  document.getElementById('btn-notif').addEventListener('click', ()=>openDashboardPage('notificaciones').then(()=>{ if(!esAdmin()) cargarNotificaciones(); }));
+  document.getElementById('btn-notif').addEventListener('click', (ev)=>{
+    try{
+      const b = ev.currentTarget;
+      b.classList.remove('bell-press');
+      void b.offsetWidth;
+      b.classList.add('bell-press');
+      setTimeout(()=>b.classList.remove('bell-press'), 220);
+    }catch(e){}
+    openDashboardPage('notificaciones').then(()=>{ if(!esAdmin()) cargarNotificaciones(); });
+  });
   document.querySelectorAll('.quick-card[data-action^="adm-"]').forEach(b=>{
     b.addEventListener('click', ()=>{
       if(b.dataset.action === 'adm-usuarios') openDashboardPage('admin-usuarios').then(()=>{ if(esAdmin()) cargarAdminUsuarios(); });
@@ -5599,6 +6138,7 @@ async function descargarConstanciaPDF(r, btn){
 
   /* ---------- Notificaciones internas ---------- */
   let notificaciones = [];
+  let lastNotifUnread = 0;
   function pintarContadorNotif(noLeidas){
     const n = Number(noLeidas || 0);
     const top = document.getElementById('notif-count');
@@ -5608,8 +6148,25 @@ async function descargarConstanciaPDF(r, btn){
       if(n > 0){ el.textContent = n > 99 ? '99+' : String(n); el.hidden = false; }
       else { el.textContent = '0'; el.hidden = true; }
     });
+    // Pulse sutil del badge solo cuando aumentan las no leídas (sin animación constante).
+    try{
+      if(n > lastNotifUnread && n > 0 && !isReduced()){
+        [top, nav].forEach(el=>{
+          if(!el || el.hidden) return;
+          el.classList.remove('pulse');
+          void el.offsetWidth;
+          el.classList.add('pulse');
+          setTimeout(()=>el.classList.remove('pulse'), 650);
+        });
+      }
+    }catch(e){}
+    lastNotifUnread = n;
   }
+  let notifCargando = null;
   async function cargarNotificaciones(){
+    // Anti-taps rápidos: una sola petición en vuelo; la vista nunca se oculta aquí.
+    if(notifCargando) return notifCargando;
+    notifCargando = (async ()=>{
     const list = document.getElementById('notif-list');
     const emptyEl = document.getElementById('notif-empty');
     if(!list) return;
@@ -5655,6 +6212,8 @@ async function descargarConstanciaPDF(r, btn){
       }
       list.appendChild(d);
     });
+    })();
+    try{ await notifCargando; }finally{ notifCargando = null; }
   }
   async function marcarNotifLeida(id, btn){
     if(btn){ btn.disabled = true; btn.textContent = 'Guardando...'; }
@@ -6472,6 +7031,7 @@ async function descargarConstanciaPDF(r, btn){
       }
       guardarSesion(authData.token, authData.usuario && authData.usuario.rol);
       aplicarVisibilidadAdmin();
+      try{ iniciarTiempoReal(); }catch(e){}
       if(esAdmin()) resetHidroBotSession();
     }catch(err){
       showError('No se pudo conectar con el servidor. Inténtalo nuevamente.');
@@ -6479,6 +7039,15 @@ async function descargarConstanciaPDF(r, btn){
       btnLoginText.textContent = 'Iniciar Sesión';
       return;
     }
+    // Feedback de éxito ~150ms antes del dashboard (sin ralentizar; omitido en reduced-motion).
+    try{
+      if(!isReduced()){
+        btnLogin.classList.add('login-success');
+        btnLoginText.textContent = '¡Bienvenido!';
+        await new Promise(r=>setTimeout(r, 150));
+        btnLogin.classList.remove('login-success');
+      }
+    }catch(e){}
     supplyLabel.textContent = sup;
     supplyHello.textContent = sup;
     document.getElementById('side-supply').textContent = sup;
@@ -6492,6 +7061,11 @@ async function descargarConstanciaPDF(r, btn){
     if(searchMes) searchMes.value = '';
     if(filterAnio) filterAnio.value = 'Todos';
     document.querySelectorAll('.chip-filter').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
+    // Entrada al dashboard: header fade + contenido rise + cards stagger (una vez por login).
+    try{
+      document.body.classList.add('dash-enter');
+      setTimeout(()=>document.body.classList.remove('dash-enter'), 700);
+    }catch(e){}
     showView(viewDash);
     const loginHash = location.hash.slice(1); // capturar antes de que showSkeletons actualice el hash
     showSkeletons();
@@ -6571,22 +7145,14 @@ async function descargarConstanciaPDF(r, btn){
     }, isReduced() ? 0 : 160);
   });
 
-  // Flujo principal de logout (unico listener): incluye limpieza de HidroBot.
+  // Flujo principal de logout: ambos botones usan la misma función central, sin duplicar.
   document.getElementById('btn-logout').addEventListener('click', ()=>{
-    stopCortesPolling();
-    limpiarSesion();
-    pintarContadorNotif(0);
-    misSolicitudes = [];
-    notificaciones = [];
-    aplicarVisibilidadAdmin();
-    resetHidroBotSession();
-    [detModal,payModal,copiesModal,incModal,fotoModal,passModal].forEach(closeModal);
-    endSpotlight(false, {markSeen:false});
-    showView(viewLogin);
-    inpPass.value = '';
-    inpSupply.focus();
-    showToast('Sesión cerrada correctamente.');
+    cerrarSesionCompleta('Sesión cerrada correctamente.');
   });
+  (function(){
+    const m = document.getElementById('btn-logout-mobile');
+    if(m) m.addEventListener('click', ()=>{ cerrarSesionCompleta('Sesión cerrada correctamente.'); });
+  })();
 
   document.getElementById('btn-replay-tutorial').addEventListener('click', startTutorial);
   document.getElementById('forgot-link').addEventListener('click', e=>{e.preventDefault();showToast('Te enviamos un enlace de recuperación a tu correo registrado.');});
@@ -6612,6 +7178,8 @@ async function descargarConstanciaPDF(r, btn){
 
   aplicarVisibilidadAdmin();
   initHidroBot();
+  // La animación de bienvenida del login corre una sola vez (no en cada navegación).
+  setTimeout(()=>{ try{ document.body.classList.add('login-seen'); }catch(e){} }, 900);
 })();
 </script>
 </body>

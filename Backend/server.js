@@ -3,7 +3,9 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const crypto = require('crypto');
+const http = require('http');
 const jwt = require('jsonwebtoken');
+const { Server } = require('socket.io');
 const { Pool } = require("pg");
 
 const app = express();
@@ -97,6 +99,143 @@ const pool = new Pool({
     user: process.env.POSTGRES_USER,
     password: process.env.POSTGRES_PASSWORD
 });
+
+
+// ==========================================
+// TIEMPO REAL (Socket.IO sobre el mismo HTTP)
+// REST + PostgreSQL siguen siendo la fuente de verdad:
+// el socket solo avisa "algo cambió" con payloads
+// mínimos y el cliente reconsulta sus endpoints.
+// ==========================================
+
+let ioTiempoReal = null;
+
+function rtLog(mensaje){
+    // En producción, logs mínimos. Nunca JWT, hashes ni secretos.
+    if (!esProduccion()) console.log(mensaje);
+}
+
+// Emits mínimos (sin objetos sensibles, sin hashes, sin secretos).
+function emitirASuministro(idSuministro, evento, datos){
+    try{
+        if (!ioTiempoReal || !idSuministro) return;
+        ioTiempoReal.to('suministro:' + Number(idSuministro)).emit(evento, datos || {});
+    }catch(e){}
+}
+
+function emitirAAdmins(evento, datos){
+    try{
+        if (!ioTiempoReal) return;
+        ioTiempoReal.to('admins').emit(evento, datos || {});
+    }catch(e){}
+}
+
+function emitirAAutenticados(evento, datos){
+    try{
+        if (!ioTiempoReal) return;
+        ioTiempoReal.to('authenticated').emit(evento, datos || {});
+    }catch(e){}
+}
+
+async function desconectarSocketsDeSuministro(idSuministro){
+    try{
+        if (!ioTiempoReal || !idSuministro) return;
+        const sala = 'suministro:' + Number(idSuministro);
+        ioTiempoReal.to(sala).emit('sesion:invalidada', { motivo: 'desactivada' });
+        await ioTiempoReal.in(sala).disconnectSockets(true);
+    }catch(e){}
+}
+
+async function desconectarSocketsDeUsuario(idUsuario){
+    try{
+        if (!ioTiempoReal || !idUsuario) return;
+        const sala = 'usuario:' + Number(idUsuario);
+        ioTiempoReal.to(sala).emit('sesion:invalidada', { motivo: 'desactivada' });
+        await ioTiempoReal.in(sala).disconnectSockets(true);
+    }catch(e){}
+}
+
+function configurarTiempoReal(httpServer){
+    const io = new Server(httpServer, {
+        path: '/socket.io/',
+        // Sin '*' indiscriminado: se reutilizan los orígenes de la API REST.
+        cors: {
+            origin: function (origen, cb) {
+                if (!origen) return cb(null, true);
+                if (ORIGENES_PERMITIDOS.indexOf(origen) !== -1) return cb(null, true);
+                return cb(null, false);
+            },
+            methods: ['GET', 'POST'],
+            credentials: true
+        }
+    });
+
+    // Auth obligatoria: JWT del handshake, verificado contra PostgreSQL
+    // (firma, expiración, usuario existe, activo, rol actual). Sin anónimos.
+    io.use(async (socket, next) => {
+        try{
+            const token = socket.handshake && socket.handshake.auth && socket.handshake.auth.token;
+            if (!token || typeof token !== 'string') return next(new Error('Autenticación requerida.'));
+            let datos;
+            try{
+                datos = jwt.verify(token, obtenerSecretoAuth());
+            }catch(e){
+                return next(new Error('Autenticación requerida.'));
+            }
+            const idUsuario = Number(datos && datos.id_usuario);
+            if (!Number.isInteger(idUsuario) || idUsuario <= 0) {
+                return next(new Error('Autenticación requerida.'));
+            }
+            const verif = await pool.query(
+                `SELECT u.id_usuario, u.rol, u.activo,
+                        s.id_suministro, s.numero_suministro
+                 FROM usuarios u
+                 LEFT JOIN suministros s ON s.id_usuario = u.id_usuario
+                 WHERE u.id_usuario = $1
+                 LIMIT 1;`,
+                [idUsuario]
+            );
+            if (verif.rowCount === 0 || verif.rows[0].activo === false) {
+                return next(new Error('Acceso denegado.'));
+            }
+            const fila = verif.rows[0];
+            socket.user = {
+                id_usuario: fila.id_usuario,
+                id_suministro: fila.id_suministro,
+                numero_suministro: fila.numero_suministro,
+                rol: fila.rol
+            };
+            return next();
+        }catch(e){
+            return next(new Error('Autenticación requerida.'));
+        }
+    });
+
+    io.on('connection', (socket) => {
+        try{
+            // Rooms asignadas por el SERVIDOR. El cliente nunca elige rooms.
+            const u = socket.user;
+            socket.join('authenticated');
+            socket.join('usuario:' + Number(u.id_usuario));
+            if (u.rol === 'admin') {
+                socket.join('admins');
+            } else if (u.id_suministro) {
+                socket.join('suministro:' + Number(u.id_suministro));
+            }
+            rtLog('Socket conectado: usuario ' + u.id_usuario + ' rol ' + u.rol);
+        }catch(e){}
+        socket.on('disconnect', () => {
+            try{
+                const id = socket.user ? socket.user.id_usuario : '?';
+                rtLog('Socket desconectado: usuario ' + id);
+            }catch(e){}
+        });
+        // Sin handler 'join': el cliente no solicita rooms.
+    });
+
+    ioTiempoReal = io;
+    return io;
+}
 
 
 // ==========================================
@@ -949,6 +1088,12 @@ app.post("/api/incidencias", limiteOperacionesSensibles, requiereAuth, async (re
             ]
         );
 
+        // Tiempo real (post-persistencia): aviso mínimo a admins y al propio
+        // suministro (otras pestañas del mismo usuario). El detalle se
+        // consulta por REST; aquí solo el id.
+        emitirAAdmins('incidencia:nueva', { id: insertResultado.rows[0].id_incidencia });
+        emitirASuministro(idSuministro, 'incidencia:nueva', { id: insertResultado.rows[0].id_incidencia });
+
         return res.status(201).json({
             estado: "ok",
             incidencia: insertResultado.rows[0]
@@ -1095,6 +1240,11 @@ app.post("/api/pagos", limiteOperacionesSensibles, requiereAuth, async (req, res
         );
 
         await cliente.query('COMMIT');
+
+        // Tiempo real DESPUÉS del COMMIT (nunca antes; en ROLLBACK no se emite).
+        // Aviso mínimo: el cliente reconsulta Inicio/Recibos/Historial por REST.
+        emitirASuministro(req.user.id_suministro, 'pago:registrado', { id_pago: idPago, id_recibo: idRecibo });
+        emitirAAdmins('pago:nuevo', { id_pago: idPago, id_recibo: idRecibo });
 
         return res.status(201).json({
             estado: "ok",
@@ -1458,6 +1608,10 @@ app.post("/api/admin/cortes", requiereAdmin, async (req, res) => {
             }
         } catch (e) {}
 
+        // Tiempo real: aviso a todos los autenticados (sin datos privados).
+        // Cada cliente filtra por General/Distrito/Zona vía GET /api/me/cortes.
+        emitirAAutenticados('corte:actualizado', { id: insertado.rows[0].id_corte, accion: 'creado' });
+
         return res.status(201).json({
             estado: "ok",
             corte: filaCorteAdmin(insertado.rows[0])
@@ -1500,6 +1654,8 @@ app.patch("/api/admin/cortes/:id/cancelar", requiereAdmin, async (req, res) => {
                 mensaje: "Corte no encontrado."
             });
         }
+
+        emitirAAutenticados('corte:actualizado', { id: idCorte, accion: 'cancelado' });
 
         return res.json({
             estado: "ok",
@@ -1565,6 +1721,8 @@ app.patch("/api/admin/cortes/:id", requiereAdmin, async (req, res) => {
                fecha_inicio, fecha_fin, cancelado;`,
             [validado.alcance, validado.distrito, validado.zona, validado.motivo, validado.inicio, validado.fin, idCorte]
         );
+
+        emitirAAutenticados('corte:actualizado', { id: idCorte, accion: 'editado' });
 
         return res.json({
             estado: "ok",
@@ -1727,6 +1885,9 @@ app.patch("/api/admin/incidencias/:id/estado", requiereAdmin, async (req, res) =
                 tipo: 'incidencia'
             });
         } catch (e) {}
+
+        // Tiempo real: el propietario recarga Incidencias + Notificaciones por REST.
+        emitirASuministro(resultado.rows[0].id_suministro, 'incidencia:actualizada', { id: resultado.rows[0].id_incidencia, estado: estado });
 
         return res.json({
             estado: "ok",
@@ -1894,6 +2055,9 @@ app.post("/api/admin/recibos", requiereAdmin, async (req, res) => {
             });
         } catch (e) {}
 
+        // Tiempo real: el suministro recarga Inicio/Recibos/Notificaciones por REST.
+        emitirASuministro(suministro.rows[0].id_suministro, 'recibo:nuevo', { id: insertado.rows[0].id_recibo, periodo: validado.periodo });
+
         return res.status(201).json({
             estado: "ok",
             recibo: filaReciboAdmin(insertado.rows[0])
@@ -1983,6 +2147,12 @@ app.patch("/api/admin/recibos/:id", requiereAdmin, async (req, res) => {
              validado.monto, validado.consumo, idRecibo, validado.numero]
         );
 
+        // Tiempo real: aviso mínimo al suministro (reconsulta Recibos por REST).
+        try {
+            const sum = await pool.query(`SELECT id_suministro FROM recibos WHERE id_recibo = $1 LIMIT 1;`, [idRecibo]);
+            if (sum.rowCount) emitirASuministro(sum.rows[0].id_suministro, 'recibo:actualizado', { id: idRecibo });
+        } catch (e) {}
+
         return res.json({
             estado: "ok",
             recibo: filaReciboAdmin(resultado.rows[0])
@@ -2045,7 +2215,7 @@ app.patch("/api/admin/recibos/:id/anular", requiereAdmin, async (req, res) => {
 
         const actualizado = await pool.query(
             `SELECT
-               r.id_recibo, s.numero_suministro, r.periodo,
+               r.id_recibo, r.id_suministro, s.numero_suministro, r.periodo,
                r.fecha_emision, r.fecha_vencimiento, r.monto,
                r.consumo_m3, r.estado,
                FALSE AS tiene_pago
@@ -2055,6 +2225,11 @@ app.patch("/api/admin/recibos/:id/anular", requiereAdmin, async (req, res) => {
              LIMIT 1;`,
             [idRecibo]
         );
+
+        // Tiempo real: aviso mínimo al suministro (reconsulta Recibos por REST).
+        if (actualizado.rowCount) {
+            emitirASuministro(actualizado.rows[0].id_suministro, 'recibo:actualizado', { id: idRecibo, estado: 'Anulado' });
+        }
 
         return res.json({
             estado: "ok",
@@ -2104,7 +2279,14 @@ async function crearNotificacion(datos){
              RETURNING id_notificacion;`,
             [idSuministro, alcance, titulo, mensaje, tipo]
         );
-        return r.rows[0] ? r.rows[0].id_notificacion : null;
+        const idNotif = r.rows[0] ? r.rows[0].id_notificacion : null;
+        // Tiempo real centralizado (una sola fila en PostgreSQL, un solo aviso):
+        // el frontend reconsulta GET /api/notificaciones y actualiza badges.
+        if (idNotif) {
+            if (alcance === 'General') emitirAAutenticados('notificacion:nueva', { id: idNotif, alcance: alcance, tipo: tipo });
+            else emitirASuministro(idSuministro, 'notificacion:nueva', { id: idNotif, alcance: alcance, tipo: tipo });
+        }
+        return idNotif;
     } catch (e) {
         console.error('No se pudo crear la notificación.', e);
         return null;
@@ -2240,6 +2422,15 @@ app.patch("/api/admin/usuarios/:id/estado", requiereAdmin, async (req, res) => {
         if (resultado.rowCount === 0) {
             return res.status(404).json({ estado: "error", mensaje: "Usuario no encontrado." });
         }
+        // Tiempo real: cuenta desactivada => el frontend cierra sesión y el
+        // servidor desconecta sus sockets (complementa el 403 HTTP).
+        if (activo === false) {
+            try {
+                const sum = await pool.query(`SELECT id_suministro FROM suministros WHERE id_usuario = $1 LIMIT 1;`, [idUsuario]);
+                if (sum.rowCount) await desconectarSocketsDeSuministro(sum.rows[0].id_suministro);
+                await desconectarSocketsDeUsuario(idUsuario);
+            } catch (e) {}
+        }
         return res.json({ estado: "ok", usuario: resultado.rows[0] });
     } catch (error) {
         console.error(error);
@@ -2274,6 +2465,8 @@ app.patch("/api/admin/suministros/:id/ubicacion", requiereAdmin, async (req, res
         if (resultado.rowCount === 0) {
             return res.status(404).json({ estado: "error", mensaje: "Suministro no encontrado." });
         }
+        // Tiempo real: el cliente actualiza su perfil si está abierto.
+        emitirASuministro(idSuministro, 'perfil:actualizado', { id: idSuministro });
         // No se copian cortes: el modelo dinámico por distrito/zona refleja
         // automáticamente el cambio en la siguiente consulta/polling.
         return res.json({ estado: "ok", suministro: resultado.rows[0] });
@@ -2375,6 +2568,9 @@ app.post("/api/atencion", limiteOperacionesSensibles, requiereAuth, async (req, 
              RETURNING id_solicitud, categoria, asunto, descripcion, estado, fecha_registro;`,
             [idSuministro, validado.categoria, validado.asunto, validado.descripcion]
         );
+        // Tiempo real: aviso mínimo a admins y al propio suministro.
+        emitirAAdmins('atencion:nueva', { id: insertado.rows[0].id_solicitud });
+        emitirASuministro(idSuministro, 'atencion:nueva', { id: insertado.rows[0].id_solicitud });
         return res.status(201).json({
             estado: "ok",
             solicitud: {
@@ -2512,6 +2708,8 @@ app.patch("/api/admin/atencion/:id", requiereAdmin, async (req, res) => {
                 });
             }
         } catch (e) {}
+        // Tiempo real: el propietario recarga Atención + Notificaciones por REST.
+        emitirASuministro(sol.id_suministro, 'atencion:actualizada', { id: sol.id_solicitud, estado: sol.estado });
         return res.json({ estado: "ok", solicitud: sol });
     } catch (error) {
         console.error(error);
@@ -2773,7 +2971,10 @@ app.get("/api/admin/resumen", requiereAdmin, async (req, res) => {
 });
 
 
-app.listen(PORT, "0.0.0.0", () => {
+const httpServer = http.createServer(app);
+configurarTiempoReal(httpServer);
+
+httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(
         `API Hidro Mejora ejecutándose en el puerto ${PORT}`
     );

@@ -12,6 +12,7 @@
     "express-rate-limit": "^8.7.0",
     "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "socket.io": "^4.8.4"
   }
 }
