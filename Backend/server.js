@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { Pool } = require("pg");
@@ -7,9 +9,69 @@ const { Pool } = require("pg");
 const app = express();
 const PORT = 3000;
 
-app.use(cors());
+// Confiar solo en el primer proxy (arquitectura: Internet -> Nginx -> Backend).
+// Necesario para que express-rate-limit vea la IP real vía X-Forwarded-For.
+// No usar 'true' (confiaría en cadena completa externa).
+app.set('trust proxy', 1);
+
+// Cabecera X-Powered-By desactivada explícitamente (verificación: curl -I).
+app.disable('x-powered-by');
+
+// Helmet: headers de seguridad. CSP desactivada por ahora porque el
+// frontend actual usa scripts inline (imponerla rompería la web sin
+// refactorizar). Se protege el resto (HSTS, nosniff, frameguard, etc.).
+app.use(helmet({ contentSecurityPolicy: false }));
+
+function esProduccion(){
+    return String(process.env.NODE_ENV || '').toLowerCase() === 'production';
+}
+
+// CORS restringido por env (nunca '*' para APIs privadas).
+// CORS_ALLOWED_ORIGINS="http://localhost:8080,https://DOMINIO"
+// En desarrollo sin variable: se permite http://localhost:8080 por comodidad.
+// En producción sin variable: solo same-origin (sin cabecera CORS).
+function obtenerOrigenesPermitidos(){
+    const crudo = String(process.env.CORS_ALLOWED_ORIGINS || '').trim();
+    if (crudo) {
+        return crudo.split(',').map(s => s.trim()).filter(Boolean);
+    }
+    return esProduccion() ? [] : ['http://localhost:8080'];
+}
+
+const ORIGENES_PERMITIDOS = obtenerOrigenesPermitidos();
+
+app.use(cors({
+    origin: function (origen, cb) {
+        // Peticiones same-origin / curl sin Origin: permitir (Nginx proxea /api/).
+        if (!origen) return cb(null, true);
+        if (ORIGENES_PERMITIDOS.indexOf(origen) !== -1) return cb(null, true);
+        return cb(null, false);
+    },
+    methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 600
+}));
 // Límite acotado: fotografías de incidencias hasta 2 MB + overhead base64.
 app.use(express.json({ limit: '3mb' }));
+
+// Rate limits (por IP, detrás de Nginx gracias a trust proxy = 1).
+// Mensajes genéricos para no revelar política exacta al atacante.
+function limitadorGenerico(maxPeticiones, ventanaMinutos){
+    return rateLimit({
+        windowMs: ventanaMinutos * 60 * 1000,
+        max: maxPeticiones,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: { estado: "error", mensaje: "Demasiadas solicitudes. Intenta nuevamente más tarde." }
+    });
+}
+
+// Login/registro/cambio-clave: estrictos pero sin bloquear pruebas normales.
+const limiteLogin = limitadorGenerico(10, 15);
+const limiteRegistro = limitadorGenerico(10, 15);
+const limiteCambioClave = limitadorGenerico(10, 15);
+// Operaciones sensibles de usuario: más amplio (uso legítimo frecuente).
+const limiteOperacionesSensibles = limitadorGenerico(60, 15);
 
 function obtenerSecretoAuth(){
     return process.env.AUTH_TOKEN_SECRET || '';
@@ -271,7 +333,15 @@ function generarTokenAcceso(datos){
     );
 }
 
-function requiereAuth(req, res, next){
+// ==========================================
+// AUTENTICACIÓN POR TOKEN (JWT 8h) + verificación en DB
+// HARDENING: no se confía 8h en rol/activo del token.
+// En cada petición se consulta usuarios (sin clave_hash) para
+// obtener rol actual y activo. Si no existe o activo=false -> 403.
+// req.user se reconstruye desde DB (nunca hashes).
+// ==========================================
+
+async function requiereAuth(req, res, next){
     const autorizacion = req.headers.authorization || '';
     const partes = autorizacion.split(' ');
 
@@ -282,13 +352,66 @@ function requiereAuth(req, res, next){
         });
     }
 
+    let datosToken;
     try {
-        req.user = jwt.verify(partes[1], obtenerSecretoAuth());
-        return next();
+        datosToken = jwt.verify(partes[1], obtenerSecretoAuth());
     } catch (e) {
         return res.status(401).json({
             estado: "error",
             mensaje: "Autenticación requerida."
+        });
+    }
+
+    const idUsuarioToken = Number(datosToken.id_usuario);
+    if (!Number.isInteger(idUsuarioToken) || idUsuarioToken <= 0) {
+        return res.status(401).json({
+            estado: "error",
+            mensaje: "Autenticación requerida."
+        });
+    }
+
+    try {
+        // Sin clave_hash, sin foto, sin secretos. Solo estado y rol actual.
+        const verif = await pool.query(
+            `SELECT u.id_usuario, u.rol, u.activo,
+                    s.id_suministro, s.numero_suministro
+             FROM usuarios u
+             LEFT JOIN suministros s ON s.id_usuario = u.id_usuario
+             WHERE u.id_usuario = $1
+             LIMIT 1;`,
+            [idUsuarioToken]
+        );
+
+        if (verif.rowCount === 0) {
+            return res.status(403).json({
+                estado: "error",
+                mensaje: "Acceso denegado."
+            });
+        }
+
+        const fila = verif.rows[0];
+
+        if (fila.activo === false) {
+            return res.status(403).json({
+                estado: "error",
+                mensaje: "Acceso denegado."
+            });
+        }
+
+        req.user = {
+            id_usuario: fila.id_usuario,
+            id_suministro: fila.id_suministro,
+            numero_suministro: fila.numero_suministro,
+            rol: fila.rol
+        };
+
+        return next();
+    } catch (e) {
+        // En producción, mensaje genérico; detalle solo en log servidor.
+        console.error(esProduccion() ? 'Error de autenticación.' : e);
+        return res.status(500).json({
+            estado: "error",
+            mensaje: "Error interno del servidor."
         });
     }
 }
@@ -311,7 +434,7 @@ function requiereAdmin(req, res, next){
 // AUTENTICACIÓN DE USUARIO POR SUMINISTRO
 // ==========================================
 
-app.post("/api/auth/login", async (req, res) => {
+app.post("/api/auth/login", limiteLogin, async (req, res) => {
     try {
         const { numero_suministro, password } = req.body || {};
 
@@ -400,7 +523,7 @@ app.post("/api/auth/login", async (req, res) => {
 // el usuario no se valida contra sistemas oficiales.
 // ==========================================
 
-app.post("/api/auth/register", async (req, res) => {
+app.post("/api/auth/register", limiteRegistro, async (req, res) => {
     let cliente = null;
 
     try {
@@ -584,7 +707,7 @@ app.get("/api/perfil/:suministro", requiereAuth, async (req, res) => {
 // Con JWT: el suministro se obtiene del token, nunca del body.
 // ==========================================
 
-app.post("/api/auth/change-password", requiereAuth, async (req, res) => {
+app.post("/api/auth/change-password", limiteCambioClave, requiereAuth, async (req, res) => {
     try {
         const { password_actual, password_nueva, password_confirmacion } = req.body || {};
 
@@ -726,7 +849,7 @@ function validarFotoIncidencia(fotoBase64, fotoMime){
 }
 // ==========================================
 
-app.post("/api/incidencias", requiereAuth, async (req, res) => {
+app.post("/api/incidencias", limiteOperacionesSensibles, requiereAuth, async (req, res) => {
     try {
         const { tipo, descripcion, referencia, latitud, longitud, foto_base64, foto_mime } = req.body || {};
         // El suministro se obtiene del JWT, nunca del body (FASE 27).
@@ -833,7 +956,7 @@ app.post("/api/incidencias", requiereAuth, async (req, res) => {
 // backend, fecha, método, cambio a Pagado, historial.
 // ==========================================
 
-app.post("/api/pagos", requiereAuth, async (req, res) => {
+app.post("/api/pagos", limiteOperacionesSensibles, requiereAuth, async (req, res) => {
     let cliente = null;
 
     try {
@@ -1091,6 +1214,9 @@ app.get("/api/cortes", async (req, res) => {
 
 // ==========================================
 // CONSULTAR CORTES DE SERVICIO POR SUMINISTRO
+// LEGACY: candidata a eliminar. Usar GET /api/me/cortes (JWT).
+// HARDENING: ahora exige requiereAuth + puedeVerSuministro para
+// evitar enumeración libre de suministros. Admin autorizado.
 // Avisos demostrativos del prototipo académico.
 // No provienen de sistemas oficiales.
 // Fuente: zona del suministro + avisos generales.
@@ -1099,7 +1225,7 @@ app.get("/api/cortes", async (req, res) => {
 // pero no aparecen en la vista activa.
 // ==========================================
 
-app.get("/api/cortes/:suministro", async (req, res) => {
+app.get("/api/cortes/:suministro", requiereAuth, async (req, res) => {
     try {
         const numeroSuministro = String(req.params.suministro || '').trim();
 
@@ -1108,6 +1234,10 @@ app.get("/api/cortes/:suministro", async (req, res) => {
                 estado: "error",
                 mensaje: "Número de suministro inválido."
             });
+        }
+
+        if (!puedeVerSuministro(req, numeroSuministro)) {
+            return res.status(403).json({ estado: "error", mensaje: "Acceso denegado." });
         }
 
         const suministroResultado = await pool.query(
@@ -2204,7 +2334,7 @@ function validarSolicitudAtencion(body){
     return { categoria, asunto, descripcion };
 }
 
-app.post("/api/atencion", requiereAuth, async (req, res) => {
+app.post("/api/atencion", limiteOperacionesSensibles, requiereAuth, async (req, res) => {
     try {
         const validado = validarSolicitudAtencion(req.body);
         if (validado.error) {

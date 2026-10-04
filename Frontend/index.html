@@ -2107,12 +2107,26 @@
     showView(viewLogin);
     showToast('Sesión terminada. Inicia sesión nuevamente.');
   }
+  /* ---------- API base para WEB vs ANDROID (sin romper web) ----------
+     WEB actual: API_BASE = '' (URLs relativas /api/... vía Nginx).
+     ANDROID futuro: configurar window.HM_API_BASE = 'https://api.DOMINIO'
+     antes de este script (o vía capacitor.config). No hardcodear dominio aquí.
+     Todas las llamadas deben pasar por apiUrl(path) / apiFetch(path). */
+  var HM_API_BASE = (typeof window.HM_API_BASE === 'string') ? window.HM_API_BASE : '';
+  function apiUrl(path){
+    var p = String(path || '');
+    if(!HM_API_BASE) return p;
+    if(p.indexOf('http://') === 0 || p.indexOf('https://') === 0) return p;
+    var base = HM_API_BASE.replace(/\/$/, '');
+    if(p.charAt(0) !== '/') p = '/' + p;
+    return base + p;
+  }
   async function apiFetch(url, options){
     const o = options || {};
     const headers = Object.assign({}, o.headers || {});
     const token = obtenerToken();
     if(token) headers['Authorization'] = 'Bearer ' + token;
-    const resp = await fetch(url, Object.assign({}, o, {headers: headers}));
+    const resp = await fetch(apiUrl(url), Object.assign({}, o, {headers: headers}));
     if(resp.status === 401) cerrarSesionPorAuth();
     return resp;
   }
@@ -5658,7 +5672,7 @@ async function descargarConstanciaPDF(r, btn){
     return lista.map(adaptarCorteAPI);
   }
   async function cargarCatalogoCortes(){
-    const resp = await fetch('/api/cortes');
+    const resp = await fetch(apiUrl('/api/cortes'));
     if(!resp.ok) throw new Error('API catálogo de cortes respondió ' + resp.status);
     const data = await resp.json();
     const lista = Array.isArray(data.cortes) ? data.cortes : [];
@@ -6076,7 +6090,7 @@ async function descargarConstanciaPDF(r, btn){
     btnRegister.disabled = true;
     btnRegisterText.textContent = 'Creando cuenta...';
     try{
-      const resp = await fetch('/api/auth/register', {
+      const resp = await fetch(apiUrl('/api/auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -6127,7 +6141,7 @@ async function descargarConstanciaPDF(r, btn){
     btnLogin.disabled = true;
     btnLoginText.textContent = 'Verificando...';
     try{
-      const resp = await fetch('/api/auth/login', {
+      const resp = await fetch(apiUrl('/api/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
