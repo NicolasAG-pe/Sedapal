@@ -67,7 +67,16 @@ function limitadorGenerico(maxPeticiones, ventanaMinutos){
 }
 
 // Login/registro/cambio-clave: estrictos pero sin bloquear pruebas normales.
-const limiteLogin = limitadorGenerico(10, 15);
+// LOGIN demostrativo: 20 FALLIDOS por 15 min por IP; los exitosos no consumen
+// contador (skipSuccessfulRequests) para varias personas tras la misma NAT.
+const limiteLogin = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+    message: { estado: "error", mensaje: "Demasiadas solicitudes. Intenta nuevamente más tarde." }
+});
 const limiteRegistro = limitadorGenerico(10, 15);
 const limiteCambioClave = limitadorGenerico(10, 15);
 // Operaciones sensibles de usuario: más amplio (uso legítimo frecuente).
@@ -102,7 +111,7 @@ app.get("/api/health", async (req, res) => {
 
         res.json({
             estado: "ok",
-            mensaje: "API de Hidro Mejora conectada a PostgreSQL",
+            mensaje: "Servicio de Hidro Mejora operativo",
             fecha: resultado.rows[0].fecha_servidor
         });
 
@@ -112,7 +121,7 @@ app.get("/api/health", async (req, res) => {
 
         res.status(500).json({
             estado: "error",
-            mensaje: "No se pudo conectar con PostgreSQL"
+            mensaje: "No se pudo conectar con el servicio"
         });
     }
 });
@@ -438,14 +447,14 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
     try {
         const { numero_suministro, password } = req.body || {};
 
-        if (!/^\d{7,9}$/.test(String(numero_suministro || ''))) {
-            return res.status(401).json({
+        if (!/^\d{9}$/.test(String(numero_suministro || ''))) {
+            return res.status(400).json({
                 estado: "error",
-                mensaje: "Número de suministro o contraseña incorrectos."
+                mensaje: "El número de suministro debe contener 9 dígitos."
             });
         }
 
-        if (typeof password !== 'string' || password.length < 4) {
+        if (typeof password !== 'string' || password.length < 4 || password.length > 128) {
             return res.status(401).json({
                 estado: "error",
                 mensaje: "Número de suministro o contraseña incorrectos."
@@ -539,17 +548,17 @@ app.post("/api/auth/register", limiteRegistro, async (req, res) => {
             });
         }
 
-        if (!/^\d{7,9}$/.test(suministroNormalizado)) {
+        if (!/^\d{9}$/.test(suministroNormalizado)) {
             return res.status(400).json({
                 estado: "error",
-                mensaje: "Número de suministro inválido. Debe tener entre 7 y 9 dígitos."
+                mensaje: "El número de suministro debe contener 9 dígitos."
             });
         }
 
-        if (typeof password !== 'string' || password.length < 8) {
+        if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
             return res.status(400).json({
                 estado: "error",
-                mensaje: "La contraseña debe tener al menos 8 caracteres."
+                mensaje: "La contraseña debe tener entre 8 y 128 caracteres."
             });
         }
 
@@ -659,10 +668,10 @@ app.get("/api/perfil/:suministro", requiereAuth, async (req, res) => {
     try {
         const numeroSuministro = String(req.params.suministro || '').trim();
 
-        if (!/^\d{7,9}$/.test(numeroSuministro)) {
+        if (!/^\d{9}$/.test(numeroSuministro)) {
             return res.status(400).json({
                 estado: "error",
-                mensaje: "Número de suministro inválido."
+                mensaje: "El número de suministro debe contener 9 dígitos."
             });
         }
 
@@ -718,10 +727,10 @@ app.post("/api/auth/change-password", limiteCambioClave, requiereAuth, async (re
             });
         }
 
-        if (typeof password_nueva !== 'string' || password_nueva.length < 8) {
+        if (typeof password_nueva !== 'string' || password_nueva.length < 8 || password_nueva.length > 128) {
             return res.status(400).json({
                 estado: "error",
-                mensaje: "La contraseña nueva debe tener al menos 8 caracteres."
+                mensaje: "La contraseña nueva debe tener entre 8 y 128 caracteres."
             });
         }
 
@@ -854,10 +863,10 @@ app.post("/api/incidencias", limiteOperacionesSensibles, requiereAuth, async (re
         const { tipo, descripcion, referencia, latitud, longitud, foto_base64, foto_mime } = req.body || {};
         // El suministro se obtiene del JWT, nunca del body (FASE 27).
 
-        if (!String(tipo || '').trim()) {
+        if (!String(tipo || '').trim() || String(tipo || '').trim().length > 80) {
             return res.status(400).json({
                 estado: "error",
-                mensaje: "El tipo de incidencia es obligatorio."
+                mensaje: "El tipo de incidencia es obligatorio (máximo 80 caracteres)."
             });
         }
 
@@ -868,10 +877,17 @@ app.post("/api/incidencias", limiteOperacionesSensibles, requiereAuth, async (re
             });
         }
 
-        if (!String(referencia || '').trim()) {
+        if (String(descripcion || '').trim().length > 2000) {
             return res.status(400).json({
                 estado: "error",
-                mensaje: "La referencia es obligatoria."
+                mensaje: "La descripción supera el límite permitido (máximo 2000 caracteres)."
+            });
+        }
+
+        if (!String(referencia || '').trim() || String(referencia || '').trim().length > 200) {
+            return res.status(400).json({
+                estado: "error",
+                mensaje: "La referencia es obligatoria (máximo 200 caracteres)."
             });
         }
 
@@ -973,10 +989,10 @@ app.post("/api/pagos", limiteOperacionesSensibles, requiereAuth, async (req, res
             });
         }
 
-        if (!String(metodo || '').trim()) {
+        if (!String(metodo || '').trim() || String(metodo || '').trim().length > 30) {
             return res.status(400).json({
                 estado: "error",
-                mensaje: "El método de pago es obligatorio."
+                mensaje: "El método de pago es obligatorio (máximo 30 caracteres)."
             });
         }
 
@@ -1229,10 +1245,10 @@ app.get("/api/cortes/:suministro", requiereAuth, async (req, res) => {
     try {
         const numeroSuministro = String(req.params.suministro || '').trim();
 
-        if (!/^\d{7,9}$/.test(numeroSuministro)) {
+        if (!/^\d{9}$/.test(numeroSuministro)) {
             return res.status(400).json({
                 estado: "error",
-                mensaje: "Número de suministro inválido."
+                mensaje: "El número de suministro debe contener 9 dígitos."
             });
         }
 
@@ -1742,8 +1758,8 @@ function validarReciboAdmin(body){
     const monto = Number((body || {}).monto);
     const consumo = Number((body || {}).consumo_m3);
 
-    if (!/^\d{7,9}$/.test(numero)) {
-        return { error: 'Número de suministro inválido.' };
+    if (!/^\d{9}$/.test(numero)) {
+        return { error: 'El número de suministro debe contener 9 dígitos.' };
     }
 
     if (!periodo || periodo.length > 20) {
@@ -1758,12 +1774,12 @@ function validarReciboAdmin(body){
         return { error: 'La fecha de vencimiento debe ser igual o posterior a la emisión.' };
     }
 
-    if (!Number.isFinite(monto) || monto <= 0) {
-        return { error: 'El monto debe ser un número mayor a 0.' };
+    if (!Number.isFinite(monto) || monto <= 0 || monto > 99999999.99) {
+        return { error: 'Ingresa un monto válido.' };
     }
 
-    if (!Number.isFinite(consumo) || consumo < 0) {
-        return { error: 'El consumo debe ser un número mayor o igual a 0.' };
+    if (!Number.isFinite(consumo) || consumo < 0 || consumo > 99999999.99) {
+        return { error: 'Ingresa un consumo válido.' };
     }
 
     return { numero, periodo, emision, vencimiento, monto, consumo };
@@ -2278,16 +2294,25 @@ app.get("/api/admin/pagos", requiereAdmin, async (req, res) => {
         const { suministro, periodo, metodo } = req.query || {};
         const condiciones = [];
         const valores = [];
+        // Filtros acotados: suministro admite búsqueda parcial numérica (1-9
+        // dígitos; el valor almacenado siempre tiene 9), periodo parcial
+        // (máx. 60) y método exacto de la lista (máx. 30).
         if (suministro && String(suministro).trim() !== '') {
-            valores.push('%' + String(suministro).trim() + '%');
+            const fSum = String(suministro).trim();
+            if (!/^\d{1,9}$/.test(fSum)) {
+                return res.status(400).json({ estado: "error", mensaje: "El filtro de suministro debe contener entre 1 y 9 dígitos." });
+            }
+            valores.push('%' + fSum + '%');
             condiciones.push('s.numero_suministro ILIKE $' + valores.length);
         }
         if (periodo && String(periodo).trim() !== '') {
-            valores.push('%' + String(periodo).trim() + '%');
+            const fPer = String(periodo).trim().slice(0, 60);
+            valores.push('%' + fPer + '%');
             condiciones.push('r.periodo ILIKE $' + valores.length);
         }
         if (metodo && String(metodo).trim() !== '' && String(metodo).trim() !== 'Todos') {
-            valores.push(String(metodo).trim());
+            const fMet = String(metodo).trim().slice(0, 30);
+            valores.push(fMet);
             condiciones.push('p.metodo ILIKE $' + valores.length);
         }
         const filtro = condiciones.length ? 'WHERE ' + condiciones.join(' AND ') : '';
@@ -2389,16 +2414,27 @@ app.get("/api/admin/atencion", requiereAdmin, async (req, res) => {
         const { estado, categoria, suministro } = req.query || {};
         const condiciones = [];
         const valores = [];
+        // Filtros acotados: estado solo de la lista válida, categoría (máx. 80)
+        // y suministro parcial (máx. 120).
         if (estado && String(estado).trim() !== '' && String(estado).trim() !== 'Todos') {
-            valores.push(String(estado).trim());
+            const fEst = String(estado).trim();
+            if (ATENCION_ESTADOS.indexOf(fEst) === -1) {
+                return res.status(400).json({ estado: "error", mensaje: "Filtro de estado inválido." });
+            }
+            valores.push(fEst);
             condiciones.push('a.estado = $' + valores.length);
         }
         if (categoria && String(categoria).trim() !== '' && String(categoria).trim() !== 'Todos') {
-            valores.push(String(categoria).trim());
+            const fCat = String(categoria).trim().slice(0, 80);
+            valores.push(fCat);
             condiciones.push('a.categoria = $' + valores.length);
         }
         if (suministro && String(suministro).trim() !== '') {
-            valores.push('%' + String(suministro).trim() + '%');
+            const fSum = String(suministro).trim();
+            if (!/^\d{1,9}$/.test(fSum)) {
+                return res.status(400).json({ estado: "error", mensaje: "El filtro de suministro debe contener entre 1 y 9 dígitos." });
+            }
+            valores.push('%' + fSum + '%');
             condiciones.push('s.numero_suministro ILIKE $' + valores.length);
         }
         const filtro = condiciones.length ? 'WHERE ' + condiciones.join(' AND ') : '';
@@ -2491,19 +2527,32 @@ app.patch("/api/admin/atencion/:id", requiereAdmin, async (req, res) => {
 app.get("/api/notificaciones", requiereAuth, async (req, res) => {
     try {
         const idSuministro = Number(req.user.id_suministro);
+        // Fuente de verdad: notificaciones_lecturas por suministro.
+        // notificaciones.leida es LEGACY y ya no se usa.
         const resultado = await pool.query(
-            `SELECT id_notificacion, alcance, titulo, mensaje, tipo, leida, fecha_registro,
-                    (SELECT COUNT(*) FROM notificaciones
-                      WHERE (alcance = 'General' OR (alcance = 'Usuario' AND id_suministro = $1))
-                        AND leida = FALSE) AS total_no_leidas
-             FROM notificaciones
-             WHERE alcance = 'General' OR (alcance = 'Usuario' AND id_suministro = $1)
-             ORDER BY fecha_registro DESC
-             LIMIT 100;`,
+            `SELECT n.id_notificacion, n.alcance, n.titulo, n.mensaje, n.tipo,
+                    (l.id_notificacion IS NOT NULL) AS leida,
+                    n.fecha_registro
+              FROM notificaciones n
+              LEFT JOIN notificaciones_lecturas l
+                ON l.id_notificacion = n.id_notificacion
+               AND l.id_suministro = $1
+              WHERE n.alcance = 'General'
+                 OR (n.alcance = 'Usuario' AND n.id_suministro = $1)
+              ORDER BY n.fecha_registro DESC
+              LIMIT 100;`,
             [idSuministro]
         );
-        const noLeidas = resultado.rows.length ? Number(resultado.rows[0].total_no_leidas || 0) : 0;
-        const notifs = resultado.rows.map(({ total_no_leidas, ...r }) => r);
+        const notifs = resultado.rows.map(r => ({
+            id_notificacion: r.id_notificacion,
+            alcance: r.alcance,
+            titulo: r.titulo,
+            mensaje: r.mensaje,
+            tipo: r.tipo,
+            leida: !!r.leida,
+            fecha_registro: r.fecha_registro
+        }));
+        const noLeidas = notifs.filter(n => !n.leida).length;
         return res.json({ cantidad: notifs.length, no_leidas: noLeidas, notificaciones: notifs });
     } catch (error) {
         console.error(error);
@@ -2518,18 +2567,26 @@ app.patch("/api/notificaciones/:id/leida", requiereAuth, async (req, res) => {
             return res.status(404).json({ estado: "error", mensaje: "Notificación no encontrada." });
         }
         const idSuministro = Number(req.user.id_suministro);
-        const resultado = await pool.query(
-            `UPDATE notificaciones
-             SET leida = TRUE
-             WHERE id_notificacion = $1
-               AND (alcance = 'General' OR (alcance = 'Usuario' AND id_suministro = $2))
-             RETURNING id_notificacion, leida;`,
+        // 1) Existe y 2) es visible para este suministro (General o propia).
+        const visible = await pool.query(
+            `SELECT id_notificacion
+              FROM notificaciones
+              WHERE id_notificacion = $1
+                AND (alcance = 'General' OR (alcance = 'Usuario' AND id_suministro = $2))
+              LIMIT 1;`,
             [idNotif, idSuministro]
         );
-        if (resultado.rowCount === 0) {
+        if (visible.rowCount === 0) {
             return res.status(404).json({ estado: "error", mensaje: "Notificación no encontrada." });
         }
-        return res.json({ estado: "ok", notificacion: resultado.rows[0] });
+        // 3) Lectura por suministro (idempotente, sin tocar la fila global).
+        await pool.query(
+            `INSERT INTO notificaciones_lecturas (id_notificacion, id_suministro)
+              VALUES ($1, $2)
+              ON CONFLICT DO NOTHING;`,
+            [idNotif, idSuministro]
+        );
+        return res.json({ estado: "ok", notificacion: { id_notificacion: idNotif, leida: true } });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });

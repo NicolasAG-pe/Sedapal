@@ -31,8 +31,10 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8080}
       NODE_ENV: ${NODE_ENV:-development}
 
-    ports:
-      - "3000:3000"
+    # Backend solo en red interna (web -> backend:3000 vía Nginx).
+    # Sin publicación al host: las pruebas usan http://localhost:8080/api/*.
+    expose:
+      - "3000"
 
     depends_on:
       db:

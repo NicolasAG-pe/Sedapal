@@ -21,6 +21,7 @@ CREATE TABLE usuarios (
 
 
 -- SUMINISTROS (ubicación DEMO opcional del prototipo)
+-- numero_suministro: exactamente 9 dígitos (CHECK).
 CREATE TABLE suministros (
     id_suministro BIGSERIAL PRIMARY KEY,
     numero_suministro VARCHAR(20) UNIQUE NOT NULL,
@@ -28,6 +29,9 @@ CREATE TABLE suministros (
 
     distrito VARCHAR(100),
     zona VARCHAR(150),
+
+    CONSTRAINT chk_numero_suministro_9
+        CHECK (numero_suministro ~ '^[0-9]{9}$'),
 
     CONSTRAINT fk_suministro_usuario
         FOREIGN KEY (id_usuario)
@@ -184,6 +188,9 @@ CREATE INDEX idx_solicitudes_estado ON solicitudes_atencion(estado);
 -- NOTIFICACIONES INTERNAS (solo dentro de la app, sin push/Firebase)
 -- alcance 'Usuario' => id_suministro obligatorio.
 -- alcance 'General' => id_suministro NULL (visible para todos).
+-- LEGACY: columna leida (BOOLEAN global). Fuente de verdad actual:
+-- notificaciones_lecturas (una fila por suministro que ya la leyó).
+-- No usar notificaciones.leida para lógica nueva.
 CREATE TABLE notificaciones (
     id_notificacion BIGSERIAL PRIMARY KEY,
     id_suministro BIGINT NULL,
@@ -203,3 +210,27 @@ CREATE TABLE notificaciones (
 );
 CREATE INDEX idx_notif_suministro ON notificaciones(id_suministro);
 CREATE INDEX idx_notif_fecha ON notificaciones(fecha_registro DESC);
+
+
+-- LECTURAS DE NOTIFICACIONES POR SUMINISTRO
+-- Una notificación General es la misma fila para todos, pero cada
+-- suministro tiene su propio estado de lectura (una fila aquí = leída).
+CREATE TABLE notificaciones_lecturas (
+    id_notificacion BIGINT NOT NULL,
+    id_suministro BIGINT NOT NULL,
+    fecha_lectura TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT pk_notificaciones_lecturas
+        PRIMARY KEY (id_notificacion, id_suministro),
+
+    CONSTRAINT fk_lectura_notificacion
+        FOREIGN KEY (id_notificacion)
+        REFERENCES notificaciones(id_notificacion)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_lectura_suministro
+        FOREIGN KEY (id_suministro)
+        REFERENCES suministros(id_suministro)
+        ON DELETE CASCADE
+);
+CREATE INDEX idx_lecturas_suministro ON notificaciones_lecturas(id_suministro);
