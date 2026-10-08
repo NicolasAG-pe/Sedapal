@@ -1,0 +1,6 @@
+{
+  "framework": null,
+  "buildCommand": "node scripts/build-web.js admin",
+  "outputDirectory": "artifacts/web/admin",
+  "installCommand": "echo \"skip install\""
+}
