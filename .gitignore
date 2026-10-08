@@ -5,6 +5,8 @@
 !.env.*.example
 *.jks
 *.keystore
+release.env
+keystore.properties
 
 # Dependencias y salidas reconstruibles.
 node_modules/

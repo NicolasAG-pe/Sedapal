@@ -11,7 +11,8 @@
     "cap:www": "bash scripts/sync-capacitor-www.sh",
     "cap:sync": "node scripts/sync-android.cjs",
     "cap:open": "npx cap open android",
-    "android:gradle": "bash scripts/android-gradle.sh"
+    "android:gradle": "bash scripts/android-gradle.sh",
+    "android:release": "node scripts/build-android-release.cjs"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",

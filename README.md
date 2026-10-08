@@ -241,7 +241,7 @@ npm run android:gradle -- -PhidroBuildDir="$PWD/artifacts/android/builds/manual-
 El APK estará en `/ruta/absoluta/nueva/hidro-debug/outputs/apk/debug/app-debug.apk`.
 Copiarlo a `artifacts/android/` con un nombre único y sin sobrescribir. No usar
 `assembleDebug` con la salida predeterminada si contiene un APK que se debe
-conservar. No hay firma release configurada.
+conservar. Para la APK release firmada, consultar [docs/ANDROID-RELEASE.md](docs/ANDROID-RELEASE.md).
 
 Compilar y comprobar el contenido del APK no valida su ejecución en WebView.
 Las pruebas instrumentales y las funciones nativas de Atrás, permisos,
@@ -371,4 +371,6 @@ La configuración fuente es únicamente `capacitor.config.js`. Los JSON bajo
 Conservar `artifacts/android/cache/android-user-home/debug.keystore`: es la identidad
 local de firma debug, **no una caché regenerable equivalente**. Conservar también
 `.env`, `android/local.properties`, los ajustes JDK/IDE y los dumps PostgreSQL.
-No publicar estos archivos privados. No hay firma release ni despliegue.
+No publicar estos archivos privados. La firma release permanente se guarda fuera
+del repositorio; consultar [docs/ANDROID-RELEASE.md](docs/ANDROID-RELEASE.md) para
+compilar, verificar y respaldar la clave. No limpiar su directorio privado.
