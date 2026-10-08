@@ -1,3 +1,7 @@
+> **Informe histórico fechado: 7 de octubre de 2026, anterior al despliegue y a la release v1.0.0.** Todos los conteos de archivos, datos, pruebas, tamaños y estados de este documento corresponden a esa fase de limpieza; no son el estado actual ni una nueva validación. El cuerpo se conserva como evidencia, incluida información única de recuperación. No se verificaron respaldos privados durante la actualización documental.
+>
+> Guías vigentes: [mantenimiento](MAINTENANCE.md), [pruebas](TESTING.md), [desarrollo local](LOCAL-DEVELOPMENT.md), [Android](ANDROID.md) y [release](ANDROID-RELEASE.md). Los comandos y rutas de artefactos del informe son antecedentes; la lista histórica de archivos conservados no autoriza nuevas eliminaciones.
+
 # Limpieza verificable de Hidro-Mejora
 
 7 de octubre de 2026. Se trabajó únicamente en Sedapal. No se modificó la lógica,

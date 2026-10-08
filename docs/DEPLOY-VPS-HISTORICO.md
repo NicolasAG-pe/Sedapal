@@ -1,3 +1,7 @@
+> **Documento histórico. No representa la infraestructura actual de producción.** La infraestructura vigente es Android/Admin Vercel → Render → Neon; consultar [DEPLOYMENT](DEPLOYMENT.md).
+>
+> El cuerpo conserva la alternativa VPS original, no un procedimiento validado para v1.0.0. Sus cifras/checklists y afirmaciones de objetivo corresponden a esa alternativa. No ejecutar estos comandos sobre los servicios actuales. En particular, revisar el conflicto de puerto 80 entre proxy y web, el comportamiento real de variables del Compose y la restauración con `--clean`, que puede destruir datos. Los tres servicios citados en la guía no representan los cuatro del Compose vigente. Respaldos/restauración: [MAINTENANCE](MAINTENANCE.md).
+
 > Guía histórica de VPS conservada. No es el objetivo actual Render/Neon/Vercel y no se ejecutó ningún despliegue durante la organización. Los comandos parten de la raíz Sedapal.
 
 # DEPLOY.md — Primer despliegue de Hidro Mejora en VPS

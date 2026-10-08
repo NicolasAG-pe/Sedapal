@@ -1,5 +1,10 @@
 # Descripción del TO-BE: Hidro Mejora
 
+> **Modelo académico e histórico TO-BE; no es el contrato de Hidro-Mejora v1.0.0.** Estas clases Java y el texto original describen una etapa anterior del prototipo. No son el backend Node/Express, el esquema PostgreSQL ni las clases nativas Android. Se conserva toda la información original como antecedente, incluso donde usa la palabra «actual». Las cantidades y simulaciones del cuerpo pertenecen a ese modelo, cuya fecha/commit original no se fija aquí.
+>
+> Documentación vigente: [arquitectura](../../../../docs/ARCHITECTURE.md), [API y reglas de entrada](../../../../docs/API.md), [PostgreSQL](../../../../docs/DATABASE.md), [producto](../../../../docs/MEJORA-PROFESIONAL.md) y [Android/Java 21](../../../../docs/ANDROID.md). El rol SQL/API normal es `usuario`, el otro es `admin`; el suministro actual exige nueve dígitos. Recibos, pagos, incidencias, fotos y atención se persisten mediante API/PostgreSQL; no siguen series demo ni almacenamiento local como fuente de verdad.
+
+
 ## AS-IS y TO-BE
 
 - **AS-IS**: situación / aplicación original de SEDAPAL analizada por el

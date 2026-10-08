@@ -3,8 +3,15 @@
 Distribución directa por APK. No se genera AAB ni se publica en Google Play.
 Se conserva Capacitor 7, Java 21 y `pe.edu.hidromejora.app`.
 La primera release es `versionCode 2`, `versionName 1.0.0`.
+Fuente del versionado: [android/app/build.gradle](../android/app/build.gradle); entorno nativo: [ANDROID](ANDROID.md).
 
-## Validación de v1.0.0
+## Publicación y validación de v1.0.0
+
+Publicada el 8 de octubre de 2026, tag `v1.0.0`, commit `135cb54173ee60e2f528738805564773e3c32e8b`.
+
+- [GitHub Release](https://github.com/NicolasAG-pe/Sedapal/releases/tag/v1.0.0).
+- [Descarga directa de la APK](https://github.com/NicolasAG-pe/Sedapal/releases/download/v1.0.0/hidro-mejora-v1.0.0-release.apk).
+- Artefacto publicado: `hidro-mejora-v1.0.0-release.apk`, **3.389.545 bytes**. Este tamaño identifica esa APK, no todos los builds futuros.
 
 La APK `hidro-mejora-v1.0.0-release.apk` fue instalada y validada en un teléfono
 físico por el propietario: instalación, login, perfil, dashboard, recibos, PDF,
@@ -22,7 +29,9 @@ firmada; el archivo binario se adjunta a GitHub Releases y no se versiona en Git
 
 ## Identidad de firma permanente
 
-La clave está en `~/.config/hidro-mejora/signing/hidro-mejora-release.keystore`.
+La clave permanente reside en un directorio privado externo al repositorio.
+La ubicación convencional del directorio es `~/.config/hidro-mejora/signing/`;
+el archivo concreto se proporciona mediante `HM_RELEASE_STORE_FILE`.
 Es PKCS12, RSA de 3072 bits, SHA256withRSA, con validez de 10000 días.
 El directorio tiene permisos 700 y los archivos 600. Nunca limpiar ese directorio,
 recrear la clave ni utilizar la firma debug para releases.
@@ -39,8 +48,9 @@ archivo privado externo con `HM_RELEASE_ENV_FILE`, o proporcionar las cuatro
 variables en el entorno. No pasar secretos como argumentos `-P` ni activar
 `set -x`. No copiar credenciales al repositorio, logs, tickets o GitHub.
 
-`android/release-certificate.sha256` contiene únicamente el fingerprint público
-SHA-256 del certificado. Se puede versionar: no contiene la clave privada.
+[android/release-certificate.sha256](../android/release-certificate.sha256) contiene únicamente el fingerprint público
+SHA-256 del certificado. Es la referencia pública para comparar la firma de la APK
+y es distinto del SHA-256 del archivo APK indicado arriba. Se puede versionar: no contiene la clave privada.
 Gradle verifica ese fingerprint, la validez del certificado y el acceso a la
 clave antes de compilar release. No cambiar el fingerprint para aceptar otra
 clave: se perdería la compatibilidad de actualización de los APK distribuidos.
@@ -88,6 +98,18 @@ Conservar APK distribuidos, SHA-256 y fingerprint público del certificado.
 - Comprobar checksum del APK y probar login, Perfil, PDF, permisos, Atrás y tiempo real
   en un teléfono físico con la release, no solo con el build debug.
 
+## Cierre y publicación de futuras versiones en GitHub
+
+Después de compilar, verificar e instalar la release en un dispositivo físico:
+
+1. Revisar cambios y secretos; versionar solo configuración, scripts, documentación y fuentes legítimas. No incluir la APK, keystore, archivos privados ni respaldos en el commit.
+2. Actualizar [CHANGELOG](../CHANGELOG.md), versionCode/versionName y la evidencia de validación de la nueva versión. No reemplazar los datos históricos de v1.0.0 con resultados de otro artefacto.
+3. Crear el commit, subirlo y vincular el tag de la nueva versión exactamente a ese commit validado. No mover un tag distribuido para ocultar un cambio posterior.
+4. Crear una GitHub Release con título Hidro-Mejora y versión; incluir compatibilidad, versionCode, alcance y SHA-256 real. Adjuntar solamente la APK firmada correspondiente.
+5. Comprobar el asset publicado, descarga, tamaño y checksum desde una copia descargada; conservar APK anteriores e identidad de firma.
+
+La documentación posterior puede avanzar en main sin modificar el tag ni la APK distribuida. GitHub Releases no actualiza automáticamente las instalaciones del celular.
+
 ## Primera instalación y futuras actualizaciones
 
 La APK debug existente usa otro certificado y no puede actualizarse directamente
@@ -132,6 +154,8 @@ que el certificado coincide con el fingerprint público y comprobar la apertura
 del keystore sin imprimir alias ni contraseñas. Si la ruta cambia al recuperar,
 ajustar SOLO `HM_RELEASE_STORE_FILE` en la configuración privada.
 Nunca subir el backup, el keystore o las credenciales a GitHub.
+
+Cobertura de pruebas y distinción entre ejecución y compilación: [TESTING](TESTING.md).
 
 Documentación Android: [firma](https://developer.android.com/studio/publish/app-signing)
 y [versionado](https://developer.android.com/studio/publish/versioning).
