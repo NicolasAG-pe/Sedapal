@@ -1693,6 +1693,8 @@
         s.classList.remove('active','page-exit','page-enter');
       });
       target.classList.add('active');
+      // Perfil se carga desde la ruta común: menú, Cuenta móvil y hash.
+      if(pageName==='perfil') cargarPerfil();
       if(pageName==='inicio') setTimeout(replayCharts, isReduced() ? 0 : 120);
       // Reset instantáneo: la página siempre empieza desde arriba (sin smooth)
       window.scrollTo({top:0, behavior:'instant'});
@@ -1714,6 +1716,7 @@
       }
       // Misma sección: mantener visible, sin page-exit; micro-entrada + scroll suave; anti-taps rápidos.
       if(navLock) return Promise.resolve(target);
+      if(pageName==='perfil') cargarPerfil();
       closeMobileNav({restore:false});
       syncSidebar(pageName);
       updateHash(pageName);
@@ -3884,7 +3887,6 @@ async function descargarConstanciaPDF(r, btn){
       showToast('No se pudo cargar la información del perfil.');
     }
   }
-  document.querySelector('[data-sec="perfil"]').addEventListener('click', ()=>cargarPerfil());
   document.querySelector('[data-sec="cortes"]').addEventListener('click', ()=>refrescarCortes());
   function abrirPassModal(opener){
     document.getElementById('pass-error').classList.remove('show');
