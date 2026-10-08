@@ -1,0 +1,14 @@
+**
+!Admin/
+!Admin/index.html
+!Admin/hm-api-config.js
+!Admin/assets/
+!Admin/assets/**
+!Admin/nginx/
+!Admin/nginx/default.conf
+!Shared/
+!Shared/**
+!Frontend/
+!Frontend/assets/
+!Frontend/assets/vendor/
+!Frontend/assets/vendor/socket.io.min.js

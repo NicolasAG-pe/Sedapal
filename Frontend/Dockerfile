@@ -6,10 +6,13 @@ RUN apt-get update \
 
 RUN rm -rf /var/www/html/*
 
-COPY index.html /var/www/html/index.html
-COPY assets/ /var/www/html/assets/
+COPY Frontend/index.html /var/www/html/index.html
+COPY Frontend/hm-api-config.js /var/www/html/hm-api-config.js
+COPY Frontend/assets/ /var/www/html/assets/
+COPY Shared/api.js Shared/ui.js Shared/styles.css Shared/icons.js /var/www/html/shared/
+COPY Shared/assets/ /var/www/html/shared/assets/
 
-COPY nginx/default.conf /etc/nginx/sites-available/default
+COPY Frontend/nginx/default.conf /etc/nginx/sites-available/default
 
 EXPOSE 80
 

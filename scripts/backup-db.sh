@@ -4,10 +4,10 @@
 # Uso (desde la raíz del repo, con Docker en marcha):
 #   ./scripts/backup-db.sh
 # Resultado:
-#   backups/hidro_mejora_YYYYMMDD_HHMM.dump
-# Lee credenciales del .env (nunca hardcodeadas).
+#   backups/hidro_mejora_YYYYMMDD_HHMMSS_XXXXXX.dump
+# Usa credenciales del contenedor actual (nunca hardcodeadas).
 # No imprime secretos. Solo informa la ruta generada.
-# Restauración: ver DEPLOY.md (pg_restore).
+# Restauración: ver docs/DEPLOY-VPS-HISTORICO.md (pg_restore).
 # ============================================================
 set -euo pipefail
 
@@ -18,20 +18,17 @@ if [ ! -f .env ]; then
   exit 1
 fi
 
-# shellcheck disable=SC1091
-set -a
-. ./.env
-set +a
-
-: "${POSTGRES_USER:?Falta POSTGRES_USER en .env}"
-: "${POSTGRES_DB:?Falta POSTGRES_DB en .env}"
-
+umask 077
 mkdir -p backups
-SALIDA="backups/hidro_mejora_$(date +%Y%m%d_%H%M).dump"
+SALIDA="$(mktemp "backups/hidro_mejora_$(date +%Y%m%d_%H%M%S)_XXXXXX.dump")"
 
-docker compose exec -T db pg_dump \
-  -U "$POSTGRES_USER" \
-  -d "$POSTGRES_DB" \
-  -F c > "$SALIDA"
+docker compose exec -T db sh -c \
+  'exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -F c' > "$SALIDA"
 
-echo "Backup generado: $SALIDA"
+test -s "$SALIDA"
+# Solo listar el archivo: no se conecta a la base ni restaura datos.
+docker compose exec -T db pg_restore --list < "$SALIDA" > "$SALIDA.list"
+test -s "$SALIDA.list"
+sha256sum "$SALIDA" > "$SALIDA.sha256"
+
+echo "Backup generado y reconocido por pg_restore: $SALIDA"

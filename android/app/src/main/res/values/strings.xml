@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Hidro-Mejora</string>
+    <string name="title_activity_main">Hidro-Mejora</string>
+    <string name="package_name">pe.edu.hidromejora.app</string>
+    <string name="custom_url_scheme">pe.edu.hidromejora.app</string>
+</resources>

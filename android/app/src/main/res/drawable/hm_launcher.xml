@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Emblema vectorial propio. Los recursos históricos de Capacitor se conservan. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#103E60" android:pathData="M0,0 H108 V108 H0 Z" />
+    <path android:fillColor="#FFFFFF" android:pathData="M54,22 C48,33 32,47 32,61 C32,74 42,84 54,84 C66,84 76,74 76,61 C76,47 60,33 54,22 Z" />
+    <path android:fillColor="#087E9E" android:pathData="M36,61 C43,55 49,65 56,61 C63,57 68,59 72,61 C72,71 64,80 54,80 C44,80 36,71 36,61 Z" />
+    <path android:fillColor="#FFFFFF" android:fillAlpha="0.75" android:pathData="M41,46 C39,50 37,54 37,59 L40,59 C40,55 42,52 44,48 Z" />
+</vector>

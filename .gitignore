@@ -1,10 +1,49 @@
+# Variables privadas; conservar ejemplos sin secretos.
 .env
-node_modules/
-Backend/node_modules/
-*.log
-index.backup*.html
+.env.*
+!.env.example
+!.env.*.example
+*.jks
+*.keystore
 
+# Dependencias y salidas reconstruibles.
+node_modules/
+build/
+dist/
+.gradle/
+.cache/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+coverage/
+artifacts/
+Backend/documentacion/java-docs/javadoc/
+
+# Respaldos privados y seed local: nunca publicar datos.
+backups/
 Frontend/backups/
 Backend/backups/
 Base-de-Datos/seed.sql
-backups/
+*.dump
+*.dump.*
+*.apk
+*.aab
+*.aar
+
+# Temporales y logs.
+*.log
+*.tmp
+*.bak
+*.old
+*.swp
+*.orig
+*~
+.DS_Store
+Thumbs.db
+
+# Salidas anteriores: no son fuentes.
+www-android/
+dist-web/
+dist-admin/
+.generated/

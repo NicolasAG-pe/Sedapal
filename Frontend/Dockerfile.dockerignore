@@ -1,0 +1,21 @@
+**
+!Frontend/
+!Frontend/index.html
+!Frontend/hm-api-config.js
+!Frontend/assets/
+!Frontend/assets/**
+!Frontend/nginx/
+!Frontend/nginx/default.conf
+!Shared/
+!Shared/api.js
+!Shared/ui.js
+!Shared/styles.css
+!Shared/icons.js
+!Shared/assets/
+!Shared/assets/**
+
+# Originales históricos conservados en Frontend; no usados por el runtime.
+Frontend/assets/LogoSedapal.png
+Frontend/assets/logo.png
+Frontend/assets/sedapal1.png
+Frontend/assets/sedapal.jpg

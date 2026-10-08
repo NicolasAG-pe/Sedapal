@@ -1,0 +1,24 @@
+{
+  "name": "hidro-mejora",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Hidro-Mejora — cliente Capacitor y panel administrativo independiente con API compartida",
+  "scripts": {
+    "build:web": "node scripts/build-web.js web",
+    "build:admin": "node scripts/build-web.js admin",
+    "test:config": "node --test Backend/test/config.test.js Backend/test/receipt-date.test.js scripts/test/public-api-config.test.js",
+    "test:documents": "node --test scripts/test/documents.test.cjs",
+    "cap:www": "bash scripts/sync-capacitor-www.sh",
+    "cap:sync": "node scripts/sync-android.cjs",
+    "cap:open": "npx cap open android",
+    "android:gradle": "bash scripts/android-gradle.sh"
+  },
+  "dependencies": {
+    "@capacitor/app": "^7.1.2",
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/cli": "^7.4.3"
+  }
+}

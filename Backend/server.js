@@ -7,9 +7,11 @@ const http = require('http');
 const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
 const { Pool } = require("pg");
+const { obtenerConfiguracion } = require('./config');
 
 const app = express();
-const PORT = 3000;
+const configuracion = obtenerConfiguracion();
+const PORT = configuracion.port;
 
 // Confiar solo en el primer proxy (arquitectura: Internet -> Nginx -> Backend).
 // Necesario para que express-rate-limit vea la IP real vía X-Forwarded-For.
@@ -30,25 +32,20 @@ function esProduccion(){
 
 // CORS restringido por env (nunca '*' para APIs privadas).
 // CORS_ALLOWED_ORIGINS="http://localhost:8080,https://DOMINIO"
-// En desarrollo sin variable: se permite http://localhost:8080 por comodidad.
+// En desarrollo se incluyen también los orígenes locales web y Android.
 // En producción sin variable: solo same-origin (sin cabecera CORS).
-function obtenerOrigenesPermitidos(){
-    const crudo = String(process.env.CORS_ALLOWED_ORIGINS || '').trim();
-    if (crudo) {
-        return crudo.split(',').map(s => s.trim()).filter(Boolean);
-    }
-    return esProduccion() ? [] : ['http://localhost:8080'];
+const ORIGENES_PERMITIDOS = configuracion.origenes;
+
+function origenPermitido(origen){
+    return !origen || ORIGENES_PERMITIDOS.includes(origen);
 }
 
-const ORIGENES_PERMITIDOS = obtenerOrigenesPermitidos();
+function corsOrigen(origen, cb){
+    cb(null, origenPermitido(origen));
+}
 
 app.use(cors({
-    origin: function (origen, cb) {
-        // Peticiones same-origin / curl sin Origin: permitir (Nginx proxea /api/).
-        if (!origen) return cb(null, true);
-        if (ORIGENES_PERMITIDOS.indexOf(origen) !== -1) return cb(null, true);
-        return cb(null, false);
-    },
+    origin: corsOrigen,
     methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     maxAge: 600
@@ -92,13 +89,7 @@ if (!obtenerSecretoAuth()) {
     console.error('Falta AUTH_TOKEN_SECRET: las rutas protegidas responderán 401.');
 }
 
-const pool = new Pool({
-    host: process.env.DB_HOST || "db",
-    port: Number(process.env.DB_PORT || 5432),
-    database: process.env.POSTGRES_DB,
-    user: process.env.POSTGRES_USER,
-    password: process.env.POSTGRES_PASSWORD
-});
+const pool = new Pool(configuracion.database);
 
 
 // ==========================================
@@ -158,13 +149,11 @@ async function desconectarSocketsDeUsuario(idUsuario){
 function configurarTiempoReal(httpServer){
     const io = new Server(httpServer, {
         path: '/socket.io/',
+        // CORS cubre polling; allowRequest valida también el upgrade WebSocket.
+        allowRequest: (req, cb) => cb(null, origenPermitido(req.headers.origin)),
         // Sin '*' indiscriminado: se reutilizan los orígenes de la API REST.
         cors: {
-            origin: function (origen, cb) {
-                if (!origen) return cb(null, true);
-                if (ORIGENES_PERMITIDOS.indexOf(origen) !== -1) return cb(null, true);
-                return cb(null, false);
-            },
+            origin: corsOrigen,
             methods: ['GET', 'POST'],
             credentials: true
         }
@@ -1943,7 +1932,10 @@ function validarReciboAdmin(body){
         return { error: 'Ingresa un consumo válido.' };
     }
 
-    return { numero, periodo, emision, vencimiento, monto, consumo };
+    // SQL DATE no tiene zona horaria. Evitar que pg convierta medianoche UTC
+    // al día anterior al serializar un Date en America/Lima.
+    return { numero, periodo, emision: emision.toISOString().slice(0, 10),
+        vencimiento: vencimiento.toISOString().slice(0, 10), monto, consumo };
 }
 
 function filaReciboAdmin(fila){
