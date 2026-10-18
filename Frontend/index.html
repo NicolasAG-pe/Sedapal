@@ -80,6 +80,21 @@
         <span id="btn-register-text">Crear cuenta</span>
       </button>
     </form>
+    <form id="verify-email-form" novalidate hidden>
+      <p class="verification-intro">Enviamos un código a tu correo. Revísalo, incluida la carpeta de spam, y escríbelo aquí para terminar de crear tu cuenta.</p>
+      <div id="verify-error" class="form-error" role="alert"></div>
+      <div class="field">
+        <label for="verify-code">Código de verificación</label>
+        <input type="text" id="verify-code" name="verification-code" inputmode="numeric"
+               autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6"
+               aria-describedby="verify-code-hint" placeholder="000000" required />
+        <div class="hint" id="verify-code-hint">El código vence en 10 minutos. No lo compartas.</div>
+      </div>
+      <p id="verify-status" class="hint" role="status"></p>
+      <button type="submit" class="btn btn-primary" id="btn-verify-email">Verificar correo</button>
+      <button type="button" class="btn btn-ghost" id="btn-resend-email" disabled>Reenviar código</button>
+      <button type="button" class="btn btn-ghost" id="btn-restart-register">Usar otros datos</button>
+    </form>
     <div class="auth-switch" id="auth-to-login" hidden>¿Ya tienes una cuenta? <a href="#" id="show-login">Iniciar sesión</a></div>
 
     <div class="login-foot">¿Olvidaste tu clave? <a href="#" id="forgot-link">Recupérala aquí</a> · <a href="#" id="help-link">Ayuda</a></div>
@@ -896,6 +911,14 @@
   const regPass2 = document.getElementById('reg-pass2');
   const btnRegister = document.getElementById('btn-register');
   const btnRegisterText = document.getElementById('btn-register-text');
+  const verifyForm = document.getElementById('verify-email-form');
+  const verifyCode = document.getElementById('verify-code');
+  const verifyError = document.getElementById('verify-error');
+  const verifyStatus = document.getElementById('verify-status');
+  const btnVerify = document.getElementById('btn-verify-email');
+  const btnResend = document.getElementById('btn-resend-email');
+  const btnRestartRegister = document.getElementById('btn-restart-register');
+  let registroPendiente = null, verificacionOcupada = false, verificacionVersion = 0, reenvioTimer = null;
   const authToRegister = document.getElementById('auth-to-register');
   const authToLogin = document.getElementById('auth-to-login');
   const loginFoot = document.querySelector('.login-foot');
@@ -936,7 +959,7 @@
   const sesionCliente = window.createHMClientSession(cerrarSesionPorAuth);
   const fmtFechaLarga = window.HMShared.ui.date;
   let clienteCorreo='';
-  function guardarSesion(token, rol){ sesionCliente.set(token, rol); }
+  function guardarSesion(token, rol){ limpiarVerificacion(); sesionCliente.set(token, rol); }
   function obtenerToken(){ return sesionCliente.token(); }
   function limpiarSesion(){ sesionCliente.clear(); }
   function esAbortado(error){ return error && error.name === 'AbortError'; }
@@ -956,6 +979,8 @@
     try{ detenerTiempoReal(); }catch(e){}
     try{ stopCortesPolling(); }catch(e){}
     limpiarSesion();
+    limpiarVerificacion();
+    mostrarLogin();
     clienteCorreo='';
     window.HMShared.ui.clearFormLocks(document);
     limpiarDatosCliente();
@@ -4856,6 +4881,8 @@ async function descargarConstanciaPDF(r, btn){
     regError.classList.add('show');
   }
   function mostrarRegistro(){
+    if(registroPendiente){ mostrarVerificacion(); return; }
+    verifyForm.hidden = true;
     form.hidden = true;
     if(demoBox) demoBox.hidden = true;
     if(loginFoot) loginFoot.hidden = true;
@@ -4867,6 +4894,7 @@ async function descargarConstanciaPDF(r, btn){
     regCorreo.focus();
   }
   function mostrarLogin(){
+    verifyForm.hidden = true;
     regForm.hidden = true;
     authToLogin.hidden = true;
     form.hidden = false;
@@ -4878,7 +4906,95 @@ async function descargarConstanciaPDF(r, btn){
     inpSupply.focus();
   }
   document.getElementById('show-register').addEventListener('click', e=>{ e.preventDefault(); mostrarRegistro(); });
-  document.getElementById('show-login').addEventListener('click', e=>{ e.preventDefault(); mostrarLogin(); });
+  document.getElementById('show-login').addEventListener('click', e=>{ e.preventDefault(); if(!verificacionOcupada)mostrarLogin(); });
+
+  function limpiarVerificacion(){
+    verificacionVersion++;
+    registroPendiente = null;
+    verificacionOcupada = false;
+    clearInterval(reenvioTimer);
+    verifyForm.reset();
+    verifyForm.removeAttribute('aria-busy');
+    verifyError.classList.remove('show');
+    verifyStatus.textContent = '';
+    try{ sessionStorage.removeItem('hm_email_pending'); }catch(_){}
+  }
+  function actualizarReenvio(){
+    if(!registroPendiente)return;
+    const segundos = Math.max(0, Math.ceil((registroPendiente.reenvioHasta-Date.now())/1000));
+    const vencido = registroPendiente.solicitudHasta <= Date.now();
+    btnResend.disabled = verificacionOcupada || segundos > 0 || vencido;
+    btnResend.textContent = segundos ? 'Reenviar en ' + segundos + ' s' : 'Reenviar código';
+    btnVerify.disabled = verificacionOcupada || vencido;
+    btnVerify.textContent = verificacionOcupada ? 'Procesando...' : 'Verificar correo';
+    btnRestartRegister.disabled = verificacionOcupada;
+    document.getElementById('verify-code-hint').textContent = vencido
+      ? 'La solicitud venció. Usa otros datos o inicia un nuevo registro.'
+      : Date.parse(registroPendiente.venceEn) <= Date.now()
+        ? 'El código venció. Solicita otro para continuar.' : 'El código vence en 10 minutos. No lo compartas.';
+  }
+  function mostrarVerificacion(){
+    formError.classList.remove('show');
+    form.hidden = true; regForm.hidden = true; verifyForm.hidden = false;
+    authToRegister.hidden = true; authToLogin.hidden = false;
+    if(loginFoot)loginFoot.hidden = true;
+    loginTitle.textContent = 'Verifica tu correo';
+    actualizarReenvio(); verifyCode.focus();
+  }
+  function guardarVerificacion(data, suministro){
+    registroPendiente = { id: data.registro_id, suministro, venceEn: data.vence_en,
+      solicitudHasta: registroPendiente ? registroPendiente.solicitudHasta : Date.now()+3600000,
+      reenvioHasta: Date.now()+Number(data.reenvio_en_segundos || 60)*1000 };
+    // Solo solicitud y plazos temporales. Nunca contraseña, OTP ni JWT.
+    try{ sessionStorage.setItem('hm_email_pending', JSON.stringify(registroPendiente)); }catch(_){}
+    clearInterval(reenvioTimer); reenvioTimer = setInterval(actualizarReenvio, 1000);
+    mostrarVerificacion();
+  }
+  function showVerifyError(message){ verifyError.textContent = message; verifyError.classList.add('show'); }
+  verifyCode.addEventListener('input', ()=>{ verifyCode.value = verifyCode.value.replace(/\D/g,'').slice(0,6); });
+  async function procesarVerificacion(reenviar){
+    if(verificacionOcupada || !registroPendiente)return;
+    if(reenviar && btnResend.disabled)return;
+    if(!reenviar && !/^\d{6}$/.test(verifyCode.value)){
+      showVerifyError('Ingresa el código de seis dígitos.'); verifyCode.focus(); return;
+    }
+    const version = verificacionVersion;
+    const suministro = registroPendiente.suministro;
+    verificacionOcupada = true; actualizarReenvio(); verifyForm.setAttribute('aria-busy','true');
+    verifyError.classList.remove('show'); verifyStatus.textContent = '';
+    try{
+      const body = { registro_id: registroPendiente.id };
+      if(!reenviar)body.codigo = verifyCode.value;
+      const resp = await sesionCliente.authFetch('/api/auth/' + (reenviar ? 'resend-verification' : 'verify-email'), {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+      });
+      const data = await resp.json().catch(()=>null);
+      if(version !== verificacionVersion)return;
+      if(!resp.ok || !data || data.estado !== (reenviar ? 'pendiente' : 'ok')){
+        if(reenviar && resp.status===429){
+          registroPendiente.reenvioHasta = Date.now()+Math.max(1,Number(resp.headers.get('Retry-After')) || 60)*1000;
+          try{sessionStorage.setItem('hm_email_pending',JSON.stringify(registroPendiente));}catch(_){}
+        }
+        showVerifyError((data && data.mensaje) || 'No se pudo completar la verificación. Inténtalo nuevamente.');
+        return;
+      }
+      if(reenviar){
+        guardarVerificacion(data,suministro); verifyCode.value='';
+        verifyStatus.textContent='Enviamos un nuevo código. El anterior ya no es válido.';
+      }else{
+        limpiarVerificacion(); mostrarLogin();
+        inpSupply.value = (data.usuario && data.usuario.numero_suministro) || suministro;
+        inpPass.value=''; inpPass.focus(); showSuccess('Correo verificado. Ya puedes iniciar sesión.');
+      }
+    }catch(error){
+      if(version===verificacionVersion && !esAbortado(error))showVerifyError('No se pudo conectar con el servidor. Inténtalo nuevamente.');
+    }finally{
+      if(version===verificacionVersion){verificacionOcupada=false;verifyForm.removeAttribute('aria-busy');actualizarReenvio();}
+    }
+  }
+  verifyForm.addEventListener('submit', e=>{e.preventDefault();procesarVerificacion(false);});
+  btnResend.addEventListener('click', ()=>procesarVerificacion(true));
+  btnRestartRegister.addEventListener('click', ()=>{limpiarVerificacion();regForm.reset();mostrarRegistro();});
 
   function validarRegistro(correo, suministro, pass, pass2){
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)){
@@ -4917,7 +5033,7 @@ async function descargarConstanciaPDF(r, btn){
       return;
     }
     btnRegister.disabled = true;
-    btnRegisterText.textContent = 'Creando cuenta...';
+    btnRegisterText.textContent = 'Enviando código...';
     try{
       const resp = await conSesion(() => (sesionCliente.authFetch('/api/auth/register', {
         method: 'POST',
@@ -4931,21 +5047,17 @@ async function descargarConstanciaPDF(r, btn){
         })
       })), _hmEpoch);
       const data = await conSesion(() => (resp.json().catch(()=>null)), _hmEpoch);
-      if(!resp.ok || !data || data.estado !== 'ok'){
+      if(!resp.ok || !data || data.estado !== 'pendiente' || !data.registro_id){
         showRegError('' + ((data && data.mensaje) || 'No se pudo crear la cuenta. Inténtalo nuevamente.'));
         btnRegister.disabled = false;
         btnRegisterText.textContent = 'Crear cuenta';
         return;
       }
-      showSuccess('Cuenta creada correctamente. Ya puedes iniciar sesión.');
       regPass.value = '';
       regPass2.value = '';
       btnRegister.disabled = false;
       btnRegisterText.textContent = 'Crear cuenta';
-      mostrarLogin();
-      inpSupply.value = (data.usuario && data.usuario.numero_suministro) || suministro;
-      inpPass.value = '';
-      inpPass.focus();
+      guardarVerificacion(data, suministro);
     }catch(err){
       if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
       console.error('No se pudo crear la cuenta.', err);
@@ -5187,6 +5299,16 @@ async function descargarConstanciaPDF(r, btn){
   const clientDefaults=new Map([...document.querySelectorAll('#view-dashboard [id],.overlay [id],#toast-success-msg')]
     .filter(element=>element.children.length===0 || ['btn-pay-detail','pay-confirm'].includes(element.id))
     .map(element=>[element.id,element.innerHTML]));
+  try{
+    const saved=JSON.parse(sessionStorage.getItem('hm_email_pending') || 'null');
+    if(saved && /^[a-f0-9-]{36}$/i.test(saved.id) && /^\d{9}$/.test(saved.suministro) &&
+        Number.isFinite(Date.parse(saved.venceEn)) && Number.isFinite(saved.reenvioHasta) &&
+        saved.reenvioHasta<=Date.now()+3600000 && saved.solicitudHasta>Date.now() && saved.solicitudHasta<=Date.now()+3600000){
+      registroPendiente={id:saved.id,suministro:saved.suministro,venceEn:saved.venceEn,
+        solicitudHasta:saved.solicitudHasta,reenvioHasta:saved.reenvioHasta};
+      reenvioTimer=setInterval(actualizarReenvio,1000); mostrarVerificacion();
+    }else{sessionStorage.removeItem('hm_email_pending');}
+  }catch(_){try{sessionStorage.removeItem('hm_email_pending');}catch(_){} }
   // La animación de bienvenida del login corre una sola vez (no en cada navegación).
   setTimeout(()=>{ try{ document.body.classList.add('login-seen'); }catch(e){} }, 900);
 })();

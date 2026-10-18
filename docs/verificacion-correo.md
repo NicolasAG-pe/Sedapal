@@ -103,3 +103,73 @@ Cada ejecución crea bases nuevas con nombres aleatorios y no borra las anterior
 Las pruebas de API arrancan un servidor HTTP local, interceptan exclusivamente el
 envío a Resend y verifican el flujo contra PostgreSQL real con datos sintéticos.
 No leen archivos `.env` ni envían mensajes reales.
+
+## Cliente web y Android
+
+El cliente compartido muestra la pantalla de código después del registro 202.
+Ofrece entrada numérica de seis dígitos con `autocomplete="one-time-code"`,
+errores accesibles, cuenta regresiva de reenvío y protección contra doble envío.
+Confirmar lleva al login con el suministro rellenado; no inicia sesión por sí solo.
+La aplicación Android usa este mismo HTML empaquetado por Capacitor.
+
+La solicitud puede retomarse después de recargar en la misma sesión del navegador.
+Solo se guarda en `sessionStorage` el identificador, suministro y plazos; nunca
+contraseña, código ni JWT de registro. Las contraseñas se vacían al recibir el 202.
+"Usar otros datos" descarta el estado local y permite iniciar otra solicitud, sin
+eludir los límites del servidor. Un login válido o el cierre de sesión limpia
+también este estado temporal.
+
+El harness existente de cliente/admin simula Resend mediante un preload exclusivo
+de pruebas (`Backend/test/resend-fixture.cjs`); no existe un modo de envío simulado
+configurable en el servidor de producción. Su buzón contiene solo códigos y
+direcciones sintéticas dentro del directorio de reportes ignorado por Git.
+
+Para repetirlo en el contenedor aislado, usar `HIDRO_EMAIL_TEST_DB_PORT` y ejecutar
+`node scripts/test/admin-e2e.cjs`. Se puede indicar la ruta de Chromium con
+`HIDRO_TEST_CHROME`. `HIDRO_TEST_DOUBLE_SUBMIT=1`, `HIDRO_TEST_VISUAL_CAPTURE=1` y
+`HIDRO_TEST_VISUAL_MATRIX=1` habilitan dobles envíos y capturas/verificación de
+layout, campos accesibles y controles en varios anchos. Los reportes permanecen
+locales en `/tmp` o bajo `artifacts/` con `HIDRO_TEST_REPORT_DIR`.
+
+## Configuración pendiente de autorización
+
+1. Configurar privadamente en el backend `RESEND_API_KEY`, `RESEND_FROM` y
+   `EMAIL_OTP_SECRET`. Usar una clave Resend con permiso de envío y un remitente
+   de dominio verificado. Generar el secreto OTP con un generador criptográfico
+   (por ejemplo `openssl rand -hex 32`), independiente de `AUTH_TOKEN_SECRET`.
+   No pegar esos valores en GitHub, el PR ni el cliente.
+2. Revisar y autorizar la migración aditiva
+   `Base-de-Datos/migrations/003_verificacion_correo.sql` antes de aplicarla a
+   una base existente. El arranque no aplica migraciones automáticamente. Para
+   una base de desarrollo nueva, `init.sql` ya incluye el esquema completo.
+3. Definir la retención/limpieza de pendientes y comprobar dominio, remitente y
+   una entrega real a un buzón de prueba autorizado, incluidos spam y reenvío.
+4. Revisar la compatibilidad de versiones antes de publicar: el nuevo contrato de
+   registro 202 requiere este cliente actualizado. La APK v1.0.0 anterior espera
+   registro inmediato; su login de cuentas existentes sigue siendo compatible.
+5. Solo tras autorización, coordinar los cambios de backend/base y la distribución
+   del cliente. Este trabajo no realiza merge, despliegues ni publicación de APK.
+
+Si faltan variables de correo, registro/confirmación/reenvío responden 503;
+login y el resto de la aplicación conservan su comportamiento anterior. No hay
+fallback a creación de cuentas sin verificación.
+
+## Validación del 18 de octubre de 2026
+
+- `npm run test:config` y `npm run test:email`: aprobados.
+- Pruebas de esquema y API con `HIDRO_EMAIL_TEST_DB_PORT=32768`: aprobadas en
+  el contenedor aislado `hidro-email-test-20261018`. Cada ejecución creó una base
+  nueva sin usar el `.env` local ni conexiones externas de base de datos.
+- Harness de Chromium con doble envío y matriz visual: 25 comprobaciones
+  aprobadas, cero errores JavaScript y cero recursos fallidos. Evidencia local:
+  `artifacts/email-verification/run_1792366815866/admin-e2e.json`; no se publica
+  el buzón de códigos ni logs en Git. Matriz OTP: 360, 390, 412, 768 y 1366 px.
+- Runtimes `web` y `android` generados en directorios temporales y validados por
+  `verifyClientRuntime`: 15 archivos cada uno, formulario de verificación presente,
+  sin código administrativo ni referencias a secretos del servidor.
+- Regresiones de documentos (4 pruebas) y firma Android aprobadas. No se compiló
+  ni distribuyó una APK y no se ejecutó un envío real de correo.
+
+El contenedor de pruebas y sus bases se conservan. Los reportes son locales y los
+resultados reproducibles se documentan aquí y en el PR; no equivalen a una prueba
+de entrega de Resend ni a una validación en teléfono físico.

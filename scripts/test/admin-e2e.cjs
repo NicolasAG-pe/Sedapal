@@ -8,6 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const http = require('node:http');
+const crypto = require('node:crypto');
 const { spawn } = require('node:child_process');
 const { createRequire } = require('node:module');
 const requireBackend = createRequire(path.resolve('Backend/package.json'));
@@ -92,20 +93,21 @@ async function browser(executable) {
 }
 
 (async () => {
-  const port = Number(process.env.HIDRO_TEST_DB_PORT);
+  const port = Number(process.env.HIDRO_EMAIL_TEST_DB_PORT || process.env.HIDRO_TEST_DB_PORT);
   assert.ok(Number.isInteger(port) && port > 0, 'HIDRO_TEST_DB_PORT obligatorio: puerto de PostgreSQL tmpfs aislado.');
   const output = process.env.HIDRO_TEST_REPORT_DIR
     ? path.join(process.env.HIDRO_TEST_REPORT_DIR, 'run_' + Date.now())
     : fs.mkdtempSync(path.join(os.tmpdir(), 'hidro-admin-e2e-'));
   fs.mkdirSync(output, { recursive: true });
-  const connection = { host: '127.0.0.1', port, database: 'hm_admin_test', user: 'hm_fixture', password: 'fixture-only-not-production' };
+  const mailbox = path.resolve(output, 'mailbox.jsonl');
+  const connection = { host: '127.0.0.1', port, database: process.env.HIDRO_EMAIL_TEST_DB_PORT ? 'hm_email_test' : 'hm_admin_test', user: 'hm_fixture', password: 'fixture-only-not-production' };
   const database = 'hm_admin_test_' + Date.now();
   const parent = new Pool(connection);
   let pool;
   let backend, web, chrome;
   let serverOutput = '';
   try {
-    assert.equal((await parent.query('SELECT current_database() AS db')).rows[0].db, 'hm_admin_test');
+    assert.equal((await parent.query('SELECT current_database() AS db')).rows[0].db, connection.database);
     // Una base nueva por ejecución; conservar incluso los fixtures anteriores.
     await parent.query('CREATE DATABASE "' + database + '"');
     await parent.end();
@@ -139,10 +141,12 @@ async function browser(executable) {
     });
     await new Promise(resolve => web.listen(0, '127.0.0.1', resolve));
     const origin = 'http://127.0.0.1:' + web.address().port;
-    backend = spawn(process.execPath, ['server.js'], { cwd: path.join(root, 'Backend'), stdio: ['ignore', 'pipe', 'pipe'],
+    backend = spawn(process.execPath, ['--require', path.join(root,'Backend/test/resend-fixture.cjs'), 'server.js'], { cwd: path.join(root, 'Backend'), stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, PORT: String(backendPort), DATABASE_URL: '', DB_HOST: '127.0.0.1', DB_PORT: String(port),
         POSTGRES_DB: database, POSTGRES_USER: 'hm_fixture', POSTGRES_PASSWORD: 'fixture-only-not-production',
-        AUTH_TOKEN_SECRET: 'isolated-e2e-fixture-secret-not-production', NODE_ENV: 'development', CORS_ALLOWED_ORIGINS: origin } });
+        AUTH_TOKEN_SECRET: 'isolated-e2e-fixture-secret-not-production', NODE_ENV: 'development', CORS_ALLOWED_ORIGINS: origin,
+        EMAIL_OTP_SECRET: crypto.randomBytes(32).toString('hex'), RESEND_API_KEY:'fixture-provider-key',
+        RESEND_FROM:'correo@fixture.invalid', HIDRO_TEST_MAILBOX:mailbox } });
     backend.stdout.on('data', data => { serverOutput += data; }); backend.stderr.on('data', data => { serverOutput += data; });
     await wait(async () => { try { return (await fetch(base + '/api/health')).ok; } catch (_) { return false; } }, 'API aislada');
     async function request(method, endpoint, token, body, status) {
@@ -152,7 +156,9 @@ async function browser(executable) {
       return response.headers.get('content-type')?.includes('application/json') ? response.json() : response.arrayBuffer();
     }
     for (const [supply, email] of [[adminSupply, 'admin@fixture.invalid'], [userSupply, 'cliente@fixture.invalid']]) {
-      await request('POST', '/api/auth/register', null, { numero_suministro: supply, correo: email, password }, 201);
+      const pending = await request('POST', '/api/auth/register', null, { numero_suministro: supply, correo: email, password }, 202);
+      const message = fs.readFileSync(mailbox,'utf8').trim().split('\n').map(JSON.parse).filter(m=>m.correo===email).at(-1);
+      await request('POST', '/api/auth/verify-email', null, {registro_id:pending.registro_id,codigo:message.codigo}, 201);
     }
     await pool.query("UPDATE usuarios SET rol='admin' WHERE correo='admin@fixture.invalid'");
     const admin = await request('POST', '/api/auth/login', null, { numero_suministro: adminSupply, password }, 200);
@@ -325,7 +331,7 @@ async function browser(executable) {
     ok('Segundo login crea una conexión nueva y no conserva conexiones anteriores');
 
     await require('./client-checks.cjs')({ chrome, origin, output, pool, request, admin, user, password,
-      adminSupply, userSupply, supplyId, png, wait, pause, ok, expiredToken });
+      adminSupply, userSupply, supplyId, png, wait, pause, ok, expiredToken, mailbox });
 
     for (const route of routes) {
       const method = route[1].toUpperCase();

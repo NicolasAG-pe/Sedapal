@@ -4,6 +4,22 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — cliente web/Android y validación completa
+
+- Pantalla de verificación con entrada OTP, errores accesibles, reenvío con
+  cuenta regresiva y protección contra doble envío. Confirmar retorna al login.
+- Recuperación temporal del registro tras recargar con `sessionStorage`, sin
+  guardar contraseñas ni códigos; limpieza al confirmar, reiniciar o iniciar sesión.
+- Harness de cliente/admin adaptado al nuevo contrato, con proveedor simulado
+  exclusivamente en pruebas y bases sintéticas nuevas por ejecución.
+- Chromium: 25 comprobaciones aprobadas; sin errores JavaScript ni recursos
+  fallidos. Pantalla OTP validada a 360, 390, 412, 768 y 1366 píxeles, incluyendo
+  accesibilidad de campos y controles sin desbordamiento horizontal.
+- Runtimes web y Android generados y verificados sin código administrativo ni
+  secretos del servidor; pruebas de configuración, OTP/Resend y firma aprobadas.
+- Configuración, límites, compatibilidad con APK previa y pasos pendientes de
+  autorización documentados. Sin merge, despliegue ni cambios en Neon.
+
 ### 18 de octubre de 2026 — API de registro y confirmación
 
 - Registro devuelve una solicitud pendiente (202); solo la confirmación válida
