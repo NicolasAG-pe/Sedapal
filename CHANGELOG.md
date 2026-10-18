@@ -4,6 +4,16 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — proveedor Resend
+
+- Adaptador HTTPS de Resend con correo de verificación en texto y HTML accesible,
+  timeout de 10 segundos por intento y un reintento para fallos transitorios.
+- Cuerpo y clave de idempotencia conservados durante el reintento; errores
+  permanentes sin reintento y mensajes sin datos sensibles del proveedor.
+- Variables privadas exclusivamente en el backend; ejemplos vacíos y paso de
+  configuración en Docker Compose. No se envían correos reales en las pruebas.
+- Pruebas simuladas de envío, idempotencia, configuración, cuota, red y timeout.
+
 ### 18 de octubre de 2026 — esquema y códigos OTP
 
 - Esquema inicial y migración aditiva `003_verificacion_correo.sql` para registros

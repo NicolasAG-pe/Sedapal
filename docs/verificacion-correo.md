@@ -39,3 +39,13 @@ contenido completo de los nuevos archivos. Excluir secretos, datos personales,
 respaldos y binarios privados. Ejecutar las pruebas correspondientes al avance,
 crear el commit y hacer push de la rama. Comprobar el SHA remoto y mantener el PR
 en borrador, sin fusionar ni desplegar.
+
+## Proveedor de correo
+
+El adaptador usa la [API de envío de Resend](https://resend.com/docs/api-reference/emails/send-email)
+y sus [claves de idempotencia](https://resend.com/docs/dashboard/emails/idempotency-keys).
+Un envío tiene como máximo dos intentos con el mismo cuerpo y clave; los errores
+de red, timeout, 429 y 5xx permiten el segundo intento. Un 4xx permanente no se
+reintenta. Cada intento tiene timeout de 10 segundos, con una pausa de un segundo
+entre intentos. La aceptación por Resend no acredita entrega en la bandeja de
+entrada: solo la confirmación del código acredita control del correo.
