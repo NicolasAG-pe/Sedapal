@@ -4,6 +4,18 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — esquema y códigos OTP
+
+- Esquema inicial y migración aditiva `003_verificacion_correo.sql` para registros
+  pendientes, historial de envíos y fecha de verificación. Sin ejecución en Neon.
+- Códigos criptográficos de seis dígitos, HMAC SHA-256 ligado a la solicitud,
+  comparación de tiempo constante y rechazo de formatos o secretos inválidos.
+- Política: vigencia de 10 minutos, 5 intentos, 60 segundos entre envíos y hasta
+  3 envíos por hora. El registro pendiente vence en una hora.
+- Pruebas unitarias de generación, aislamiento por solicitud/secreto y entradas
+  inválidas; regresión de configuración. Pruebas PostgreSQL en bases nuevas:
+  migración repetible, conservación de cuenta previa y restricciones del esquema.
+
 ### 18 de octubre de 2026 — flujo de revisión
 
 - Reglas persistentes de Git, seguridad y revisión incremental en `AGENTS.md`.
