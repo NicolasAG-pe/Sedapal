@@ -52,6 +52,8 @@ entrada: solo la confirmación del código acredita control del correo.
 
 ## Contrato de la API
 
+El código OTP vence a los 5 minutos (300 segundos).
+
 | Ruta POST | Entrada | Éxito |
 | --- | --- | --- |
 | `/api/auth/register` | `correo`, `numero_suministro`, `password` | 202, `estado: pendiente`, `registro_id`, `vence_en`, `reenvio_en_segundos` |

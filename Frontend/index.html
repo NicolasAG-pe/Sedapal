@@ -88,7 +88,7 @@
         <input type="text" id="verify-code" name="verification-code" inputmode="numeric"
                autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6"
                aria-describedby="verify-code-hint" placeholder="000000" required />
-        <div class="hint" id="verify-code-hint">El código vence en 10 minutos. No lo compartas.</div>
+        <div class="hint" id="verify-code-hint">El código vence en 5 minutos. No lo compartas.</div>
       </div>
       <p id="verify-status" class="hint" role="status"></p>
       <button type="submit" class="btn btn-primary" id="btn-verify-email">Verificar correo</button>
@@ -4931,7 +4931,7 @@ async function descargarConstanciaPDF(r, btn){
     document.getElementById('verify-code-hint').textContent = vencido
       ? 'La solicitud venció. Usa otros datos o inicia un nuevo registro.'
       : Date.parse(registroPendiente.venceEn) <= Date.now()
-        ? 'El código venció. Solicita otro para continuar.' : 'El código vence en 10 minutos. No lo compartas.';
+        ? 'El código venció. Solicita otro para continuar.' : 'El código vence en 5 minutos. No lo compartas.';
   }
   function mostrarVerificacion(){
     formError.classList.remove('show');

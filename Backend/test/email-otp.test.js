@@ -2,10 +2,11 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
-const { crearCodigo, coincideCodigo } = require('../email-otp');
+const { crearCodigo, coincideCodigo, OTP_TTL_SECONDS } = require('../email-otp');
 const secreto = crypto.randomBytes(32).toString('hex');
 
 test('código de seis dígitos con HMAC, ligado a solicitud y secreto', () => {
+    assert.equal(OTP_TTL_SECONDS, 5 * 60);
     const id = crypto.randomUUID();
     const { codigo, hash } = crearCodigo(id, secreto);
     assert.match(codigo, /^\d{6}$/);

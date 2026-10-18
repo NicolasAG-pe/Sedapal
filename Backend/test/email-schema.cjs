@@ -31,7 +31,7 @@ async function main() {
         const id = crypto.randomUUID();
         const insert = `INSERT INTO registros_correo_pendientes
             (id,correo,numero_suministro,clave_hash,codigo_hash,codigo_vence_en)
-            VALUES ($1,'schema@example.invalid',$2,'fixture-hash',$3,NOW()+INTERVAL '10 minutes')`;
+            VALUES ($1,'schema@example.invalid',$2,'fixture-hash',$3,NOW()+INTERVAL '5 minutes')`;
         await pool.query(insert, [id, '900000001', 'a'.repeat(64)]);
         await assert.rejects(pool.query(insert, [crypto.randomUUID(), 'abc', 'a'.repeat(64)]), { code: '23514' });
         await assert.rejects(pool.query(insert, [crypto.randomUUID(), '900000002', 'hash-invalido']), { code: '23514' });

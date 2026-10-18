@@ -24,8 +24,8 @@ function crearRemitente(config, { fetchImpl = fetch, sleep = esperar, timeoutMs 
         const body = JSON.stringify({
             from: config.from, to: [correo],
             subject: 'Verifica tu correo en Hidro-Mejora',
-            text: `Tu código de verificación es: ${codigo}. Vence en 10 minutos. No lo compartas. Si no solicitaste esta cuenta, ignora este mensaje.`,
-            html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Verifica tu correo</title></head><body style="font:16px sans-serif;line-height:1.5"><h1>Verifica tu correo en Hidro-Mejora</h1><p>Ingresa este código en la aplicación:</p><p style="font:32px monospace;letter-spacing:4px">${codigo}</p><p>Vence en 10 minutos. No lo compartas.</p><p>Si no solicitaste esta cuenta, ignora este mensaje.</p></body></html>`
+            text: `Tu código de verificación es: ${codigo}. Vence en 5 minutos. No lo compartas. Si no solicitaste esta cuenta, ignora este mensaje.`,
+            html: `<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Verifica tu correo</title></head><body style="font:16px sans-serif;line-height:1.5"><h1>Verifica tu correo en Hidro-Mejora</h1><p>Ingresa este código en la aplicación:</p><p style="font:32px monospace;letter-spacing:4px">${codigo}</p><p>Vence en 5 minutos. No lo compartas.</p><p>Si no solicitaste esta cuenta, ignora este mensaje.</p></body></html>`
         });
         // Mismo cuerpo y clave para ambos intentos del mismo envío lógico.
         for (let intento = 0; intento < 2; intento++) {

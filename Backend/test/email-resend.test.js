@@ -30,6 +30,8 @@ test('envía texto y HTML accesible por HTTPS; reintento conserva cuerpo e idemp
     const body = JSON.parse(calls[0].options.body);
     assert.deepEqual(body.to, [datos.correo]);
     assert.match(body.text, /001234/);
+    assert.match(body.text, /Vence en 5 minutos/);
+    assert.match(body.html, /Vence en 5 minutos/);
     assert.match(body.html, /lang="es"/);
     assert.ok(calls[0].options.signal instanceof AbortSignal);
 });

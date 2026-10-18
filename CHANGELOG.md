@@ -4,6 +4,12 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — OTP vigente cinco minutos
+
+- Vigencia del OTP reducida de 600 a 300 segundos; textos del correo y del cliente
+  actualizados a cinco minutos, junto con las pruebas y documentación afectadas.
+- Validación: `npm run test:email` y `git diff --check`.
+
 ### 18 de octubre de 2026 — impedir previews automáticas
 
 - La auditoría remota detectó que la integración Vercel existente creaba previews

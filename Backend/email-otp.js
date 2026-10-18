@@ -1,7 +1,7 @@
 'use strict';
 
 const crypto = require('node:crypto');
-const OTP_TTL_SECONDS = 600;
+const OTP_TTL_SECONDS = 300;
 const OTP_MAX_ATTEMPTS = 5;
 const OTP_RESEND_SECONDS = 60;
 const OTP_MAX_SENDS_HOUR = 3;
