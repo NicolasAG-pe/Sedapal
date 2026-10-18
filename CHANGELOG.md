@@ -4,6 +4,20 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — API de registro y confirmación
+
+- Registro devuelve una solicitud pendiente (202); solo la confirmación válida
+  crea usuario y suministro juntos (201). No se emite JWT antes de confirmar.
+- Rutas de confirmación y reenvío; vencimiento, intentos persistentes, límites por
+  IP/correo/suministro y bloqueos PostgreSQL para solicitudes concurrentes.
+- Reenvío invalida el código anterior sin reiniciar intentos; consumo único y
+  limpieza del hash de contraseña pendiente tras confirmar o sustituir solicitud.
+- Fallos de envío revierten la transacción. Configuración ausente devuelve 503,
+  sin permitir registros sin verificación. Cuentas previas conservan su acceso.
+- API HTTP real probada con Resend simulado y PostgreSQL nuevo: caducidad,
+  concurrencia, reintentos de código, límites, conflictos, login y bloqueo admin.
+  Pruebas unitarias y regresión de configuración aprobadas.
+
 ### 18 de octubre de 2026 — proveedor Resend
 
 - Adaptador HTTPS de Resend con correo de verificación en texto y HTML accesible,

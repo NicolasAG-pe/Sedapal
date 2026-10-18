@@ -8,6 +8,8 @@ const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
 const { Pool } = require("pg");
 const { obtenerConfiguracion } = require('./config');
+const { obtenerConfigCorreo, crearRemitente } = require('./resend-mail');
+const { crearRegistroCorreo, registrarRutasCorreo } = require('./email-registration');
 
 const app = express();
 const configuracion = obtenerConfiguracion();
@@ -660,130 +662,13 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
 // el usuario no se valida contra sistemas oficiales.
 // ==========================================
 
-app.post("/api/auth/register", limiteRegistro, async (req, res) => {
-    let cliente = null;
-
-    try {
-        const { correo, numero_suministro, password } = req.body || {};
-
-        const correoNormalizado = String(correo || '').trim().toLowerCase();
-        const suministroNormalizado = String(numero_suministro || '').trim();
-
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoNormalizado) || correoNormalizado.length > 120) {
-            return res.status(400).json({
-                estado: "error",
-                mensaje: "Correo electrónico inválido."
-            });
-        }
-
-        if (!/^\d{9}$/.test(suministroNormalizado)) {
-            return res.status(400).json({
-                estado: "error",
-                mensaje: "El número de suministro debe contener 9 dígitos."
-            });
-        }
-
-        if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
-            return res.status(400).json({
-                estado: "error",
-                mensaje: "La contraseña debe tener entre 8 y 128 caracteres."
-            });
-        }
-
-        if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-            return res.status(400).json({
-                estado: "error",
-                mensaje: "La contraseña debe contener al menos una letra y un número."
-            });
-        }
-
-        cliente = await pool.connect();
-        await cliente.query('BEGIN');
-
-        const correoExistente = await cliente.query(
-            `SELECT id_usuario FROM usuarios WHERE correo = $1 LIMIT 1;`,
-            [correoNormalizado]
-        );
-
-        if (correoExistente.rowCount > 0) {
-            await cliente.query('ROLLBACK');
-            return res.status(409).json({
-                estado: "error",
-                mensaje: "El correo ya se encuentra registrado."
-            });
-        }
-
-        const suministroExistente = await cliente.query(
-            `SELECT id_suministro FROM suministros WHERE numero_suministro = $1 LIMIT 1;`,
-            [suministroNormalizado]
-        );
-
-        if (suministroExistente.rowCount > 0) {
-            await cliente.query('ROLLBACK');
-            return res.status(409).json({
-                estado: "error",
-                mensaje: "El número de suministro ya se encuentra registrado."
-            });
-        }
-
-        const claveHash = generarClaveHash(password);
-
-        const usuarioResultado = await cliente.query(
-            `INSERT INTO usuarios (correo, clave_hash)
-             VALUES ($1, $2)
-             RETURNING id_usuario, correo;`,
-            [correoNormalizado, claveHash]
-        );
-
-        const idUsuario = usuarioResultado.rows[0].id_usuario;
-
-        await cliente.query(
-            `INSERT INTO suministros (numero_suministro, id_usuario)
-             VALUES ($1, $2);`,
-            [suministroNormalizado, idUsuario]
-        );
-
-        await cliente.query('COMMIT');
-
-        return res.status(201).json({
-            estado: "ok",
-            mensaje: "Cuenta creada correctamente.",
-            usuario: {
-                id_usuario: idUsuario,
-                correo: correoNormalizado,
-                numero_suministro: suministroNormalizado
-            }
-        });
-
-    } catch (error) {
-        if (cliente) {
-            try { await cliente.query('ROLLBACK'); } catch (e) {}
-        }
-
-        if (error && error.code === '23505') {
-            const restriccion = String(error.constraint || '');
-            const esCorreo = restriccion.indexOf('usuarios') > -1 || /correo/i.test(restriccion);
-
-            return res.status(409).json({
-                estado: "error",
-                mensaje: esCorreo
-                    ? "El correo ya se encuentra registrado."
-                    : "El número de suministro ya se encuentra registrado."
-            });
-        }
-
-        console.error(error);
-
-        return res.status(500).json({
-            estado: "error",
-            mensaje: "Error interno del servidor."
-        });
-    } finally {
-        if (cliente) {
-            try { cliente.release(); } catch (e) {}
-        }
-    }
-});
+let configCorreo = null;
+try { configCorreo = obtenerConfigCorreo(); }
+catch (_) { console.error('Configuración de correo inválida; registro deshabilitado.'); }
+const registroCorreo = crearRegistroCorreo({ pool, enviarCodigo: crearRemitente(configCorreo),
+    secreto: configCorreo && configCorreo.secreto, generarClaveHash });
+registrarRutasCorreo(app, registroCorreo, { registro: limiteRegistro,
+    verificacion: limitadorGenerico(30, 15), reenvio: limitadorGenerico(10, 15) });
 
 
 // ==========================================
@@ -2966,8 +2851,11 @@ app.get("/api/admin/resumen", requiereAdmin, async (req, res) => {
 const httpServer = http.createServer(app);
 configurarTiempoReal(httpServer);
 
-httpServer.listen(PORT, "0.0.0.0", () => {
+if (require.main === module) httpServer.listen(PORT, "0.0.0.0", () => {
     console.log(
         `API Hidro Mejora ejecutándose en el puerto ${PORT}`
     );
 });
+
+// Permite pruebas HTTP aisladas sin iniciar un puerto al importar.
+module.exports = { app, pool, httpServer, io: ioTiempoReal };

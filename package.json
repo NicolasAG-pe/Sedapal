@@ -8,6 +8,8 @@
     "build:admin": "node scripts/build-web.js admin",
     "test:config": "node --test Backend/test/config.test.js Backend/test/receipt-date.test.js scripts/test/public-api-config.test.js",
     "test:email": "node --test Backend/test/email-*.test.js",
+    "test:email:schema": "node Backend/test/email-schema.cjs",
+    "test:email:api": "node Backend/test/email-api.cjs",
     "test:documents": "node --test scripts/test/documents.test.cjs",
     "cap:www": "bash scripts/sync-capacitor-www.sh",
     "cap:sync": "node scripts/sync-android.cjs",

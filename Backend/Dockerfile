@@ -6,7 +6,7 @@ COPY package.json package-lock.json ./
 
 RUN npm ci --omit=dev
 
-COPY server.js config.js ./
+COPY server.js config.js email-otp.js resend-mail.js email-registration.js ./
 
 EXPOSE 3000
 
