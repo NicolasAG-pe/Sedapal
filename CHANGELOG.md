@@ -2,6 +2,16 @@
 
 Este archivo registra cambios publicados y comprobados. Para futuras versiones, añadir una entrada nueva arriba con su fecha y cambios relevantes, sin repetir los manuales.
 
+## En desarrollo — verificación de correo
+
+### 18 de octubre de 2026 — flujo de revisión
+
+- Reglas persistentes de Git, seguridad y revisión incremental en `AGENTS.md`.
+- Plan de verificación de correo con Resend y decisiones de seguridad documentados
+  en `docs/verificacion-correo.md`.
+- Validación: estado inicial limpio, rama existente comprobada y pruebas de
+  configuración ejecutadas antes del commit. Sin cambios en producción.
+
 ## v1.0.0
 
 Publicada el 8 de octubre de 2026. Referencia: [Release v1.0.0](https://github.com/NicolasAG-pe/Sedapal/releases/tag/v1.0.0), commit `135cb54173ee60e2f528738805564773e3c32e8b`.
