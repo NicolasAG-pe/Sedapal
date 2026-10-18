@@ -4,6 +4,17 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — impedir previews automáticas
+
+- La auditoría remota detectó que la integración Vercel existente creaba previews
+  automáticamente al hacer push, pese a que no se ejecutaron comandos de despliegue.
+  En `a7ebcae`, la preview Admin terminó y la del proyecto `sedapal` falló por
+  buscar `Backend/scripts/build-web.js` desde una raíz de proyecto incompatible.
+- Despliegues Git deshabilitados para `feature/verificacion-correo` en la raíz
+  y en `Backend/vercel.json`; regla persistente para revisar automatizaciones
+  antes del primer push de futuras ramas. No se reintenta el build de la preview.
+- Configuración JSON y diff revisados; auditoría final registrada en el PR.
+
 ### 18 de octubre de 2026 — cliente web/Android y validación completa
 
 - Pantalla de verificación con entrada OTP, errores accesibles, reenvío con
@@ -18,7 +29,8 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 - Runtimes web y Android generados y verificados sin código administrativo ni
   secretos del servidor; pruebas de configuración, OTP/Resend y firma aprobadas.
 - Configuración, límites, compatibilidad con APK previa y pasos pendientes de
-  autorización documentados. Sin merge, despliegue ni cambios en Neon.
+  autorización documentados. Sin merge ni cambios en Neon; previews automáticas
+  detectadas posteriormente y registradas en la entrada de auditoría.
 
 ### 18 de octubre de 2026 — API de registro y confirmación
 

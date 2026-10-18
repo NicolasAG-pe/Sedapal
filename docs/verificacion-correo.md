@@ -148,7 +148,8 @@ locales en `/tmp` o bajo `artifacts/` con `HIDRO_TEST_REPORT_DIR`.
    registro 202 requiere este cliente actualizado. La APK v1.0.0 anterior espera
    registro inmediato; su login de cuentas existentes sigue siendo compatible.
 5. Solo tras autorización, coordinar los cambios de backend/base y la distribución
-   del cliente. Este trabajo no realiza merge, despliegues ni publicación de APK.
+   del cliente. No se realiza merge ni publicación de APK. Las previews automáticas
+   detectadas en Vercel se registran a continuación y se deshabilitan para esta rama.
 
 Si faltan variables de correo, registro/confirmación/reenvío responden 503;
 login y el resto de la aplicación conservan su comportamiento anterior. No hay
@@ -173,3 +174,19 @@ fallback a creación de cuentas sin verificación.
 El contenedor de pruebas y sus bases se conservan. Los reportes son locales y los
 resultados reproducibles se documentan aquí y en el PR; no equivalen a una prueba
 de entrega de Resend ni a una validación en teléfono físico.
+
+## Auditoría de automatizaciones de GitHub
+
+La integración Vercel existente activó previews al recibir los primeros pushes.
+La auditoría de `a7ebcae` confirmó los entornos `Preview – hidro-mehora-admin`
+(completado) y `Preview – sedapal` (fallido). El segundo buscó
+`/vercel/path0/Backend/scripts/build-web.js`, que no existe; esto corresponde a
+la configuración del proyecto Vercel y su raíz, y no a las pruebas locales de OTP.
+No se reintentó el despliegue ni se cambiaron ajustes remotos del proyecto.
+
+Para impedir nuevas previews de esta rama, `vercel.json` y `Backend/vercel.json`
+declaran `git.deploymentEnabled["feature/verificacion-correo"] = false` según la
+[configuración Git oficial de Vercel](https://vercel.com/docs/project-configuration/git-configuration).
+Se incluyen ambas raíces porque los proyectos conectados construyen desde
+directorios distintos. Antes de publicar futuras ramas, comprobar también sus
+integraciones y autorizaciones; un Draft PR no impide las previews automáticas.
