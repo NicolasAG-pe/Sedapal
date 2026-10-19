@@ -22,12 +22,20 @@ arrancar la API ni tiene un temporizador, ruta HTTP o programación activa.
   `registros_correo_pendientes`. Confirmar no elimina antes el historial que
   aún puede imponer límites. Eliminar una fila consumida no elimina su cuenta.
 
-La única FK entrante esperada es
-`registros_correo_envios.registro_id → registros_correo_pendientes.id`, con
-`ON DELETE CASCADE`. No hay FK desde usuarios, suministros, recibos o pagos hacia
-estas tablas. La tarea elimina únicamente padres elegibles y PostgreSQL elimina
-su historial asociado. Si aparece otra FK entrante, falta la cascada esperada o
-la restricción no está validada, cancela el lote para exigir revisión del esquema.
+Las FKs entrantes esperadas son
+`registros_correo_envios.registro_id → registros_correo_pendientes.id` y, tras 006,
+`correo_outbox.id → registros_correo_envios.id`, ambas `ON DELETE CASCADE`.
+También se admite el esquema anterior sin outbox. No hay FK desde usuarios,
+suministros, recibos o pagos hacia estas tablas. Si aparece otra FK entrante a
+cualquiera de las tres tablas, falta una cascada o no está validada, cancela el lote.
+La aplicación bloquea las tablas conocidas antes de comprobar dependencias.
+
+Desde avance 14 no se elimina una solicitud con eventos `pendiente`, `procesando`
+o `reintento`, aunque hayan pasado 24 horas desde su vencimiento. El trabajador
+debe finalizar/caducar primero esos eventos y retirar su payload. La limpieza
+no envía, no reintenta ni desbloquea correos. Con el trabajador desactivado puede
+acumularse contenido cifrado: requiere revisión operativa, no un DELETE automático.
+Los eventos terminales se eliminan en cascada al cumplir la retención del padre.
 
 ## Ejecución acotada y concurrencia
 

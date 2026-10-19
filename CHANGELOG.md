@@ -4,6 +4,34 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — avance 14: integrar correo mediante Transactional Outbox
+
+- H03 corregido en desarrollo: registro/reenvío confirman solicitud, reserva y
+  evento cifrado en una transacción; la API ya no envía correos. El trabajador
+  independiente solo procesa eventos confirmados, sin activación automática.
+- OTP de seis dígitos, cinco minutos desde el primer claim confirmado, plazos
+  obtenidos de PostgreSQL y presupuesto monótono; cola demorada no agota vigencia.
+  Cancelación al sustituir/consumir, clave AES exclusiva y eliminación de payload
+  terminal. Reintentos conservan cuerpo/identidad/vencimiento y máximo cinco intentos.
+- HTTP 202 significa encolado; consulta privada de estado y cliente actualizado
+  distinguen en cola/aceptado/errores sin prometer entrega. Retención protege
+  trabajos activos y admite las FKs esperadas de 006; sin cambios en pagos/recibos.
+- Node 20.19.2 y Node 22.23.3: TAP 61, 60 OK y una omisión condicional H02;
+  incluye dos contenedores de subpruebas. Outbox: 19 escenarios PostgreSQL/API
+  independientes; variante H02 legacy: 12 OK y una omisión del esquema alternativo.
+  Casos de COMMIT fallido, dos procesos, SIGKILL/reinicio, SIGTERM durante HTTP,
+  ambigüedad, reenvío intercalado, privacidad y rol sin acceso a negocio aprobados.
+- Esquema/API/retención/CLI y simulación terminal aprobados. Configuración 13,
+  documentos 4, firma 7 y Perfil 3 pruebas OK. Chromium: 25 comprobaciones, sin
+  errores JS ni recursos fallidos. Runtimes web/Android temporales: 15 archivos
+  cada uno, sin secretos ni código administrativo; no APK compilada.
+- Migración 006 preparada y validada solo en bases nuevas: conserva datos previos,
+  es repetible y revierte por timeout sin estado parcial. Guías de registro,
+  auditoría, outbox, retención, permisos, habilitación y recuperación actualizadas.
+- Pendientes: autorización/configuración productiva, dominio, monitoreo y H01
+  (APK v1.0.0). No se promete entrega exactamente una vez ni recepción SMTP.
+  Sin correos reales, Neon, despliegues, workers/cron productivos, APK ni merge.
+
 ### 18 de octubre de 2026 — avance 14, base transaccional de correo
 
 - H03 reproducido antes de cambiar el registro: aceptación simulada seguida de

@@ -15,27 +15,31 @@ function validarOpciones({ retentionHours = MIN_RETENTION_HOURS, batchSize = 500
 
 // Nunca usar creado_en ni codigo_vence_en como sustituto de vence_en.
 // Los guardas adicionales conservan datos anómalos que aún podrían limitar envíos.
-const elegible = `p.vence_en < $1::timestamptz
+const elegibleBase = `p.vence_en < $1::timestamptz
     AND p.codigo_vence_en <= $2::timestamptz
     AND NOT EXISTS (SELECT 1 FROM public.registros_correo_envios e
         WHERE e.registro_id=p.id AND e.enviado_en >= $2::timestamptz-INTERVAL '1 hour')`;
 
-async function comprobarDependencias(client) {
+async function comprobarDependencias(client, dryRun) {
+    const { rows: [schema] } = await client.query("SELECT to_regclass('public.correo_outbox') IS NOT NULL AS outbox");
+    if (schema.outbox && !dryRun) await client.query('LOCK TABLE public.correo_outbox IN ROW EXCLUSIVE MODE');
     const { rows } = await client.query(`SELECT
-        conrelid='public.registros_correo_envios'::regclass AS es_historial,
-        confrelid='public.registros_correo_pendientes'::regclass AS es_pendiente,
-        conkey=ARRAY[(SELECT attnum FROM pg_catalog.pg_attribute
-            WHERE attrelid=c.conrelid AND attname='registro_id' AND NOT attisdropped)] AS origen_correcto,
+        ((conrelid='public.registros_correo_envios'::regclass AND confrelid='public.registros_correo_pendientes'::regclass
+            AND conkey=ARRAY[(SELECT attnum FROM pg_catalog.pg_attribute
+                WHERE attrelid=c.conrelid AND attname='registro_id' AND NOT attisdropped)])
+        OR (conrelid=to_regclass('public.correo_outbox') AND confrelid='public.registros_correo_envios'::regclass
+            AND conkey=ARRAY[(SELECT attnum FROM pg_catalog.pg_attribute
+                WHERE attrelid=c.conrelid AND attname='id' AND NOT attisdropped)])) AS origen_correcto,
         confkey=ARRAY[(SELECT attnum FROM pg_catalog.pg_attribute
             WHERE attrelid=c.confrelid AND attname='id' AND NOT attisdropped)] AS destino_correcto,
-        confdeltype, convalidated
-        FROM pg_catalog.pg_constraint c WHERE contype='f'
-        AND confrelid IN ('public.registros_correo_pendientes'::regclass,
-            'public.registros_correo_envios'::regclass)`);
-    if (rows.length !== 1 || !rows[0].es_historial || !rows[0].es_pendiente ||
-        !rows[0].origen_correcto || !rows[0].destino_correcto || rows[0].confdeltype !== 'c' || !rows[0].convalidated) {
+        confdeltype,convalidated
+        FROM pg_catalog.pg_constraint c WHERE contype='f' AND confrelid IN
+        ('public.registros_correo_pendientes'::regclass,'public.registros_correo_envios'::regclass,to_regclass('public.correo_outbox'))`);
+    if (rows.length !== (schema.outbox ? 2 : 1) || rows.some(r => !r.origen_correcto ||
+        !r.destino_correcto || r.confdeltype !== 'c' || !r.convalidated)) {
         throw new Error('Dependencias de verificación inesperadas; limpieza cancelada.');
     }
+    return schema.outbox;
 }
 
 async function limpiarRegistrosCorreo(pool, options) {
@@ -60,7 +64,10 @@ async function limpiarRegistrosCorreo(pool, options) {
             await client.query(`LOCK TABLE public.registros_correo_pendientes,
                 public.registros_correo_envios IN ROW EXCLUSIVE MODE`);
         }
-        await comprobarDependencias(client);
+        const outbox = await comprobarDependencias(client, dryRun);
+        const elegible = elegibleBase + (outbox ? ` AND NOT EXISTS
+            (SELECT 1 FROM public.correo_outbox o JOIN public.registros_correo_envios e ON e.id=o.id
+                WHERE e.registro_id=p.id AND o.estado IN ('pendiente','procesando','reintento'))` : '');
         const { rows: [time] } = await client.query(`SELECT t AS referencia,
             t-make_interval(hours=>$1) AS corte FROM (SELECT clock_timestamp() AS t) reloj`, [retentionHours]);
         const params = [time.corte, time.referencia];

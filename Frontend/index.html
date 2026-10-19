@@ -81,7 +81,7 @@
       </button>
     </form>
     <form id="verify-email-form" novalidate hidden>
-      <p class="verification-intro">Enviamos un código a tu correo. Revísalo, incluida la carpeta de spam, y escríbelo aquí para terminar de crear tu cuenta.</p>
+      <p class="verification-intro">Solicitamos un código para tu correo. Cuando llegue, revísalo también en spam y escríbelo aquí para terminar de crear tu cuenta.</p>
       <div id="verify-error" class="form-error" role="alert"></div>
       <div class="field">
         <label for="verify-code">Código de verificación</label>
@@ -918,7 +918,7 @@
   const btnVerify = document.getElementById('btn-verify-email');
   const btnResend = document.getElementById('btn-resend-email');
   const btnRestartRegister = document.getElementById('btn-restart-register');
-  let registroPendiente = null, verificacionOcupada = false, verificacionVersion = 0, reenvioTimer = null;
+  let registroPendiente = null, verificacionOcupada = false, verificacionVersion = 0, reenvioTimer = null, consultaCorreoTimer = null, consultandoCorreo = false;
   const authToRegister = document.getElementById('auth-to-register');
   const authToLogin = document.getElementById('auth-to-login');
   const loginFoot = document.querySelector('.login-foot');
@@ -4912,7 +4912,7 @@ async function descargarConstanciaPDF(r, btn){
     verificacionVersion++;
     registroPendiente = null;
     verificacionOcupada = false;
-    clearInterval(reenvioTimer);
+    clearInterval(reenvioTimer); clearInterval(consultaCorreoTimer);
     verifyForm.reset();
     verifyForm.removeAttribute('aria-busy');
     verifyError.classList.remove('show');
@@ -4930,8 +4930,16 @@ async function descargarConstanciaPDF(r, btn){
     btnRestartRegister.disabled = verificacionOcupada;
     document.getElementById('verify-code-hint').textContent = vencido
       ? 'La solicitud venció. Usa otros datos o inicia un nuevo registro.'
-      : Date.parse(registroPendiente.venceEn) <= Date.now()
-        ? 'El código venció. Solicita otro para continuar.' : 'El código vence en 5 minutos. No lo compartas.';
+      : !registroPendiente.venceEn
+        ? 'Solicitud aceptada. El correo está en cola; espera el código.'
+        : Date.parse(registroPendiente.venceEn) <= Date.now()
+          ? 'El código venció. Solicita otro para continuar.' : 'El código vence cinco minutos después de prepararse el envío. No lo compartas.';
+    const mensajes = {en_cola:'Correo en cola. Espera el código.',procesando:'Procesando el envío del código.',
+      aceptado:'El proveedor aceptó el correo. Revisa tu bandeja y spam; la entrega puede demorar.',
+      fallido:'No se pudo enviar el correo. Puedes solicitar otro código cuando termine la espera.',
+      caducado:'El envío venció. Solicita otro código.',ambiguo:'No pudimos confirmar el envío. Si llega un código vigente, puedes usarlo; también puedes solicitar otro.',
+      cancelado:'Este envío fue sustituido o cancelado.'};
+    if(!verificacionOcupada && mensajes[registroPendiente.estadoEnvio])verifyStatus.textContent=mensajes[registroPendiente.estadoEnvio];
   }
   function mostrarVerificacion(){
     formError.classList.remove('show');
@@ -4941,14 +4949,37 @@ async function descargarConstanciaPDF(r, btn){
     loginTitle.textContent = 'Verifica tu correo';
     actualizarReenvio(); verifyCode.focus();
   }
+  async function consultarCorreo(){
+    if(consultandoCorreo || !registroPendiente || verifyForm.hidden || registroPendiente.solicitudHasta<=Date.now())return;
+    const pendiente=registroPendiente;
+    consultandoCorreo=true;
+    try{
+      const resp=await sesionCliente.authFetch('/api/auth/verification-status',{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({registro_id:pendiente.id})
+      });
+      const data=await resp.json().catch(()=>null);
+      if(registroPendiente!==pendiente)return;
+      if(resp.ok && data && data.estado==='pendiente'){
+        pendiente.venceEn=data.vence_en; pendiente.estadoEnvio=data.estado_envio;
+        if(!['en_cola','procesando'].includes(data.estado_envio))clearInterval(consultaCorreoTimer);
+        try{sessionStorage.setItem('hm_email_pending',JSON.stringify(pendiente));}catch(_){}
+        actualizarReenvio();
+      }else if(resp.status===400){clearInterval(consultaCorreoTimer);}
+    }catch(_){ /* La desconexión no descarta la solicitud ni el código introducido. */ }
+    finally{consultandoCorreo=false;}
+  }
+  function iniciarConsultaCorreo(){
+    clearInterval(consultaCorreoTimer);consultaCorreoTimer=setInterval(consultarCorreo,5000);
+    consultarCorreo();
+  }
   function guardarVerificacion(data, suministro){
-    registroPendiente = { id: data.registro_id, suministro, venceEn: data.vence_en,
-      solicitudHasta: registroPendiente ? registroPendiente.solicitudHasta : Date.now()+3600000,
+    registroPendiente = { id: data.registro_id, suministro, venceEn: data.vence_en, estadoEnvio:data.estado_envio,
+      solicitudHasta: Date.parse(data.solicitud_vence_en) || (registroPendiente ? registroPendiente.solicitudHasta : Date.now()+3600000),
       reenvioHasta: Date.now()+Number(data.reenvio_en_segundos || 60)*1000 };
     // Solo solicitud y plazos temporales. Nunca contraseña, OTP ni JWT.
     try{ sessionStorage.setItem('hm_email_pending', JSON.stringify(registroPendiente)); }catch(_){}
     clearInterval(reenvioTimer); reenvioTimer = setInterval(actualizarReenvio, 1000);
-    mostrarVerificacion();
+    mostrarVerificacion(); iniciarConsultaCorreo();
   }
   function showVerifyError(message){ verifyError.textContent = message; verifyError.classList.add('show'); }
   verifyCode.addEventListener('input', ()=>{ verifyCode.value = verifyCode.value.replace(/\D/g,'').slice(0,6); });
@@ -4980,7 +5011,7 @@ async function descargarConstanciaPDF(r, btn){
       }
       if(reenviar){
         guardarVerificacion(data,suministro); verifyCode.value='';
-        verifyStatus.textContent='Enviamos un nuevo código. El anterior ya no es válido.';
+        verifyStatus.textContent='Solicitamos un nuevo código. El anterior ya no es válido.';
       }else{
         limpiarVerificacion(); mostrarLogin();
         inpSupply.value = (data.usuario && data.usuario.numero_suministro) || suministro;
@@ -5302,11 +5333,11 @@ async function descargarConstanciaPDF(r, btn){
   try{
     const saved=JSON.parse(sessionStorage.getItem('hm_email_pending') || 'null');
     if(saved && /^[a-f0-9-]{36}$/i.test(saved.id) && /^\d{9}$/.test(saved.suministro) &&
-        Number.isFinite(Date.parse(saved.venceEn)) && Number.isFinite(saved.reenvioHasta) &&
+        (saved.venceEn===null || Number.isFinite(Date.parse(saved.venceEn))) && Number.isFinite(saved.reenvioHasta) &&
         saved.reenvioHasta<=Date.now()+3600000 && saved.solicitudHasta>Date.now() && saved.solicitudHasta<=Date.now()+3600000){
-      registroPendiente={id:saved.id,suministro:saved.suministro,venceEn:saved.venceEn,
+      registroPendiente={id:saved.id,suministro:saved.suministro,venceEn:saved.venceEn,estadoEnvio:saved.estadoEnvio,
         solicitudHasta:saved.solicitudHasta,reenvioHasta:saved.reenvioHasta};
-      reenvioTimer=setInterval(actualizarReenvio,1000); mostrarVerificacion();
+      reenvioTimer=setInterval(actualizarReenvio,1000); mostrarVerificacion(); iniciarConsultaCorreo();
     }else{sessionStorage.removeItem('hm_email_pending');}
   }catch(_){try{sessionStorage.removeItem('hm_email_pending');}catch(_){} }
   // La animación de bienvenida del login corre una sola vez (no en cada navegación).

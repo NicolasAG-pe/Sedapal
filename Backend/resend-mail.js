@@ -27,18 +27,18 @@ function construirMensaje(from, correo, codigo) {
 function crearRemitente(config, { fetchImpl = fetch, sleep = esperar, timeoutMs = 10000, maxAttempts = 2 } = {}) {
     if (!config) return null;
     if (![1, 2].includes(maxAttempts) || !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 10000) throw new Error('Límites de envío inválidos.');
-    return async function enviarCodigo({ correo, codigo, envioId, mensaje, enviarHasta }) {
+    return async function enviarCodigo({ correo, codigo, envioId, mensaje, enviarHasta, limiteMonotono = Infinity }) {
         if ((mensaje === undefined && !/^\d{6}$/.test(codigo)) || !/^[a-f0-9-]{36}$/.test(envioId)) {
             throw new Error('Datos de envío inválidos.');
         }
         const body = mensaje === undefined ? construirMensaje(config.from, correo, codigo) : mensaje;
         if (typeof body !== 'string' || body.length > 16384) throw new Error('Mensaje inválido.');
         const deadline = enviarHasta === undefined ? Infinity : new Date(enviarHasta).getTime();
-        if (Number.isNaN(deadline)) throw new Error('Plazo de envío inválido.');
+        if (Number.isNaN(deadline) || typeof limiteMonotono !== 'number' || Number.isNaN(limiteMonotono)) throw new Error('Plazo de envío inválido.');
         // Mismo cuerpo y clave para ambos intentos del mismo envío lógico.
         let tipo = 'ambiguo', retryAfter = 0;
         for (let intento = 0; intento < maxAttempts; intento++) {
-            const remaining = deadline - Date.now();
+            const remaining = Math.min(deadline - Date.now(), limiteMonotono - performance.now());
             if (remaining <= 0) { tipo = 'caducado'; break; }
             let reintentable = true;
             try {
@@ -49,7 +49,8 @@ function crearRemitente(config, { fetchImpl = fetch, sleep = esperar, timeoutMs 
                     body, signal: AbortSignal.timeout(Math.max(1, Math.min(timeoutMs, Math.floor(remaining))))
                 });
                 reintentable = respuesta.status === 429 || respuesta.status === 409 || respuesta.status >= 500;
-                tipo = reintentable ? (respuesta.status === 409 ? 'ambiguo' : 'transitorio') : 'permanente';
+                // Un 5xx tampoco prueba que el proveedor no haya aceptado el mensaje.
+                tipo = reintentable ? (respuesta.status === 429 ? 'transitorio' : 'ambiguo') : 'permanente';
                 retryAfter = Math.min(300, Math.max(0, Number(respuesta.headers?.get('Retry-After')) || 0));
                 if (respuesta.ok) {
                     const data = await respuesta.json();

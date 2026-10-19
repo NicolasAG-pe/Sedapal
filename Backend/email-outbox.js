@@ -49,7 +49,8 @@ function crearProcesadorOutbox({ pool, key, enviarCodigo }) {
                     const { rows: [lock] } = await client.query('SELECT pg_try_advisory_xact_lock(7401,hashtext($1)) AS ok', [identity]);
                     if (!lock.ok) return null;
                 }
-                const { rows: [p] } = await client.query(`SELECT * FROM public.registros_correo_pendientes
+                const { rows: [p] } = await client.query(`SELECT id,invalidado,consumido_en,codigo_hash,intentos,vence_en
+                    FROM public.registros_correo_pendientes
                     WHERE id=$1 FOR UPDATE SKIP LOCKED`, [c.registro_id]);
                 if (!p) return null;
                 const { rows: [o] } = await client.query(`SELECT * FROM public.correo_outbox WHERE id=$1
@@ -116,15 +117,22 @@ function crearProcesadorOutbox({ pool, key, enviarCodigo }) {
         const job = await tomar();
         if (!job || job.estado !== 'procesando') return { estado: job?.estado || 'vacio' };
         // Revalidar lease y sustituciones después del COMMIT y antes del intento externo.
-        const { rowCount } = await pool.query(`SELECT 1 FROM public.correo_outbox WHERE id=$1
-            AND lease_token=$2 AND estado='procesando' AND bloqueado_hasta>clock_timestamp()`, [job.id, job.token]);
-        if (!rowCount) return { estado: 'sin_lease' };
+        const budgetStarted = performance.now();
+        const { rows: [live] } = await pool.query(`SELECT EXTRACT(EPOCH FROM (enviar_hasta-clock_timestamp()))*1000 AS restante
+            FROM public.correo_outbox WHERE id=$1 AND lease_token=$2 AND estado='procesando'
+            AND bloqueado_hasta>clock_timestamp()`, [job.id, job.token]);
+        if (!live) return { estado: 'sin_lease' };
+        const limiteMonotono = budgetStarted + Number(live.restante);
+        const remaining = limiteMonotono - performance.now();
+        if (remaining <= 0) return { estado: await finalizar(job, { tipo: 'caducado' }) };
+        // Presupuesto calculado por PostgreSQL; no depende del desfase absoluto de relojes.
+        const enviarHasta = new Date(Date.now() + Math.floor(remaining));
         let mensaje;
         try { mensaje = descifrarMensaje(job.payload, key, job.id, job.registro_id); }
         catch (_) { return { estado: await finalizar(job, { tipo: 'cifrado' }) }; }
         let outcome;
         try {
-            const result = await enviarCodigo({ mensaje, envioId: job.id, enviarHasta: job.enviar_hasta });
+            const result = await enviarCodigo({ mensaje, envioId: job.id, enviarHasta, limiteMonotono });
             outcome = result && typeof result.id === 'string' && result.id.length <= 120 ? result : { tipo: 'ambiguo' };
         } catch (error) { outcome = { tipo: error.tipo, retryAfter: error.retryAfter }; }
         finally { mensaje = undefined; }

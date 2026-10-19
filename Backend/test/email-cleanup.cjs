@@ -29,7 +29,7 @@ async function main() {
             WHERE schemaname='public' ORDER BY tablename`);
         const state = {};
         for (const { tablename } of tables) {
-            if (excludeEmail && ['registros_correo_pendientes', 'registros_correo_envios'].includes(tablename)) continue;
+            if (excludeEmail && ['registros_correo_pendientes', 'registros_correo_envios', 'correo_outbox'].includes(tablename)) continue;
             assert.match(tablename, /^[a-z_]+$/);
             state[tablename] = (await pool.query(`SELECT to_jsonb(t) AS dato FROM public."${tablename}" t ORDER BY to_jsonb(t)::text`)).rows;
         }
@@ -128,19 +128,23 @@ async function main() {
         let releaseSend, enteredSend, receivedCode;
         const entered = new Promise(resolve => { enteredSend = resolve; });
         const gate = new Promise(resolve => { releaseSend = resolve; });
-        const service = crearRegistroCorreo({ pool, secreto: crypto.randomBytes(32).toString('hex'),
-            generarClaveHash: () => 'fixture-hash', enviarCodigo: async ({ codigo }) => {
-                receivedCode = codigo; enteredSend(); await gate;
-            } });
+        const key = crypto.randomBytes(32);
+        const service = crearRegistroCorreo({ pool, key, from: 'fixture@example.invalid', secreto: crypto.randomBytes(32).toString('hex'),
+            generarClaveHash: () => 'fixture-hash' });
+        const worker = require('../email-outbox').crearProcesadorOutbox({pool,key,enviarCodigo: async ({mensaje}) => {
+            receivedCode = JSON.parse(mensaje).text.match(/: (\d{6})/)[1]; enteredSend(); await gate;
+            return {id:'fixture-accepted'};
+        }});
         const password = crypto.randomBytes(24).toString('hex');
         await assert.rejects(service.registrar({ ...rateLimited, password }), { status: 429 });
         await fixture('antigua-durante-registro');
-        const registration = service.registrar({ correo: 'en-curso@example.invalid', numero_suministro: '930000001', password });
+        const pending = await service.registrar({ correo: 'en-curso@example.invalid', numero_suministro: '930000001', password });
+        const processing=worker.procesarUno();
         try {
             await entered;
             assert.equal((await apply()).eliminados, 1);
         } finally { releaseSend(); }
-        const pending = await registration;
+        assert.equal((await processing).estado,'aceptado');
         const [verified, cleanup] = await Promise.all([
             service.verificar({ registro_id: pending.registro_id, codigo: receivedCode }), apply()
         ]);

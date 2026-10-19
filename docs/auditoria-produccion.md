@@ -16,6 +16,15 @@ Su aplicación productiva sigue pendiente. Los hallazgos, cifras y evidencias
 originales siguientes describen el código auditado del avance 12; no se reescribe
 esa evidencia histórica ni se declara la versión lista para publicar.
 
+**Seguimiento posterior — avance 14:** [H03 corregido en desarrollo mediante
+Transactional Outbox](correo-outbox.md). Solicitud y evento cifrado se confirman
+juntos; el trabajador independiente opera después del commit, con recuperación,
+leases, idempotencia estable y reintentos limitados. Se reprodujo el defecto antes
+de cambiarlo y se validó la corrección en PostgreSQL aislado y Node 20/22, con
+proveedor simulado. La migración 006 y la habilitación productiva siguen pendientes;
+H01 (APK v1.0.0), dominio/remitente y los demás riesgos no se dan por resueltos.
+El informe original conserva su evidencia y numeración históricas.
+
 ## 1. Resumen ejecutivo y dictamen
 
 **La nueva versión no está lista para publicarse en producción.** El flujo OTP tiene controles adecuados y sus regresiones locales pasan, pero la transición Android rompe el registro de la APK anterior. Además, se reprodujeron carreras de integridad de recibos/pagos y un fallo de consistencia entre envío de correo y commit PostgreSQL. Se necesita corregir y validar estos puntos antes de autorizar una publicación.

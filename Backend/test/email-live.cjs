@@ -100,6 +100,7 @@ async function ejecutar({ modo, leer = leerOculto, escribir = console.log } = {}
         Object.assign(process.env, { DATABASE_URL: '', DB_HOST: c.host, DB_PORT: String(c.port),
             POSTGRES_DB: c.database, POSTGRES_USER: c.user, POSTGRES_PASSWORD: c.password,
             AUTH_TOKEN_SECRET: crypto.randomBytes(32).toString('hex'), EMAIL_OTP_SECRET: secreto,
+            EMAIL_OUTBOX_KEY:crypto.randomBytes(32).toString('base64'),
             RESEND_FROM: 'onboarding@resend.dev', NODE_ENV: 'test', PORT: '3000', CORS_ALLOWED_ORIGINS: '' });
         if (simulado) {
             process.env.RESEND_API_KEY = 'fixture-provider-key';
@@ -111,6 +112,8 @@ async function ejecutar({ modo, leer = leerOculto, escribir = console.log } = {}
                 return Response.json({ id: crypto.randomUUID() });
             };
         }
+        const worker = require('../email-outbox').crearProcesadorOutbox({pool:db,key:Buffer.from(process.env.EMAIL_OUTBOX_KEY,'base64'),
+            enviarCodigo:require('../resend-mail').crearRemitente({apiKey:process.env.RESEND_API_KEY},{fetchImpl:global.fetch,maxAttempts:1})});
         backend = require('../server');
         global.fetch = originalFetch;
         await new Promise((resolve, reject) => {
@@ -123,6 +126,7 @@ async function ejecutar({ modo, leer = leerOculto, escribir = console.log } = {}
                 headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
                 signal: AbortSignal.timeout(30000) });
             const data = await response.json();
+            if(response.status===202) comprobar((await worker.procesarUno()).estado==='aceptado');
             if (expected !== undefined) comprobar(response.status === expected);
             return { status: response.status, data };
         };
@@ -150,12 +154,14 @@ async function ejecutar({ modo, leer = leerOculto, escribir = console.log } = {}
             EXTRACT(EPOCH FROM (codigo_vence_en-creado_en)) AS ttl
             FROM registros_correo_pendientes WHERE id=$1`, [p.registro_id])).rows[0];
         comprobar(Number(pending.ttl) >= 299 && Number(pending.ttl) <= 301);
-        comprobar(Math.abs(new Date(p.vence_en) - pending.codigo_vence_en) < 1);
-        comprobar(new Date(p.vence_en).getTime() <= before + 301000);
+        comprobar(p.vence_en===null && p.estado_envio==='en_cola');
+        const estado=await request('verification-status',{registro_id:p.registro_id},200);
+        comprobar(Math.abs(new Date(estado.data.vence_en) - pending.codigo_vence_en) < 1);
+        comprobar(pending.codigo_vence_en.getTime() <= before + 301000);
         comprobar(/^scrypt\$/.test(pending.clave_hash));
         await sinCuenta();
         await request('login', login(), 401);
-        ok('Registro HTTP 202: proveedor acepta envío, TTL de 300 segundos, sin usuario, suministro ni JWT');
+        ok('Registro HTTP 202 encola; trabajador explícito acepta envío con TTL de 300 segundos, sin cuenta ni JWT');
         let first = simulado ? codigoSimulado : await leer('OTP del PRIMER correo (oculto, se dejará vencer): ');
         comprobar(coincideCodigo(p.registro_id, first, pending.codigo_hash, secreto));
         ok('Código del primer envío coincide con su HMAC; entrada privada en modo real');

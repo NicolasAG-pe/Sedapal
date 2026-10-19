@@ -26,6 +26,13 @@ histórica v1.0.0, y esta nota documenta la diferencia de la rama.
 
 Códigos comunes: **401** sin JWT válido o expirado; **403** cuenta inexistente/inactiva o permiso insuficiente; **500** error del servidor/base. Estos códigos se aplican a todas las rutas protegidas, además de los específicos de las tablas. Las rutas públicas también pueden devolver 500. Las rutas con limitador pueden devolver 429. Un JSON inválido o un cuerpo excesivo puede ser rechazado antes del handler, sin su formato JSON particular.
 
+**Desarrollo posterior — H03/avance 14:** registro/reenvío confirman una outbox,
+responden 202 con `estado_envio: en_cola` y `vence_en: null`; el código se activa
+al preparar el primer intento. Se añade POST `/api/auth/verification-status` con
+UUID en el cuerpo para consultar estado/plazos. La API no llama a Resend;
+[contrato OTP](verificacion-correo.md) y [operación outbox](correo-outbox.md).
+Esto no modifica las tablas históricas v1.0.0 de este documento ni resuelve H01.
+
 ## Estado del servicio
 
 | Método | Ruta | Acceso | Parámetros/cuerpo | Respuesta y códigos propios |

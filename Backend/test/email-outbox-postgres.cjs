@@ -78,7 +78,7 @@ test('Outbox PostgreSQL: atomicidad, recuperación, concurrencia, privacidad y l
             assert.equal(calls.at(-1).envioId,calls.at(-2).envioId);
             assert.equal((await row(f.event)).hubo_ambiguedad,true);
         });
-        await t.test('Ambigüedad limitada a cinco intentos con el mismo OTP y borrado criptográfico', async () => {
+        await t.test('Ambigüedad limitada a cinco intentos con el mismo OTP y retirada del payload', async () => {
             const f = await fixture(); failure={tipo:'ambiguo'};
             const start=calls.length;
             for(let n=0;n<5;n++) { await ready(f.event); assert.equal((await worker().procesarUno()).estado,n===4?'ambiguo':'reintento'); }
@@ -105,6 +105,14 @@ test('Outbox PostgreSQL: atomicidad, recuperación, concurrencia, privacidad y l
             const p=await fixture(); failure={tipo:'permanente'};
             assert.equal((await worker().procesarUno()).estado,'fallido'); failure=undefined;
             assert.equal((await row(p.event)).payload,null);
+        });
+        await t.test('Diez minutos en cola no consumen los cinco minutos del primer intento',async()=>{
+            const f=await fixture();
+            await pool.query("UPDATE registros_correo_pendientes SET codigo_vence_en=clock_timestamp()-INTERVAL '10 minutes' WHERE id=$1",[f.id]);
+            await pool.query("UPDATE correo_outbox SET creado_en=clock_timestamp()-INTERVAL '10 minutes' WHERE id=$1",[f.event]);
+            assert.equal((await worker().procesarUno()).estado,'aceptado');
+            const r=await row(f.event);assert.ok(r.codigo_vence_en.getTime()>Date.now()+290000);
+            assert.equal(r.codigo_hash,f.otp.hash);assert.match(calls.at(-1).mensaje,new RegExp(f.otp.codigo));
         });
         await t.test('Integridad de estados, FK e índices; sin transacciones/conexiones abandonadas', async () => {
             const f=await fixture();

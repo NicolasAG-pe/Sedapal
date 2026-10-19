@@ -158,6 +158,7 @@ module.exports = async function ({ chrome:c, origin, output, pool, request, admi
   await c.fill('#verify-code','12');await c.submit('#verify-email-form');
   assert.match(await c.evaluate('document.getElementById("verify-error").textContent'),/seis dígitos/);
   const mensajes = ()=>fs.readFileSync(mailbox,'utf8').trim().split('\n').map(JSON.parse).filter(m=>m.correo==='registro@fixture.invalid');
+  await wait(()=>mensajes().length===1,'primer correo del worker');
   const primerCodigo = mensajes().at(-1).codigo;
   // Simular el paso del cooldown únicamente en datos sintéticos y reloj de UI.
   await pool.query("UPDATE registros_correo_envios SET enviado_en=enviado_en-INTERVAL '61 seconds'");
@@ -167,7 +168,7 @@ module.exports = async function ({ chrome:c, origin, output, pool, request, admi
   assert.equal(await c.evaluate('document.getElementById("verify-code").value'),'');
   await c.evaluate(`window.__sockets=[];const originalIO=window.io;window.io=Object.assign((...args)=>{const s=originalIO(...args);__sockets.push(s);return s;},originalIO);void 0;`);
   await c.click('#btn-resend-email'); await c.click('#btn-resend-email');
-  await wait(()=>c.evaluate('document.getElementById("verify-status").textContent.includes("nuevo código")'),'reenvío');
+  await wait(()=>mensajes().length===2,'nuevo correo del worker');
   assert.equal(mensajes().length,2,'Doble clic envía una sola solicitud');
   assert.notEqual(mensajes().at(-1).codigo,primerCodigo);
   await c.fill('#verify-code',primerCodigo);await c.submit('#verify-email-form');

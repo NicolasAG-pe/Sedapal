@@ -9,6 +9,8 @@
     "test:config": "node --test Backend/test/config.test.js Backend/test/receipt-date.test.js scripts/test/public-api-config.test.js",
     "test:email": "node --test Backend/test/email-*.test.js",
     "test:email:schema": "node Backend/test/email-schema.cjs",
+    "test:email:outbox": "node --test Backend/test/email-outbox-postgres.cjs Backend/test/email-outbox-api.cjs",
+    "worker:email": "node Backend/workers/email-outbox.cjs",
     "test:email:api": "node Backend/test/email-api.cjs",
     "test:email:cleanup": "node Backend/test/email-cleanup.cjs",
     "test:email:cleanup:cli": "node Backend/test/email-cleanup-cli.cjs",

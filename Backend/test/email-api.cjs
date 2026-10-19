@@ -3,27 +3,36 @@ const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
 const { nuevaBase, sql } = require('./email-schema.cjs');
 const { crearRegistroCorreo } = require('../email-registration');
+const { crearProcesadorOutbox } = require('../email-outbox');
+const { crearRemitente } = require('../resend-mail');
 
-async function iniciar() {
+async function iniciar({ autoDrain = true } = {}) {
     const { pool: db, connection } = await nuevaBase('api');
     await db.query(sql('init.sql'));
     const authSecret = crypto.randomBytes(32).toString('hex');
     Object.assign(process.env, { DATABASE_URL: '', DB_HOST: connection.host, DB_PORT: String(connection.port),
         POSTGRES_DB: connection.database, POSTGRES_USER: connection.user, POSTGRES_PASSWORD: connection.password,
         AUTH_TOKEN_SECRET: authSecret, EMAIL_OTP_SECRET: crypto.randomBytes(32).toString('hex'),
-        RESEND_API_KEY: 'fixture-provider-key', RESEND_FROM: 'correo@example.invalid', NODE_ENV: 'test' });
+        EMAIL_OUTBOX_KEY: crypto.randomBytes(32).toString('base64'), RESEND_API_KEY: 'fixture-provider-key', RESEND_FROM: 'correo@example.invalid', NODE_ENV: 'test' });
     const originalFetch = global.fetch;
     const mensajes = [];
     let proveedorFalla = false;
-    global.fetch = async (url, opciones) => {
+    const fixtureFetch = async (url, opciones) => {
         if (url !== 'https://api.resend.com/emails') throw new Error('Destino inesperado en el adaptador de pruebas.');
         if (proveedorFalla) return Response.json({ message: 'fixture-sensitive-provider-error' }, { status: 403 });
         const body = JSON.parse(opciones.body);
         mensajes.push({ correo: body.to[0], codigo: body.text.match(/: (\d{6})/)[1] });
         return Response.json({ id: crypto.randomUUID() });
     };
+    // Barrera del harness: incluso una regresión de envío desde la API queda simulada.
+    global.fetch=(url,options)=>url==='https://api.resend.com/emails' ? fixtureFetch(url,options) : originalFetch(url,options);
     const backend = require('../server');
-    global.fetch = originalFetch;
+    const worker = crearProcesadorOutbox({pool:db,key:Buffer.from(process.env.EMAIL_OUTBOX_KEY,'base64'),
+        enviarCodigo:crearRemitente({apiKey:'fixture-provider-key'},{fetchImpl:fixtureFetch,maxAttempts:1})});
+    async function drain() {
+        for(let i=0;i<50;i++) { const r=await worker.procesarUno(); if(r.estado==='vacio')return; }
+        throw new Error('Demasiados trabajos en fixture.');
+    }
     await new Promise(resolve => backend.httpServer.listen(0, '127.0.0.1', resolve));
     const base = `http://127.0.0.1:${backend.httpServer.address().port}`;
     let ip = 1;
@@ -32,6 +41,7 @@ async function iniciar() {
             headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': fixedIP || `192.0.2.${ip++}` },
             body: JSON.stringify(body) });
         const data = await res.json();
+        if(autoDrain && res.status===202) await drain();
         if (status !== undefined) assert.equal(res.status, status, `${ruta}: ${JSON.stringify(data)}`);
         assert.equal(JSON.stringify(data).includes('codigo_hash'), false);
         return { data, res };
@@ -43,9 +53,10 @@ async function iniciar() {
     async function adelantarEnvios() {
         await db.query("UPDATE registros_correo_envios SET enviado_en=enviado_en-INTERVAL '61 seconds'");
     }
-    return { ...backend, db, base, request, registro, codigo, verificar, mensajes, adelantarEnvios,
+    return { ...backend, db, connection, base, request, worker, drain, registro, codigo, verificar, mensajes, adelantarEnvios,
         setProveedorFalla: value => { proveedorFalla = value; },
         async close() {
+            global.fetch=originalFetch;
             await new Promise(resolve => backend.io.close(resolve));
             await backend.pool.end(); await db.end();
         } };
@@ -112,8 +123,10 @@ async function main() {
         console.log('OK: vencimiento, cooldown, reenvío sin reiniciar intentos, cinco fallos concurrentes y límite horario por correo/suministro.');
 
         ctx.setProveedorFalla(true);
-        await request('register', registro(3), 503);
-        assert.equal((await db.query("SELECT count(*)::int AS n FROM registros_correo_pendientes WHERE correo=$1", [registro(3).correo])).rows[0].n, 0);
+        const {data: fallida} = await request('register', registro(3), 202);
+        assert.equal((await db.query("SELECT count(*)::int AS n FROM registros_correo_pendientes WHERE correo=$1", [registro(3).correo])).rows[0].n, 1);
+        assert.equal((await request('verification-status',{registro_id:fallida.registro_id},200)).data.estado_envio,'fallido');
+        await adelantarEnvios();
         ctx.setProveedorFalla(false);
         const { data: p3 } = await request('register', registro(3), 202);
         await adelantarEnvios();
@@ -122,7 +135,7 @@ async function main() {
         await db.query("UPDATE registros_correo_pendientes SET vence_en=NOW()-INTERVAL '1 second' WHERE id=$1", [nuevo.registro_id]);
         await request('resend-verification', { registro_id: nuevo.registro_id }, 400);
         await request('verify-email', verificar(nuevo.registro_id, codigo(registro(3).correo)), 400);
-        console.log('OK: fallo del proveedor revierte solicitud; registro sustituido y registro vencido son rechazados.');
+        console.log('OK: fallo permanente conserva solicitud y estado fallido; registro sustituido y registro vencido son rechazados.');
 
         const c4 = registro(4), c5 = { ...registro(5), numero_suministro: registro(4).numero_suministro };
         const { data: p4 } = await request('register', c4, 202);

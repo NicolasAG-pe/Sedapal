@@ -85,3 +85,10 @@ Toda actualización APK debe conservar applicationId e identidad permanente, aum
 | APK no actualiza | applicationId, versionCode mayor y certificado permanente; no cambiar fingerprint para aceptar otra clave. |
 
 Revisar logs localmente y redactarlos antes de compartir; la aplicación no garantiza que todos los errores internos sean libres de datos sensibles. Más cobertura en [TESTING](TESTING.md).
+
+## Outbox de correo (avance 14, sin activación)
+
+El [trabajador independiente](correo-outbox.md) procesa eventos confirmados;
+no se activa desde la API, Compose ni cron. La retención protege eventos activos
+y solo elimina la outbox terminal con su solicitud elegible. La recuperación,
+rotación de clave y habilitación futura requieren el procedimiento de esa guía.

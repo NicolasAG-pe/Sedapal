@@ -31,3 +31,13 @@ test('CLI desactivado por defecto y errores sin credenciales; no usa DATABASE_UR
     assert.throws(() => configurar({ EMAIL_WORKER_ENABLED:'1',RESEND_API_KEY:'synthetic',
         EMAIL_WORKER_DATABASE_URL:'postgres://example.invalid/one',EMAIL_WORKER_EXPECTED_DATABASE:'two' }));
 });
+test('Adaptador no inicia HTTP tras vencer presupuesto SQL/monótono o plazo local', async () => {
+    const { crearRemitente }=require('../resend-mail');
+    let calls=0;
+    const send=crearRemitente({apiKey:'fixture'},{maxAttempts:1,fetchImpl:async()=>{calls++;return Response.json({id:'fixture'});}});
+    const data={mensaje:'{}',envioId:crypto.randomUUID()};
+    await assert.rejects(send({...data,enviarHasta:new Date(Date.now()+300000),limiteMonotono:performance.now()-1}),{tipo:'caducado'});
+    await assert.rejects(send({...data,enviarHasta:new Date(Date.now()-1)}),{tipo:'caducado'});
+    await assert.rejects(send({...data,enviarHasta:'invalido'}));
+    assert.equal(calls,0);
+});

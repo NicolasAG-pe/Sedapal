@@ -104,7 +104,7 @@ async function browser(executable) {
   const database = 'hm_admin_test_' + Date.now();
   const parent = new Pool(connection);
   let pool;
-  let backend, web, chrome;
+  let backend, worker, web, chrome;
   let serverOutput = '';
   try {
     assert.equal((await parent.query('SELECT current_database() AS db')).rows[0].db, connection.database);
@@ -141,14 +141,20 @@ async function browser(executable) {
     });
     await new Promise(resolve => web.listen(0, '127.0.0.1', resolve));
     const origin = 'http://127.0.0.1:' + web.address().port;
+    const outboxKey=crypto.randomBytes(32).toString('base64');
     backend = spawn(process.execPath, ['--require', path.join(root,'Backend/test/resend-fixture.cjs'), 'server.js'], { cwd: path.join(root, 'Backend'), stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, PORT: String(backendPort), DATABASE_URL: '', DB_HOST: '127.0.0.1', DB_PORT: String(port),
         POSTGRES_DB: database, POSTGRES_USER: 'hm_fixture', POSTGRES_PASSWORD: 'fixture-only-not-production',
         AUTH_TOKEN_SECRET: 'isolated-e2e-fixture-secret-not-production', NODE_ENV: 'development', CORS_ALLOWED_ORIGINS: origin,
-        EMAIL_OTP_SECRET: crypto.randomBytes(32).toString('hex'), RESEND_API_KEY:'fixture-provider-key',
+        EMAIL_OUTBOX_KEY:outboxKey, EMAIL_OTP_SECRET: crypto.randomBytes(32).toString('hex'), RESEND_API_KEY:'fixture-provider-key',
         RESEND_FROM:'correo@fixture.invalid', HIDRO_TEST_MAILBOX:mailbox } });
     backend.stdout.on('data', data => { serverOutput += data; }); backend.stderr.on('data', data => { serverOutput += data; });
     await wait(async () => { try { return (await fetch(base + '/api/health')).ok; } catch (_) { return false; } }, 'API aislada');
+    worker=spawn(process.execPath,['--require',path.join(root,'Backend/test/resend-fixture.cjs'),
+      path.join(root,'Backend/workers/email-outbox.cjs'),'--run'],{stdio:['ignore','pipe','pipe'],env:{...process.env,
+      EMAIL_WORKER_ENABLED:'1',EMAIL_WORKER_DATABASE_URL:`postgres://hm_fixture:fixture-only-not-production@127.0.0.1:${port}/${database}`,
+      EMAIL_WORKER_EXPECTED_DATABASE:database,EMAIL_OUTBOX_KEY:outboxKey,RESEND_API_KEY:'fixture-provider-key',HIDRO_TEST_MAILBOX:mailbox}});
+    worker.stdout.on('data',data=>{serverOutput+=data;});worker.stderr.on('data',data=>{serverOutput+=data;});
     async function request(method, endpoint, token, body, status) {
       const response = await fetch(base + endpoint, { method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
       if (status) assert.equal(response.status, status, method + ' ' + endpoint);
@@ -157,6 +163,7 @@ async function browser(executable) {
     }
     for (const [supply, email] of [[adminSupply, 'admin@fixture.invalid'], [userSupply, 'cliente@fixture.invalid']]) {
       const pending = await request('POST', '/api/auth/register', null, { numero_suministro: supply, correo: email, password }, 202);
+      await wait(()=>fs.existsSync(mailbox) && fs.readFileSync(mailbox,'utf8').includes(email),'worker sintético');
       const message = fs.readFileSync(mailbox,'utf8').trim().split('\n').map(JSON.parse).filter(m=>m.correo===email).at(-1);
       await request('POST', '/api/auth/verify-email', null, {registro_id:pending.registro_id,codigo:message.codigo}, 201);
     }
@@ -349,6 +356,7 @@ async function browser(executable) {
     console.error(error.message); process.exitCode = 1;
   } finally {
     if (chrome) await chrome.close();
+    if (worker && worker.exitCode===null){const stopped=new Promise(resolve=>worker.once('exit',resolve));worker.kill('SIGTERM');await stopped;}
     if (backend) backend.kill('SIGTERM');
     if (web) await new Promise(resolve => web.close(resolve));
     if (pool) await pool.end();

@@ -17,8 +17,9 @@ Cada punto se publica al completarse, con diff revisado, pruebas y entrada en
 
 - Crear usuario y suministro solo al confirmar el correo. Las cuentas existentes
   conservan el acceso; no se modifica su estado mediante una migración masiva.
-- Generar códigos con aleatoriedad criptográfica y guardar únicamente su HMAC,
-  ligado al identificador de solicitud y a un secreto exclusivo del servidor.
+- Generar códigos con aleatoriedad criptográfica; validar mediante HMAC ligado
+  a la solicitud y a un secreto exclusivo. La outbox conserva temporalmente el
+  mensaje cifrado con AES-GCM y una clave independiente; nunca OTP legibles.
 - Limitar vigencia, intentos y reenvíos. La confirmación y el consumo deben ser
   atómicos para impedir reutilización o dobles registros concurrentes.
 - Guardar únicamente el hash de la contraseña del registro pendiente. No devolver
@@ -44,21 +45,26 @@ en borrador, sin fusionar ni desplegar.
 
 El adaptador usa la [API de envío de Resend](https://resend.com/docs/api-reference/emails/send-email)
 y sus [claves de idempotencia](https://resend.com/docs/dashboard/emails/idempotency-keys).
-Un envío tiene como máximo dos intentos con el mismo cuerpo y clave; los errores
-de red, timeout, 429 y 5xx permiten el segundo intento. Un 4xx permanente no se
-reintenta. Cada intento tiene timeout de 10 segundos, con una pausa de un segundo
-entre intentos. La aceptación por Resend no acredita entrega en la bandeja de
-entrada: solo la confirmación del código acredita control del correo.
+El registro no llama al proveedor. Confirma la solicitud y un evento cifrado en
+la misma transacción PostgreSQL; un trabajador independiente intenta enviarlo
+**después del commit**. Consulta [arquitectura y operación outbox](correo-outbox.md).
+Cada evento permite cinco intentos como máximo, un HTTP de hasta 10 s por claim,
+backoff y la misma clave/cuerpo en todos los intentos. 429 permite reintento;
+red, timeout, 409 y 5xx se tratan como potencialmente ambiguos. Los 4xx restantes
+son permanentes. No se inspeccionan ni registran errores privados del proveedor.
+La aceptación por Resend no acredita entrega en bandeja ni lectura.
 
 ## Contrato de la API
 
-El código OTP vence a los 5 minutos (300 segundos).
+El código OTP vence 300 segundos después de preparar el primer intento de envío.
+La solicitud vence a la hora original, sin ampliarla por demora o reenvío.
 
 | Ruta POST | Entrada | Éxito |
 | --- | --- | --- |
-| `/api/auth/register` | `correo`, `numero_suministro`, `password` | 202, `estado: pendiente`, `registro_id`, `vence_en`, `reenvio_en_segundos` |
+| `/api/auth/register` | `correo`, `numero_suministro`, `password` | 202, `estado: pendiente`, `estado_envio: en_cola`, `registro_id`, `vence_en: null`, `solicitud_vence_en`, `reenvio_en_segundos` |
 | `/api/auth/verify-email` | `registro_id`, `codigo` (texto de seis dígitos) | 201, `estado: ok`, suministro para iniciar sesión |
-| `/api/auth/resend-verification` | `registro_id` | 202, solicitud y nueva vigencia del código |
+| `/api/auth/resend-verification` | `registro_id` | 202, nuevo evento en cola; el código anterior se invalida |
+| `/api/auth/verification-status` | `registro_id` | 200, estado de envío y plazos, sin destinatario ni código |
 
 No se retorna JWT en estas rutas; después de confirmar se usa el login habitual.
 El identificador UUID aleatorio permite confirmar/reanudar la solicitud; tratarlo
@@ -66,7 +72,9 @@ como un dato privado temporal. No incluirlo en URLs ni logs.
 
 Los límites de envío (60 segundos y 3/hora) se comparten por correo y por suministro
 mediante historial y bloqueos PostgreSQL. Las rutas además limitan por IP:
-registro/reenvío 10 peticiones por 15 minutos y verificación 30 por 15 minutos.
+registro/reenvío 10 peticiones por 15 minutos, verificación 30 y consulta de
+estado 240 por 15 minutos. Los cupos de envío cuentan reservas de la cola,
+incluso si el proveedor falla, para evitar eludir límites mediante errores.
 Los cinco intentos son acumulados por solicitud y no se reinician con el reenvío.
 Al agotarlos se requiere un registro nuevo, sujeto al mismo límite de envíos.
 Una solicitud nueva para el mismo correo invalida las anteriores. La confirmación
@@ -74,15 +82,17 @@ consume la solicitud y crea cuenta/suministro en una sola transacción. Las cuen
 previas no se marcan artificialmente como verificadas.
 
 Errores: 400 código/entrada inválidos o solicitud vencida; 409 datos ocupados;
-429 límite de solicitudes (`Retry-After` cuando lo impone el servicio); 503 correo
-sin configurar o envío fallido. Un fallo o timeout de Resend revierte el cambio:
-no crea cuentas ni deja códigos nuevos utilizables. Si Resend aceptó un mensaje
-pero se perdió su respuesta, ese código puede resultar inutilizable y el usuario
-debe volver a solicitarlo. Los intentos automáticos del adaptador usan idempotencia.
+429 límite de solicitudes (`Retry-After` cuando lo impone el servicio); 503
+configuración ausente o contención SQL temporal. Los errores Resend ya no revierten
+la solicitud: se reflejan en la cola y en la consulta de estado. Un fallo anterior
+al commit no crea el evento ni permite enviar. Un commit con respuesta HTTP
+perdida puede requerir reiniciar el registro tras el cooldown; no hay idempotencia
+de la solicitud HTTP. El trabajador sí conserva la identidad de cada evento.
 
 La [política de retención](retencion-correo.md) conserva cada solicitud al menos
 24 horas después de `vence_en`, además de proteger cualquier envío de la última
-hora. La limpieza usa lotes, bloqueos y cascada únicamente del historial asociado;
+hora. La limpieza usa lotes, bloqueos y cascada del historial/outbox terminal asociado;
+protege cualquier evento activo incluso si la solicitud es antigua y
 no elimina usuarios ni suministros. No se ejecuta desde el arranque ni está
 programada en producción. Las pruebas eliminan solo fixtures de bases nuevas.
 
@@ -99,6 +109,7 @@ Con el puerto de ese contenedor, ejecutar:
 ```sh
 HIDRO_EMAIL_TEST_DB_PORT=<puerto-local> npm run test:email:schema
 HIDRO_EMAIL_TEST_DB_PORT=<puerto-local> npm run test:email:api
+HIDRO_EMAIL_TEST_DB_PORT=<puerto-local> npm run test:email:outbox
 ```
 
 Cada ejecución crea bases nuevas con nombres aleatorios y no borra las anteriores.
@@ -114,7 +125,10 @@ errores accesibles, cuenta regresiva de reenvío y protección contra doble env�
 Confirmar lleva al login con el suministro rellenado; no inicia sesión por sí solo.
 La aplicación Android usa este mismo HTML empaquetado por Capacitor.
 
-La solicitud puede retomarse después de recargar en la misma sesión del navegador.
+La solicitud puede retomarse después de recargar, incluso con `vence_en: null`.
+El cliente consulta el estado cada cinco segundos mientras está en cola/proceso;
+se detiene al obtener aceptación o estado terminal. Una desconexión conserva el
+estado y el código introducido. No promete envío ni entrega por recibir un 202.
 Solo se guarda en `sessionStorage` el identificador, suministro y plazos; nunca
 contraseña, código ni JWT de registro. Las contraseñas se vacían al recibir el 202.
 "Usar otros datos" descarta el estado local y permite iniciar otra solicitud, sin
@@ -122,7 +136,7 @@ eludir los límites del servidor. Un login válido o el cierre de sesión limpia
 también este estado temporal.
 
 El harness existente de cliente/admin simula Resend mediante un preload exclusivo
-de pruebas (`Backend/test/resend-fixture.cjs`); no existe un modo de envío simulado
+de pruebas (`Backend/test/resend-fixture.cjs`) en un trabajador hijo explícito; no existe un modo de envío simulado
 configurable en el servidor de producción. Su buzón contiene solo códigos y
 direcciones sintéticas dentro del directorio de reportes ignorado por Git.
 
@@ -135,13 +149,15 @@ locales en `/tmp` o bajo `artifacts/` con `HIDRO_TEST_REPORT_DIR`.
 
 ## Configuración pendiente de autorización
 
-1. Configurar privadamente en el backend `RESEND_API_KEY`, `RESEND_FROM` y
-   `EMAIL_OTP_SECRET`. Usar una clave Resend con permiso de envío y un remitente
+1. Configurar privadamente en la API `RESEND_FROM`, `EMAIL_OTP_SECRET` y
+   `EMAIL_OUTBOX_KEY`; el trabajador usa su conexión exclusiva, la misma clave
+   outbox y `RESEND_API_KEY`, sin necesitar el secreto HMAC ni el JWT. Usar una
+   clave Resend con permiso de envío y un remitente
    de dominio verificado. Generar el secreto OTP con un generador criptográfico
    (por ejemplo `openssl rand -hex 32`), independiente de `AUTH_TOKEN_SECRET`.
    No pegar esos valores en GitHub, el PR ni el cliente.
-2. Revisar y autorizar la migración aditiva
-   `Base-de-Datos/migrations/003_verificacion_correo.sql` antes de aplicarla a
+2. Revisar y autorizar las migraciones aditivas 003, 004, 005 (con su preflight
+   de integridad independiente) y `006_correo_outbox.sql`, en ese orden, antes de aplicarlas a
    una base existente. El arranque no aplica migraciones automáticamente. Para
    una base de desarrollo nueva, `init.sql` ya incluye el esquema completo.
 3. Revisar la [retención ya implementada](retencion-correo.md) y autorizar por
@@ -156,11 +172,11 @@ locales en `/tmp` o bajo `artifacts/` con `HIDRO_TEST_REPORT_DIR`.
    del cliente. No se realiza merge ni publicación de APK. Las previews automáticas
    detectadas en Vercel se registran a continuación y se deshabilitan para esta rama.
 
-Si faltan variables de correo, registro/confirmación/reenvío responden 503;
-login y el resto de la aplicación conservan su comportamiento anterior. No hay
+Si faltan variables de correo requeridas por la API, registro/confirmación/reenvío
+y consulta responden 503; login y el resto de la aplicación conservan su comportamiento anterior. No hay
 fallback a creación de cuentas sin verificación.
 
-## Validación del 18 de octubre de 2026
+## Validación histórica previa al avance 14 — 18 de octubre de 2026
 
 - `npm run test:config` y `npm run test:email`: aprobados.
 - Pruebas de esquema y API con `HIDRO_EMAIL_TEST_DB_PORT=32768`: aprobadas en
@@ -179,6 +195,10 @@ fallback a creación de cuentas sin verificación.
 El contenedor de pruebas y sus bases se conservan. Los reportes son locales y los
 resultados reproducibles se documentan aquí y en el PR; no equivalen a una prueba
 de entrega de Resend ni a una validación en teléfono físico.
+
+La evidencia nueva de avance 14, incluida Node 22 y la cola, figura en
+[correo-outbox.md](correo-outbox.md). Las pruebas anteriores se conservan como
+históricas; no prueban este contrato por sí solas.
 
 ## Auditoría de automatizaciones de GitHub
 

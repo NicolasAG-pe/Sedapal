@@ -30,7 +30,10 @@ revisa en el [Draft PR #1](https://github.com/NicolasAG-pe/Sedapal/pull/1), con
 commits por avance y registro en [CHANGELOG.md](CHANGELOG.md).
 
 Consulta la [configuración, contrato y pruebas](docs/verificacion-correo.md).
-Esta mejora requiere la migración 003 y variables privadas del backend antes de
+El avance 14 incorpora una [outbox transaccional cifrada](docs/correo-outbox.md);
+el trabajador permanece desactivado y requiere habilitación posterior autorizada.
+Esta mejora requiere las migraciones pendientes 003–006 y variables privadas
+de API/trabajador, según la guía, antes de
 habilitar nuevos registros; su publicación en producción queda pendiente de
 autorización. Las cuentas anteriores conservan su acceso.
 

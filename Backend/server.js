@@ -8,7 +8,8 @@ const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
 const { Pool } = require("pg");
 const { obtenerConfiguracion } = require('./config');
-const { obtenerConfigCorreo, crearRemitente } = require('./resend-mail');
+const { obtenerConfigCorreo } = require('./resend-mail');
+const { obtenerClaveOutbox } = require('./outbox-crypto');
 const { crearRegistroCorreo, registrarRutasCorreo } = require('./email-registration');
 const { crearServicioRecibos, responderErrorRecibo } = require('./receipt-transactions');
 
@@ -665,12 +666,15 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
 // ==========================================
 
 let configCorreo = null;
-try { configCorreo = obtenerConfigCorreo(); }
+try {
+    const config = obtenerConfigCorreo(process.env, { requiereApiKey: false });
+    if (config) configCorreo = { ...config, key: obtenerClaveOutbox() };
+}
 catch (_) { console.error('Configuración de correo inválida; registro deshabilitado.'); }
-const registroCorreo = crearRegistroCorreo({ pool, enviarCodigo: crearRemitente(configCorreo),
+const registroCorreo = crearRegistroCorreo({ pool, key: configCorreo && configCorreo.key, from: configCorreo && configCorreo.from,
     secreto: configCorreo && configCorreo.secreto, generarClaveHash });
 registrarRutasCorreo(app, registroCorreo, { registro: limiteRegistro,
-    verificacion: limitadorGenerico(30, 15), reenvio: limitadorGenerico(10, 15) });
+    verificacion: limitadorGenerico(30, 15), reenvio: limitadorGenerico(10, 15), consulta: limitadorGenerico(240, 15) });
 
 
 // ==========================================
