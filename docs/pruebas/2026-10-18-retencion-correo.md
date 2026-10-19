@@ -43,6 +43,30 @@ y más un minuto). Las fechas sintéticas se construyen con el reloj PostgreSQL;
 el código productivo no recibe un reloj/corte configurable desde el cliente.
 No se reducen las vigencias del registro ni del OTP.
 
+## Avance 2: comando operativo y preparación para automatización
+
+Se comprobaron `npm run test:email` (cuatro archivos), `npm run test:config`
+(tres archivos), `npm run maintenance:email -- --help` y
+`HIDRO_EMAIL_TEST_DB_PORT=32768 node Backend/test/email-cleanup-cli.cjs`.
+La integración CLI creó otra base sintética nueva y ejecutó subprocesos Node con
+solo su entorno de fixtures, sin heredar secretos del entorno de desarrollo.
+
+Tres grupos de integración CLI aprobados:
+
+1. Simulación por defecto y explícita sin cambios. Usar solo `DATABASE_URL` o
+   un nombre de base esperado distinto falla antes de borrar. Aplicación de un
+   solo lote, cascada correcta e idempotencia; solicitud reciente conservada.
+2. Dos procesos CLI simultáneos y un lote posterior: exactamente cuatro padres
+   y cuatro envíos antiguos eliminados, sin duplicados ni pérdida de datos recientes.
+3. Dependencia inesperada: salida 1, cancelación y datos conservados. stdout y
+   stderr no contienen URL, credencial, nombre de base ni correo del fixture;
+   los fallos usan un mensaje fijo y los éxitos solo conteos permitidos.
+
+Las unitarias también comprueban argumentos ambiguos/duplicados, política mínima,
+destino explícito, TLS externo verificado, ayuda sin conexión y errores privados
+sanitizados. No se ha ejecutado el comando contra bases anteriores ni producción.
+No se instalaron programaciones automáticas.
+
 ## Decisiones y alcance
 
 La [política](../retencion-correo.md) define 24 horas después de `vence_en`, no

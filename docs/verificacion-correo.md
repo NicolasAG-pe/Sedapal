@@ -144,8 +144,11 @@ locales en `/tmp` o bajo `artifacts/` con `HIDRO_TEST_REPORT_DIR`.
    `Base-de-Datos/migrations/003_verificacion_correo.sql` antes de aplicarla a
    una base existente. El arranque no aplica migraciones automáticamente. Para
    una base de desarrollo nueva, `init.sql` ya incluye el esquema completo.
-3. Definir la retención/limpieza de pendientes y comprobar dominio, remitente y
-   una entrega real a un buzón de prueba autorizado, incluidos spam y reenvío.
+3. Revisar la [retención ya implementada](retencion-correo.md) y autorizar por
+   separado su operación y futura programación en un destino identificado.
+   Comprobar dominio y remitente propios antes de producción. La entrega real de
+   prueba y el reenvío ya se documentaron en
+   [el informe OTP](pruebas/2026-10-18-resend-otp.md).
 4. Revisar la compatibilidad de versiones antes de publicar: el nuevo contrato de
    registro 202 requiere este cliente actualizado. La APK v1.0.0 anterior espera
    registro inmediato; su login de cuentas existentes sigue siendo compatible.

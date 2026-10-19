@@ -62,8 +62,8 @@ Aplicación:
 5. Revalida elegibilidad en una sentencia nueva, después de adquirir los locks.
    Así observa envíos confirmados entre el snapshot de selección y los locks.
    El lock del padre impide insertar nuevas referencias mientras se borra.
-6. Cuenta el historial asociado, elimina padres y confirma. Un fallo revierte
-   padres e historial juntos; los locks se liberan al terminar la transacción.
+6. Cuenta el historial asociado, elimina padres y confirma. Un fallo antes de
+   confirmar revierte padres e historial juntos; los locks se liberan al terminar.
 
 La simulación usa `REPEATABLE READ READ ONLY`, no toma locks de fila ni advisory
 locks y devuelve únicamente conteos del lote. Es una estimación: puede incluir
@@ -93,8 +93,55 @@ El helper crea una base sintética nueva y la conserva después. Nunca toma la U
 de producción ni lee `.env`. Los resultados y regresiones se documentan en
 [el informe de retención](pruebas/2026-10-18-retencion-correo.md).
 
-El núcleo ya puede ser invocado por una tarea externa futura. El comando operativo
-con identificación explícita de destino se añadirá en el siguiente avance.
-No hay autorización para ejecutar limpieza o migraciones sobre Neon u otras bases
-existentes. Activar cualquier programación exige una revisión y autorización
-separadas del propietario, con un rol de permisos mínimos y conteos sanitizados.
+## Comando operativo preparado, sin programación activa
+
+`Backend/maintenance/email-cleanup.cjs` ejecuta un único lote y termina. No importa
+el servidor, no envía correos ni lee `.env`, `DATABASE_URL` o las credenciales de
+la API. Requiere **ambas** variables privadas:
+
+| Variable | Uso |
+| --- | --- |
+| `EMAIL_MAINTENANCE_DATABASE_URL` | Conexión PostgreSQL exclusiva del destino autorizado |
+| `EMAIL_MAINTENANCE_EXPECTED_DATABASE` | Nombre que debe coincidir con la URL y con `current_database()` |
+
+Las conexiones externas reutilizan la política TLS `verify-full` de la API. El
+pool es de una conexión; tiene tiempo de conexión de 5 segundos, límites SQL de
+10 segundos y de espera de locks de 1 segundo, y timeout de transacción ociosa de
+15 segundos. No imprime la URL, el nombre de base, errores SQL ni objetos privados.
+
+Preparar esas variables con el mecanismo privado del entorno autorizado, nunca
+mediante argumentos con contraseñas ni archivos versionados. Revisar primero:
+
+```bash
+node Backend/maintenance/email-cleanup.cjs --help
+node Backend/maintenance/email-cleanup.cjs --dry-run
+```
+
+Omitir `--dry-run` también simula. Para aplicar **solo con autorización separada
+del destino**, el comando preparado es:
+
+```bash
+node Backend/maintenance/email-cleanup.cjs --apply --batch-size 500 --retention-hours 24
+```
+
+El alias desde la raíz es `npm run maintenance:email -- --dry-run` o, para un
+destino autorizado, `npm run maintenance:email -- --apply`. Las opciones no aceptan
+valores menores que la política, modos contradictorios, duplicados o desconocidos.
+
+El proceso escribe un JSON de conteos sanitizados en stdout y devuelve código 0
+al simular, completar o encontrar otra limpieza (`ocupado`). Si falla, escribe
+solo un mensaje fijo en stderr y devuelve 1. No crea archivos de reportes. Un
+planificador futuro puede consumir directamente este JSON, alertar ante fallos y
+volver a intentarlo en su siguiente intervalo; `ocupado` no exige un reintento
+inmediato. Evaluar una ejecución horaria y ajustar el lote/frecuencia a los
+conteos y carga, conservando el mínimo de 24 horas. La retención efectiva puede
+ser mayor por la frecuencia, el límite del lote, bloqueos o guardas de seguridad.
+Si se pierde la conexión durante el COMMIT, su resultado puede ser ambiguo para
+el proceso; una ejecución posterior es segura por la idempotencia de la tarea.
+
+No se ha creado ningún cron, servicio ni tarea programada. No hay autorización
+para ejecutar limpieza o migraciones sobre Neon u otras bases existentes.
+Activar cualquier programación exige revisión y autorización separadas del
+propietario, un destino identificado y un rol limitado a estas tablas, sin
+permisos de borrado sobre tablas de negocio. Revisar los triggers y dependencias
+del destino antes de conceder permisos o aplicar la migración preparada.

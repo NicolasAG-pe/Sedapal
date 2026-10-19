@@ -4,6 +4,19 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — comando de mantenimiento preparado
+
+- Comando de un solo lote con simulación predeterminada y aplicación explícita;
+  exige conexión privada exclusiva y nombre de base esperado, sin reutilizar
+  `DATABASE_URL`, leer `.env` ni cargar la API o las credenciales de correo.
+- Opciones estrictas, TLS verificado en conexiones externas, tiempos de espera
+  acotados y salida de conteos sin datos personales ni errores SQL privados.
+- Unitarias de correo/configuración y tres grupos CLI en PostgreSQL aislado
+  aprobados: simulación, destino erróneo, cascada, idempotencia, dos procesos
+  simultáneos, manejo de errores y privacidad de stdout/stderr.
+- Procedimiento y contrato de salida listos para un planificador futuro; ninguno
+  activado. Sin limpiezas de bases existentes ni cambios en infraestructura/APK.
+
 ### 18 de octubre de 2026 — retención segura de solicitudes de correo
 
 - Núcleo de mantenimiento con simulación de solo lectura por defecto y retención
