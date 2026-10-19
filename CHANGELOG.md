@@ -4,6 +4,20 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — avance 14, base transaccional de correo
+
+- H03 reproducido antes de cambiar el registro: aceptación simulada seguida de
+  fallo previo al commit deja cero solicitudes y el reintento usa otra identidad.
+- Migración 006 aditiva y manual; cola cifrada AES-256-GCM con clave exclusiva,
+  trabajador independiente desactivado por defecto, leases recuperables,
+  idempotencia estable, backoff, cinco intentos y plazos de envío acotados.
+- Fundación comprobada: 26 pruebas de correo/outbox aprobadas en Node 20;
+  16 pruebas focalizadas de outbox/adaptador aprobadas en Node 22, con ocho
+  escenarios PostgreSQL en bases nuevas y proveedor simulado. No correos reales.
+- Este primer incremento prepara los componentes; la integración del registro,
+  cliente y retención se completa en el siguiente incremento del avance 14.
+  H03 todavía no se declara corregido en el flujo HTTP en este punto.
+
 ### 18 de octubre de 2026 — avance 13: corregir integridad concurrente de recibos y pagos
 
 - H02 reproducido antes de corregir: dos altas 201/201, edición que deja recibo
