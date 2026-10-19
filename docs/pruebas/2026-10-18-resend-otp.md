@@ -1,6 +1,6 @@
 # Prueba de correo OTP con Resend — 18 de octubre de 2026
 
-Estado: preparación y ensayo completos; **envío real pendiente de autorización**.
+Estado: **prueba real aprobada**, verificada mediante el informe local de ejecución.
 Rama: `feature/verificacion-correo`. [Draft PR #1](https://github.com/NicolasAG-pe/Sedapal/pull/1).
 
 ## Alcance y aislamiento
@@ -14,8 +14,8 @@ solo una confirmación válida inserta usuario y suministro en una transacción.
 El contenedor reutilizado es `hidro-email-test-20261018`, imagen `postgres:18`,
 sin montajes y con puerto `127.0.0.1:32768`. Es independiente de los servicios
 `sedapal-*`. Cada ejecución crea una base nueva con fixtures sintéticos y conserva
-las anteriores. La futura ejecución real usará exclusivamente el buzón autorizado
-por el propietario; el resto de sus datos de cuenta serán sintéticos.
+las anteriores. La ejecución real usó exclusivamente el buzón autorizado
+por el propietario; el resto de sus datos de cuenta fueron sintéticos.
 
 El ejecutor comprueba la asociación entre contenedor y puerto antes de conectar.
 Fija host, base, usuario y contraseña de pruebas; vacía `DATABASE_URL` y nunca
@@ -52,6 +52,9 @@ incluyen modo, fechas, nombre aleatorio de base aislada, contadores y etiquetas
 fijas de comprobación; nunca cuerpos HTTP, correos, códigos, hashes ni JWT.
 
 ## Procedimiento privado para la prueba real
+
+Se conserva este procedimiento para reproducibilidad. La prueba real ya terminó;
+este avance documental no lo vuelve a ejecutar ni envía correos adicionales.
 
 Primero obtener autorización del propietario para **dos correos** al único buzón
 que indicó en la conversación. El remitente está fijado en `onboarding@resend.dev`.
@@ -122,21 +125,58 @@ esperar. Su informe distingue `simulacion_aprobada` de `prueba_real_aprobada`.
   `npm run test:email:live`. Los fallos del ejecutor se informan por etapa con texto
   fijo; los errores SQL del servidor heredado no se imprimen ni guardan.
 
-## Pendiente y límites de la evidencia
+## Resultado de la ejecución real
 
-| Prueba real | Estado |
+Se revisó el informe local más reciente,
+`artifacts/email-live/resultado-1792369605147-e602a843.json`, sin incorporarlo a Git.
+Sus nueve comprobaciones coinciden, en contenido y orden, con las del ejecutor
+`Backend/test/email-live.cjs` publicado en `be8f1b1`.
+
+| Dato del informe | Valor comprobado |
 | --- | --- |
-| Aceptación de los dos correos por la API real de Resend | Pendiente de autorización y credenciales |
-| Recepción en el buzón e introducción privada de OTP | Pendiente del propietario |
-| Caducidad tras cinco minutos reales | Pendiente |
-| Confirmación, PostgreSQL y login con el OTP recibido | Pendiente |
+| Modo | `live` |
+| Resultado | `prueba_real_aprobada` |
+| Inicio UTC | `2026-10-19T00:26:45.146Z` |
+| Fin UTC | `2026-10-19T00:32:02.472Z` |
+| Fecha y horario en Lima (UTC−05:00) | 18 de octubre de 2026, 19:26:45 a 19:32:02 |
+| Vigencia configurada del OTP | 300 segundos |
+| Espera real registrada | 300 segundos |
+| Envíos lógicos aceptados | 2 |
+| Comprobaciones aprobadas | 9 |
+
+Huella SHA-256 del archivo local, para comprobar la identidad de la evidencia:
+`f3d3c0091ebc7584ce8adaa3ca13a3f8c6713ff29b068806076069b5bb754cc6`.
+Esta huella corresponde al informe completo, no a un OTP ni a una credencial.
+
+| Comprobación de la prueba real | Resultado aprobado |
+| --- | --- |
+| PostgreSQL aislado | Base nueva y vacía; esquema inicial aplicado |
+| Compatibilidad con cuenta previa | Login de cuenta sintética sin fecha de verificación antes y después del flujo |
+| Registro y primer envío real por Resend | HTTP 202; TTL de 300 segundos; sin usuario, suministro definitivo ni JWT antes de confirmar; login previo rechazado |
+| Recepción privada del primer OTP | El código introducido desde la terminal coincide con el HMAC del primer envío |
+| Código incorrecto | HTTP 400; intento persistente y ausencia de cuenta/suministro |
+| Caducidad real | Primer OTP rechazado con HTTP 400 tras esperar 300 segundos reales, sin modificar fechas ni crear cuenta/suministro |
+| Reenvío real | Segundo envío aceptado; nuevo hash y contador de intentos conservado; cuenta aún pendiente |
+| Confirmación única e integridad | Dos confirmaciones concurrentes producen 201 y 400; reutilización rechazada; exactamente un usuario verificado y su suministro, cero huérfanos y hashes pendientes consumidos limpiados |
+| Registro completado y sesión | Login correcto y acceso al perfil protegido; contraseña incorrecta rechazada; cuenta previa conserva acceso |
+
+Al documentar este resultado se validaron el modo, estado, fechas, contadores y
+las nueve etiquetas del informe contra el ejecutor. Se revisó el diff documental
+para excluir datos personales y secretos. No se repitieron el flujo, los envíos
+ni las pruebas que requieren escribir en PostgreSQL. El informe privado y la base
+aislada se conservan localmente; solo se publica este resumen sin credenciales,
+direcciones personales, códigos ni tokens.
+
+## Límites de la evidencia y pasos antes de producción
 
 HTTP 202 y el adaptador acreditan aceptación del proveedor, no colocación en inbox.
 La entrada correcta del OTP recibido acredita el acceso al mensaje por el operador.
+La prueba real cubre el flujo API/PostgreSQL; la interfaz web/Android se validó
+por separado con proveedor simulado. No se acredita una nueva prueba física de APK
+ni el funcionamiento de cuentas de producción: la cuenta previa es sintética.
 Esta prueba no consulta cuerpos de Resend ni comparte enlaces a sus mensajes;
-los eventos de entrega del proveedor requerirían una comprobación separada. Si
-falla una etapa, no declarar éxito: revisar el informe y repetir en una base nueva,
-con autorización para cualquier envío adicional.
+los eventos de entrega del proveedor requerirían una comprobación separada.
+Cualquier repetición futura requiere autorización para los envíos adicionales.
 
 Antes de producción: validar dominio propio/remitente y entregabilidad, acordar
 retención de pendientes, evaluar la recuperación ante un envío aceptado seguido de

@@ -4,6 +4,21 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — prueba real OTP con Resend aprobada
+
+- Verificado el último informe privado: modo `live`, resultado
+  `prueba_real_aprobada`, dos envíos aceptados y nueve comprobaciones aprobadas.
+- Caducidad de 300 segundos comprobada mediante espera real; códigos incorrecto
+  y vencido rechazados sin crear cuenta. Reenvío con nuevo código sin reiniciar
+  intentos; confirmación concurrente de consumo único y registro íntegro de
+  usuario verificado y suministro, sin duplicados ni huérfanos.
+- Login y perfil protegido de la cuenta nueva aprobados; contraseña incorrecta
+  rechazada y compatibilidad de login con cuenta previa sintética conservada.
+- Informe de pruebas actualizado con resultados y referencia verificable a la
+  evidencia local. Validación documental: campos y nueve comprobaciones cotejados
+  con el ejecutor, revisión del diff y exclusión de secretos/datos personales.
+  No se repitieron correos ni se publicaron archivos de `artifacts/`.
+
 ### 18 de octubre de 2026 — preparación de prueba real privada
 
 - Ejecutor de terminal para Resend real con confirmación previa de dos envíos,
