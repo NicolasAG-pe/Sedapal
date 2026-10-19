@@ -4,6 +4,22 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — avance 12: auditoría de preparación para producción
+
+- Informe `docs/auditoria-produccion.md` con alcance, evidencias, 7 hallazgos altos,
+  9 medios y 2 bajos, plan correctivo, transición Android/backend, checklist de
+  despliegue y recuperación. Dictamen: nueva versión no lista para producción.
+- Reproducidos en bases sintéticas nuevas: recibos duplicados concurrentes,
+  anulación intercalada con pago y envío simulado aceptado sin commit persistido.
+  Comprobados rechazo del contrato 202 por cliente v1.0.0, cabeceras CORS,
+  bloqueo controlado de 003 y conservación de tablas previas con 003/004 repetidas.
+- Regresiones aprobadas: configuración, correo, esquema/API, retención/CLI,
+  documentos, firma y Perfil; harness Chromium con 25 comprobaciones, cero
+  errores JS y recursos fallidos; runtimes cliente de 15 archivos por destino.
+  Consultas npm sin avisos conocidos; límites de la evidencia detallados.
+- Solo documentación: sin correcciones funcionales, correos reales, migraciones
+  Neon, limpieza de bases existentes, programación, despliegues, APK ni merge.
+
 ### 18 de octubre de 2026 — comando de mantenimiento preparado
 
 - Comando de un solo lote con simulación predeterminada y aplicación explícita;
