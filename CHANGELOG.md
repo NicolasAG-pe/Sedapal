@@ -4,6 +4,21 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — preparación de prueba real privada
+
+- Ejecutor de terminal para Resend real con confirmación previa de dos envíos,
+  API Key por variable privada y OTP con entrada oculta. Base nueva por ejecución,
+  servidor en loopback e informes sin credenciales, códigos ni datos personales.
+- Procedimiento de caducidad tras cinco minutos reales, código incorrecto,
+  confirmación concurrente, integridad PostgreSQL, login/perfil y cuenta previa.
+- Ensayo con proveedor simulado y preparación aislada aprobados; envío real
+  pendiente de autorización y credenciales. No se atribuye entrega real al ensayo.
+- Unitarias de correo/configuración, esquema/API PostgreSQL, 25 comprobaciones
+  Chromium, tres de Perfil, cuatro de documentos y firma Android aprobadas.
+  Perfil usa la caché de Chromium ya instalada; restricciones del sandbox resueltas
+  ejecutando las pruebas autorizadas fuera de él. Detalle en
+  `docs/pruebas/2026-10-18-resend-otp.md`.
+
 ### 18 de octubre de 2026 — OTP vigente cinco minutos
 
 - Vigencia del OTP reducida de 600 a 300 segundos; textos del correo y del cliente
