@@ -4,6 +4,15 @@ Contrato de [Backend/server.js](../Backend/server.js) en **v1.0.0**, commit `135
 
 Base pública: `https://hidro-mejora-api.onrender.com`. En Docker se usa `/api` desde el origen de cada cliente mediante Nginx. No concatenar `/api` dos veces.
 
+**Desarrollo posterior — H02:** alta, edición, anulación y pago de recibos ahora
+comparten el [protocolo transaccional](integridad-recibos.md). Mantienen URLs y
+respuestas de éxito. Duplicados, pagos existentes, estado incompatible y espera
+de lock agotada devuelven 409; timeout SQL, 503. No se modifican monto/suministro
+desde el body de pago ni suministro/estado desde edición. Un histórico con pago
+o estado Pagado bloquea cambios; un periodo histórico duplicado bloquea cobro
+hasta revisión. Sin cambios remotos; la tabla siguiente conserva la referencia
+histórica v1.0.0, y esta nota documenta la diferencia de la rama.
+
 ## Convenciones
 
 - Cuerpos de escritura: JSON, `Content-Type: application/json`; límite global de 3 MB.

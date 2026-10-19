@@ -4,6 +4,25 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — avance 13: corregir integridad concurrente de recibos y pagos
+
+- H02 reproducido antes de corregir: dos altas 201/201, edición que deja recibo
+  de S/ 20 con pago de S/ 10 y anulación/edición aceptadas después de pagar.
+- Servicio transaccional para las cuatro escrituras: suministro y después recibo,
+  relectura de pagos tras el lock, monto del servidor y verificación de propiedad.
+  Conflictos 409 sanitizados, tiempos acotados, rollback y liberación de conexión.
+- UNIQUE suministro/periodo y pago/recibo en bases nuevas. Migración 005 manual
+  con preflight, rechazo de históricos inconsistentes y validación de drift;
+  sin reconciliación automática ni cambios en bases existentes.
+- H02: 21 pruebas aprobadas y una condicional omitida en Node 20 y Node 22;
+  variante de esquema anterior: 12 aprobadas y una condicional omitida. Incluyen
+  dos procesos, permisos, carga mixta, timeout, rollback, pool liberado, cero
+  deadlocks observados y conservación de tablas/FKs/secuencias en migración.
+- Regresiones de configuración, correo, esquema/API, retención/CLI, documentos,
+  firma y Perfil aprobadas; Chromium cliente/admin: 25 comprobaciones sin
+  errores JS ni recursos fallidos. Guías y seguimiento de auditoría actualizados.
+- Sin Neon, despliegues, correos reales, cambios APK, borrado de históricos o merge.
+
 ### 18 de octubre de 2026 — avance 12: auditoría de preparación para producción
 
 - Informe `docs/auditoria-produccion.md` con alcance, evidencias, 7 hallazgos altos,

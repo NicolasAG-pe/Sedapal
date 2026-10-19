@@ -10,6 +10,12 @@
 
 **Revisión:** [Draft PR #1](https://github.com/NicolasAG-pe/Sedapal/pull/1), hacia `main`.
 
+**Seguimiento posterior — avance 13:** [H02 corregido en desarrollo](integridad-recibos.md),
+con transacciones coordinadas, pruebas concurrentes y migración 005 preparada.
+Su aplicación productiva sigue pendiente. Los hallazgos, cifras y evidencias
+originales siguientes describen el código auditado del avance 12; no se reescribe
+esa evidencia histórica ni se declara la versión lista para publicar.
+
 ## 1. Resumen ejecutivo y dictamen
 
 **La nueva versión no está lista para publicarse en producción.** El flujo OTP tiene controles adecuados y sus regresiones locales pasan, pero la transición Android rompe el registro de la APK anterior. Además, se reprodujeron carreras de integridad de recibos/pagos y un fallo de consistencia entre envío de correo y commit PostgreSQL. Se necesita corregir y validar estos puntos antes de autorizar una publicación.

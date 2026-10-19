@@ -84,7 +84,9 @@ CREATE TABLE recibos (
 
     CONSTRAINT fk_recibo_suministro
         FOREIGN KEY (id_suministro)
-        REFERENCES suministros(id_suministro)
+        REFERENCES suministros(id_suministro),
+
+    CONSTRAINT uq_recibos_suministro_periodo UNIQUE (id_suministro, periodo)
 );
 
 
@@ -102,7 +104,9 @@ CREATE TABLE pagos (
 
     CONSTRAINT fk_pago_recibo
         FOREIGN KEY (id_recibo)
-        REFERENCES recibos(id_recibo)
+        REFERENCES recibos(id_recibo),
+
+    CONSTRAINT uq_pagos_recibo UNIQUE (id_recibo)
 );
 
 

@@ -10,6 +10,7 @@ const { Pool } = require("pg");
 const { obtenerConfiguracion } = require('./config');
 const { obtenerConfigCorreo, crearRemitente } = require('./resend-mail');
 const { crearRegistroCorreo, registrarRutasCorreo } = require('./email-registration');
+const { crearServicioRecibos, responderErrorRecibo } = require('./receipt-transactions');
 
 const app = express();
 const configuracion = obtenerConfiguracion();
@@ -92,6 +93,7 @@ if (!obtenerSecretoAuth()) {
 }
 
 const pool = new Pool(configuracion.database);
+const servicioRecibos = crearServicioRecibos({ pool, validarRecibo: validarReciboAdmin });
 
 
 // ==========================================
@@ -992,158 +994,14 @@ app.post("/api/incidencias", limiteOperacionesSensibles, requiereAuth, async (re
 // ==========================================
 
 app.post("/api/pagos", limiteOperacionesSensibles, requiereAuth, async (req, res) => {
-    let cliente = null;
-
     try {
-        // El recibo debe pertenecer al suministro del JWT (FASE 26).
-        // No se acepta numero_suministro del body como autoridad.
-        const { id_recibo, metodo } = req.body || {};
-
-        const idRecibo = Number(id_recibo);
-
-        if (!Number.isInteger(idRecibo) || idRecibo <= 0) {
-            return res.status(400).json({
-                estado: "error",
-                mensaje: "Identificador de recibo inválido."
-            });
-        }
-
-        if (!String(metodo || '').trim() || String(metodo || '').trim().length > 30) {
-            return res.status(400).json({
-                estado: "error",
-                mensaje: "El método de pago es obligatorio (máximo 30 caracteres)."
-            });
-        }
-
-        cliente = await pool.connect();
-
-        await cliente.query('BEGIN');
-
-        const reciboResultado = await cliente.query(
-            `SELECT
-               r.id_recibo,
-               r.monto,
-               r.estado,
-               r.periodo,
-               s.numero_suministro
-             FROM recibos r
-             JOIN suministros s
-               ON s.id_suministro = r.id_suministro
-             WHERE r.id_recibo = $1
-               AND s.id_suministro = $2
-             FOR UPDATE;`,
-            [idRecibo, req.user.id_suministro]
-        );
-
-        if (reciboResultado.rowCount === 0) {
-            await cliente.query('ROLLBACK');
-            return res.status(404).json({
-                estado: "error",
-                mensaje: "Recibo no encontrado."
-            });
-        }
-
-        const recibo = reciboResultado.rows[0];
-
-        if (recibo.estado === 'Pagado') {
-            await cliente.query('ROLLBACK');
-            return res.status(409).json({
-                estado: "error",
-                mensaje: "El recibo ya se encuentra pagado."
-            });
-        }
-
-        if (recibo.estado === 'Anulado') {
-            await cliente.query('ROLLBACK');
-            return res.status(409).json({
-                estado: "error",
-                mensaje: "No se puede pagar un recibo anulado."
-            });
-        }
-
-        // El monto se obtiene de PostgreSQL, nunca del frontend.
-        // El código se deriva del id_pago (PK) para garantizar
-        // unicidad con formato HM-PAG-2026-000002. No se genera
-        // en el navegador ni se acepta desde el cliente.
-        const pagoProvisional = await cliente.query(
-            `INSERT INTO pagos (
-               id_recibo,
-               monto,
-               metodo,
-               codigo_operacion
-             )
-             VALUES ($1,$2,$3,$4)
-             RETURNING
-               id_pago,
-               id_recibo,
-               monto,
-               metodo,
-               codigo_operacion,
-               fecha_pago;`,
-            [
-                idRecibo,
-                recibo.monto,
-                String(metodo).trim(),
-                'PENDIENTE'
-            ]
-        );
-
-        const idPago = pagoProvisional.rows[0].id_pago;
-        const anioActual = new Date().getFullYear();
-        const codigoOperacion = 'HM-PAG-' + anioActual + '-' + String(idPago).padStart(6, '0');
-
-        const pagoResultado = await cliente.query(
-            `UPDATE pagos
-             SET codigo_operacion = $1
-             WHERE id_pago = $2
-             RETURNING
-               id_pago,
-               id_recibo,
-               monto,
-               metodo,
-               codigo_operacion,
-               fecha_pago;`,
-            [codigoOperacion, idPago]
-        );
-
-        await cliente.query(
-            `UPDATE recibos
-             SET estado = 'Pagado'
-             WHERE id_recibo = $1;`,
-            [idRecibo]
-        );
-
-        await cliente.query('COMMIT');
-
-        // Tiempo real DESPUÉS del COMMIT (nunca antes; en ROLLBACK no se emite).
-        // Aviso mínimo: el cliente reconsulta Inicio/Recibos/Historial por REST.
-        emitirASuministro(req.user.id_suministro, 'pago:registrado', { id_pago: idPago, id_recibo: idRecibo });
-        emitirAAdmins('pago:nuevo', { id_pago: idPago, id_recibo: idRecibo });
-
-        return res.status(201).json({
-            estado: "ok",
-            pago: pagoResultado.rows[0],
-            recibo: {
-                id_recibo: idRecibo,
-                estado: "Pagado"
-            }
-        });
-
-    } catch (error) {
-        if (cliente) {
-            try { await cliente.query('ROLLBACK'); } catch (e) {}
-        }
-        console.error(error);
-
-        return res.status(500).json({
-            estado: "error",
-            mensaje: "Error interno del servidor."
-        });
-    } finally {
-        if (cliente) {
-            try { cliente.release(); } catch (e) {}
-        }
-    }
+        const result = await servicioRecibos.pagar(Number((req.body || {}).id_recibo),
+            (req.body || {}).metodo, req.user.id_suministro, req.user.id_usuario);
+        // El servicio confirma y libera la conexión antes de notificar.
+        emitirASuministro(req.user.id_suministro, 'pago:registrado', { id_pago: result.pago.id_pago, id_recibo: result.recibo.id_recibo });
+        emitirAAdmins('pago:nuevo', { id_pago: result.pago.id_pago, id_recibo: result.recibo.id_recibo });
+        return res.status(201).json({ estado: 'ok', ...result });
+    } catch (error) { return responderErrorRecibo(res, error); }
 });
 
 
@@ -1872,255 +1730,32 @@ app.get("/api/admin/recibos", requiereAdmin, async (req, res) => {
 
 app.post("/api/admin/recibos", requiereAdmin, async (req, res) => {
     try {
-        const validado = validarReciboAdmin(req.body);
-
-        if (validado.error) {
-            return res.status(400).json({
-                estado: "error",
-                mensaje: validado.error
-            });
-        }
-
-        const suministro = await pool.query(
-            `SELECT id_suministro FROM suministros WHERE numero_suministro = $1 LIMIT 1;`,
-            [validado.numero]
-        );
-
-        if (suministro.rowCount === 0) {
-            return res.status(404).json({
-                estado: "error",
-                mensaje: "Suministro no encontrado."
-            });
-        }
-
-        const duplicado = await pool.query(
-            `SELECT r.id_recibo
-             FROM recibos r
-             JOIN suministros s ON s.id_suministro = r.id_suministro
-             WHERE s.numero_suministro = $1 AND r.periodo = $2
-             LIMIT 1;`,
-            [validado.numero, validado.periodo]
-        );
-
-        if (duplicado.rowCount > 0) {
-            return res.status(409).json({
-                estado: "error",
-                mensaje: "Ya existe un recibo para este suministro y periodo."
-            });
-        }
-
-        const insertado = await pool.query(
-            `INSERT INTO recibos
-               (id_suministro, periodo, fecha_emision, fecha_vencimiento, monto, consumo_m3, estado)
-             VALUES ($1, $2, $3, $4, $5, $6, 'Emitido')
-             RETURNING
-               id_recibo, $7 AS numero_suministro, periodo,
-               fecha_emision, fecha_vencimiento, monto, consumo_m3, estado,
-               FALSE AS tiene_pago;`,
-            [suministro.rows[0].id_suministro, validado.periodo, validado.emision,
-             validado.vencimiento, validado.monto, validado.consumo, validado.numero]
-        );
-
-        // FASE 19: nuevo recibo => notificación al suministro.
+        const { recibo } = await servicioRecibos.crear(req.body);
+        // Notificación opcional después del COMMIT; un conflicto no notifica.
         try {
-            await crearNotificacion({
-                id_suministro: suministro.rows[0].id_suministro,
-                alcance: 'Usuario',
-                titulo: 'Nuevo recibo disponible: ' + validado.periodo,
-                mensaje: 'Se publicó tu recibo ' + validado.periodo + ' por S/ ' + Number(validado.monto).toFixed(2) + '.',
-                tipo: 'recibo'
-            });
-        } catch (e) {}
-
-        // Tiempo real: el suministro recarga Inicio/Recibos/Notificaciones por REST.
-        emitirASuministro(suministro.rows[0].id_suministro, 'recibo:nuevo', { id: insertado.rows[0].id_recibo, periodo: validado.periodo });
-
-        return res.status(201).json({
-            estado: "ok",
-            recibo: filaReciboAdmin(insertado.rows[0])
-        });
-
-    } catch (error) {
-        console.error(error);
-
-        return res.status(500).json({
-            estado: "error",
-            mensaje: "Error interno del servidor."
-        });
-    }
+            await crearNotificacion({ id_suministro: recibo.id_suministro, alcance: 'Usuario',
+                titulo: 'Nuevo recibo disponible: ' + recibo.periodo,
+                mensaje: 'Se publicó tu recibo ' + recibo.periodo + ' por S/ ' + Number(recibo.monto).toFixed(2) + '.', tipo: 'recibo' });
+        } catch (_) {}
+        emitirASuministro(recibo.id_suministro, 'recibo:nuevo', { id: recibo.id_recibo, periodo: recibo.periodo });
+        return res.status(201).json({ estado: 'ok', recibo: filaReciboAdmin(recibo) });
+    } catch (error) { return responderErrorRecibo(res, error); }
 });
 
 app.patch("/api/admin/recibos/:id", requiereAdmin, async (req, res) => {
     try {
-        const idRecibo = Number(req.params.id);
-
-        if (!Number.isInteger(idRecibo) || idRecibo <= 0) {
-            return res.status(404).json({
-                estado: "error",
-                mensaje: "Recibo no encontrado."
-            });
-        }
-
-        const actual = await pool.query(
-            `SELECT r.id_recibo, s.numero_suministro,
-                    EXISTS(SELECT 1 FROM pagos p WHERE p.id_recibo = r.id_recibo) AS tiene_pago
-             FROM recibos r
-             JOIN suministros s ON s.id_suministro = r.id_suministro
-             WHERE r.id_recibo = $1
-             LIMIT 1;`,
-            [idRecibo]
-        );
-
-        if (actual.rowCount === 0) {
-            return res.status(404).json({
-                estado: "error",
-                mensaje: "Recibo no encontrado."
-            });
-        }
-
-        if (actual.rows[0].tiene_pago) {
-            return res.status(409).json({
-                estado: "error",
-                mensaje: "No se puede modificar un recibo que ya tiene un pago registrado."
-            });
-        }
-
-        const cuerpo = Object.assign({}, req.body, { numero_suministro: actual.rows[0].numero_suministro });
-        const validado = validarReciboAdmin(cuerpo);
-
-        if (validado.error) {
-            return res.status(400).json({
-                estado: "error",
-                mensaje: validado.error
-            });
-        }
-
-        const duplicado = await pool.query(
-            `SELECT r.id_recibo
-             FROM recibos r
-             JOIN suministros s ON s.id_suministro = r.id_suministro
-             WHERE s.numero_suministro = $1 AND r.periodo = $2 AND r.id_recibo <> $3
-             LIMIT 1;`,
-            [validado.numero, validado.periodo, idRecibo]
-        );
-
-        if (duplicado.rowCount > 0) {
-            return res.status(409).json({
-                estado: "error",
-                mensaje: "Ya existe un recibo para este suministro y periodo."
-            });
-        }
-
-        const resultado = await pool.query(
-            `UPDATE recibos
-             SET periodo = $1, fecha_emision = $2, fecha_vencimiento = $3,
-                 monto = $4, consumo_m3 = $5
-             WHERE id_recibo = $6
-             RETURNING
-               id_recibo, $7 AS numero_suministro, periodo,
-               fecha_emision, fecha_vencimiento, monto, consumo_m3, estado,
-               FALSE AS tiene_pago;`,
-            [validado.periodo, validado.emision, validado.vencimiento,
-             validado.monto, validado.consumo, idRecibo, validado.numero]
-        );
-
-        // Tiempo real: aviso mínimo al suministro (reconsulta Recibos por REST).
-        try {
-            const sum = await pool.query(`SELECT id_suministro FROM recibos WHERE id_recibo = $1 LIMIT 1;`, [idRecibo]);
-            if (sum.rowCount) emitirASuministro(sum.rows[0].id_suministro, 'recibo:actualizado', { id: idRecibo });
-        } catch (e) {}
-
-        return res.json({
-            estado: "ok",
-            recibo: filaReciboAdmin(resultado.rows[0])
-        });
-
-    } catch (error) {
-        console.error(error);
-
-        return res.status(500).json({
-            estado: "error",
-            mensaje: "Error interno del servidor."
-        });
-    }
+        const { recibo } = await servicioRecibos.editar(Number(req.params.id), req.body);
+        emitirASuministro(recibo.id_suministro, 'recibo:actualizado', { id: recibo.id_recibo });
+        return res.json({ estado: 'ok', recibo: filaReciboAdmin(recibo) });
+    } catch (error) { return responderErrorRecibo(res, error); }
 });
 
 app.patch("/api/admin/recibos/:id/anular", requiereAdmin, async (req, res) => {
     try {
-        const idRecibo = Number(req.params.id);
-
-        if (!Number.isInteger(idRecibo) || idRecibo <= 0) {
-            return res.status(404).json({
-                estado: "error",
-                mensaje: "Recibo no encontrado."
-            });
-        }
-
-        const actual = await pool.query(
-            `SELECT EXISTS(SELECT 1 FROM pagos p WHERE p.id_recibo = $1) AS tiene_pago,
-                    EXISTS(SELECT 1 FROM recibos WHERE id_recibo = $1) AS existe;`,
-            [idRecibo]
-        );
-
-        if (!actual.rows[0].existe) {
-            return res.status(404).json({
-                estado: "error",
-                mensaje: "Recibo no encontrado."
-            });
-        }
-
-        if (actual.rows[0].tiene_pago) {
-            return res.status(409).json({
-                estado: "error",
-                mensaje: "No se puede anular un recibo que ya tiene un pago registrado."
-            });
-        }
-
-        const resultado = await pool.query(
-            `UPDATE recibos
-             SET estado = 'Anulado'
-             WHERE id_recibo = $1;`,
-            [idRecibo]
-        );
-
-        if (resultado.rowCount === 0) {
-            return res.status(404).json({
-                estado: "error",
-                mensaje: "Recibo no encontrado."
-            });
-        }
-
-        const actualizado = await pool.query(
-            `SELECT
-               r.id_recibo, r.id_suministro, s.numero_suministro, r.periodo,
-               r.fecha_emision, r.fecha_vencimiento, r.monto,
-               r.consumo_m3, r.estado,
-               FALSE AS tiene_pago
-             FROM recibos r
-             JOIN suministros s ON s.id_suministro = r.id_suministro
-             WHERE r.id_recibo = $1
-             LIMIT 1;`,
-            [idRecibo]
-        );
-
-        // Tiempo real: aviso mínimo al suministro (reconsulta Recibos por REST).
-        if (actualizado.rowCount) {
-            emitirASuministro(actualizado.rows[0].id_suministro, 'recibo:actualizado', { id: idRecibo, estado: 'Anulado' });
-        }
-
-        return res.json({
-            estado: "ok",
-            recibo: filaReciboAdmin(actualizado.rows[0])
-        });
-
-    } catch (error) {
-        console.error(error);
-
-        return res.status(500).json({
-            estado: "error",
-            mensaje: "Error interno del servidor."
-        });
-    }
+        const { recibo } = await servicioRecibos.anular(Number(req.params.id));
+        emitirASuministro(recibo.id_suministro, 'recibo:actualizado', { id: recibo.id_recibo, estado: recibo.estado });
+        return res.json({ estado: 'ok', recibo: filaReciboAdmin(recibo) });
+    } catch (error) { return responderErrorRecibo(res, error); }
 });
 
 // ==========================================

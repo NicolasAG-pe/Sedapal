@@ -4,6 +4,14 @@ Referencia de código: **v1.0.0**, commit `135cb54`. Esta guía distingue cobert
 
 ## Automatizadas JavaScript y backend
 
+La rama añade [regresiones H02](integridad-recibos.md):
+`HIDRO_EMAIL_TEST_DB_PORT=32768 npm run test:receipts`, exclusivamente contra el
+PostgreSQL de pruebas aislado. Crea bases nuevas; cubre API concurrente, dos
+procesos, permisos, rollback, locks, conexiones y migración 005. La variante
+`HIDRO_RECEIPT_TEST_LEGACY=1` de `Backend/test/receipt-concurrency.cjs` prueba la
+API sin las dos nuevas UNIQUE. La guía H02 documenta resultados actuales y
+casos condicionales; no son nuevas pruebas en Neon ni en teléfono físico.
+
 | Prueba | Ejecución | Alcance |
 |---|---|---|
 | Configuración | `npm run test:config` | Configuración PostgreSQL local/TLS externo, puertos, orígenes, fechas DATE y build público separado. |
