@@ -8,6 +8,11 @@ El volumen lógico es `postgres_data`; la instalación Compose `sedapal` utiliza
 
 Producción Neon es independiente. No restaurar automáticamente un respaldo local sobre Neon ni viceversa. No usar la base original para tests con writes.
 
+La rama de verificación prepara una [política de retención de correo](retencion-correo.md)
+conservando al menos 24 horas después del vencimiento de la solicitud. Su limpieza
+solo se ha probado en bases sintéticas nuevas; no se ejecuta al arrancar ni tiene
+programación activa. No autoriza mantenimiento sobre bases existentes.
+
 ## Respaldo y verificación
 
 Con Docker local en marcha, desde la raíz:

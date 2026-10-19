@@ -4,6 +4,20 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 18 de octubre de 2026 — retención segura de solicitudes de correo
+
+- Núcleo de mantenimiento con simulación de solo lectura por defecto y retención
+  mínima de 24 horas después de vencer la solicitud; conserva OTP vigentes y
+  cualquier historial necesario para límites de envío.
+- Lotes acotados, exclusión entre tareas, filas bloqueadas omitidas y revalidación
+  antes del borrado. Solo elimina pendientes antiguos y su historial por cascada;
+  dependencias inesperadas cancelan la tarea y los errores revierten el lote.
+- Índice de vencimiento en bases nuevas y migración 004 aditiva preparada, sin
+  aplicarla a bases existentes. Política y pruebas documentadas; sin programación.
+- Unitarias de correo/configuración, esquema/API y seis grupos de retención en
+  PostgreSQL aislado aprobados: concurrencia, idempotencia, rollback, límites,
+  registros en curso y conservación de tablas de negocio con fixtures sintéticos.
+
 ### 18 de octubre de 2026 — prueba real OTP con Resend aprobada
 
 - Verificado el último informe privado: modo `live`, resultado

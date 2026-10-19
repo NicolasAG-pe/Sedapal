@@ -80,11 +80,11 @@ no crea cuentas ni deja códigos nuevos utilizables. Si Resend aceptó un mensaj
 pero se perdió su respuesta, ese código puede resultar inutilizable y el usuario
 debe volver a solicitarlo. Los intentos automáticos del adaptador usan idempotencia.
 
-El historial contiene datos de registro pendientes y debe conservarse al menos
-una hora para aplicar los límites. Antes de habilitarlo en producción, definir una
-limpieza de solicitudes de más de 24 horas (incluye cascada de envíos) bajo la
-política de retención autorizada. No se ejecuta limpieza contra bases existentes
-desde el arranque ni desde estas pruebas.
+La [política de retención](retencion-correo.md) conserva cada solicitud al menos
+24 horas después de `vence_en`, además de proteger cualquier envío de la última
+hora. La limpieza usa lotes, bloqueos y cascada únicamente del historial asociado;
+no elimina usuarios ni suministros. No se ejecuta desde el arranque ni está
+programada en producción. Las pruebas eliminan solo fixtures de bases nuevas.
 
 ## Pruebas locales aisladas
 

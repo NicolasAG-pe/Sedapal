@@ -61,6 +61,7 @@ CREATE TABLE registros_correo_envios (
 );
 CREATE INDEX idx_registro_correo ON registros_correo_pendientes(correo);
 CREATE INDEX idx_registro_suministro ON registros_correo_pendientes(numero_suministro);
+CREATE INDEX idx_registro_vencimiento ON registros_correo_pendientes(vence_en,id);
 CREATE INDEX idx_registro_envios ON registros_correo_envios(registro_id, enviado_en);
 
 -- RECIBOS

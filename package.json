@@ -10,6 +10,7 @@
     "test:email": "node --test Backend/test/email-*.test.js",
     "test:email:schema": "node Backend/test/email-schema.cjs",
     "test:email:api": "node Backend/test/email-api.cjs",
+    "test:email:cleanup": "node Backend/test/email-cleanup.cjs",
     "test:email:live": "node Backend/test/email-live.cjs --live",
     "test:email:e2e": "node scripts/test/admin-e2e.cjs",
     "test:documents": "node --test scripts/test/documents.test.cjs",
