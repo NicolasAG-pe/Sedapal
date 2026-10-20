@@ -2427,7 +2427,7 @@
     currentFilter = 'Todos'; searchQuery = ''; yearFilter = 'Todos';
     if(searchMes) searchMes.value = '';
     if(filterAnio) filterAnio.value = 'Todos';
-    document.querySelectorAll('.chip-filter').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
+    document.querySelectorAll('[data-filter]').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
     renderCards();
   }
   /* ÚNICA convención de coordenadas del tutorial: rect respecto al
@@ -5059,7 +5059,7 @@ async function descargarConstanciaPDF(r, btn){
     searchQuery = ''; yearFilter = 'Todos';
     if(searchMes) searchMes.value = '';
     if(filterAnio) filterAnio.value = 'Todos';
-    document.querySelectorAll('.chip-filter').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
+    document.querySelectorAll('[data-filter]').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
     // Entrada al dashboard: header fade + contenido rise + cards stagger (una vez por login).
     try{
       document.body.classList.add('dash-enter');
@@ -5168,9 +5168,9 @@ async function descargarConstanciaPDF(r, btn){
   document.querySelectorAll('[data-report]').forEach(b=>b.addEventListener('click', ()=>openIncidentModal()));
   document.getElementById('btn-copies-head').addEventListener('click', ev=>abrirCopias(false, ev.currentTarget));
 
-  document.querySelectorAll('.chip-filter').forEach(ch=>{
+  document.querySelectorAll('[data-filter]').forEach(ch=>{
     ch.addEventListener('click', ()=>{
-      document.querySelectorAll('.chip-filter').forEach(c=>c.classList.remove('active'));
+      document.querySelectorAll('[data-filter]').forEach(c=>c.classList.remove('active'));
       ch.classList.add('active');
       currentFilter = ch.dataset.filter;
       if(!loading) renderCards();
