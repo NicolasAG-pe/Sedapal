@@ -33,6 +33,13 @@ UUID en el cuerpo para consultar estado/plazos. La API no llama a Resend;
 [contrato OTP](verificacion-correo.md) y [operación outbox](correo-outbox.md).
 Esto no modifica las tablas históricas v1.0.0 de este documento ni resuelve H01.
 
+**Desarrollo posterior — H01/avance 15:** el cliente nuevo usa las rutas
+`/api/auth/otp/register` y `/api/auth/otp/resend-verification` con contrato
+`otp-outbox-v1`; el alta exige `solicitud_id` UUID del cliente. Los alias históricos
+rechazan clientes sin contrato mediante 426 antes de escribir, sin exigirlo al
+login. Consulta de estado permite recuperar confirmación/respuestas perdidas.
+[Contrato, compatibilidad Android y pruebas](android-transicion.md).
+
 ## Estado del servicio
 
 | Método | Ruta | Acceso | Parámetros/cuerpo | Respuesta y códigos propios |

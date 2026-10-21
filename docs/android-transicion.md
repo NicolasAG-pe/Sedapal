@@ -116,13 +116,18 @@ Un 401 real sigue cerrando la sesión y limpiando datos/socket como antes.
 Propuesta: **1.1.0 / versionCode 3**, superior a la release distribuida, manteniendo
 applicationId `pe.edu.hidromejora.app` y certificado permanente. Se reserva como
 candidato de desarrollo, sin tag, release, APK compilada o distribución en este avance.
-La preparación del versionado nativo se registra en el segundo incremento.
+La propuesta ya está reflejada en Gradle (segundo incremento). Tres pruebas
+estáticas/de empaquetado contrastan versiones, identidad, certificado público,
+Capacitor y runtime; no verifican firma ni instalación de un artefacto compilado.
 
 Capacitor mantiene webDir de runtime cliente, sin server.url remoto ni mecanismo
 OTA. HTTPS de API/Socket.IO de release se fija en el script de release; esquema
 WebView https://localhost, orígenes CORS explícitos y configuración pública sin
 secretos. El HTTP local se limita a la configuración de desarrollo. XML debug
-permite localhost/127.0.0.1/10.0.2.2; no se añade a release. No cambia SDK, plugin,
+permite localhost/127.0.0.1/10.0.2.2; no se añade a release. El runtime de prueba se generó en directorios temporales; no se sincronizaron
+los assets nativos. La futura compilación debe usar el script release completo
+que genera/sincroniza Frontend: un assemble directo puede empaquetar assets viejos.
+No cambia SDK, plugin,
 applicationId, fingerprint, permisos o Native Bridge en este avance.
 
 Permisos existentes: Internet y ubicación puntual coarse/fine, sin ubicación en
@@ -213,3 +218,18 @@ sin red/cambio Wi-Fi/datos, accesibilidad con TalkBack y DNS/TLS productivos.
 
 Nada de los pasos operativos anteriores se ejecutó. No se hizo merge, despliegue,
 correo real, cambio de credenciales, datos reales ni publicación de APK.
+
+## Archivos del avance
+
+- Registro/API: `Backend/email-registration.js`, `Backend/server.js`.
+- Cliente: `Frontend/index.html`, `Frontend/assets/js/client-session.js`.
+- Android: `android/app/build.gradle` (solo versionCode/versionName).
+- Pruebas: `Backend/test/email-contract.cjs`, `email-api.cjs`, `email-live.cjs`,
+  `email-outbox-api.cjs`; `scripts/test/android-transition.cjs`,
+  `client-session.test.cjs`, `android-upgrade.test.cjs`, `admin-e2e.cjs`,
+  `client-checks.cjs`. La prueba SIGKILL espera el registro sintético completo
+  antes de matar al proceso: existir el archivo no garantiza que terminó write().
+- Scripts: `package.json`, comandos de contrato, transición y candidato.
+- Documentación: `CHANGELOG.md`, `docs/ANDROID.md`, `ANDROID-RELEASE.md`,
+  `android-transicion.md`, `API.md`, `auditoria-produccion.md`, `verificacion-correo.md`,
+  `correo-outbox.md`. Sin nueva migración ni modificación de pagos/recibos.

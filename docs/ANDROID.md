@@ -6,8 +6,9 @@ Configuración de **v1.0.0**, contrastada con [capacitor.config.js](../capacitor
 
 El [plan de transición Android/OTP](android-transicion.md) documenta H01, guardia
 de compatibilidad, recuperación de solicitudes, pruebas y publicación coordinada.
-Las secciones siguientes conservan la referencia nativa v1.0.0. No se ha compilado
-ni distribuido el candidato; emulación Chromium no acredita Android físico.
+La configuración nativa conserva la identidad de v1.0.0 y propone 1.1.0/código 3.
+Los permisos, SDK, firma pública, esquema HTTPS y plugins siguen sin cambios.
+No se ha compilado ni distribuido el candidato; emulación Chromium no acredita Android físico.
 
 ## Plataforma
 

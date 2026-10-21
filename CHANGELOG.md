@@ -4,6 +4,17 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 21 de octubre de 2026 — avance 15: preparar candidato Android 1.1.0
+
+- Gradle propone versionName 1.1.0 / versionCode 3 frente a la release 1.0.0/2;
+  conserva applicationId, namespace y certificado público permanente. Sin cambiar
+  SDK, permisos, Capacitor, claves privadas ni artefactos ya publicados.
+- Tres pruebas estáticas/de empaquetado comprueban incremento, identidad, firma
+  pública, configuración Capacitor HTTPS y runtime OTP limpio sin código Admin.
+  No equivalen a compilar, firmar, instalar ni ejecutar Android nativo.
+- Documentación Android/release y plan coordinado actualizados; sin APK generada,
+  tag, distribución, despliegue, correo real ni cambio en main/servicios/datos.
+
 ### 21 de octubre de 2026 — avance 15: transición del contrato Android y recuperación
 
 - H01 reproducido con HTML/JS v1.0.0, PostgreSQL aislado y proveedor simulado:

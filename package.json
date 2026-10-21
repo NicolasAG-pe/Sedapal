@@ -12,6 +12,7 @@
     "test:email:outbox": "node --test Backend/test/email-outbox-postgres.cjs Backend/test/email-outbox-api.cjs",
     "worker:email": "node Backend/workers/email-outbox.cjs",
     "test:email:contract": "node --test Backend/test/email-contract.cjs",
+    "test:android:upgrade": "node --test scripts/test/android-upgrade.test.cjs",
     "test:android:transition": "node --test scripts/test/android-transition.cjs scripts/test/client-session.test.cjs",
     "test:email:api": "node Backend/test/email-api.cjs",
     "test:email:cleanup": "node Backend/test/email-cleanup.cjs",
