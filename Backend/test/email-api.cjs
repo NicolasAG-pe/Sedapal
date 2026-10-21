@@ -37,9 +37,9 @@ async function iniciar({ autoDrain = true } = {}) {
     const base = `http://127.0.0.1:${backend.httpServer.address().port}`;
     let ip = 1;
     async function request(ruta, body, status, fixedIP) {
-        const res = await originalFetch(base + '/api/auth/' + ruta, { method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Forwarded-For': fixedIP || `192.0.2.${ip++}` },
-            body: JSON.stringify(body) });
+        const res = await originalFetch(base + '/api/auth/' + (['register','resend-verification'].includes(ruta)?'otp/':'') + ruta, { method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Hidro-Auth-Contract':'otp-outbox-v1', 'X-Forwarded-For': fixedIP || `192.0.2.${ip++}` },
+            body: JSON.stringify(ruta==='register' && body && body.solicitud_id===undefined ? {...body,solicitud_id:crypto.randomUUID()} : body) });
         const data = await res.json();
         if(autoDrain && res.status===202) await drain();
         if (status !== undefined) assert.equal(res.status, status, `${ruta}: ${JSON.stringify(data)}`);

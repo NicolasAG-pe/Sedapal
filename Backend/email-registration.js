@@ -13,7 +13,10 @@ const invalido = () => new ErrorRegistro(400, 'Código inválido, vencido o sin 
 const ocupado = () => new ErrorRegistro(409, 'No se puede registrar esta cuenta con los datos proporcionados.');
 const uuid = valor => typeof valor === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(valor);
 
-function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash }) {
+const CONTRATO_CORREO = 'otp-outbox-v1';
+const ACTUALIZAR_CLIENTE = 'Actualiza Hidro-Mejora para crear una cuenta y verificar tu correo. Si ya tienes cuenta, puedes iniciar sesión normalmente.';
+
+function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verificarClave }) {
     function disponible() {
         if (!key || !from || !secreto) throw new ErrorRegistro(503, 'El registro no está disponible temporalmente. Intenta más tarde.');
     }
@@ -77,16 +80,31 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash }) {
             mensaje: 'Solicitud aceptada. El correo está en cola; espera el código para continuar.' };
     }
 
-    async function buscar(cliente, id) {
+    async function estadoSolicitud(cliente, r) {
+        if (r.consumido_en) return {estado:'verificado',registro_id:r.id};
+        const motivo = r.invalidado ? 'sustituido' : !r.vigente ? 'solicitud_vencida' : r.intentos>=OTP_MAX_ATTEMPTS ? 'sin_intentos' : null;
+        if (motivo) return {estado:'cerrado',motivo,registro_id:r.id};
+        const { rows: [o] } = await cliente.query(`SELECT o.estado,o.iniciado_en FROM public.correo_outbox o
+            JOIN public.registros_correo_envios e ON e.id=o.id WHERE e.registro_id=$1
+            AND o.codigo_hash=$2 ORDER BY o.creado_en DESC,o.id LIMIT 1`, [r.id,r.codigo_hash]);
+        const { rows: [h] } = await cliente.query(`SELECT GREATEST(0,CEIL($2-EXTRACT(EPOCH FROM
+            (clock_timestamp()-MAX(enviado_en)))))::int AS espera FROM registros_correo_envios WHERE registro_id=$1`,[r.id,OTP_RESEND_SECONDS]);
+        const estados = { pendiente:'en_cola',reintento:'en_cola',procesando:'procesando',aceptado:'aceptado',
+            fallido:'fallido',caducado:'caducado',cancelado:'cancelado',ambiguo:'ambiguo' };
+        return { estado:'pendiente',registro_id:r.id,estado_envio:o ? estados[o.estado] : 'anterior',
+            vence_en:o && !o.iniciado_en ? null : r.codigo_vence_en,solicitud_vence_en:r.vence_en,
+            reenvio_en_segundos:h.espera || 0 };
+    }
+    async function buscar(cliente, id, consulta = false) {
         // Primera lectura para conocer las claves de los advisory locks.
         const { rows: [datos] } = await cliente.query('SELECT correo,numero_suministro FROM registros_correo_pendientes WHERE id=$1', [id]);
-        if (!datos) throw invalido();
+        if (!datos) { if(consulta)throw new ErrorRegistro(404,'No se encontró la solicitud. Puedes reintentar el registro con los mismos datos.'); throw invalido(); }
         await bloquear(cliente, datos.correo, datos.numero_suministro);
         const { rows: [r] } = await cliente.query(`SELECT *,
             vence_en>clock_timestamp() AS vigente,
             codigo_vence_en>clock_timestamp() AS codigo_vigente
             FROM registros_correo_pendientes WHERE id=$1 FOR UPDATE`, [id]);
-        if (!r || !r.vigente || r.consumido_en || r.invalidado || r.intentos >= OTP_MAX_ATTEMPTS) throw invalido();
+        if (!r || (!consulta && (!r.vigente || r.consumido_en || r.invalidado || r.intentos >= OTP_MAX_ATTEMPTS))) throw invalido();
         return r;
     }
     return {
@@ -103,9 +121,21 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash }) {
                 !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
                 throw new ErrorRegistro(400, 'La contraseña debe tener entre 8 y 128 caracteres, al menos una letra y un número.');
             }
+            if(body.solicitud_id!==undefined && !uuid(body.solicitud_id))throw new ErrorRegistro(400,'Identificador de solicitud inválido.');
+            const id=body.solicitud_id || crypto.randomUUID();
             const claveHash = generarClaveHash(password);
             return transaccion(async cliente => {
+                // Idempotencia de registro: mismo UUID serializa también cuerpos distintos.
+                await cliente.query('SELECT pg_advisory_xact_lock(7403,hashtext($1))',[id]);
                 await bloquear(cliente, correo, suministro);
+                const {rows:[existente]}=await cliente.query(`SELECT *,vence_en>clock_timestamp() AS vigente
+                    FROM registros_correo_pendientes WHERE id=$1 FOR UPDATE`,[id]);
+                if(existente){
+                    if(existente.correo!==correo || existente.numero_suministro!==suministro || !existente.clave_hash ||
+                        !verificarClave || !verificarClave(password,existente.clave_hash))throw ocupado();
+                    if(!existente.vigente || existente.invalidado || existente.intentos>=OTP_MAX_ATTEMPTS)throw invalido();
+                    return estadoSolicitud(cliente,existente);
+                }
                 await comprobarEnvios(cliente, correo, suministro);
                 await comprobarCuenta(cliente, correo, suministro);
                 // Una nueva solicitud sustituye las anteriores para el mismo correo.
@@ -113,7 +143,6 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash }) {
                     SET invalidado=TRUE,clave_hash='',codigo_hash=$2
                     WHERE correo=$1 AND consumido_en IS NULL AND NOT invalidado RETURNING id`, [correo, '0'.repeat(64)]);
                 for (const anterior of anteriores) await cancelarEventos(cliente, anterior.id);
-                const id = crypto.randomUUID();
                 await cliente.query(`INSERT INTO registros_correo_pendientes
                     (id,correo,numero_suministro,clave_hash,codigo_hash,codigo_vence_en,vence_en)
                     VALUES ($1,$2,$3,$4,$5,clock_timestamp(),clock_timestamp()+make_interval(secs=>$6))`,
@@ -136,14 +165,8 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash }) {
             disponible();
             if (!uuid(body.registro_id)) throw invalido();
             return transaccion(async cliente => {
-                const r = await buscar(cliente, body.registro_id);
-                const { rows: [o] } = await cliente.query(`SELECT o.estado,o.iniciado_en FROM public.correo_outbox o
-                    JOIN public.registros_correo_envios e ON e.id=o.id WHERE e.registro_id=$1
-                    AND o.codigo_hash=$2 ORDER BY o.creado_en DESC,o.id LIMIT 1`, [r.id,r.codigo_hash]);
-                const estados = { pendiente:'en_cola',reintento:'en_cola',procesando:'procesando',aceptado:'aceptado',
-                    fallido:'fallido',caducado:'caducado',cancelado:'cancelado',ambiguo:'ambiguo' };
-                return { estado:'pendiente',registro_id:r.id,estado_envio:o ? estados[o.estado] : 'anterior',
-                    vence_en:o && !o.iniciado_en ? null : r.codigo_vence_en,solicitud_vence_en:r.vence_en };
+                const r = await buscar(cliente, body.registro_id, true);
+                return estadoSolicitud(cliente,r);
             });
         },
         async verificar(body = {}) {
@@ -174,12 +197,21 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash }) {
 }
 
 function registrarRutasCorreo(app, servicio, { registro, verificacion, reenvio, consulta }) {
+    app.get('/api/auth/capabilities', consulta, (req,res)=>res.set('Cache-Control','no-store').json({
+        estado:'ok',contratos_registro:[CONTRATO_CORREO],verificacion_correo_obligatoria:true
+    }));
     for (const [ruta, accion, limite, status] of [
         ['register', 'registrar', registro, 202], ['verify-email', 'verificar', verificacion, 201],
-        ['resend-verification', 'reenviar', reenvio, 202], ['verification-status', 'consultar', consulta, 200]
+        ['resend-verification', 'reenviar', reenvio, 202],
+        ['otp/register', 'registrar', registro, 202], ['otp/resend-verification', 'reenviar', reenvio, 202],
+        ['verification-status', 'consultar', consulta, 200]
     ]) {
         app.post(`/api/auth/${ruta}`, limite, async (req, res) => {
             res.set('Cache-Control', 'no-store');
+            if(['registrar','reenviar'].includes(accion) && req.get('X-Hidro-Auth-Contract')!==CONTRATO_CORREO){
+                return res.status(426).json({estado:'error',codigo:'CLIENT_UPDATE_REQUIRED',mensaje:ACTUALIZAR_CLIENTE});
+            }
+            if(accion==='registrar' && !uuid(req.body?.solicitud_id))return res.status(400).json({estado:'error',mensaje:'Identificador de solicitud inválido.'});
             try { return res.status(status).json(await servicio[accion](req.body || {})); }
             catch (error) {
                 if (error.retryAfter) res.set('Retry-After', String(error.retryAfter));
@@ -191,4 +223,4 @@ function registrarRutasCorreo(app, servicio, { registro, verificacion, reenvio, 
     }
 }
 
-module.exports = { crearRegistroCorreo, registrarRutasCorreo };
+module.exports = { crearRegistroCorreo, registrarRutasCorreo, CONTRATO_CORREO };

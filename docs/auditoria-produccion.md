@@ -25,6 +25,14 @@ proveedor simulado. La migración 006 y la habilitación productiva siguen pendi
 H01 (APK v1.0.0), dominio/remitente y los demás riesgos no se dan por resueltos.
 El informe original conserva su evidencia y numeración históricas.
 
+**Seguimiento posterior — avance 15:** [H01 mitigado en desarrollo](android-transicion.md):
+cliente antiguo recibe actualización requerida antes de crear solicitudes; login
+se conserva, rutas OTP separadas y UUID idempotente recuperan respuestas perdidas.
+Probado con HTML v1.0.0 y perfiles Chromium contra PostgreSQL aislado. La APK
+instalada no se actualiza remotamente: firma, instalación sobre v1.0.0, validación
+Android nativa/física y publicación coordinada siguen pendientes. La evidencia
+original siguiente no se reescribe ni se declara producción lista.
+
 ## 1. Resumen ejecutivo y dictamen
 
 **La nueva versión no está lista para publicarse en producción.** El flujo OTP tiene controles adecuados y sus regresiones locales pasan, pero la transición Android rompe el registro de la APK anterior. Además, se reprodujeron carreras de integridad de recibos/pagos y un fallo de consistencia entre envío de correo y commit PostgreSQL. Se necesita corregir y validar estos puntos antes de autorizar una publicación.

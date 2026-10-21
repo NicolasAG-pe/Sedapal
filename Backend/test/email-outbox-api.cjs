@@ -121,13 +121,14 @@ test('HTTP, trabajador independiente y migración: contrato OTP íntegro', async
             assert.equal((await events(p.registro_id))[0].intentos,1);
             const {data:q}=await request('register',registro(106),202);
             const graceful=child('--run',400);
-            await until(()=>fs.existsSync(graceful.mailbox));graceful.proc.kill('SIGTERM');
+            await until(()=>fs.existsSync(graceful.mailbox) && fs.readFileSync(graceful.mailbox,'utf8').endsWith('\n'));graceful.proc.kill('SIGTERM');
             const r=await graceful.stopped;assert.equal(r.code,0);privateOutput(r);
             assert.equal((await events(q.registro_id))[0].estado,'aceptado');
         });
         await t.test('SIGKILL y reinicio recuperan lease con idéntico mensaje y clave',async()=>{
             const {data:p}=await request('register',registro(107),202);
-            const interrupted=child('--run',2000);await until(()=>fs.existsSync(interrupted.mailbox));
+            const interrupted=child('--run',2000);await until(()=>fs.existsSync(interrupted.mailbox) && fs.readFileSync(interrupted.mailbox,'utf8').endsWith('\n'));
+            // Esperar el registro completo; existencia del archivo no prueba que terminó write().
             interrupted.proc.kill('SIGKILL');await interrupted.stopped;
             const [e]=await events(p.registro_id);assert.equal(e.estado,'procesando');
             await db.query("UPDATE correo_outbox SET bloqueado_hasta=clock_timestamp()-INTERVAL '1 second' WHERE id=$1",[e.id]);

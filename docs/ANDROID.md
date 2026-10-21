@@ -2,6 +2,13 @@
 
 Configuración de **v1.0.0**, contrastada con [capacitor.config.js](../capacitor.config.js), [Gradle app](../android/app/build.gradle), [variables Gradle](../android/variables.gradle) y [manifiesto](../android/app/src/main/AndroidManifest.xml).
 
+## Desarrollo posterior — avance 15
+
+El [plan de transición Android/OTP](android-transicion.md) documenta H01, guardia
+de compatibilidad, recuperación de solicitudes, pruebas y publicación coordinada.
+Las secciones siguientes conservan la referencia nativa v1.0.0. No se ha compilado
+ni distribuido el candidato; emulación Chromium no acredita Android físico.
+
 ## Plataforma
 
 | Elemento | Valor |

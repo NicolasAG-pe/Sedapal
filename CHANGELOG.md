@@ -4,6 +4,25 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 21 de octubre de 2026 — avance 15: transición del contrato Android y recuperación
+
+- H01 reproducido con HTML/JS v1.0.0, PostgreSQL aislado y proveedor simulado:
+  202 mostrado como error, solicitud sin pantalla OTP; login previo conservado.
+- Rutas OTP específicas y cabecera de contrato; APK antigua recibe 426 legible
+  antes de escribir. Preflight y ausencia de fallback impiden registrar sin OTP
+  contra API antigua, incluso si cambia entre la consulta y el POST. Login intacto.
+- UUID criptográfico persistido antes de enviar y registro idempotente con locks;
+  respuesta perdida se recupera por estado, sin duplicar evento, hash o cuota.
+  Recuperación de reenvío/confirmación, caducidad, intentos y desconexiones.
+- CORS admite la nueva cabecera solo en orígenes autorizados. Timeout y limpieza
+  de peticiones públicas, sin logout por errores OTP/red ni reintentos automáticos.
+- Backend Node 20/22: TAP 66, 65 OK, una omisión condicional H02; tres contenedores
+  de subpruebas incluidos. Transición/sesión: 18 pruebas; cinco perfiles emulados.
+  Chromium cliente/admin: 25 comprobaciones; configuración/PDF/firma/Perfil OK.
+- Plan Android/API/trabajador y límites documentados. Sin migración nueva,
+  cambios de negocio, servicios, Neon, correos reales, APK ni merge. Candidato
+  1.1.0/código 3 propuesto; preparación nativa en el siguiente incremento.
+
 ### 18 de octubre de 2026 — avance 14: integrar correo mediante Transactional Outbox
 
 - H03 corregido en desarrollo: registro/reenvío confirman solicitud, reserva y

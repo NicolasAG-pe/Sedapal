@@ -119,6 +119,14 @@ produce intencionadamente un log genérico; la respuesta no contiene el error SQ
 | Regresión H02 | Dos procesos, crear/editar/anular/pagar, permisos, monto, unicidad, timeout, rollback, pool liberado y migración 005; cero deadlocks observados, no garantía universal. |
 | Parada | SIGTERM durante HTTP permite finalizar y cerrar pool; SIGKILL deja lease que otro proceso recupera con la misma identidad. |
 
+## Seguimiento — avance 15
+
+[Transición Android](android-transicion.md): H01 ahora tiene guardia 426, rutas OTP
+específicas y recuperación por UUID del cliente. La limitación de idempotencia de
+registro HTTP descrita históricamente en avance 14 queda mitigada mientras exista
+la solicitud y se conserve su UUID. La outbox/cifrado/trabajador no cambian; la
+habilitación productiva y validación Android siguen pendientes.
+
 ## Contrato y compatibilidad
 
 Registro/reenvío mantienen HTTP 202 y `estado: pendiente`; añaden

@@ -156,7 +156,7 @@ async function browser(executable) {
       EMAIL_WORKER_EXPECTED_DATABASE:database,EMAIL_OUTBOX_KEY:outboxKey,RESEND_API_KEY:'fixture-provider-key',HIDRO_TEST_MAILBOX:mailbox}});
     worker.stdout.on('data',data=>{serverOutput+=data;});worker.stderr.on('data',data=>{serverOutput+=data;});
     async function request(method, endpoint, token, body, status) {
-      const response = await fetch(base + endpoint, { method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+      const response = await fetch(base + endpoint, { method, headers: { 'Content-Type': 'application/json', 'X-Hidro-Auth-Contract':'otp-outbox-v1', ...(token ? { Authorization: 'Bearer ' + token } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(endpoint==='/api/auth/register'?{...body,solicitud_id:crypto.randomUUID()}:body) }) });
       if (status) assert.equal(response.status, status, method + ' ' + endpoint);
       record(method, endpoint, response.status);
       return response.headers.get('content-type')?.includes('application/json') ? response.json() : response.arrayBuffer();

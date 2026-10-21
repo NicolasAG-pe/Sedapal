@@ -51,7 +51,7 @@ function corsOrigen(origen, cb){
 app.use(cors({
     origin: corsOrigen,
     methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Hidro-Auth-Contract'],
     maxAge: 600
 }));
 // Límite acotado: fotografías de incidencias hasta 2 MB + overhead base64.
@@ -672,7 +672,7 @@ try {
 }
 catch (_) { console.error('Configuración de correo inválida; registro deshabilitado.'); }
 const registroCorreo = crearRegistroCorreo({ pool, key: configCorreo && configCorreo.key, from: configCorreo && configCorreo.from,
-    secreto: configCorreo && configCorreo.secreto, generarClaveHash });
+    secreto: configCorreo && configCorreo.secreto, generarClaveHash, verificarClave });
 registrarRutasCorreo(app, registroCorreo, { registro: limiteRegistro,
     verificacion: limitadorGenerico(30, 15), reenvio: limitadorGenerico(10, 15), consulta: limitadorGenerico(240, 15) });
 

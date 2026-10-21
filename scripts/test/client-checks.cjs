@@ -155,10 +155,13 @@ module.exports = async function ({ chrome:c, origin, output, pool, request, admi
   assert.equal(stored.includes(password),false);
   assert.equal(stored.includes('codigo'),false);
   await require('./visual-checks.cjs').matrix(c,output,'client-verify-email','client');
-  await c.fill('#verify-code','12');await c.submit('#verify-email-form');
-  assert.match(await c.evaluate('document.getElementById("verify-error").textContent'),/seis dígitos/);
   const mensajes = ()=>fs.readFileSync(mailbox,'utf8').trim().split('\n').map(JSON.parse).filter(m=>m.correo==='registro@fixture.invalid');
   await wait(()=>mensajes().length===1,'primer correo del worker');
+  await wait(()=>c.evaluate('!document.getElementById("btn-check-email").disabled'),'consulta disponible');
+  await c.click('#btn-check-email');
+  await wait(()=>c.evaluate('!document.getElementById("btn-verify-email").disabled'),'código preparado');
+  await c.fill('#verify-code','12');await c.submit('#verify-email-form');
+  assert.match(await c.evaluate('document.getElementById("verify-error").textContent'),/seis dígitos/);
   const primerCodigo = mensajes().at(-1).codigo;
   // Simular el paso del cooldown únicamente en datos sintéticos y reloj de UI.
   await pool.query("UPDATE registros_correo_envios SET enviado_en=enviado_en-INTERVAL '61 seconds'");
@@ -171,6 +174,9 @@ module.exports = async function ({ chrome:c, origin, output, pool, request, admi
   await wait(()=>mensajes().length===2,'nuevo correo del worker');
   assert.equal(mensajes().length,2,'Doble clic envía una sola solicitud');
   assert.notEqual(mensajes().at(-1).codigo,primerCodigo);
+  await wait(()=>c.evaluate('!document.getElementById("btn-check-email").disabled'),'consulta del reenvío');
+  await c.click('#btn-check-email');
+  await wait(()=>c.evaluate('!document.getElementById("btn-verify-email").disabled'),'nuevo código preparado');
   await c.fill('#verify-code',primerCodigo);await c.submit('#verify-email-form');
   await wait(()=>c.evaluate('document.getElementById("verify-error").classList.contains("show")'),'rechazar código anterior');
   assert.equal(await c.evaluate('document.getElementById("view-dashboard").classList.contains("active")'),false);

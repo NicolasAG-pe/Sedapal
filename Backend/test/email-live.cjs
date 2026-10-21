@@ -48,7 +48,9 @@ function leerOculto(prompt, input = process.stdin, output = process.stdout) {
 }
 
 function comprobarContenedor(port) {
-    const raw = execFileSync('docker', ['inspect', 'hidro-email-test-20261018', '--format',
+    const container=process.env.HIDRO_EMAIL_TEST_CONTAINER || 'hidro-email-test-20261018';
+    comprobar(/^hidro-(email|compat)-test-\d{8}$/.test(container));
+    const raw = execFileSync('docker', ['inspect', container, '--format',
         '{{json .NetworkSettings.Ports}}'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
     const bindings = JSON.parse(raw)['5432/tcp'];
     comprobar(bindings?.length === 1 && bindings[0].HostIp === '127.0.0.1' &&
@@ -123,7 +125,7 @@ async function ejecutar({ modo, leer = leerOculto, escribir = console.log } = {}
         base = `http://127.0.0.1:${backend.httpServer.address().port}`;
         const request = async (route, body, expected) => {
             const response = await originalFetch(base + '/api/auth/' + route, { method: 'POST',
-                headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+                headers: { 'Content-Type': 'application/json', 'X-Hidro-Auth-Contract':'otp-outbox-v1' }, body: JSON.stringify(route==='register'?{...body,solicitud_id:crypto.randomUUID()}:body),
                 signal: AbortSignal.timeout(30000) });
             const data = await response.json();
             if(response.status===202) comprobar((await worker.procesarUno()).estado==='aceptado');

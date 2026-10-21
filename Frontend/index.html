@@ -93,6 +93,8 @@
       <p id="verify-status" class="hint" role="status"></p>
       <button type="submit" class="btn btn-primary" id="btn-verify-email">Verificar correo</button>
       <button type="button" class="btn btn-ghost" id="btn-resend-email" disabled>Reenviar código</button>
+      <button type="button" class="btn btn-ghost" id="btn-check-email">Comprobar estado</button>
+      <button type="button" class="btn btn-ghost" id="btn-retry-registration" hidden>Volver al registro</button>
       <button type="button" class="btn btn-ghost" id="btn-restart-register">Usar otros datos</button>
     </form>
     <div class="auth-switch" id="auth-to-login" hidden>¿Ya tienes una cuenta? <a href="#" id="show-login">Iniciar sesión</a></div>
@@ -4880,8 +4882,8 @@ async function descargarConstanciaPDF(r, btn){
     regError.textContent = msg;
     regError.classList.add('show');
   }
-  function mostrarRegistro(){
-    if(registroPendiente){ mostrarVerificacion(); return; }
+  function mostrarRegistro(reintentar=false){
+    if(registroPendiente && !reintentar){ mostrarVerificacion(); return; }
     verifyForm.hidden = true;
     form.hidden = true;
     if(demoBox) demoBox.hidden = true;
@@ -4919,84 +4921,105 @@ async function descargarConstanciaPDF(r, btn){
     verifyStatus.textContent = '';
     try{ sessionStorage.removeItem('hm_email_pending'); }catch(_){}
   }
+  function persistirVerificacion(){
+    try{sessionStorage.setItem('hm_email_pending',JSON.stringify(registroPendiente));return true;}catch(_){return false;}
+  }
   function actualizarReenvio(){
     if(!registroPendiente)return;
-    const segundos = Math.max(0, Math.ceil((registroPendiente.reenvioHasta-Date.now())/1000));
-    const vencido = registroPendiente.solicitudHasta <= Date.now();
-    btnResend.disabled = verificacionOcupada || segundos > 0 || vencido;
-    btnResend.textContent = segundos ? 'Reenviar en ' + segundos + ' s' : 'Reenviar código';
-    btnVerify.disabled = verificacionOcupada || vencido;
-    btnVerify.textContent = verificacionOcupada ? 'Procesando...' : 'Verificar correo';
-    btnRestartRegister.disabled = verificacionOcupada;
-    document.getElementById('verify-code-hint').textContent = vencido
-      ? 'La solicitud venció. Usa otros datos o inicia un nuevo registro.'
-      : !registroPendiente.venceEn
-        ? 'Solicitud aceptada. El correo está en cola; espera el código.'
-        : Date.parse(registroPendiente.venceEn) <= Date.now()
-          ? 'El código venció. Solicita otro para continuar.' : 'El código vence cinco minutos después de prepararse el envío. No lo compartas.';
-    const mensajes = {en_cola:'Correo en cola. Espera el código.',procesando:'Procesando el envío del código.',
-      aceptado:'El proveedor aceptó el correo. Revisa tu bandeja y spam; la entrega puede demorar.',
+    const p=registroPendiente;
+    const segundos=Math.max(0,Math.ceil((p.reenvioHasta-Date.now())/1000));
+    const vencido=p.solicitudHasta<=Date.now(),cerrado=p.estadoSolicitud==='cerrado';
+    const faltaCodigo=!p.venceEn,restante=faltaCodigo?0:Math.max(0,Math.ceil((Date.parse(p.venceEn)-Date.now())/1000));
+    btnResend.disabled=verificacionOcupada || !p.aceptada || segundos>0 || vencido || cerrado;
+    btnResend.textContent=segundos?'Reenviar en '+segundos+' s':'Reenviar código';
+    btnVerify.disabled=verificacionOcupada || !p.aceptada || vencido || cerrado || faltaCodigo || !restante;
+    btnVerify.textContent=verificacionOcupada?'Procesando...':'Verificar correo';
+    btnRestartRegister.disabled=verificacionOcupada;
+    document.getElementById('btn-check-email').disabled=consultandoCorreo || verificacionOcupada || vencido;
+    document.getElementById('btn-retry-registration').hidden=p.aceptada;
+    document.getElementById('btn-retry-registration').disabled=verificacionOcupada;
+    const cerrados={sin_intentos:'Agotaste los intentos. Inicia un nuevo registro.',sustituido:'Esta solicitud fue sustituida. Usa la solicitud más reciente o inicia otra.',solicitud_vencida:'La solicitud venció. Inicia un nuevo registro.'};
+    document.getElementById('verify-code-hint').textContent=cerrados[p.motivo] || (vencido?'La solicitud venció. Inicia un nuevo registro.':
+      !p.aceptada?'Estamos comprobando si se guardó tu solicitud.':faltaCodigo?'El correo está en cola; espera el código.':
+      !restante?'El código venció. Solicita otro para continuar.':'El código vence en '+Math.floor(restante/60)+':'+String(restante%60).padStart(2,'0')+'. No lo compartas.');
+    const mensajes={en_cola:'Correo en cola. Espera el código.',procesando:'Procesando el envío del código.',
+      aceptado:'El servicio de correo aceptó el mensaje. Revisa tu bandeja y spam; la entrega puede demorar.',
       fallido:'No se pudo enviar el correo. Puedes solicitar otro código cuando termine la espera.',
       caducado:'El envío venció. Solicita otro código.',ambiguo:'No pudimos confirmar el envío. Si llega un código vigente, puedes usarlo; también puedes solicitar otro.',
-      cancelado:'Este envío fue sustituido o cancelado.'};
-    if(!verificacionOcupada && mensajes[registroPendiente.estadoEnvio])verifyStatus.textContent=mensajes[registroPendiente.estadoEnvio];
+      cancelado:'Este envío fue sustituido o cancelado.',anterior:'Revisa tu correo para continuar con la solicitud anterior.'};
+    if(!verificacionOcupada)verifyStatus.textContent=p.problemaConsulta || cerrados[p.motivo] || (!p.aceptada?
+      'No se confirmó la respuesta del registro. Comprobaremos su estado sin volver a enviarlo.':mensajes[p.estadoEnvio] || 'Consulta el estado del correo.');
   }
   function mostrarVerificacion(){
-    formError.classList.remove('show');
-    form.hidden = true; regForm.hidden = true; verifyForm.hidden = false;
-    authToRegister.hidden = true; authToLogin.hidden = false;
-    if(loginFoot)loginFoot.hidden = true;
-    loginTitle.textContent = 'Verifica tu correo';
-    actualizarReenvio(); verifyCode.focus();
+    formError.classList.remove('show');form.hidden=true;regForm.hidden=true;verifyForm.hidden=false;
+    authToRegister.hidden=true;authToLogin.hidden=false;
+    if(loginFoot)loginFoot.hidden=true;
+    loginTitle.textContent='Verifica tu correo';actualizarReenvio();verifyCode.focus();
+  }
+  function completarVerificacion(suministro){
+    limpiarVerificacion();mostrarLogin();inpSupply.value=suministro;inpPass.value='';inpPass.focus();
+    showSuccess('Correo verificado. Ya puedes iniciar sesión.');
   }
   async function consultarCorreo(){
     if(consultandoCorreo || !registroPendiente || verifyForm.hidden || registroPendiente.solicitudHasta<=Date.now())return;
-    const pendiente=registroPendiente;
-    consultandoCorreo=true;
+    const pendiente=registroPendiente;consultandoCorreo=true;actualizarReenvio();
     try{
       const resp=await sesionCliente.authFetch('/api/auth/verification-status',{
         method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({registro_id:pendiente.id})
       });
       const data=await resp.json().catch(()=>null);
       if(registroPendiente!==pendiente)return;
-      if(resp.ok && data && data.estado==='pendiente'){
-        pendiente.venceEn=data.vence_en; pendiente.estadoEnvio=data.estado_envio;
+      if(resp.ok && data?.estado==='verificado'){completarVerificacion(pendiente.suministro);return;}
+      if(resp.ok && data?.estado==='cerrado'){
+        pendiente.aceptada=true;pendiente.estadoSolicitud='cerrado';pendiente.motivo=data.motivo;pendiente.problemaConsulta='';
+        clearInterval(consultaCorreoTimer);persistirVerificacion();
+      }else if(resp.ok && data?.estado==='pendiente'){
+        guardarVerificacion(data,pendiente.suministro,false);
         if(!['en_cola','procesando'].includes(data.estado_envio))clearInterval(consultaCorreoTimer);
-        try{sessionStorage.setItem('hm_email_pending',JSON.stringify(pendiente));}catch(_){}
-        actualizarReenvio();
-      }else if(resp.status===400){clearInterval(consultaCorreoTimer);}
-    }catch(_){ /* La desconexión no descarta la solicitud ni el código introducido. */ }
-    finally{consultandoCorreo=false;}
+      }else{
+        pendiente.problemaConsulta=resp.status===404 && !pendiente.aceptada?
+          'Todavía no se encontró la solicitud. Vuelve al registro y reintenta con los mismos datos; conservaremos su identificador.':
+          (data?.mensaje || 'No se pudo consultar el estado. Tu solicitud se conserva.');
+      }
+    }catch(_){if(registroPendiente===pendiente)pendiente.problemaConsulta='Sin conexión o sin respuesta. Tu solicitud se conserva; vuelve a comprobar su estado.';}
+    finally{consultandoCorreo=false;actualizarReenvio();}
   }
   function iniciarConsultaCorreo(){
-    clearInterval(consultaCorreoTimer);consultaCorreoTimer=setInterval(consultarCorreo,5000);
-    consultarCorreo();
+    clearInterval(consultaCorreoTimer);consultaCorreoTimer=setInterval(consultarCorreo,5000);consultarCorreo();
   }
-  function guardarVerificacion(data, suministro){
-    registroPendiente = { id: data.registro_id, suministro, venceEn: data.vence_en, estadoEnvio:data.estado_envio,
-      solicitudHasta: Date.parse(data.solicitud_vence_en) || (registroPendiente ? registroPendiente.solicitudHasta : Date.now()+3600000),
-      reenvioHasta: Date.now()+Number(data.reenvio_en_segundos || 60)*1000 };
-    // Solo solicitud y plazos temporales. Nunca contraseña, OTP ni JWT.
-    try{ sessionStorage.setItem('hm_email_pending', JSON.stringify(registroPendiente)); }catch(_){}
-    clearInterval(reenvioTimer); reenvioTimer = setInterval(actualizarReenvio, 1000);
-    mostrarVerificacion(); iniciarConsultaCorreo();
+  function guardarVerificacion(data,suministro,iniciar=true){
+    if(!data || !/^[a-f0-9-]{36}$/i.test(data.registro_id) || (registroPendiente && data.registro_id!==registroPendiente.id) ||
+      !(data.vence_en===null || Number.isFinite(Date.parse(data.vence_en))) || !Number.isFinite(Date.parse(data.solicitud_vence_en)))throw new Error('Respuesta de registro incompleta.');
+    const anterior=registroPendiente;
+    registroPendiente={id:data.registro_id,suministro,venceEn:data.vence_en,estadoEnvio:data.estado_envio,aceptada:true,
+      estadoSolicitud:'pendiente',motivo:null,problemaConsulta:'',
+      solicitudHasta:Date.parse(data.solicitud_vence_en),reenvioHasta:Date.now()+Math.max(0,Number(data.reenvio_en_segundos) || 0)*1000};
+    // Solo identificador, suministro y plazos; nunca correo, contraseña, OTP ni JWT.
+    persistirVerificacion();
+    clearInterval(reenvioTimer);reenvioTimer=setInterval(actualizarReenvio,1000);
+    if(iniciar){mostrarVerificacion();iniciarConsultaCorreo();}else{
+      // Mantener la referencia permite descartar respuestas de solicitudes anteriores.
+      Object.assign(anterior,registroPendiente);registroPendiente=anterior;
+    }
   }
   function showVerifyError(message){ verifyError.textContent = message; verifyError.classList.add('show'); }
   verifyCode.addEventListener('input', ()=>{ verifyCode.value = verifyCode.value.replace(/\D/g,'').slice(0,6); });
   async function procesarVerificacion(reenviar){
     if(verificacionOcupada || !registroPendiente)return;
     if(reenviar && btnResend.disabled)return;
+    if(!reenviar && btnVerify.disabled)return;
     if(!reenviar && !/^\d{6}$/.test(verifyCode.value)){
       showVerifyError('Ingresa el código de seis dígitos.'); verifyCode.focus(); return;
     }
     const version = verificacionVersion;
     const suministro = registroPendiente.suministro;
+    if(reenviar)verifyCode.value='';
     verificacionOcupada = true; actualizarReenvio(); verifyForm.setAttribute('aria-busy','true');
     verifyError.classList.remove('show'); verifyStatus.textContent = '';
     try{
       const body = { registro_id: registroPendiente.id };
       if(!reenviar)body.codigo = verifyCode.value;
-      const resp = await sesionCliente.authFetch('/api/auth/' + (reenviar ? 'resend-verification' : 'verify-email'), {
+      const resp = await sesionCliente.authFetch('/api/auth/' + (reenviar ? 'otp/resend-verification' : 'verify-email'), {
         method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
       });
       const data = await resp.json().catch(()=>null);
@@ -5007,24 +5030,29 @@ async function descargarConstanciaPDF(r, btn){
           try{sessionStorage.setItem('hm_email_pending',JSON.stringify(registroPendiente));}catch(_){}
         }
         showVerifyError((data && data.mensaje) || 'No se pudo completar la verificación. Inténtalo nuevamente.');
-        return;
+        await consultarCorreo();return;
       }
       if(reenviar){
         guardarVerificacion(data,suministro); verifyCode.value='';
         verifyStatus.textContent='Solicitamos un nuevo código. El anterior ya no es válido.';
       }else{
-        limpiarVerificacion(); mostrarLogin();
-        inpSupply.value = (data.usuario && data.usuario.numero_suministro) || suministro;
-        inpPass.value=''; inpPass.focus(); showSuccess('Correo verificado. Ya puedes iniciar sesión.');
+        completarVerificacion((data.usuario && data.usuario.numero_suministro) || suministro);
       }
     }catch(error){
-      if(version===verificacionVersion && !esAbortado(error))showVerifyError('No se pudo conectar con el servidor. Inténtalo nuevamente.');
+      if(version===verificacionVersion && !esAbortado(error)){
+        showVerifyError('No se confirmó la respuesta. Comprobaremos el estado; no repitas la operación todavía.');
+        iniciarConsultaCorreo();
+      }
     }finally{
       if(version===verificacionVersion){verificacionOcupada=false;verifyForm.removeAttribute('aria-busy');actualizarReenvio();}
     }
   }
   verifyForm.addEventListener('submit', e=>{e.preventDefault();procesarVerificacion(false);});
   btnResend.addEventListener('click', ()=>procesarVerificacion(true));
+  document.getElementById('btn-check-email').addEventListener('click',consultarCorreo);
+  document.getElementById('btn-retry-registration').addEventListener('click',()=>{regSuministro.value=registroPendiente.suministro;mostrarRegistro(true);});
+  window.addEventListener('online',()=>{if(registroPendiente)consultarCorreo();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden && registroPendiente)consultarCorreo();});
   btnRestartRegister.addEventListener('click', ()=>{limpiarVerificacion();regForm.reset();mostrarRegistro();});
 
   function validarRegistro(correo, suministro, pass, pass2){
@@ -5064,20 +5092,31 @@ async function descargarConstanciaPDF(r, btn){
       return;
     }
     btnRegister.disabled = true;
-    btnRegisterText.textContent = 'Enviando código...';
+    btnRegisterText.textContent = 'Guardando solicitud...';
+    let solicitudEnviada=false;
     try{
-      const resp = await conSesion(() => (sesionCliente.authFetch('/api/auth/register', {
+      await sesionCliente.comprobarRegistro();
+      if(_hmEpoch!==sesionCliente.generation())return;
+      if(registroPendiente?.aceptada){mostrarVerificacion();return;}
+      if(registroPendiente && registroPendiente.suministro!==suministro)throw new Error('Hay una solicitud sin confirmar. Usa «Usar otros datos» para iniciar otra.');
+      if(!registroPendiente)registroPendiente={id:sesionCliente.nuevoRegistroId(),suministro,venceEn:null,aceptada:false,
+        solicitudHasta:Date.now()+3600000,reenvioHasta:Date.now()+60000};
+      if(!persistirVerificacion()){registroPendiente=null;throw new Error('No se pudo guardar la solicitud en este dispositivo. Revisa el almacenamiento e inténtalo de nuevo.');}
+      solicitudEnviada=true;
+      const resp = await conSesion(() => (sesionCliente.authFetch('/api/auth/otp/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          solicitud_id:registroPendiente.id,
           correo: correo,
           numero_suministro: suministro,
           password: pass
         })
       })), _hmEpoch);
       const data = await conSesion(() => (resp.json().catch(()=>null)), _hmEpoch);
+      if(resp.status>=500 || (resp.ok && (!data || data.estado!=='pendiente')))throw new Error('Respuesta no confirmada.');
       if(!resp.ok || !data || data.estado !== 'pendiente' || !data.registro_id){
         showRegError('' + ((data && data.mensaje) || 'No se pudo crear la cuenta. Inténtalo nuevamente.'));
         btnRegister.disabled = false;
@@ -5091,13 +5130,15 @@ async function descargarConstanciaPDF(r, btn){
       guardarVerificacion(data, suministro);
     }catch(err){
       if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
-      console.error('No se pudo crear la cuenta.', err);
-      showRegError('No se pudo conectar con el servidor. Inténtalo nuevamente.');
+      console.error('No se pudo confirmar la solicitud de registro.');
+      if(solicitudEnviada && registroPendiente){
+        regPass.value='';regPass2.value='';mostrarVerificacion();iniciarConsultaCorreo();
+      }else showRegError(err.name==='TimeoutError' || err instanceof TypeError?'No se pudo conectar para comprobar el registro. Inténtalo nuevamente.':err.message);
       btnRegister.disabled = false;
       btnRegisterText.textContent = 'Crear cuenta';
     }
 
-    }finally{_releaseForm();}
+    }finally{btnRegister.disabled=false;btnRegisterText.textContent='Crear cuenta';_releaseForm();}
   });
   form.addEventListener('submit', async e=>{
     e.preventDefault();
@@ -5336,6 +5377,7 @@ async function descargarConstanciaPDF(r, btn){
         (saved.venceEn===null || Number.isFinite(Date.parse(saved.venceEn))) && Number.isFinite(saved.reenvioHasta) &&
         saved.reenvioHasta<=Date.now()+3600000 && saved.solicitudHasta>Date.now() && saved.solicitudHasta<=Date.now()+3600000){
       registroPendiente={id:saved.id,suministro:saved.suministro,venceEn:saved.venceEn,estadoEnvio:saved.estadoEnvio,
+        aceptada:saved.aceptada!==false,estadoSolicitud:saved.estadoSolicitud,motivo:saved.motivo,
         solicitudHasta:saved.solicitudHasta,reenvioHasta:saved.reenvioHasta};
       reenvioTimer=setInterval(actualizarReenvio,1000); mostrarVerificacion(); iniciarConsultaCorreo();
     }else{sessionStorage.removeItem('hm_email_pending');}

@@ -54,6 +54,17 @@ red, timeout, 409 y 5xx se tratan como potencialmente ambiguos. Los 4xx restante
 son permanentes. No se inspeccionan ni registran errores privados del proveedor.
 La aceptación por Resend no acredita entrega en bandeja ni lectura.
 
+## Transición de clientes — avance 15
+
+El cliente nuevo usa `/api/auth/otp/register` y `/api/auth/otp/resend-verification`,
+con `X-Hidro-Auth-Contract: otp-outbox-v1`; el alta requiere UUID `solicitud_id`
+persistido antes de enviar. Los alias de la tabla siguiente conservan el guardia:
+sin contrato devuelven 426 y no crean solicitud. Login no requiere esa cabecera.
+Consulta de estado también devuelve verificado/cerrado o 404, permitiendo recuperar
+respuestas perdidas. El reintento de alta con el mismo UUID y credenciales conserva
+el evento/cuota; no sobrescribe contraseñas ni amplía vigencia. Sin migración nueva.
+[Compatibilidad, contrato completo, pruebas y plan Android](android-transicion.md).
+
 ## Contrato de la API
 
 El código OTP vence 300 segundos después de preparar el primer intento de envío.
