@@ -33,6 +33,12 @@ instalada no se actualiza remotamente: firma, instalación sobre v1.0.0, validac
 Android nativa/física y publicación coordinada siguen pendientes. La evidencia
 original siguiente no se reescribe ni se declara producción lista.
 
+**Seguimiento posterior — avance 16:** [APK candidata compilada y validación
+nativa en Android 15](pruebas/android-1.1.0-nativo.md). Firma permanente y
+actualización 1.0.0/2 → 1.1.0/3 comprobadas sin desinstalar, conservando preferencias.
+Flujos de escritura con debug/API/base aisladas y Resend simulado. La validación
+física, requisitos productivos y distribución siguen pendientes; sin despliegues.
+
 ## 1. Resumen ejecutivo y dictamen
 
 **La nueva versión no está lista para publicarse en producción.** El flujo OTP tiene controles adecuados y sus regresiones locales pasan, pero la transición Android rompe el registro de la APK anterior. Además, se reprodujeron carreras de integridad de recibos/pagos y un fallo de consistencia entre envío de correo y commit PostgreSQL. Se necesita corregir y validar estos puntos antes de autorizar una publicación.

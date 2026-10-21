@@ -4,6 +4,31 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 21 de octubre de 2026 — avance 16: compilar y validar Android 1.1.0 nativo
+
+- APK release 1.1.0/código 3 compilada localmente con runtime recién generado,
+  Java 21 y firma permanente verificada contra la APK oficial 1.0.0/código 2.
+  ApplicationId, certificado, diseño, permisos y API HTTPS conservados; sin publicar.
+- AVD Android 15 independiente: actualización mediante install -r sin desinstalar,
+  dos fases instrumentales aprobadas, localStorage del tutorial/marcador conservado,
+  misma identidad interna y primera instalación. Nueva prueba instrumental opt-in.
+- Segundo AVD y APK debug con API/PostgreSQL aislados y Resend simulado: registro,
+  cola/OTP/reenvío/vencimiento, desconexión, login, perfil, teclado, Atrás, rotación,
+  Socket.IO, recibos/pago, cortes/notificaciones y PDF guardado y abierto en visor real.
+  Photo Picker y denegación de ubicación probados; obtención de posición con
+  permiso concedido quedó sin aprobar por timeout del AVD, documentada para seguimiento.
+  Reapertura de proceso conserva tutorial y exige login; el UUID OTP en
+  sessionStorage se pierde, con solicitud SQL intacta. Persistencia durable pendiente.
+- Corregido CRC del PNG sintético del E2E; sin cambios de lógica de negocio.
+  Regresión Node: 113 aprobadas/una omisión condicional, sin fallos. E2E Chromium
+  repetido: 25 comprobaciones, cero errores JS/recursos fallidos. Java: cuatro
+  pruebas por variante; lint sin errores, con avisos previos. Prueba instrumental
+  existente de paquete ejecutada en Android, además de las dos fases de actualización.
+- Informe `docs/pruebas/android-1.1.0-nativo.md` y guías Android actualizados con
+  checksums, evidencia, resultados nativos separados de Chromium y requisitos
+  pendientes. Sin APK versionada, Release, correo real, despliegue, merge,
+  cambios de Neon/Kubernetes ni cambios de servicios Docker existentes.
+
 ### 21 de octubre de 2026 — avance 15: preparar candidato Android 1.1.0
 
 - Gradle propone versionName 1.1.0 / versionCode 3 frente a la release 1.0.0/2;

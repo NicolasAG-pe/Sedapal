@@ -8,7 +8,10 @@ El [plan de transición Android/OTP](android-transicion.md) documenta H01, guard
 de compatibilidad, recuperación de solicitudes, pruebas y publicación coordinada.
 La configuración nativa conserva la identidad de v1.0.0 y propone 1.1.0/código 3.
 Los permisos, SDK, firma pública, esquema HTTPS y plugins siguen sin cambios.
-No se ha compilado ni distribuido el candidato; emulación Chromium no acredita Android físico.
+El [avance 16](pruebas/android-1.1.0-nativo.md) compiló el candidato y comprobó
+la actualización firmada sobre 1.0.0 en un AVD Android 15 sin desinstalar.
+Los flujos funcionales usan otro AVD con APK debug y backend aislado. No hay
+distribución nueva ni validación de esta candidata en teléfono físico.
 
 ## Plataforma
 

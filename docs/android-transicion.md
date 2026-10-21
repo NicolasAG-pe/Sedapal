@@ -5,6 +5,13 @@ Referencia distribuida: tag `v1.0.0` (`135cb54173ee60e2f528738805564773e3c32e8b`
 versionName 1.0.0 / versionCode 2. Referencia anterior a este avance: `226048c`.
 La consulta de Releases al iniciar este trabajo mostró únicamente v1.0.0 publicada.
 
+**Seguimiento — avance 16:** [compilación y validación nativa](pruebas/android-1.1.0-nativo.md).
+La candidata 1.1.0/3 ya se compiló y firmó localmente; actualización sobre el
+asset oficial 1.0.0/2 aprobada en Android 15 conservando localStorage. Pruebas de
+escritura con otra APK debug, API/PostgreSQL aislados y Resend simulado. Los
+resultados del avance 15 que siguen conservan su alcance histórico; no hay
+distribución, despliegue ni aprobación productiva por esta validación.
+
 ## Dictamen y reproducción de H01
 
 H01 está mitigado en el código de desarrollo con contrato explícito y rutas OTP;

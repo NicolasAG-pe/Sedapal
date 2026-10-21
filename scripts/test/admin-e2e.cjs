@@ -188,7 +188,7 @@ async function browser(executable) {
     ok('Las 19 rutas administrativas rechazan usuario normal (403) y ausencia de JWT (401)');
     const receipt = await request('POST', '/api/admin/recibos', admin.token, { numero_suministro: userSupply, periodo: 'Pago fixture', fecha_emision: '2026-01-01', fecha_vencimiento: '2026-02-01', monto: 30, consumo_m3: 10 }, 201);
     await request('POST', '/api/pagos', user.token, { id_recibo: receipt.recibo.id_recibo, metodo: 'Tarjeta' }, 201);
-    const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aS1sAAAAASUVORK5CYII=';
+    const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
     const incident = await request('POST', '/api/incidencias', user.token, { tipo: 'Fuga de agua', descripcion: 'Reporte de prueba aislada', referencia: 'Dirección fixture', foto_base64: 'data:image/png;base64,' + png, foto_mime: 'image/png' }, 201);
     const attention = await request('POST', '/api/atencion', user.token, { categoria: 'Facturación', asunto: 'Consulta fixture', descripcion: 'Solicitud de prueba aislada' }, 201);
     ok('Datos de prueba creados únicamente en hm_admin_test');

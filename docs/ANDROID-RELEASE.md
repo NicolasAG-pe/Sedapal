@@ -3,8 +3,10 @@
 Distribución directa por APK. No se genera AAB ni se publica en Google Play.
 Se conserva Capacitor 7, Java 21 y `pe.edu.hidromejora.app`.
 La primera release distribuida es `versionCode 2`, `versionName 1.0.0`.
-La rama prepara el **candidato 1.1.0 / versionCode 3**, sin compilar ni publicar
-una APK. [Transición OTP, pruebas y pendientes](android-transicion.md).
+La rama tiene un **candidato 1.1.0 / versionCode 3 compilado localmente**,
+sin publicar. La [validación nativa del avance 16](pruebas/android-1.1.0-nativo.md)
+comprobó firma, instalación sobre la APK oficial y conservación de localStorage
+en un AVD Android 15. [Transición OTP y pendientes productivos](android-transicion.md).
 Fuente del versionado: [android/app/build.gradle](../android/app/build.gradle); entorno nativo: [ANDROID](ANDROID.md).
 
 ## Publicación y validación de v1.0.0
@@ -76,10 +78,10 @@ No ejecutar un `cap sync` local/emulador entre la generación del runtime de
 producción y la compilación release. Utilizar siempre el script completo.
 Las variables de desarrollo de `.env.android` permanecen independientes.
 
-El script deriva el nombre del versionName de Gradle; para el candidato sería
-`artifacts/android/hidro-mejora-v1.1.0-release.apk`, junto con su checksum, solo
-cuando se autorice y ejecute la compilación futura. El APK publicado v1.0.0 y su
-checksum se conservan; este avance no genera ni reemplaza ningún APK.
+El script deriva el nombre del versionName de Gradle. En el avance 16 generó
+`artifacts/android/hidro-mejora-v1.1.0-release.apk` y su checksum, solo locales.
+El APK publicado v1.0.0 y su checksum se conservan; no se reemplazó ningún asset.
+El informe nativo identifica el checksum exacto y las fuentes compiladas.
 Cada build usa una salida nueva bajo `artifacts/android/builds/`.
 Los logs locales ocultan los valores de firma. Si la APK de esa versión ya
 existe, el script se detiene; no la sobrescribe. Una compilación exitosa no
@@ -88,6 +90,7 @@ sustituye las verificaciones del artefacto ni la prueba de la release en celular
 Para una actualización, incrementar `versionCode` y ajustar `versionName` en
 `android/app/build.gradle`; conservar applicationId y exactamente la misma clave.
 La propuesta del avance 15 usa código 3, versión 1.1.0 por el nuevo flujo OTP.
+La compilación y prueba de actualización del avance 16 conservan esos valores.
 Antes de distribuir, comprobar que sea superior a cualquier código realmente
 entregado; una corrección posterior requerirá otro código mayor. No basta con
 cambiar versionName para actualizar una instalación.
