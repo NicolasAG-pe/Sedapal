@@ -41,6 +41,12 @@ física, requisitos productivos y distribución siguen pendientes; sin despliegu
 
 ## 1. Resumen ejecutivo y dictamen
 
+**Seguimiento — avance 17:** [sesión Android cifrada y validada al restaurar](pruebas/android-sesion-persistente.md).
+Se elimina la copia de JWT en Web Storage y se usa Android Keystore fuera de
+backup; la credencial no autoriza el dashboard hasta comprobar cuenta/rol en SQL.
+Esto no incorpora revocación central, refresh tokens o una política nueva de
+duración, ni cierra automáticamente los demás hallazgos de esta auditoría histórica.
+
 **La nueva versión no está lista para publicarse en producción.** El flujo OTP tiene controles adecuados y sus regresiones locales pasan, pero la transición Android rompe el registro de la APK anterior. Además, se reprodujeron carreras de integridad de recibos/pagos y un fallo de consistencia entre envío de correo y commit PostgreSQL. Se necesita corregir y validar estos puntos antes de autorizar una publicación.
 
 Se registran **7 hallazgos de gravedad alta, 9 media y 2 baja**. No se acreditó una vulnerabilidad crítica durante esta revisión; eso no demuestra su inexistencia. Algunos hallazgos son defectos reproducidos; otros son riesgos de diseño o requisitos operativos aún sin acreditar. La gravedad considera una futura aplicación pública con datos de usuarios; el uso académico no equivale a capacidad para operar un servicio oficial de agua ni procesar pagos bancarios.

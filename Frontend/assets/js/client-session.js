@@ -1,19 +1,77 @@
-// Sesión exclusiva de clientes. Sin restauración automática de JWT antiguos.
+// JWT solo en memoria; Android persiste cifrado y valida en servidor antes de restaurar.
 (function (global) {
   'use strict';
   global.createHMClientSession = function (onDenied) {
     let token = '', role = '', generation = 0;
+    let restoration = null;
+    const secure=global.HMNativeState;
+    const native=!!secure?.isNative();
     const authRequests = new Set();
     const session = {
       token: () => token, role: () => role, generation: () => generation,
       isUser: () => !!token && role === 'usuario'
     };
     const api = global.HMShared.createApi(session, onDenied);
-    function clear() {
+    function clearMemory() {
       generation++; token = ''; role = '';
       api.cancel();
       authRequests.forEach(controller => controller.abort()); authRequests.clear();
       try { sessionStorage.removeItem('hm_token'); sessionStorage.removeItem('hm_rol'); } catch (_) {}
+      try { global.localStorage?.removeItem('hm_token'); global.localStorage?.removeItem('hm_rol'); } catch (_) {}
+    }
+    function clear() {
+      clearMemory();
+      const removal=native?secure.clearSession():Promise.resolve();
+      removal.catch(()=>{}); // Los llamadores de UI esperan y muestran el error; no descartar el rechazo.
+      return removal;
+    }
+    function set(value, verifiedRole) {
+      clearMemory();
+      if (verifiedRole !== 'usuario' || typeof value!=='string' || !value) throw new Error('Esta aplicación es exclusiva para clientes.');
+      token=value; role=verifiedRole;
+    }
+    async function establish(value, verifiedRole) {
+      clearMemory();
+      const epoch=generation;
+      if(verifiedRole!=='usuario' || typeof value!=='string' || !value)throw new Error('Esta aplicación es exclusiva para clientes.');
+      if(native){
+        try{
+          await secure.clearSession();
+          if(epoch!==generation)throw new DOMException('Sesión cancelada.','AbortError');
+          await secure.writeSession(value);
+        }catch(error){
+          if(epoch!==generation || error.name==='AbortError')throw new DOMException('Sesión cancelada.','AbortError');
+          const failure=new Error('No se pudo guardar la sesión de forma segura. Reintenta.');
+          failure.code='SECURE_STATE_UNAVAILABLE';throw failure;
+        }
+      }
+      if(epoch!==generation)throw new DOMException('Sesión cancelada.','AbortError');
+      token=value;role=verifiedRole;
+    }
+    function restore() {
+      if(!native)return Promise.resolve({state:'anonymous'});
+      if(restoration)return restoration;
+      const epoch=generation;
+      const guard=()=>{if(epoch!==generation)throw new DOMException('Restauración cancelada.','AbortError');};
+      const operation=(async()=>{
+        try{
+          const saved=await secure.readSession();guard();
+          if(!saved.token)return {state:'anonymous'};
+          const response=await authFetch('/api/auth/session',{headers:{Authorization:'Bearer '+saved.token}});guard();
+          if(response.status===401 || response.status===403){await response.json().catch(()=>null);guard();await secure.clearSession();guard();return {state:'ended'};}
+          const data=await response.json().catch(()=>null);guard();
+          if(!response.ok || data?.estado!=='ok' || data.usuario?.rol!=='usuario' || !/^\d{9}$/.test(data.suministro?.numero_suministro || ''))return {state:'unavailable'};
+          set(saved.token,'usuario');
+          return {state:'authenticated',data};
+        }catch(error){
+          if(error.name==='AbortError')return {state:'cancelled'};
+          // Sin red/5xx/almacén inaccesible: no mostrar datos ni borrar una credencial aún no validada.
+          return {state:'unavailable'};
+        }
+      })();
+      restoration=operation;
+      operation.finally(()=>{if(restoration===operation)restoration=null;});
+      return operation;
     }
     async function authFetch(path, options = {}) {
       const {timeoutMs=15000,signal,...rest}=options;
@@ -37,9 +95,9 @@
         return {ok:response.ok,status:response.status,headers:response.headers,json:()=>read('json'),blob:()=>read('blob')};
       }catch(error){finish();throw errorFor(error);}
     }
-    clear();
+    clearMemory();
     return {
-      ...session, clear, authFetch,
+      ...session, clear, authFetch, set, establish, restore, isNative:()=>native,
       nuevoRegistroId(){
         const bytes=new Uint8Array(16);global.crypto.getRandomValues(bytes);
         bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
@@ -52,12 +110,6 @@
         if(!response.ok || !data?.contratos_registro?.includes('otp-outbox-v1') || data.verificacion_correo_obligatoria!==true){
           throw new Error('El registro con verificación no está disponible en este servidor. Intenta más tarde. Si ya tienes cuenta, inicia sesión.');
         }
-      },
-      set(value, verifiedRole) {
-        clear();
-        if (verifiedRole !== 'usuario' || !value) throw new Error('Esta aplicación es exclusiva para clientes.');
-        token = value; role = verifiedRole;
-        try { sessionStorage.setItem('hm_token', token); sessionStorage.setItem('hm_rol', role); } catch (_) {}
       },
       fetch: (path, options) => session.isUser()
         ? api.fetch(path, options) : Promise.reject(new DOMException('Sesión cerrada.', 'AbortError'))

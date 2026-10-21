@@ -14,6 +14,8 @@
     "test:email:contract": "node --test Backend/test/email-contract.cjs",
     "test:android:upgrade": "node --test scripts/test/android-upgrade.test.cjs",
     "test:android:transition": "node --test scripts/test/android-transition.cjs scripts/test/client-session.test.cjs",
+    "test:android:session": "node --test scripts/test/secure-session.test.cjs Backend/test/android-session.cjs",
+    "test:android:native": "node scripts/test/android-session-native.cjs",
     "test:email:api": "node Backend/test/email-api.cjs",
     "test:email:cleanup": "node Backend/test/email-cleanup.cjs",
     "test:email:cleanup:cli": "node Backend/test/email-cleanup-cli.cjs",

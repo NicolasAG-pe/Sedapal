@@ -13,6 +13,16 @@ la actualización firmada sobre 1.0.0 en un AVD Android 15 sin desinstalar.
 Los flujos funcionales usan otro AVD con APK debug y backend aislado. No hay
 distribución nueva ni validación de esta candidata en teléfono físico.
 
+## Desarrollo posterior — avance 17
+
+La [persistencia segura de sesión](pruebas/android-sesion-persistente.md) utiliza
+un plugin propio basado en Android Keystore y AES-GCM, con archivos privados fuera
+de backup. El JWT se mantiene únicamente en memoria web; Android lo restaura solo
+después de validar cuenta, rol y suministro con `/api/auth/session`. No se amplía
+su duración de ocho horas ni se añaden refresh tokens. El bridge no registra datos
+ni siquiera en debug. Logout espera la retirada nativa y limpia datos/socket.
+La recuperación OTP y ubicación se documentan por incrementos en ese informe.
+
 ## Plataforma
 
 | Elemento | Valor |

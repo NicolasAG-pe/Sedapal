@@ -4,6 +4,20 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 21 de octubre de 2026 — avance 17: sesión Android cifrada y validada
+
+- Reproducida pérdida de sesión y UUID OTP al terminar el proceso Android.
+  JWT ahora solo en memoria web y cifrado con AES-GCM/Android Keystore en
+  Android, fuera de backups; sin contraseña persistida ni dependencias nuevas.
+- Restauración única mediante ruta aditiva `/api/auth/session`, antes de mostrar
+  datos privados o conectar Socket.IO. Conserva TTL de ocho horas y cuentas
+  históricas; 401/403 retiran credencial, errores temporales permiten reintentar.
+  Logout espera borrado seguro y cancela datos/peticiones de la identidad anterior.
+- Bridge sin logging también en debug; pruebas de carreras de sesión, API/SQL,
+  cifrado instrumental y ciclo de vida de WebView real. Informe de resultados y
+  límites en `docs/pruebas/android-sesion-persistente.md`. OTP durable y ubicación
+  continúan en incrementos separados; sin despliegue ni distribución.
+
 ### 21 de octubre de 2026 — avance 16: compilar y validar Android 1.1.0 nativo
 
 - APK release 1.1.0/código 3 compilada localmente con runtime recién generado,

@@ -659,6 +659,25 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
 });
 
 
+// Restauración Android: verifica JWT y estado/rol actuales mediante requiereAuth.
+// No emite tokens nuevos ni amplía sus ocho horas de vigencia.
+app.get('/api/auth/session', (req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+}, requiereAuth, async (req, res) => {
+    if (req.user.rol !== 'usuario' || !req.user.numero_suministro) {
+        return res.status(403).json({ estado: 'error', mensaje: 'Acceso denegado.' });
+    }
+    try {
+        const result = await pool.query('SELECT correo FROM usuarios WHERE id_usuario=$1', [req.user.id_usuario]);
+        if (!result.rowCount) return res.status(403).json({ estado: 'error', mensaje: 'Acceso denegado.' });
+        return res.json({ estado: 'ok', usuario: { id_usuario: req.user.id_usuario, rol: req.user.rol, correo: result.rows[0].correo },
+            suministro: { id_suministro: req.user.id_suministro, numero_suministro: req.user.numero_suministro } });
+    } catch (_) {
+        return res.status(500).json({ estado: 'error', mensaje: 'No se pudo comprobar la sesión.' });
+    }
+});
+
 // ==========================================
 // REGISTRO DE USUARIO + SUMINISTRO
 // Prototipo académico: el suministro informado por

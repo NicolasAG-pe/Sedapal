@@ -32,6 +32,12 @@
 
     <div id="form-error" class="form-error" role="alert"></div>
 
+    <div id="session-restore" hidden aria-live="polite">
+      <p id="session-restore-message" role="status">Comprobando tu sesión…</p>
+      <button class="btn btn-primary" id="session-retry" type="button" hidden>Reintentar</button>
+      <button class="btn btn-ghost" id="session-forget" type="button" hidden>Usar otra cuenta</button>
+    </div>
+
     <form id="login-form" novalidate>
       <div class="field">
         <label for="suministro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c3 4.2 6 7.6 6 11a6 6 0 1 1-12 0c0-3.4 3-6.8 6-11z"/></svg>Número de Suministro</label>
@@ -881,6 +887,7 @@
 <script src="shared/icons.js"></script>
 <script src="assets/js/client-home.js"></script>
 <script src="assets/js/documents.js"></script>
+<script src="assets/js/native-state.js"></script>
 <script src="assets/js/client-session.js"></script>
 <!-- Socket.IO cliente vendorizado (v4.8.4, igual que el backend): el script
      absoluto /socket.io/socket.io.js no resuelve en el WebView Android
@@ -957,13 +964,29 @@
   const fotoModal = document.getElementById('foto-modal');
   const passModal = document.getElementById('pass-modal');
 
-  /* ---------- Sesión exclusiva de clientes, en memoria y sessionStorage ---------- */
+  /* ---------- Sesión en memoria; persistencia cifrada solo en Android ---------- */
   const sesionCliente = window.createHMClientSession(cerrarSesionPorAuth);
   const fmtFechaLarga = window.HMShared.ui.date;
   let clienteCorreo='';
-  function guardarSesion(token, rol){ limpiarVerificacion(); sesionCliente.set(token, rol); }
+  let restauracionBloqueada=false, tareaRestauracion=null, reintentoSalida=false;
+  async function guardarSesion(token, rol){ limpiarVerificacion(); await sesionCliente.establish(token, rol); }
   function obtenerToken(){ return sesionCliente.token(); }
-  function limpiarSesion(){ sesionCliente.clear(); }
+  function limpiarSesion(){ return sesionCliente.clear(); }
+  function mostrarEstadoSesion(mensaje,reintentar=false,salida=false){
+    restauracionBloqueada=true;reintentoSalida=salida;
+    document.getElementById('session-restore').hidden=false;
+    document.getElementById('session-restore-message').textContent=mensaje;
+    document.getElementById('session-retry').hidden=!reintentar;
+    document.getElementById('session-forget').hidden=!reintentar || salida;
+    form.hidden=true;regForm.hidden=true;verifyForm.hidden=true;
+    authToRegister.hidden=true;authToLogin.hidden=true;
+    if(loginFoot)loginFoot.hidden=true;
+    if(demoBox)demoBox.hidden=true;
+  }
+  function ocultarEstadoSesion(){
+    restauracionBloqueada=false;
+    document.getElementById('session-restore').hidden=true;
+  }
   function esAbortado(error){ return error && error.name === 'AbortError'; }
   function despuesEnSesion(task, delay){
     const epoch=sesionCliente.generation();
@@ -977,10 +1000,10 @@
   }
   /* Cierre de sesión central (única lógica): desktop + móvil + expiración 401.
      Limpia JWT, polling, drawer/nav-open, body lock, overlays, HidroBot y vuelve al login. */
-  function cerrarSesionCompleta(mensaje){
+  async function cerrarSesionCompleta(mensaje){
     try{ detenerTiempoReal(); }catch(e){}
     try{ stopCortesPolling(); }catch(e){}
-    limpiarSesion();
+    const retirada=limpiarSesion();
     limpiarVerificacion();
     mostrarLogin();
     clienteCorreo='';
@@ -1004,6 +1027,13 @@
       document.body.classList.remove('dash-enter');
     }catch(e){}
     showView(viewLogin);
+    if(sesionCliente.isNative())mostrarEstadoSesion('Cerrando sesión…');
+    try{await retirada;}catch(_){
+      mostrarEstadoSesion('No se pudo cerrar la sesión de forma segura. Reintenta para retirar la credencial.',true,true);
+      return;
+    }
+    ocultarEstadoSesion();
+    if(sesionCliente.isNative())mostrarLogin();
     try{ form.reset(); regForm.reset(); inpPass.type='password'; }catch(e){}
     try{ inpSupply.value = ''; inpPass.value = ''; }catch(e){}
     try{ inpSupply.focus(); }catch(e){}
@@ -5075,6 +5105,7 @@ async function descargarConstanciaPDF(r, btn){
   }
   regForm.addEventListener('submit', async e=>{
     e.preventDefault();
+    if(restauracionBloqueada)return;
     const _releaseForm=window.HMShared.ui.beginForm(e.currentTarget);
     if(!_releaseForm)return;
     try{
@@ -5142,6 +5173,7 @@ async function descargarConstanciaPDF(r, btn){
   });
   form.addEventListener('submit', async e=>{
     e.preventDefault();
+    if(restauracionBloqueada)return;
     const _releaseForm=window.HMShared.ui.beginForm(e.currentTarget);
     if(!_releaseForm)return;
     try{
@@ -5204,19 +5236,19 @@ async function descargarConstanciaPDF(r, btn){
         return;
       }
       if(!authData.usuario || authData.usuario.rol !== 'usuario'){
-        cerrarSesionCompleta('Esta aplicación es exclusiva para clientes. Usa el panel administrativo para tu cuenta.');
+        await cerrarSesionCompleta('Esta aplicación es exclusiva para clientes. Usa el panel administrativo para tu cuenta.');
         showError('Esta aplicación es exclusiva para clientes. Usa el panel administrativo.');
         return;
       }
-      guardarSesion(authData.token, authData.usuario.rol);
+      const establecimiento=guardarSesion(authData.token, authData.usuario.rol);
+      _hmEpoch=sesionCliente.generation();
+      await conSesion(()=>establecimiento,_hmEpoch);
       clearToasts();
       clienteCorreo=authData.usuario.correo || '';
       _hmEpoch = sesionCliente.generation();
-      try{ iniciarTiempoReal(); }catch(e){
-      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
     }catch(err){
       if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
-      showError('No se pudo conectar con el servidor. Inténtalo nuevamente.');
+      showError(err.code==='SECURE_STATE_UNAVAILABLE'?err.message:'No se pudo conectar con el servidor. Inténtalo nuevamente.');
       btnLogin.disabled = false;
       btnLoginText.textContent = 'Iniciar Sesión';
       return;
@@ -5231,6 +5263,16 @@ async function descargarConstanciaPDF(r, btn){
       }
     }catch(e){
       if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
+    await entrarDashboard(sup,_hmEpoch);
+
+    }finally{_releaseForm();}
+  });
+
+  // Una sola entrada al dashboard para login y restauración ya validada por el servidor.
+  async function entrarDashboard(sup,_hmEpoch){
+    if(_hmEpoch!==sesionCliente.generation() || !sesionCliente.isUser())return;
+    ocultarEstadoSesion();
+    iniciarTiempoReal();
     supplyLabel.textContent = sup;
     supplyHello.textContent = sup;
     document.getElementById('side-supply').textContent = sup;
@@ -5332,8 +5374,7 @@ async function descargarConstanciaPDF(r, btn){
       }, 280);
     }, isReduced() ? 0 : 160);
 
-    }finally{_releaseForm();}
-  });
+  }
 
   // Flujo principal de logout: ambos botones usan la misma función central, sin duplicar.
   document.getElementById('btn-logout').addEventListener('click', ()=>{
@@ -5371,7 +5412,7 @@ async function descargarConstanciaPDF(r, btn){
   const clientDefaults=new Map([...document.querySelectorAll('#view-dashboard [id],.overlay [id],#toast-success-msg')]
     .filter(element=>element.children.length===0 || ['btn-pay-detail','pay-confirm'].includes(element.id))
     .map(element=>[element.id,element.innerHTML]));
-  try{
+  function restaurarRegistroDePagina(){try{
     const saved=JSON.parse(sessionStorage.getItem('hm_email_pending') || 'null');
     if(saved && /^[a-f0-9-]{36}$/i.test(saved.id) && /^\d{9}$/.test(saved.suministro) &&
         (saved.venceEn===null || Number.isFinite(Date.parse(saved.venceEn))) && Number.isFinite(saved.reenvioHasta) &&
@@ -5381,7 +5422,38 @@ async function descargarConstanciaPDF(r, btn){
         solicitudHasta:saved.solicitudHasta,reenvioHasta:saved.reenvioHasta};
       reenvioTimer=setInterval(actualizarReenvio,1000); mostrarVerificacion(); iniciarConsultaCorreo();
     }else{sessionStorage.removeItem('hm_email_pending');}
-  }catch(_){try{sessionStorage.removeItem('hm_email_pending');}catch(_){} }
+  }catch(_){try{sessionStorage.removeItem('hm_email_pending');}catch(_){} }}
+  function restaurarInicio(){
+    if(tareaRestauracion)return tareaRestauracion;
+    if(!sesionCliente.isNative()){restaurarRegistroDePagina();return Promise.resolve();}
+    mostrarEstadoSesion('Comprobando tu sesión…');
+    const tarea=(async()=>{
+      const result=await sesionCliente.restore();
+      if(result.state==='cancelled')return;
+      if(result.state==='unavailable'){
+        mostrarEstadoSesion('No pudimos comprobar tu sesión. Revisa tu conexión e intenta nuevamente.',true);
+        return;
+      }
+      ocultarEstadoSesion();
+      if(result.state==='authenticated'){
+        limpiarVerificacion();clienteCorreo=result.data.usuario.correo || '';
+        await entrarDashboard(result.data.suministro.numero_suministro,sesionCliente.generation());
+      }else{
+        mostrarLogin();restaurarRegistroDePagina();
+        if(result.state==='ended')showError('Tu sesión terminó o la cuenta no está habilitada. Inicia sesión nuevamente.');
+      }
+    })();
+    tareaRestauracion=tarea;
+    tarea.catch(()=>{if(!sesionCliente.isUser())mostrarEstadoSesion('No pudimos comprobar tu sesión. Reintenta.',true);})
+      .finally(()=>{if(tareaRestauracion===tarea)tareaRestauracion=null;});
+    return tarea;
+  }
+  document.getElementById('session-retry').addEventListener('click',()=>{
+    if(reintentoSalida)cerrarSesionCompleta('Sesión cerrada correctamente.');else restaurarInicio();
+  });
+  document.getElementById('session-forget').addEventListener('click',()=>cerrarSesionCompleta('Ingresa con la cuenta que deseas usar.'));
+  window.addEventListener('online',()=>{if(restauracionBloqueada && !reintentoSalida)restaurarInicio();});
+  restaurarInicio();
   // La animación de bienvenida del login corre una sola vez (no en cada navegación).
   setTimeout(()=>{ try{ document.body.classList.add('login-seen'); }catch(e){} }, 900);
 })();

@@ -51,6 +51,7 @@ login. Consulta de estado permite recuperar confirmación/respuestas perdidas.
 | Método | Ruta | Acceso | Cuerpo | Respuesta y códigos propios |
 |---|---|---|---|---|
 | POST | `/api/auth/login` | Público, limitador | `numero_suministro`, `password` | 200: `estado`, `token`, `usuario` con id/correo/rol y `suministro` con id/número. 400 suministro inválido; 401 credenciales inválidas; 403 cuenta inactiva; 429. |
+| GET | `/api/auth/session` | JWT, cliente activo | Ninguno | 200: `estado: ok`, `usuario` con id/correo/rol actual y `suministro` con id/número. 401 JWT inválido/expirado; 403 cuenta inactiva/inexistente, otro rol o sin suministro; 500 indisponibilidad. Siempre `Cache-Control: no-store`; no emite ni renueva JWT. |
 | POST | `/api/auth/register` | Público, limitador | `correo`, `numero_suministro`, `password` | 201: cuenta creada, `estado`, `mensaje`, `usuario`; no entrega JWT. 400 validación; 409 correo/suministro existente; 429. |
 | POST | `/api/auth/change-password` | JWT, ambos roles, limitador | `password_actual`, `password_nueva`, `password_confirmacion` | 200: `estado`, `mensaje`. 400 validación; 401 contraseña actual incorrecta; 429. No revoca todos los JWT existentes. |
 

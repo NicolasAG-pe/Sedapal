@@ -14,6 +14,13 @@ distribución, despliegue ni aprobación productiva por esta validación.
 
 ## Dictamen y reproducción de H01
 
+**Seguimiento — avance 17:** la [persistencia segura](pruebas/android-sesion-persistente.md)
+sustituye las copias de JWT en Web Storage: Android usa Keystore/AES-GCM y valida
+la sesión contra `/api/auth/session` antes de mostrar datos; web conserva solo
+memoria. La duración de ocho horas y las limitaciones de revocación no cambian.
+Los párrafos del avance 15 sobre memoria/sessionStorage describen su estado
+histórico; la recuperación OTP y ubicación se completan por incrementos separados.
+
 H01 está mitigado en el código de desarrollo con contrato explícito y rutas OTP;
 la transición productiva requiere validación nativa, firma y autorización propias.
 **No se declara esta actualización lista para producción.** No se puede añadir una

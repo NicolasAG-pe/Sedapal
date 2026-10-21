@@ -6,6 +6,8 @@ const localHttp = apiBase.startsWith('http:');
 module.exports = {
     appId: 'pe.edu.hidromejora.app',
     appName: 'Hidro-Mejora',
+    // El bridge transporta credenciales en memoria; tampoco registrarlas en debug.
+    loggingBehavior: 'none',
     webDir: 'artifacts/android/web-runtime',
     // Capacitor 7 reserva las barras del sistema y el recorte en Android 15+.
     android: { adjustMarginsForEdgeToEdge: 'auto' },
