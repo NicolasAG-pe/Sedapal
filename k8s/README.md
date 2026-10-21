@@ -3,6 +3,12 @@
 Los cuatro YAML se basan en `compose.yaml` y los Dockerfiles actuales. Todos
 los recursos deben aplicarse en el mismo namespace. No se modifica Compose.
 
+## Prueba en esta PC
+
+Ver [la guía local](local/README.md): herramientas instaladas dentro de
+`.local/k8s/`, clúster aislado y paneles en 8082/8083. Incluye creación de
+cuentas locales, verificación de API, navegador y persistencia.
+
 ## Rama y revisión
 
 La rama dedicada ya está creada. Para volver a ella y revisar los archivos:
@@ -104,9 +110,9 @@ cd /home/saul-lab/Sedapal
 (
   set -euo pipefail
   test "$(git branch --show-current)" = feature/vercel-to-k8s
-  git add -- k8s/
-  if git diff --cached --name-only | grep -qv '^k8s/'; then
-    echo 'Hay archivos ajenos a k8s/ en staging; revisar antes de continuar.'
+  git add -- .gitignore Backend/server.js k8s/ scripts/check-admin-local.cjs
+  if git diff --cached --name-only | grep -Eqv '^(k8s/|\.gitignore$|scripts/check-admin-local\.cjs$|Backend/server\.js$)'; then
+    echo 'Hay archivos ajenos a la preparación de Kubernetes en staging; revisar antes de continuar.'
     exit 1
   fi
   git diff --cached --check
