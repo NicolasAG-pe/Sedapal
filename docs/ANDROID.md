@@ -71,7 +71,7 @@ REST mantiene los datos de Neon mediante Render. Socket.IO usa la misma base pú
 ## Comportamiento nativo
 
 - **Permisos:** INTERNET, ACCESS_COARSE_LOCATION y ACCESS_FINE_LOCATION. No se solicitan permisos de almacenamiento para PDF ni ubicación en segundo plano.
-- **Ubicación:** `navigator.geolocation.getCurrentPosition`, petición puntual con timeout; el usuario puede rechazarla. No hay mapas nuevos ni seguimiento continuo.
+- **Ubicación:** `navigator.geolocation.getCurrentPosition`, petición puntual de alta precisión en Android, sin caché web y con timeout de ocho segundos. El usuario puede rechazarla o continuar sin coordenadas. Una petición fallida retira la posición anterior y los callbacks de formularios cerrados se descartan. No hay mapas nuevos ni seguimiento continuo.
 - **Fotografías:** selector HTML de archivos, JPG/PNG/WebP, máximo 2 MB; FileReader genera data URL para la API. La disponibilidad de cámara/galería depende del selector WebView/sistema; no existe plugin propio de cámara.
 - **PDF:** `HidroDocumentsPlugin` registrado por MainActivity. Valida nombre y contenido, usa Storage Access Framework/ACTION_CREATE_DOCUMENT, guarda fuera del hilo visual y solicita apertura con un visor disponible. Cancelar no informa éxito; si falta visor el archivo puede seguir guardado. No requiere acceso general al almacenamiento.
 - **Atrás:** cierra modal, menú o minimiza HidroBot; durante tutorial conserva el recorrido. Desde una sección secundaria vuelve a Inicio; desde Inicio/login permite salir con App. No produce un segundo logout implícito.

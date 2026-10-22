@@ -9,7 +9,11 @@ const adb=process.env.HIDRO_ADB || path.join(process.env.ANDROID_HOME || path.jo
 const {_android}=require(process.env.HIDRO_PLAYWRIGHT_MODULE || path.join(root,'artifacts/vercel-validation/tools/node_modules/playwright'));
 const jwt=require(path.join(root,'Backend/node_modules/jsonwebtoken'));
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-function android(...args){return execFileSync(adb,['-s',serial,...args],{encoding:'utf8',timeout:30000});}
+function android(...args){
+ // adb shell vuelve a interpretar los argumentos: proteger también nombres con espacios/paréntesis.
+ const command=args[0]==='shell'?['shell',...args.slice(1).map(v=>"'"+String(v).replace(/'/g,"'\\''")+"'")]:args;
+ return execFileSync(adb,['-s',serial,...command],{encoding:'utf8',timeout:30000});
+}
 async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(!await fn()){assert.ok(Date.now()<end,'Timeout: '+label);await pause(100);}}
 
 (async()=>{
@@ -82,6 +86,11 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
    await require('./android-otp-native.cjs')({ctx,getPage:()=>page,restart,until,ok,screenshot});
    report.result='passed';return;
   }
+  if(process.argv.includes('--location')){
+   android('shell','am','start','-n',pkg+'/.MainActivity');await attach();
+   await require('./android-location-native.cjs')({ctx,getPage:()=>page,android,restart,until,ok,screenshot,login,output});
+   report.result='passed';return;
+  }
   for(const n of [711,712]){
    const account=ctx.registro(n),pending=(await ctx.request('register',account,202)).data;await ctx.drain();await ctx.request('verify-email',ctx.verificar(pending.registro_id,ctx.codigo(account.correo)),201);
   }
@@ -121,6 +130,9 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  }
  finally{
   try{android('shell','svc','wifi','enable');}catch(_){}
+  // Al terminar, detener solo la app del AVD dedicado: su reconexión puede impedir
+  // cerrar el servidor HTTP del fixture. No borrar datos ni modificar otros procesos.
+  try{android('shell','am','force-stop',pkg);}catch(_){}
   await detach();await ctx.close();fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2),{mode:0o600});console.log('Evidencia local: '+path.relative(root,output));
  }
 })().catch(error=>{console.error(error.message);process.exitCode=1;});

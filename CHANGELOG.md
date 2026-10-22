@@ -4,6 +4,20 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 22 de octubre de 2026 — avance 17: ubicación Android y coordenadas seguras
+
+- Timeout reproducido con permisos/proveedor GPS operativo: petición BALANCED
+  fría sin posición de red; alta precisión activa GPS y recibe coordenadas del AVD.
+  Android pide alta precisión a demanda, sin nuevos plugins/permisos y manteniendo
+  ocho segundos. La validación en teléfono físico continúa pendiente.
+- Corregida reutilización de coordenadas antiguas después de un intento fallido,
+  reproducida en SQL. Mensajes de permiso/proveedor/timeout, búsqueda única y
+  descarte de callbacks después de cerrar/enviar/reiniciar el formulario.
+- Ocho comprobaciones nativas aprobadas: GPS/denegación/proveedor apagado, foto,
+  sesión/navegación, recibo/pago, PDF real/SAF y cortes/notificaciones. Inspección
+  visual del PDF confirmada en Docs; 26 comprobaciones Chromium cliente/Admin
+  sin errores JS/recursos fallidos. Evidencia y límites en el informe del avance 17.
+
 ### 22 de octubre de 2026 — avance 17: recuperar registro OTP tras reinicio
 
 - UUID y suministro pendientes persistidos antes del POST en un estado Android

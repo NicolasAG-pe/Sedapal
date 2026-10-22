@@ -1420,6 +1420,11 @@
   let incFotoData = null;
   let incFileReader = null;
   let incCoords = '';
+  let incGeoVersion = 0;
+  function cancelarUbicacionIncidencia(){
+    incGeoVersion++;
+    document.getElementById('inc-geo').disabled=false;
+  }
   let loading = false;
   // Estado de la fuente real de recibos (API). Sin fallback simulado.
   let recibosEstado = 'ok'; // 'cargando' | 'ok' | 'vacio' | 'error'
@@ -1585,6 +1590,7 @@
     if(f) setTimeout(()=>{ try{ f.focus({preventScroll:true}); }catch(e){ f.focus(); } }, 30);
   }
   function closeModal(m){
+    if(m===incModal)cancelarUbicacionIncidencia();
     if(m===fotoModal){
       fotoVersion++; if(fotoController)fotoController.abort();fotoController=null;
       if(fotoObjectUrl)URL.revokeObjectURL(fotoObjectUrl);fotoObjectUrl=null;
@@ -4354,13 +4360,31 @@ async function descargarConstanciaPDF(r, btn){
   });
   document.getElementById('inc-geo').addEventListener('click', ()=>{
     const out = document.getElementById('inc-coords');
-    if(!navigator.geolocation){ showToast('Geolocalización no disponible en este navegador.'); return; }
-    out.textContent = 'Solicitando permiso…';
+    const button=document.getElementById('inc-geo');
+    if(button.disabled)return;
+    incCoords=''; // Una petición nueva nunca reutiliza una posición anterior si falla.
+    if(!navigator.geolocation){out.textContent='Sin ubicación compartida.';showToast('Geolocalización no disponible. Puedes continuar sin ubicación.');return;}
+    out.textContent = 'Buscando ubicación…';button.disabled=true;
     const geoEpoch=sesionCliente.generation();
+    const version=++incGeoVersion;
+    const vigente=()=>geoEpoch===sesionCliente.generation()&&sesionCliente.isUser()&&version===incGeoVersion;
+    const fallo=error=>{
+      if(!vigente())return;
+      button.disabled=false;incCoords='';out.textContent='Sin ubicación compartida.';
+      const mensajes={1:'Permiso de ubicación denegado. Puedes continuar sin ubicación.',
+        2:'La ubicación no está disponible. Revisa si está activada o continúa sin ella.',
+        3:'No se encontró una posición a tiempo. Puedes reintentar o continuar sin ubicación.'};
+      showToast(mensajes[error?.code] || 'No se pudo obtener la ubicación. Puedes continuar sin ella.');
+    };
     navigator.geolocation.getCurrentPosition(
-      pos=>{if(geoEpoch!==sesionCliente.generation() || !sesionCliente.isUser())return; incCoords = pos.coords.latitude.toFixed(5) + ', ' + pos.coords.longitude.toFixed(5); out.textContent = incCoords; },
-      ()=>{if(geoEpoch!==sesionCliente.generation() || !sesionCliente.isUser())return;out.textContent = 'Sin ubicación compartida.'; showToast('No se pudo obtener la ubicación.'); },
-      {timeout:8000}
+      pos=>{
+        if(!vigente())return;
+        const {latitude,longitude}=pos.coords;
+        if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>90||Math.abs(longitude)>180){fallo({code:2});return;}
+        button.disabled=false;incCoords=latitude.toFixed(5)+', '+longitude.toFixed(5);out.textContent=incCoords;
+      },
+      fallo,
+      {timeout:8000,maximumAge:0,enableHighAccuracy:sesionCliente.isNative()}
     );
   });
   document.getElementById('inc-form').addEventListener('submit', async ev=>{
@@ -4378,6 +4402,7 @@ async function descargarConstanciaPDF(r, btn){
     const dir = document.getElementById('inc-dir').value.trim();
     if(desc.length < 10){ showToast('Describe la incidencia con al menos 10 caracteres.'); document.getElementById('inc-desc').focus(); return; }
     if(!dir){ showToast('Indica una dirección o referencia.'); document.getElementById('inc-dir').focus(); return; }
+    cancelarUbicacionIncidencia(); // Descartar una posición que llegue después de enviar el formulario.
     const btnSubmit = document.getElementById('inc-submit');
     form.dataset.busy = '1';
     btnSubmit.disabled = true; btnSubmit.textContent = 'Registrando...';
@@ -4452,6 +4477,7 @@ async function descargarConstanciaPDF(r, btn){
     }finally{_releaseForm();}
   });
   document.getElementById('inc-again').addEventListener('click', ()=>{
+    cancelarUbicacionIncidencia();
     document.getElementById('inc-form').reset();
     document.getElementById('inc-sup').value = supplyLabel.textContent;
     incFotoData = null; incCoords = '';

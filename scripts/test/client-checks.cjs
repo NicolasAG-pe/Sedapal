@@ -96,6 +96,16 @@ module.exports = async function ({ chrome:c, origin, output, pool, request, admi
   await c.click('#inc-view');await wait(()=>c.evaluate('document.getElementById("inc-list").textContent.includes("Incidencia cliente con foto")'),'incidencias actualizadas');
   await c.evaluate(`(()=>{const button=[...document.querySelectorAll('#inc-list button')].find(n=>/foto/i.test(n.textContent));if(!button)throw Error('Sin foto');button.click();})()`);
   await wait(()=>c.evaluate('document.getElementById("foto-img").naturalWidth>0'),'foto autenticada cliente');await c.click('#foto-close');
+  await c.click('#btn-nueva-incidencia');
+  await c.fill('#inc-tipo','Fuga de agua');await c.fill('#inc-desc','Incidencia sin coordenadas tras ubicación fallida');await c.fill('#inc-dir','Dirección sintética');
+  await c.click('#inc-geo');await wait(()=>c.evaluate('document.getElementById("inc-coords").textContent.includes("-12.05")'),'primera posición sintética');
+  await c.command('Emulation.setGeolocationOverride',{}); // Proveedor no disponible tras una posición válida.
+  await c.click('#inc-geo');await wait(()=>c.evaluate('document.getElementById("inc-coords").textContent.includes("Sin ubicación compartida")'),'error de ubicación seguro');
+  await c.submit('#inc-form');await wait(()=>c.evaluate('!document.getElementById("inc-ok").hidden'),'incidencia sin ubicación');
+  const noPosition=(await pool.query("SELECT latitud,longitud FROM incidencias WHERE descripcion='Incidencia sin coordenadas tras ubicación fallida'")).rows[0];
+  assert.equal(noPosition.latitud,null,'Un fallo posterior no debe reutilizar coordenadas anteriores');assert.equal(noPosition.longitud,null);
+  await c.click('#inc-view');await wait(()=>c.evaluate('!document.getElementById("incident-modal").classList.contains("open")'),'cerrar incidencia sin ubicación');
+  ok('Cliente: ubicación fallida posterior retira coordenadas anteriores y permite registrar sin posición');
   await nav('cortes','document.getElementById("cortes-list").textContent.includes("Corte cliente fixture")');
   await nav('notificaciones','document.getElementById("notif-list").children.length>0');
   await c.evaluate(`(()=>{const b=[...document.querySelectorAll('#notif-list button')].find(n=>/leída/i.test(n.textContent));if(!b)throw Error('Sin notificación pendiente');b.click();})()`);

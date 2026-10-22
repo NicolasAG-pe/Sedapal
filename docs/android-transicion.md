@@ -252,3 +252,9 @@ Seguimiento OTP (avance 17): Android conserva únicamente UUID/suministro en un
 estado cifrado independiente de la sesión. Recupera por consulta al backend;
 ningún dato del disco habilita OTP/reenvío sin validar SQL. Ver el
 [informe de sesión y OTP](pruebas/android-sesion-persistente.md).
+
+Seguimiento de ubicación (avance 17): alta precisión Android comprobada contra
+el proveedor GPS del AVD, mismo límite de ocho segundos, sin permisos/plugins
+nuevos. Error de reutilización de coordenadas anteriores reproducido en SQL y
+corregido; validación en teléfono físico pendiente. Evidencia y límites en el
+[informe nativo del avance 17](pruebas/android-sesion-persistente.md).

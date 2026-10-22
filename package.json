@@ -30,7 +30,8 @@
     "android:gradle": "bash scripts/android-gradle.sh",
     "android:release": "node scripts/build-android-release.cjs",
     "test:android:otp": "node --test scripts/test/registration-state.test.cjs scripts/test/android-transition.cjs",
-    "test:android:otp:native": "node scripts/test/android-session-native.cjs --otp"
+    "test:android:otp:native": "node scripts/test/android-session-native.cjs --otp",
+    "test:android:location:native": "node scripts/test/android-session-native.cjs --location"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",

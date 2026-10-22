@@ -275,3 +275,84 @@ logout persistente, identidad separada, arranque sin internet/reconexión y logc
 sin JWT/contraseña. La muerte del proceso sigue simulada por señal al UID propio,
 no por LMKD real. Esquema/API/retención/CLI de correo también se repitieron con
 bases nuevas y proveedor simulado, sin modificar servicios o bases históricas.
+
+## Incremento 3: ubicación Android y errores seguros
+
+El diagnóstico retomado reproduce el timeout en WebView Android 15/124 con
+contexto seguro, ubicación encendida y permisos fine/coarse concedidos. Se inyectó
+la misma posición GPS sintética por `adb emu geo fix`: precisión predeterminada
+(`BALANCED`) agotó 8.010 ms; alta precisión activó GPS y recibió posición en 3.965 ms,
+con exactitud declarada de 5 m. `dumpsys location` confirma solicitudes y entrega
+reales del proveedor; no se sustituyó navigator.geolocation ni se inventaron
+coordenadas en JavaScript. El proveedor de red del AVD no tenía posición.
+
+El orden inverso dio alta precisión en 3.596 ms y luego BALANCED en 8 ms con el
+proveedor ya preparado. Por tanto, el fallo depende también del arranque/caché y
+disponibilidad de proveedores: no se afirma que BALANCED falle siempre ni que
+cualquier teléfono obtenga GPS en ocho segundos. Evidencias locales:
+`location-diagnostic.json`, `location-diagnostic-reverse.json` y dumps de proveedores
+bajo el directorio de reanudación.
+
+La corrección conserva `navigator.geolocation` y solicita alta precisión solo en
+Android, `maximumAge: 0` y el **mismo timeout de 8.000 ms**. Petición puntual a demanda,
+sin plugin nuevo, dependencias, permisos adicionales o seguimiento en segundo plano.
+La propuesta anterior de LocationManager no se implementa: esta evidencia permite
+una corrección menor conservando la integración existente. La ubicación aproximada
+concedida por el usuario sigue bajo control del sistema; requiere prueba física.
+
+Se reprodujo además un fallo de aplicación mediante Chromium/API/SQL: éxito de
+ubicación, segundo intento no disponible, formulario enviado con las coordenadas
+anteriores (`-12.0500000` cuando se esperaba NULL). Ahora una petición nueva retira
+esa posición; error/denegación/timeout permiten continuar sin coordenadas y muestran
+mensajes específicos. Cerrar/enviar/reiniciar el formulario invalida callbacks
+pendientes; tampoco hay solicitudes duplicadas mientras se busca ubicación.
+La nueva regresión pasó después del cambio: **26 comprobaciones E2E**, cero errores
+JS/recursos fallidos, incluida incidencia SQL con latitud/longitud NULL tras fallo.
+Los primeros intentos del nuevo harness (incluido un error sintáctico corregido
+antes de la reproducción efectiva) se conservan y no se cuentan como aprobados.
+
+La automatización del diálogo de ubicación se ajustó a las dos variantes Android
+`permission_deny_button` y `permission_deny_and_dont_ask_again_button`; el primer
+intento esperaba solo la primera y falló con la segunda visible. Para una prueba
+repetible se restablecen únicamente los flags de permisos de este paquete en el
+AVD dedicado antes de solicitar/denegar. No se cambian permisos del manifiesto.
+En fallos el harness detiene solo la aplicación de ese AVD para que su reconexión
+no mantenga abierto el servidor HTTP temporal; conserva APK, datos y bases.
+
+La regresión PDF nativa detectó una espera insuficiente del nuevo harness: SAF
+crea primero un archivo de cero bytes y el plugin escribe después, fuera del hilo
+visual. La prueba lo copiaba antes de esa escritura y fallaba; la limpieza detenía
+entonces la aplicación. Se corrige esperando tamaño útil, visor PDF activo y
+marcador final `%%EOF`, sin modificar el plugin de documentos ni declarar aprobado
+un archivo vacío. Los artefactos fallidos permanecen locales para diagnóstico.
+
+SAF numera archivos repetidos con espacios/paréntesis. El harness pasa ahora los
+argumentos de `adb shell` con quoting explícito para poder comprobar esos nombres;
+la prueba anterior falló al consultar `... (1).pdf`, sin acreditar un fallo del
+plugin. No se borran ni reemplazan los PDF previos de los fixtures. Se exige que
+el visor de PDF esté en primer plano, además de comprobar el archivo completo.
+
+### Resultado nativo final de ubicación y regresión funcional
+
+`artifacts/android-session-native-VCxUZb/result.json`: **8 comprobaciones aprobadas,
+cero errores**, APK debug 1.1.0/3 sincronizada desde las fuentes actuales, API/base
+nuevas y Resend simulado. Incluye Keystore, Photo Picker real/PNG persistido,
+posición GPS real del proveedor del AVD en formulario/SQL, proveedor apagado tras
+éxito con coordenadas NULL, denegación por diálogo Android con formulario operativo,
+restauración de sesión tras cambio de permisos, Perfil, Atrás, rotación y un socket.
+Recibo/pago confirmados una vez en SQL, cortes y lectura de notificaciones nativos.
+
+PDF de 10.050 bytes guardado con SAF, cabecera/final válidos y una página A4 según
+Poppler; el visor Android fue activado. La primera captura era un fotograma previo
+a su dibujo, por lo que no se tomó como evidencia visual suficiente. El visor Docs
+conservaba una tarea de los intentos interrumpidos: cerrar únicamente ese proceso
+y abrir el archivo completo desde Descargas permitió comprobar visualmente el
+recibo. Captura local confirmada `resume-20261022/pdf-viewer-reopened.png`.
+No se concedieron accesos generales al almacenamiento; una apertura directa por
+shell sin grant fue rechazada correctamente y se usó la selección normal de Files.
+El harness automatiza archivo/actividad; la inspección visual se hizo separadamente.
+
+La limpieza detiene la aplicación del AVD tanto en éxito como en fallo antes de
+cerrar la API temporal, conservando estado cifrado, documentos y bases sintéticas.
+La prueba final terminó con código 0; las ejecuciones parciales anteriores quedan
+identificadas como fallidas y no se mezclan con estos ocho resultados.
