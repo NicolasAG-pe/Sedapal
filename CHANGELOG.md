@@ -370,3 +370,12 @@ La instalación y los flujos principales de la APK release fueron validados en u
 - Regresión final Node: 114 aprobadas/1 omisión condicional; modo histórico separado 12/1 inversa. E2E Chromium 28 comprobaciones, sin errores. Node 22 en imagen: 56/1 más 18/18 de correo.
 - Kubernetes: 31 recursos válidos con esquema estricto; sin clúster ni despliegues. Tres imágenes locales construidas y comprobadas.
 - Informe y documentación Android/auditoría actualizados; release anterior conservada. Integración solo local: publicación, firma de release integrada, actualización desde 1.0.0 y operación Kubernetes pendientes.
+
+## Avance 19 — Kubernetes local integrado verificado
+
+- Arranque kind exclusivo `hidro-avance19`, kubeconfig privado, puertos 8084/8085 e imágenes del avance 18 reutilizadas, sin reconstrucción ni cambios al clúster del compañero/Compose.
+- Fallback de importación de plataforma local para índices Docker/containerd incompletos; reutilización y guardia de Secret/PVC sin regenerar credenciales históricas.
+- Web/Admin/backend/PostgreSQL listos; login/sesión, roles/19 rutas, recibos/pagos/incidencias, CORS, chatbot y Socket.IO comprobados mediante Kubernetes real y Chromium.
+- Persistencia tras recrear Pod DB con PVC y filas conservadas; backend recuperado sin reinicios.
+- API OTP interna y worker en Pods separados, base nueva/migraciones 003–006 y proveedor sin HTTP real: UUID idempotente, cola, confirmación y login aprobados; altas principales cerradas y fixtures detenidos.
+- Informe `docs/pruebas/kubernetes-integracion-avance-19.md` y guía `k8s/avance19/README.md`; solo commit local, sin push, publicación de APK o intervención productiva.

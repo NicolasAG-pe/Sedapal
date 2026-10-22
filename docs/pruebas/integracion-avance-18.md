@@ -300,3 +300,8 @@ scripts/test/client-checks.cjs
 scripts/test/hidrobot.test.cjs
 scripts/test/k8s-integration.test.cjs
 ```
+
+
+Seguimiento de avance 19: [Kubernetes integrado ejecutado en entorno local aislado](kubernetes-integracion-avance-19.md).
+La evidencia de clúster corresponde al avance 19; este informe conserva el alcance
+histórico de renderizado/pruebas del avance 18.

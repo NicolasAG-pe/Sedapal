@@ -192,3 +192,10 @@ Además se validaron 31 recursos renderizados con kubeconform 0.8.0, modo estric
 esquemas Kubernetes 1.37.0: 31 válidos, cero omitidos. Esta validación de esquema
 no sustituye un dry-run contra el API server ni comprueba políticas del destino. Referencia del generador:
 [Kustomize oficial](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/).
+
+## Seguimiento — avance 19
+
+La [validación funcional local](../docs/pruebas/kubernetes-integracion-avance-19.md)
+ejecutó realmente Web/Admin/backend/PostgreSQL en un kind exclusivo, con pruebas
+de negocio, persistencia y OTP simulado. Ver [guía para otra laptop](avance19/README.md).
+No utiliza el clúster sedapal-test ni acredita operación productiva.
