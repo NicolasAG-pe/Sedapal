@@ -87,3 +87,15 @@ PVC existentes requieren migración manual autorizada; readiness solo consulta B
 La guía Kubernetes conserva los aportes e identifica estas condiciones pendientes.
 
 Regresión tras el cierre operativo: 45/45 pruebas backend, sesión, contrato y outbox aprobadas, sin proveedor real. La pausa también conserva consulta/confirmación de una solicitud ya enviada (comprobado).
+
+## Imágenes y contexto Docker
+
+Construidas localmente las tres imágenes `hidro-avance18-{backend,web,admin}:local`
+con sus Dockerfiles/contextos originales (sin publicar ni iniciar servicios).
+Se amplían `.dockerignore` raíz y Backend para excluir env privados, claves,
+artefactos, dependencias, respaldos y herramientas locales del contexto. Rebuild
+con las reglas finales: tres correctos. Inspección por comandos sin red y con
+filesystem de solo lectura: Node 22.23.4, backend/worker presentes, web con
+conocimiento Sedapal/estado nativo, sin módulo Admin en cliente ni env privado.
+No se probaron estos contenedores conectados entre sí ni en Kubernetes.
+No se sustituyeron imágenes/servicios Compose existentes.

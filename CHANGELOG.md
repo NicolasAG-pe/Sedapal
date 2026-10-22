@@ -357,3 +357,8 @@ La instalación y los flujos principales de la APK release fueron validados en u
 - Tres pruebas locales aprobadas: renderizado/controles, SQL nuevo y migraciones 003–006 repetibles, rechazo 503 sin encolar. No se ejecutó Kubernetes.
 
 - Regresión del cambio operativo: 45/45 backend/contrato/sesión/outbox; solicitudes ya enviadas siguen consultables y confirmables durante la pausa.
+
+### Avance 18 — contexto e imágenes locales
+
+- Se excluyen secretos, respaldos y artefactos privados del contexto Docker.
+- Tres builds locales y comprobaciones de contenido sin red aprobados; sin publicación, despliegue ni cambios a los servicios existentes.
