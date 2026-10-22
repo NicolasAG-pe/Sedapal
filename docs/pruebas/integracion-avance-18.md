@@ -52,3 +52,16 @@ Las pruebas previas de avance 17 son antecedentes, no resultados de esta rama.
 
 Pendiente de integración y ejecución; no se declara Kubernetes operativo ni
 Android integrado aprobado por esta auditoría.
+
+## Integración de historiales
+
+Conflictos resueltos por unión de aportes: `Backend/server.js` conserva el
+servicio transaccional de recibos y añade el handler SQL de main; `package.json`
+conserva todos los comandos y añade `test:chatbot`. La revisión del diff HTML
+confirma que solo se añaden conocimiento/fuentes/prioridades del chatbot y
+selectores de filtros, conservando sesión/OTP/ubicación.
+
+Primer control: Node 115 pruebas (114 aprobadas, una omisión condicional H02),
+Chromium 17/17 (transición OTP y perfil/navegación), chatbot incluido 4/4.
+PostgreSQL 18 nuevo exclusivo, puerto loopback 32769, Resend simulado.
+Los manifiestos heredados aún requieren la corrección indicada abajo.

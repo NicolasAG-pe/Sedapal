@@ -346,3 +346,5 @@ La instalación y los flujos principales de la APK release fueron validados en u
 - Se documentan conflictos y riesgos antes de integrar main en un worktree aislado.
 - Se conservan las ramas originales y los 22 commits; sin push ni despliegues.
 - Evidencia y plan: `docs/pruebas/integracion-avance-18.md`.
+
+- Integración de main conservando ambos historiales y resolución específica de servidor/comandos; chatbot y filtros preservados. Node: 114 OK/1 omisión; Chromium: 17 OK. Kubernetes aún pendiente de ajuste.
