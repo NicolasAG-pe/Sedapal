@@ -9,6 +9,10 @@
 .login-visual img{width:100%;max-width:500px;align-self:center;aspect-ratio:600/460;object-fit:contain}
 .login-visual h2{font-size:clamp(1.6rem,3vw,2.6rem);max-width:16ch;letter-spacing:-.035em}.login-visual p{color:#bddce6;max-width:35ch;margin-top:16px}
 .auth-eyebrow{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-weight:700}
+.verification-intro{font-size:.9rem;color:var(--muted);line-height:1.6;margin-bottom:20px}
+#verify-code{font:1.5rem monospace;letter-spacing:.3em;text-align:center}
+#verify-email-form .btn{width:100%;margin-top:10px;min-height:44px}
+#verify-status:empty{display:none}
 .login-foot-brand{font-size:.72rem;margin-top:28px}.login-foot-brand small{font-size:inherit}
 .topbar{background:white;color:var(--navy);border-bottom:1px solid var(--border);box-shadow:none;z-index:var(--z-header)}
 .topbar-inner{max-width:1240px;min-height:64px;padding:10px 24px;flex-wrap:nowrap;gap:12px}

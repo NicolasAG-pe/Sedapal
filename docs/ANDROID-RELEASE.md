@@ -2,8 +2,23 @@
 
 Distribución directa por APK. No se genera AAB ni se publica en Google Play.
 Se conserva Capacitor 7, Java 21 y `pe.edu.hidromejora.app`.
-La primera release es `versionCode 2`, `versionName 1.0.0`.
+La primera release distribuida es `versionCode 2`, `versionName 1.0.0`.
+La rama tiene un **candidato 1.1.0 / versionCode 3 compilado localmente**,
+sin publicar. La [validación nativa del avance 16](pruebas/android-1.1.0-nativo.md)
+comprobó firma, instalación sobre la APK oficial y conservación de localStorage
+en un AVD Android 15. [Transición OTP y pendientes productivos](android-transicion.md).
 Fuente del versionado: [android/app/build.gradle](../android/app/build.gradle); entorno nativo: [ANDROID](ANDROID.md).
+
+## Candidata local del avance 17
+
+La [validación de sesión, OTP y ubicación](pruebas/android-sesion-persistente.md)
+compiló otra candidata 1.1.0/3 desde `5f73bcf`, en salida Gradle exclusiva,
+sin sobrescribir el artefacto del avance 16. Usa la misma firma permanente,
+runtime HTTPS nuevo y no es depurable. SHA-256:
+`d8632a4ae4a39e3d7a501bd05ed72e63717e32e63269389ba71a9a29d0fd8f71`.
+APK, material de firma y reportes privados siguen fuera de Git; no se distribuyó.
+Los resultados de actualización/instrumentación y requisitos pendientes quedan
+en ese informe. La única APK publicada sigue siendo 1.0.0/código 2.
 
 ## Publicación y validación de v1.0.0
 
@@ -74,15 +89,22 @@ No ejecutar un `cap sync` local/emulador entre la generación del runtime de
 producción y la compilación release. Utilizar siempre el script completo.
 Las variables de desarrollo de `.env.android` permanecen independientes.
 
-La APK se guarda en `artifacts/android/hidro-mejora-v1.0.0-release.apk`, junto
-con su checksum. Cada build usa una salida nueva bajo `artifacts/android/builds/`.
+El script deriva el nombre del versionName de Gradle. En el avance 16 generó
+`artifacts/android/hidro-mejora-v1.1.0-release.apk` y su checksum, solo locales.
+El APK publicado v1.0.0 y su checksum se conservan; no se reemplazó ningún asset.
+El informe nativo identifica el checksum exacto y las fuentes compiladas.
+Cada build usa una salida nueva bajo `artifacts/android/builds/`.
 Los logs locales ocultan los valores de firma. Si la APK de esa versión ya
 existe, el script se detiene; no la sobrescribe. Una compilación exitosa no
 sustituye las verificaciones del artefacto ni la prueba de la release en celular.
 
 Para una actualización, incrementar `versionCode` y ajustar `versionName` en
 `android/app/build.gradle`; conservar applicationId y exactamente la misma clave.
-Por ejemplo, la próxima corrección puede ser código 3, versión 1.0.1.
+La propuesta del avance 15 usa código 3, versión 1.1.0 por el nuevo flujo OTP.
+La compilación y prueba de actualización del avance 16 conservan esos valores.
+Antes de distribuir, comprobar que sea superior a cualquier código realmente
+entregado; una corrección posterior requerirá otro código mayor. No basta con
+cambiar versionName para actualizar una instalación.
 Conservar APK distribuidos, SHA-256 y fingerprint público del certificado.
 
 ## Verificar antes de distribuir

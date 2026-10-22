@@ -14,7 +14,7 @@
       clear,
       set(value, verifiedRole) {
         clear(); token = value; role = verifiedRole;
-        try { sessionStorage.setItem(namespace + '_token', token); sessionStorage.setItem(namespace + '_rol', role); } catch (_) {}
+        // El panel web mantiene JWT únicamente en memoria; no ofrece persistencia sin cifrado.
       },
       token: () => token,
       role: () => role,

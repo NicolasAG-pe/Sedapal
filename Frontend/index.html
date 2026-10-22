@@ -32,6 +32,12 @@
 
     <div id="form-error" class="form-error" role="alert"></div>
 
+    <div id="session-restore" hidden aria-live="polite">
+      <p id="session-restore-message" role="status">Comprobando tu sesión…</p>
+      <button class="btn btn-primary" id="session-retry" type="button" hidden>Reintentar</button>
+      <button class="btn btn-ghost" id="session-forget" type="button" hidden>Usar otra cuenta</button>
+    </div>
+
     <form id="login-form" novalidate>
       <div class="field">
         <label for="suministro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c3 4.2 6 7.6 6 11a6 6 0 1 1-12 0c0-3.4 3-6.8 6-11z"/></svg>Número de Suministro</label>
@@ -79,6 +85,23 @@
       <button type="submit" class="btn btn-primary" id="btn-register">
         <span id="btn-register-text">Crear cuenta</span>
       </button>
+    </form>
+    <form id="verify-email-form" novalidate hidden>
+      <p class="verification-intro">Solicitamos un código para tu correo. Cuando llegue, revísalo también en spam y escríbelo aquí para terminar de crear tu cuenta.</p>
+      <div id="verify-error" class="form-error" role="alert"></div>
+      <div class="field">
+        <label for="verify-code">Código de verificación</label>
+        <input type="text" id="verify-code" name="verification-code" inputmode="numeric"
+               autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6"
+               aria-describedby="verify-code-hint" placeholder="000000" required />
+        <div class="hint" id="verify-code-hint">El código vence en 5 minutos. No lo compartas.</div>
+      </div>
+      <p id="verify-status" class="hint" role="status"></p>
+      <button type="submit" class="btn btn-primary" id="btn-verify-email">Verificar correo</button>
+      <button type="button" class="btn btn-ghost" id="btn-resend-email" disabled>Reenviar código</button>
+      <button type="button" class="btn btn-ghost" id="btn-check-email">Comprobar estado</button>
+      <button type="button" class="btn btn-ghost" id="btn-retry-registration" hidden>Volver al registro</button>
+      <button type="button" class="btn btn-ghost" id="btn-restart-register">Usar otros datos</button>
     </form>
     <div class="auth-switch" id="auth-to-login" hidden>¿Ya tienes una cuenta? <a href="#" id="show-login">Iniciar sesión</a></div>
 
@@ -864,6 +887,8 @@
 <script src="shared/icons.js"></script>
 <script src="assets/js/client-home.js"></script>
 <script src="assets/js/documents.js"></script>
+<script src="assets/js/native-state.js"></script>
+<script src="assets/js/registration-state.js"></script>
 <script src="assets/js/client-session.js"></script>
 <script src="assets/js/sedapal-knowledge.js"></script>
 <!-- Socket.IO cliente vendorizado (v4.8.4, igual que el backend): el script
@@ -897,6 +922,14 @@
   const regPass2 = document.getElementById('reg-pass2');
   const btnRegister = document.getElementById('btn-register');
   const btnRegisterText = document.getElementById('btn-register-text');
+  const verifyForm = document.getElementById('verify-email-form');
+  const verifyCode = document.getElementById('verify-code');
+  const verifyError = document.getElementById('verify-error');
+  const verifyStatus = document.getElementById('verify-status');
+  const btnVerify = document.getElementById('btn-verify-email');
+  const btnResend = document.getElementById('btn-resend-email');
+  const btnRestartRegister = document.getElementById('btn-restart-register');
+  let registroPendiente = null, verificacionOcupada = false, verificacionVersion = 0, reenvioTimer = null, consultaCorreoTimer = null, consultandoCorreo = false;
   const authToRegister = document.getElementById('auth-to-register');
   const authToLogin = document.getElementById('auth-to-login');
   const loginFoot = document.querySelector('.login-foot');
@@ -933,13 +966,29 @@
   const fotoModal = document.getElementById('foto-modal');
   const passModal = document.getElementById('pass-modal');
 
-  /* ---------- Sesión exclusiva de clientes, en memoria y sessionStorage ---------- */
+  /* ---------- Sesión en memoria; persistencia cifrada solo en Android ---------- */
   const sesionCliente = window.createHMClientSession(cerrarSesionPorAuth);
   const fmtFechaLarga = window.HMShared.ui.date;
   let clienteCorreo='';
-  function guardarSesion(token, rol){ sesionCliente.set(token, rol); }
+  let restauracionBloqueada=false, tareaRestauracion=null, reintentoSalida=false;
+  function guardarSesion(token, rol){return sesionCliente.establish(token, rol);}
   function obtenerToken(){ return sesionCliente.token(); }
-  function limpiarSesion(){ sesionCliente.clear(); }
+  function limpiarSesion(){ return sesionCliente.clear(); }
+  function mostrarEstadoSesion(mensaje,reintentar=false,salida=false){
+    restauracionBloqueada=true;reintentoSalida=salida;
+    document.getElementById('session-restore').hidden=false;
+    document.getElementById('session-restore-message').textContent=mensaje;
+    document.getElementById('session-retry').hidden=!reintentar;
+    document.getElementById('session-forget').hidden=!reintentar || salida;
+    form.hidden=true;regForm.hidden=true;verifyForm.hidden=true;
+    authToRegister.hidden=true;authToLogin.hidden=true;
+    if(loginFoot)loginFoot.hidden=true;
+    if(demoBox)demoBox.hidden=true;
+  }
+  function ocultarEstadoSesion(){
+    restauracionBloqueada=false;
+    document.getElementById('session-restore').hidden=true;
+  }
   function esAbortado(error){ return error && error.name === 'AbortError'; }
   function despuesEnSesion(task, delay){
     const epoch=sesionCliente.generation();
@@ -953,10 +1002,12 @@
   }
   /* Cierre de sesión central (única lógica): desktop + móvil + expiración 401.
      Limpia JWT, polling, drawer/nav-open, body lock, overlays, HidroBot y vuelve al login. */
-  function cerrarSesionCompleta(mensaje){
+  async function cerrarSesionCompleta(mensaje){
     try{ detenerTiempoReal(); }catch(e){}
     try{ stopCortesPolling(); }catch(e){}
-    limpiarSesion();
+    const retirada=limpiarSesion();
+    const retiradaRegistro=limpiarVerificacion();
+    mostrarLogin();
     clienteCorreo='';
     window.HMShared.ui.clearFormLocks(document);
     limpiarDatosCliente();
@@ -978,6 +1029,13 @@
       document.body.classList.remove('dash-enter');
     }catch(e){}
     showView(viewLogin);
+    if(sesionCliente.isNative())mostrarEstadoSesion('Cerrando sesión…');
+    try{await Promise.all([retirada,retiradaRegistro]);}catch(_){
+      mostrarEstadoSesion('No se pudo cerrar la sesión de forma segura. Reintenta para retirar la credencial.',true,true);
+      return;
+    }
+    ocultarEstadoSesion();
+    if(sesionCliente.isNative())mostrarLogin();
     try{ form.reset(); regForm.reset(); inpPass.type='password'; }catch(e){}
     try{ inpSupply.value = ''; inpPass.value = ''; }catch(e){}
     try{ inpSupply.focus(); }catch(e){}
@@ -1363,6 +1421,11 @@
   let incFotoData = null;
   let incFileReader = null;
   let incCoords = '';
+  let incGeoVersion = 0;
+  function cancelarUbicacionIncidencia(){
+    incGeoVersion++;
+    document.getElementById('inc-geo').disabled=false;
+  }
   let loading = false;
   // Estado de la fuente real de recibos (API). Sin fallback simulado.
   let recibosEstado = 'ok'; // 'cargando' | 'ok' | 'vacio' | 'error'
@@ -1528,6 +1591,7 @@
     if(f) setTimeout(()=>{ try{ f.focus({preventScroll:true}); }catch(e){ f.focus(); } }, 30);
   }
   function closeModal(m){
+    if(m===incModal)cancelarUbicacionIncidencia();
     if(m===fotoModal){
       fotoVersion++; if(fotoController)fotoController.abort();fotoController=null;
       if(fotoObjectUrl)URL.revokeObjectURL(fotoObjectUrl);fotoObjectUrl=null;
@@ -4315,13 +4379,31 @@ async function descargarConstanciaPDF(r, btn){
   });
   document.getElementById('inc-geo').addEventListener('click', ()=>{
     const out = document.getElementById('inc-coords');
-    if(!navigator.geolocation){ showToast('Geolocalización no disponible en este navegador.'); return; }
-    out.textContent = 'Solicitando permiso…';
+    const button=document.getElementById('inc-geo');
+    if(button.disabled)return;
+    incCoords=''; // Una petición nueva nunca reutiliza una posición anterior si falla.
+    if(!navigator.geolocation){out.textContent='Sin ubicación compartida.';showToast('Geolocalización no disponible. Puedes continuar sin ubicación.');return;}
+    out.textContent = 'Buscando ubicación…';button.disabled=true;
     const geoEpoch=sesionCliente.generation();
+    const version=++incGeoVersion;
+    const vigente=()=>geoEpoch===sesionCliente.generation()&&sesionCliente.isUser()&&version===incGeoVersion;
+    const fallo=error=>{
+      if(!vigente())return;
+      button.disabled=false;incCoords='';out.textContent='Sin ubicación compartida.';
+      const mensajes={1:'Permiso de ubicación denegado. Puedes continuar sin ubicación.',
+        2:'La ubicación no está disponible. Revisa si está activada o continúa sin ella.',
+        3:'No se encontró una posición a tiempo. Puedes reintentar o continuar sin ubicación.'};
+      showToast(mensajes[error?.code] || 'No se pudo obtener la ubicación. Puedes continuar sin ella.');
+    };
     navigator.geolocation.getCurrentPosition(
-      pos=>{if(geoEpoch!==sesionCliente.generation() || !sesionCliente.isUser())return; incCoords = pos.coords.latitude.toFixed(5) + ', ' + pos.coords.longitude.toFixed(5); out.textContent = incCoords; },
-      ()=>{if(geoEpoch!==sesionCliente.generation() || !sesionCliente.isUser())return;out.textContent = 'Sin ubicación compartida.'; showToast('No se pudo obtener la ubicación.'); },
-      {timeout:8000}
+      pos=>{
+        if(!vigente())return;
+        const {latitude,longitude}=pos.coords;
+        if(!Number.isFinite(latitude)||!Number.isFinite(longitude)||Math.abs(latitude)>90||Math.abs(longitude)>180){fallo({code:2});return;}
+        button.disabled=false;incCoords=latitude.toFixed(5)+', '+longitude.toFixed(5);out.textContent=incCoords;
+      },
+      fallo,
+      {timeout:8000,maximumAge:0,enableHighAccuracy:sesionCliente.isNative()}
     );
   });
   document.getElementById('inc-form').addEventListener('submit', async ev=>{
@@ -4339,6 +4421,7 @@ async function descargarConstanciaPDF(r, btn){
     const dir = document.getElementById('inc-dir').value.trim();
     if(desc.length < 10){ showToast('Describe la incidencia con al menos 10 caracteres.'); document.getElementById('inc-desc').focus(); return; }
     if(!dir){ showToast('Indica una dirección o referencia.'); document.getElementById('inc-dir').focus(); return; }
+    cancelarUbicacionIncidencia(); // Descartar una posición que llegue después de enviar el formulario.
     const btnSubmit = document.getElementById('inc-submit');
     form.dataset.busy = '1';
     btnSubmit.disabled = true; btnSubmit.textContent = 'Registrando...';
@@ -4413,6 +4496,7 @@ async function descargarConstanciaPDF(r, btn){
     }finally{_releaseForm();}
   });
   document.getElementById('inc-again').addEventListener('click', ()=>{
+    cancelarUbicacionIncidencia();
     document.getElementById('inc-form').reset();
     document.getElementById('inc-sup').value = supplyLabel.textContent;
     incFotoData = null; incCoords = '';
@@ -4874,7 +4958,9 @@ async function descargarConstanciaPDF(r, btn){
     regError.textContent = msg;
     regError.classList.add('show');
   }
-  function mostrarRegistro(){
+  function mostrarRegistro(reintentar=false){
+    if(registroPendiente && !reintentar){ mostrarVerificacion(); return; }
+    verifyForm.hidden = true;
     form.hidden = true;
     if(demoBox) demoBox.hidden = true;
     if(loginFoot) loginFoot.hidden = true;
@@ -4886,6 +4972,7 @@ async function descargarConstanciaPDF(r, btn){
     regCorreo.focus();
   }
   function mostrarLogin(){
+    verifyForm.hidden = true;
     regForm.hidden = true;
     authToLogin.hidden = true;
     form.hidden = false;
@@ -4897,7 +4984,163 @@ async function descargarConstanciaPDF(r, btn){
     inpSupply.focus();
   }
   document.getElementById('show-register').addEventListener('click', e=>{ e.preventDefault(); mostrarRegistro(); });
-  document.getElementById('show-login').addEventListener('click', e=>{ e.preventDefault(); mostrarLogin(); });
+  document.getElementById('show-login').addEventListener('click', e=>{ e.preventDefault(); if(!verificacionOcupada)mostrarLogin(); });
+
+  function limpiarVerificacion(){
+    verificacionVersion++;
+    registroPendiente = null;
+    verificacionOcupada = false;
+    clearInterval(reenvioTimer); clearInterval(consultaCorreoTimer);
+    verifyForm.reset();
+    verifyForm.removeAttribute('aria-busy');
+    verifyError.classList.remove('show');
+    verifyStatus.textContent = '';
+    const removal=window.HMRegistrationState.clear();removal.catch(()=>{});return removal;
+  }
+  async function persistirVerificacion(){
+    try{await window.HMRegistrationState.save(registroPendiente);return true;}catch(_){return false;}
+  }
+  function actualizarReenvio(){
+    if(!registroPendiente)return;
+    const p=registroPendiente;
+    const segundos=Math.max(0,Math.ceil((p.reenvioHasta-Date.now())/1000));
+    const vencido=p.solicitudHasta<=Date.now(),cerrado=p.estadoSolicitud==='cerrado';
+    const faltaCodigo=!p.venceEn,restante=faltaCodigo?0:Math.max(0,Math.ceil((Date.parse(p.venceEn)-Date.now())/1000));
+    btnResend.disabled=verificacionOcupada || !p.aceptada || segundos>0 || vencido || cerrado;
+    btnResend.textContent=segundos?'Reenviar en '+segundos+' s':'Reenviar código';
+    btnVerify.disabled=verificacionOcupada || !p.aceptada || vencido || cerrado || faltaCodigo || !restante;
+    btnVerify.textContent=verificacionOcupada?'Procesando...':'Verificar correo';
+    btnRestartRegister.disabled=verificacionOcupada;
+    document.getElementById('btn-check-email').disabled=consultandoCorreo || verificacionOcupada || vencido;
+    document.getElementById('btn-retry-registration').hidden=p.aceptada;
+    document.getElementById('btn-retry-registration').disabled=verificacionOcupada;
+    const cerrados={sin_intentos:'Agotaste los intentos. Inicia un nuevo registro.',sustituido:'Esta solicitud fue sustituida. Usa la solicitud más reciente o inicia otra.',solicitud_vencida:'La solicitud venció. Inicia un nuevo registro.'};
+    document.getElementById('verify-code-hint').textContent=cerrados[p.motivo] || (vencido?'La solicitud venció. Inicia un nuevo registro.':
+      !p.aceptada?'Estamos comprobando si se guardó tu solicitud.':faltaCodigo?'El correo está en cola; espera el código.':
+      !restante?'El código venció. Solicita otro para continuar.':'El código vence en '+Math.floor(restante/60)+':'+String(restante%60).padStart(2,'0')+'. No lo compartas.');
+    const mensajes={en_cola:'Correo en cola. Espera el código.',procesando:'Procesando el envío del código.',
+      aceptado:'El servicio de correo aceptó el mensaje. Revisa tu bandeja y spam; la entrega puede demorar.',
+      fallido:'No se pudo enviar el correo. Puedes solicitar otro código cuando termine la espera.',
+      caducado:'El envío venció. Solicita otro código.',ambiguo:'No pudimos confirmar el envío. Si llega un código vigente, puedes usarlo; también puedes solicitar otro.',
+      cancelado:'Este envío fue sustituido o cancelado.',anterior:'Revisa tu correo para continuar con la solicitud anterior.'};
+    if(!verificacionOcupada)verifyStatus.textContent=p.problemaConsulta || cerrados[p.motivo] || (!p.aceptada?
+      'No se confirmó la respuesta del registro. Comprobaremos su estado sin volver a enviarlo.':mensajes[p.estadoEnvio] || 'Consulta el estado del correo.');
+  }
+  function mostrarVerificacion(){
+    formError.classList.remove('show');form.hidden=true;regForm.hidden=true;verifyForm.hidden=false;
+    authToRegister.hidden=true;authToLogin.hidden=false;
+    if(loginFoot)loginFoot.hidden=true;
+    loginTitle.textContent='Verifica tu correo';actualizarReenvio();verifyCode.focus();
+  }
+  async function completarVerificacion(suministro){
+    try{await limpiarVerificacion();}catch(_){
+      mostrarLogin();showError('Correo verificado. No pudimos retirar el estado temporal; reintenta al abrir la aplicación.');return;
+    }
+    mostrarLogin();inpSupply.value=suministro;inpPass.value='';inpPass.focus();
+    showSuccess('Correo verificado. Ya puedes iniciar sesión.');
+  }
+  async function consultarCorreo(){
+    if(consultandoCorreo || !registroPendiente || verifyForm.hidden || registroPendiente.solicitudHasta<=Date.now())return;
+    const pendiente=registroPendiente;consultandoCorreo=true;actualizarReenvio();
+    try{
+      const resp=await sesionCliente.authFetch('/api/auth/verification-status',{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({registro_id:pendiente.id})
+      });
+      const data=await resp.json().catch(()=>null);
+      if(registroPendiente!==pendiente)return;
+      if(resp.ok && data?.estado==='verificado'){await completarVerificacion(pendiente.suministro);return;}
+      if(resp.ok && data?.estado==='cerrado'){
+        pendiente.aceptada=true;pendiente.estadoSolicitud='cerrado';pendiente.motivo=data.motivo;pendiente.problemaConsulta='';
+        clearInterval(consultaCorreoTimer);
+        // Conservar motivo visible, retirar solo el estado durable ya innecesario.
+        await window.HMRegistrationState.clear();
+      }else if(resp.ok && data?.estado==='pendiente'){
+        guardarVerificacion(data,pendiente.suministro,false);
+        if(!['en_cola','procesando'].includes(data.estado_envio))clearInterval(consultaCorreoTimer);
+      }else{
+        pendiente.problemaConsulta=resp.status===404 && !pendiente.aceptada?
+          'Todavía no se encontró la solicitud. Vuelve al registro y reintenta con los mismos datos; conservaremos su identificador.':
+          (data?.mensaje || 'No se pudo consultar el estado. Tu solicitud se conserva.');
+      }
+    }catch(_){if(registroPendiente===pendiente)pendiente.problemaConsulta='Sin conexión o sin respuesta. Tu solicitud se conserva; vuelve a comprobar su estado.';}
+    finally{consultandoCorreo=false;actualizarReenvio();}
+  }
+  function iniciarConsultaCorreo(){
+    clearInterval(consultaCorreoTimer);consultaCorreoTimer=setInterval(consultarCorreo,5000);consultarCorreo();
+  }
+  function guardarVerificacion(data,suministro,iniciar=true){
+    if(!data || !/^[a-f0-9-]{36}$/i.test(data.registro_id) || (registroPendiente && data.registro_id!==registroPendiente.id) ||
+      !(data.vence_en===null || Number.isFinite(Date.parse(data.vence_en))) || !Number.isFinite(Date.parse(data.solicitud_vence_en)))throw new Error('Respuesta de registro incompleta.');
+    const anterior=registroPendiente;
+    registroPendiente={id:data.registro_id,suministro,venceEn:data.vence_en,estadoEnvio:data.estado_envio,aceptada:true,
+      estadoSolicitud:'pendiente',motivo:null,problemaConsulta:'',
+      solicitudHasta:Date.parse(data.solicitud_vence_en),reenvioHasta:Date.now()+Math.max(0,Number(data.reenvio_en_segundos) || 0)*1000};
+    // Solo identificador, suministro y plazos; nunca correo, contraseña, OTP ni JWT.
+    persistirVerificacion();
+    clearInterval(reenvioTimer);reenvioTimer=setInterval(actualizarReenvio,1000);
+    if(iniciar){mostrarVerificacion();iniciarConsultaCorreo();}else{
+      // Mantener la referencia permite descartar respuestas de solicitudes anteriores.
+      Object.assign(anterior,registroPendiente);registroPendiente=anterior;
+    }
+  }
+  function showVerifyError(message){ verifyError.textContent = message; verifyError.classList.add('show'); }
+  verifyCode.addEventListener('input', ()=>{ verifyCode.value = verifyCode.value.replace(/\D/g,'').slice(0,6); });
+  async function procesarVerificacion(reenviar){
+    if(verificacionOcupada || !registroPendiente)return;
+    if(reenviar && btnResend.disabled)return;
+    if(!reenviar && btnVerify.disabled)return;
+    if(!reenviar && !/^\d{6}$/.test(verifyCode.value)){
+      showVerifyError('Ingresa el código de seis dígitos.'); verifyCode.focus(); return;
+    }
+    const version = verificacionVersion;
+    const suministro = registroPendiente.suministro;
+    if(reenviar)verifyCode.value='';
+    verificacionOcupada = true; actualizarReenvio(); verifyForm.setAttribute('aria-busy','true');
+    verifyError.classList.remove('show'); verifyStatus.textContent = '';
+    try{
+      const body = { registro_id: registroPendiente.id };
+      if(!reenviar)body.codigo = verifyCode.value;
+      const resp = await sesionCliente.authFetch('/api/auth/' + (reenviar ? 'otp/resend-verification' : 'verify-email'), {
+        method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+      });
+      const data = await resp.json().catch(()=>null);
+      if(version !== verificacionVersion)return;
+      if(!resp.ok || !data || data.estado !== (reenviar ? 'pendiente' : 'ok')){
+        if(reenviar && resp.status===429){
+          registroPendiente.reenvioHasta = Date.now()+Math.max(1,Number(resp.headers.get('Retry-After')) || 60)*1000;
+          persistirVerificacion();
+        }
+        showVerifyError((data && data.mensaje) || 'No se pudo completar la verificación. Inténtalo nuevamente.');
+        await consultarCorreo();return;
+      }
+      if(reenviar){
+        guardarVerificacion(data,suministro); verifyCode.value='';
+        verifyStatus.textContent='Solicitamos un nuevo código. El anterior ya no es válido.';
+      }else{
+        await completarVerificacion((data.usuario && data.usuario.numero_suministro) || suministro);
+      }
+    }catch(error){
+      if(version===verificacionVersion && !esAbortado(error)){
+        showVerifyError('No se confirmó la respuesta. Comprobaremos el estado; no repitas la operación todavía.');
+        iniciarConsultaCorreo();
+      }
+    }finally{
+      if(version===verificacionVersion){verificacionOcupada=false;verifyForm.removeAttribute('aria-busy');actualizarReenvio();}
+    }
+  }
+  verifyForm.addEventListener('submit', e=>{e.preventDefault();procesarVerificacion(false);});
+  btnResend.addEventListener('click', ()=>procesarVerificacion(true));
+  document.getElementById('btn-check-email').addEventListener('click',consultarCorreo);
+  document.getElementById('btn-retry-registration').addEventListener('click',()=>{regSuministro.value=registroPendiente.suministro;mostrarRegistro(true);});
+  window.addEventListener('online',()=>{if(registroPendiente)consultarCorreo();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden && registroPendiente)consultarCorreo();});
+  btnRestartRegister.addEventListener('click', async()=>{
+    if(verificacionOcupada)return;
+    btnRestartRegister.disabled=true;
+    try{await limpiarVerificacion();regForm.reset();mostrarRegistro();}
+    catch(_){showVerifyError('No pudimos retirar la solicitud de este dispositivo. Reintenta antes de usar otros datos.');}
+    finally{btnRestartRegister.disabled=false;}
+  });
 
   function validarRegistro(correo, suministro, pass, pass2){
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)){
@@ -4919,11 +5162,13 @@ async function descargarConstanciaPDF(r, btn){
   }
   regForm.addEventListener('submit', async e=>{
     e.preventDefault();
+    if(restauracionBloqueada)return;
     const _releaseForm=window.HMShared.ui.beginForm(e.currentTarget);
     if(!_releaseForm)return;
     try{
 
     let _hmEpoch=sesionCliente.generation();
+    const registroVersion=verificacionVersion;
     e.preventDefault();
     const correo = regCorreo.value.trim();
     const suministro = regSuministro.value.trim();
@@ -4936,47 +5181,59 @@ async function descargarConstanciaPDF(r, btn){
       return;
     }
     btnRegister.disabled = true;
-    btnRegisterText.textContent = 'Creando cuenta...';
+    btnRegisterText.textContent = 'Guardando solicitud...';
+    let solicitudEnviada=false;
     try{
-      const resp = await conSesion(() => (sesionCliente.authFetch('/api/auth/register', {
+      await sesionCliente.comprobarRegistro();
+      if(_hmEpoch!==sesionCliente.generation() || registroVersion!==verificacionVersion)return;
+      if(registroPendiente?.aceptada){mostrarVerificacion();return;}
+      if(registroPendiente && registroPendiente.suministro!==suministro)throw new Error('Hay una solicitud sin confirmar. Usa «Usar otros datos» para iniciar otra.');
+      if(!registroPendiente)registroPendiente={id:sesionCliente.nuevoRegistroId(),suministro,venceEn:null,aceptada:false,
+        solicitudHasta:Date.now()+3600000,reenvioHasta:Date.now()+60000};
+      if(!await persistirVerificacion()){registroPendiente=null;throw new Error('No se pudo guardar la solicitud en este dispositivo. Revisa el almacenamiento e inténtalo de nuevo.');}
+      if(_hmEpoch!==sesionCliente.generation() || registroVersion!==verificacionVersion)return;
+      solicitudEnviada=true;
+      const resp = await conSesion(() => (sesionCliente.authFetch('/api/auth/otp/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
+          solicitud_id:registroPendiente.id,
           correo: correo,
           numero_suministro: suministro,
           password: pass
         })
       })), _hmEpoch);
       const data = await conSesion(() => (resp.json().catch(()=>null)), _hmEpoch);
-      if(!resp.ok || !data || data.estado !== 'ok'){
+      if(registroVersion!==verificacionVersion)return;
+      if(resp.status>=500 || (resp.ok && (!data || data.estado!=='pendiente')))throw new Error('Respuesta no confirmada.');
+      if(!resp.ok || !data || data.estado !== 'pendiente' || !data.registro_id){
         showRegError('' + ((data && data.mensaje) || 'No se pudo crear la cuenta. Inténtalo nuevamente.'));
         btnRegister.disabled = false;
         btnRegisterText.textContent = 'Crear cuenta';
         return;
       }
-      showSuccess('Cuenta creada correctamente. Ya puedes iniciar sesión.');
       regPass.value = '';
       regPass2.value = '';
       btnRegister.disabled = false;
       btnRegisterText.textContent = 'Crear cuenta';
-      mostrarLogin();
-      inpSupply.value = (data.usuario && data.usuario.numero_suministro) || suministro;
-      inpPass.value = '';
-      inpPass.focus();
+      guardarVerificacion(data, suministro);
     }catch(err){
-      if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
-      console.error('No se pudo crear la cuenta.', err);
-      showRegError('No se pudo conectar con el servidor. Inténtalo nuevamente.');
+      if(esAbortado(err) || _hmEpoch!==sesionCliente.generation() || registroVersion!==verificacionVersion)return;
+      console.error('No se pudo confirmar la solicitud de registro.');
+      if(solicitudEnviada && registroPendiente){
+        regPass.value='';regPass2.value='';mostrarVerificacion();iniciarConsultaCorreo();
+      }else showRegError(err.name==='TimeoutError' || err instanceof TypeError?'No se pudo conectar para comprobar el registro. Inténtalo nuevamente.':err.message);
       btnRegister.disabled = false;
       btnRegisterText.textContent = 'Crear cuenta';
     }
 
-    }finally{_releaseForm();}
+    }finally{btnRegister.disabled=false;btnRegisterText.textContent='Crear cuenta';_releaseForm();}
   });
   form.addEventListener('submit', async e=>{
     e.preventDefault();
+    if(restauracionBloqueada)return;
     const _releaseForm=window.HMShared.ui.beginForm(e.currentTarget);
     if(!_releaseForm)return;
     try{
@@ -5039,19 +5296,21 @@ async function descargarConstanciaPDF(r, btn){
         return;
       }
       if(!authData.usuario || authData.usuario.rol !== 'usuario'){
-        cerrarSesionCompleta('Esta aplicación es exclusiva para clientes. Usa el panel administrativo para tu cuenta.');
+        await cerrarSesionCompleta('Esta aplicación es exclusiva para clientes. Usa el panel administrativo para tu cuenta.');
         showError('Esta aplicación es exclusiva para clientes. Usa el panel administrativo.');
         return;
       }
-      guardarSesion(authData.token, authData.usuario.rol);
+      await limpiarVerificacion();
+      if(_hmEpoch!==sesionCliente.generation())return;
+      const establecimiento=guardarSesion(authData.token, authData.usuario.rol);
+      _hmEpoch=sesionCliente.generation();
+      await conSesion(()=>establecimiento,_hmEpoch);
       clearToasts();
       clienteCorreo=authData.usuario.correo || '';
       _hmEpoch = sesionCliente.generation();
-      try{ iniciarTiempoReal(); }catch(e){
-      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
     }catch(err){
       if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
-      showError('No se pudo conectar con el servidor. Inténtalo nuevamente.');
+      showError(err.code==='SECURE_STATE_UNAVAILABLE'?err.message:'No se pudo conectar con el servidor. Inténtalo nuevamente.');
       btnLogin.disabled = false;
       btnLoginText.textContent = 'Iniciar Sesión';
       return;
@@ -5066,6 +5325,16 @@ async function descargarConstanciaPDF(r, btn){
       }
     }catch(e){
       if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
+    await entrarDashboard(sup,_hmEpoch);
+
+    }finally{_releaseForm();}
+  });
+
+  // Una sola entrada al dashboard para login y restauración ya validada por el servidor.
+  async function entrarDashboard(sup,_hmEpoch){
+    if(_hmEpoch!==sesionCliente.generation() || !sesionCliente.isUser())return;
+    ocultarEstadoSesion();
+    iniciarTiempoReal();
     supplyLabel.textContent = sup;
     supplyHello.textContent = sup;
     document.getElementById('side-supply').textContent = sup;
@@ -5167,8 +5436,7 @@ async function descargarConstanciaPDF(r, btn){
       }, 280);
     }, isReduced() ? 0 : 160);
 
-    }finally{_releaseForm();}
-  });
+  }
 
   // Flujo principal de logout: ambos botones usan la misma función central, sin duplicar.
   document.getElementById('btn-logout').addEventListener('click', ()=>{
@@ -5206,6 +5474,63 @@ async function descargarConstanciaPDF(r, btn){
   const clientDefaults=new Map([...document.querySelectorAll('#view-dashboard [id],.overlay [id],#toast-success-msg')]
     .filter(element=>element.children.length===0 || ['btn-pay-detail','pay-confirm'].includes(element.id))
     .map(element=>[element.id,element.innerHTML]));
+  async function restaurarRegistroDePagina(){try{
+    const version=verificacionVersion;
+    if(sesionCliente.isNative())mostrarEstadoSesion('Recuperando tu solicitud pendiente…');
+    const saved=await window.HMRegistrationState.read();
+    if(sesionCliente.isUser() || version!==verificacionVersion)return;
+    if(sesionCliente.isNative()){
+      ocultarEstadoSesion();mostrarLogin();
+      if(!saved)return;
+      // Nada del disco habilita verificación/reenvío: consultar SQL primero.
+      registroPendiente={id:saved.id,suministro:saved.suministro,aceptada:false,venceEn:null,
+        solicitudHasta:Date.now()+3600000,reenvioHasta:Date.now()+60000};
+      reenvioTimer=setInterval(actualizarReenvio,1000);mostrarVerificacion();iniciarConsultaCorreo();return;
+    }
+    if(saved && /^[a-f0-9-]{36}$/i.test(saved.id) && /^\d{9}$/.test(saved.suministro) &&
+        (saved.venceEn===null || Number.isFinite(Date.parse(saved.venceEn))) && Number.isFinite(saved.reenvioHasta) &&
+        saved.reenvioHasta<=Date.now()+3600000 && saved.solicitudHasta>Date.now() && saved.solicitudHasta<=Date.now()+3600000){
+      registroPendiente={id:saved.id,suministro:saved.suministro,venceEn:saved.venceEn,estadoEnvio:saved.estadoEnvio,
+        aceptada:saved.aceptada!==false,estadoSolicitud:saved.estadoSolicitud,motivo:saved.motivo,
+        solicitudHasta:saved.solicitudHasta,reenvioHasta:saved.reenvioHasta};
+      reenvioTimer=setInterval(actualizarReenvio,1000); mostrarVerificacion(); iniciarConsultaCorreo();
+    }else{await window.HMRegistrationState.clear();}
+  }catch(_){
+    if(sesionCliente.isNative())mostrarEstadoSesion('No pudimos recuperar la solicitud pendiente del dispositivo. Reintenta antes de comenzar otro registro.',true);
+    else showError('No pudimos recuperar la solicitud pendiente de esta pestaña.');
+  }}
+  function restaurarInicio(){
+    if(tareaRestauracion)return tareaRestauracion;
+    if(!sesionCliente.isNative())return restaurarRegistroDePagina();
+    mostrarEstadoSesion('Comprobando tu sesión…');
+    const tarea=(async()=>{
+      const result=await sesionCliente.restore();
+      if(result.state==='cancelled')return;
+      if(result.state==='unavailable'){
+        mostrarEstadoSesion('No pudimos comprobar tu sesión. Revisa tu conexión e intenta nuevamente.',true);
+        return;
+      }
+      ocultarEstadoSesion();
+      if(result.state==='authenticated'){
+        try{await limpiarVerificacion();}catch(_){await cerrarSesionCompleta('Reintenta para retirar el estado temporal.');return;}
+        clienteCorreo=result.data.usuario.correo || '';
+        await entrarDashboard(result.data.suministro.numero_suministro,sesionCliente.generation());
+      }else{
+        mostrarLogin();await restaurarRegistroDePagina();
+        if(result.state==='ended')showError('Tu sesión terminó o la cuenta no está habilitada. Inicia sesión nuevamente.');
+      }
+    })();
+    tareaRestauracion=tarea;
+    tarea.catch(()=>{if(!sesionCliente.isUser())mostrarEstadoSesion('No pudimos comprobar tu sesión. Reintenta.',true);})
+      .finally(()=>{if(tareaRestauracion===tarea)tareaRestauracion=null;});
+    return tarea;
+  }
+  document.getElementById('session-retry').addEventListener('click',()=>{
+    if(reintentoSalida)cerrarSesionCompleta('Sesión cerrada correctamente.');else restaurarInicio();
+  });
+  document.getElementById('session-forget').addEventListener('click',()=>cerrarSesionCompleta('Ingresa con la cuenta que deseas usar.'));
+  window.addEventListener('online',()=>{if(restauracionBloqueada && !reintentoSalida)restaurarInicio();});
+  restaurarInicio();
   // La animación de bienvenida del login corre una sola vez (no en cada navegación).
   setTimeout(()=>{ try{ document.body.classList.add('login-seen'); }catch(e){} }, 900);
 })();

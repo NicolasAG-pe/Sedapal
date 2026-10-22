@@ -4,6 +4,15 @@ Contrato de [Backend/server.js](../Backend/server.js) en **v1.0.0**, commit `135
 
 Base pública: `https://hidro-mejora-api.onrender.com`. En Docker se usa `/api` desde el origen de cada cliente mediante Nginx. No concatenar `/api` dos veces.
 
+**Desarrollo posterior — H02:** alta, edición, anulación y pago de recibos ahora
+comparten el [protocolo transaccional](integridad-recibos.md). Mantienen URLs y
+respuestas de éxito. Duplicados, pagos existentes, estado incompatible y espera
+de lock agotada devuelven 409; timeout SQL, 503. No se modifican monto/suministro
+desde el body de pago ni suministro/estado desde edición. Un histórico con pago
+o estado Pagado bloquea cambios; un periodo histórico duplicado bloquea cobro
+hasta revisión. Sin cambios remotos; la tabla siguiente conserva la referencia
+histórica v1.0.0, y esta nota documenta la diferencia de la rama.
+
 ## Convenciones
 
 - Cuerpos de escritura: JSON, `Content-Type: application/json`; límite global de 3 MB.
@@ -17,6 +26,20 @@ Base pública: `https://hidro-mejora-api.onrender.com`. En Docker se usa `/api` 
 
 Códigos comunes: **401** sin JWT válido o expirado; **403** cuenta inexistente/inactiva o permiso insuficiente; **500** error del servidor/base. Estos códigos se aplican a todas las rutas protegidas, además de los específicos de las tablas. Las rutas públicas también pueden devolver 500. Las rutas con limitador pueden devolver 429. Un JSON inválido o un cuerpo excesivo puede ser rechazado antes del handler, sin su formato JSON particular.
 
+**Desarrollo posterior — H03/avance 14:** registro/reenvío confirman una outbox,
+responden 202 con `estado_envio: en_cola` y `vence_en: null`; el código se activa
+al preparar el primer intento. Se añade POST `/api/auth/verification-status` con
+UUID en el cuerpo para consultar estado/plazos. La API no llama a Resend;
+[contrato OTP](verificacion-correo.md) y [operación outbox](correo-outbox.md).
+Esto no modifica las tablas históricas v1.0.0 de este documento ni resuelve H01.
+
+**Desarrollo posterior — H01/avance 15:** el cliente nuevo usa las rutas
+`/api/auth/otp/register` y `/api/auth/otp/resend-verification` con contrato
+`otp-outbox-v1`; el alta exige `solicitud_id` UUID del cliente. Los alias históricos
+rechazan clientes sin contrato mediante 426 antes de escribir, sin exigirlo al
+login. Consulta de estado permite recuperar confirmación/respuestas perdidas.
+[Contrato, compatibilidad Android y pruebas](android-transicion.md).
+
 ## Estado del servicio
 
 | Método | Ruta | Acceso | Parámetros/cuerpo | Respuesta y códigos propios |
@@ -28,6 +51,7 @@ Códigos comunes: **401** sin JWT válido o expirado; **403** cuenta inexistente
 | Método | Ruta | Acceso | Cuerpo | Respuesta y códigos propios |
 |---|---|---|---|---|
 | POST | `/api/auth/login` | Público, limitador | `numero_suministro`, `password` | 200: `estado`, `token`, `usuario` con id/correo/rol y `suministro` con id/número. 400 suministro inválido; 401 credenciales inválidas; 403 cuenta inactiva; 429. |
+| GET | `/api/auth/session` | JWT, cliente activo | Ninguno | 200: `estado: ok`, `usuario` con id/correo/rol actual y `suministro` con id/número. 401 JWT inválido/expirado; 403 cuenta inactiva/inexistente, otro rol o sin suministro; 500 indisponibilidad. Siempre `Cache-Control: no-store`; no emite ni renueva JWT. |
 | POST | `/api/auth/register` | Público, limitador | `correo`, `numero_suministro`, `password` | 201: cuenta creada, `estado`, `mensaje`, `usuario`; no entrega JWT. 400 validación; 409 correo/suministro existente; 429. |
 | POST | `/api/auth/change-password` | JWT, ambos roles, limitador | `password_actual`, `password_nueva`, `password_confirmacion` | 200: `estado`, `mensaje`. 400 validación; 401 contraseña actual incorrecta; 429. No revoca todos los JWT existentes. |
 

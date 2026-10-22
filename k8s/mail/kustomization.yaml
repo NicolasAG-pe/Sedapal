@@ -1,0 +1,37 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../base
+  - worker-deployment.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: backend
+    patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: backend
+      spec:
+        template:
+          spec:
+            containers:
+              - name: backend
+                env:
+                  - name: EMAIL_REGISTRATION_ENABLED
+                    value: "0"
+                  - name: RESEND_FROM
+                    valueFrom:
+                      secretKeyRef:
+                        name: sedapal-mail-secrets
+                        key: RESEND_FROM
+                  - name: EMAIL_OTP_SECRET
+                    valueFrom:
+                      secretKeyRef:
+                        name: sedapal-mail-secrets
+                        key: EMAIL_OTP_SECRET
+                  - name: EMAIL_OUTBOX_KEY
+                    valueFrom:
+                      secretKeyRef:
+                        name: sedapal-mail-secrets
+                        key: EMAIL_OUTBOX_KEY

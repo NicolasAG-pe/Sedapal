@@ -1,5 +1,8 @@
 # Kubernetes para Sedapal
 
+**Avance 18:** base/overlays revisados para OTP/outbox; solo validación local de
+archivos y SQL, sin aplicar recursos. Ver [informe](../docs/pruebas/integracion-avance-18.md).
+
 Los cuatro YAML se basan en `compose.yaml` y los Dockerfiles actuales. Todos
 los recursos deben aplicarse en el mismo namespace. No se modifica Compose.
 
@@ -40,7 +43,11 @@ for app in web admin backend; do
 done
 ```
 
-Si el registro es privado, configurar también imagePullSecrets en los Pods.
+Si se usa el overlay mail, actualizar también la imagen de
+`k8s/mail/worker-deployment.yaml` al mismo digest/etiqueta del backend, o crear
+un overlay superior con `images` que transforme ambas referencias. No dejar el
+placeholder del worker. Si el registro es privado, configurar también
+imagePullSecrets en los Pods.
 Los recursos son una base inicial: ajustar memoria, CPU y almacenamiento con
 mediciones de la aplicación.
 
@@ -70,8 +77,9 @@ kubectl create namespace sedapal --dry-run=client -o yaml | kubectl apply -f -
   kubectl -n sedapal create secret generic sedapal-secrets --from-env-file="$secret_file"
 )
 # Primero sustituir todas las imágenes REGISTRO/...:VERSION.
-kubectl -n sedapal apply --dry-run=server -f k8s/
-kubectl -n sedapal apply -f k8s/
+kubectl kustomize k8s/base --load-restrictor LoadRestrictionsNone > /tmp/sedapal-reviewed.yaml
+kubectl -n sedapal apply --dry-run=server -f /tmp/sedapal-reviewed.yaml
+kubectl -n sedapal apply -f /tmp/sedapal-reviewed.yaml
 kubectl -n sedapal rollout status deployment/db --timeout=180s
 kubectl -n sedapal rollout status deployment/backend --timeout=180s
 kubectl -n sedapal rollout status deployment/web --timeout=180s
@@ -96,8 +104,10 @@ pueden tardar en quedar disponibles durante el arranque.
 
 ## Datos
 
-El ConfigMap db-init contiene una copia de Base-de-Datos/init.sql. Se ejecuta
-solo sobre un volumen vacío; mantener esta copia sincronizada si cambia el SQL.
+El ConfigMap db-init se genera desde Base-de-Datos/init.sql (fuente única) con
+Kustomize; su hash actualiza la referencia del volumen. Se ejecuta solo sobre
+un volumen vacío y ya incluye el esquema 003–006. No aplicar YAML sueltos de
+k8s/: no contienen el ConfigMap generado.
 No se usa el volumen de Compose. Para migrar datos reales, planificar backup
 con pg_dump y restauración con pg_restore/psql en un volumen de destino limpio;
 no mezclar el esquema inicial con un dump completo. Esta preparación no realiza
@@ -120,3 +130,72 @@ cd /home/saul-lab/Sedapal
   git push --set-upstream origin feature/vercel-to-k8s
 )
 ```
+
+## Contrato OTP, sesión Android y worker (avance 18)
+
+La base y el overlay local mantienen `EMAIL_REGISTRATION_ENABLED=0`: alta y
+reenvío responden 503 aun si accidentalmente se proporcionan claves. Login,
+`/api/auth/session`, consulta/confirmación pendiente y negocio conservan contrato.
+No basta con `/api/auth/capabilities`: no acredita correo disponible ni worker.
+La readiness `/api/health` comprueba conectividad SQL, no migraciones ni entrega.
+CORS incluye `https://localhost` para Capacitor; configurar además los orígenes
+públicos exactos, sin comodines. API y Socket.IO mantienen una réplica: escalar
+requiere evaluar adaptador compartido/sticky sessions y límites distribuidos.
+
+`mail/` es una preparación opcional: agrega `email-worker` con **cero réplicas**,
+misma imagen backend y comando `node workers/email-outbox.cjs --run`. La API
+sigue con altas cerradas. No expone puerto ni inventa un healthcheck HTTP para
+un proceso sin servidor. Supervisar reinicios, edad/estados/leases de cola y
+aceptación del proveedor; SIGTERM permite terminar el trabajo actual.
+
+Secretos privados externos, nunca literales en YAML:
+
+| Secret / claves | Destino |
+| --- | --- |
+| sedapal-secrets: POSTGRES_DB/USER/PASSWORD, AUTH_TOKEN_SECRET | DB y API; conservar identidad JWT existente |
+| sedapal-mail-secrets: RESEND_FROM, EMAIL_OTP_SECRET, EMAIL_OUTBOX_KEY | API; claves OTP/outbox exclusivas y diferentes del JWT |
+| sedapal-mail-secrets: EMAIL_WORKER_DATABASE_URL, RESEND_API_KEY, EMAIL_OUTBOX_KEY | Worker; URL de rol específico con permisos de docs/correo-outbox.md |
+| sedapal-secrets: POSTGRES_DB | Nombre esperado obligatorio del worker |
+
+El worker no recibe la clave JWT ni el HMAC OTP; la API no necesita RESEND_API_KEY.
+La clave outbox debe permanecer idéntica en ambas instancias y durante recuperación.
+Validar dominio/remitente, permisos SQL, TLS del proveedor y destino exacto antes de
+habilitar worker o cambiar el cierre de altas. Un canario real requiere autorización
+independiente; aceptación no equivale a entrega. No se envió correo en este avance.
+
+### PVC existentes y recuperación
+
+El init no actualiza un PVC inicializado. Antes de usar esta API con históricos:
+backup/ensayo de restauración y revisión de migraciones pendientes; aplicar solo
+003, 004, 005 y 006 que correspondan, en orden, por operador autorizado. 005 exige
+`Base-de-Datos/checks/005_integridad_recibos.sql` y ventana sin escritores. Nunca
+reconciliar duplicados borrando datos automáticamente. No hay Job/initContainer
+que ejecute migraciones repetidamente. Si falta esquema, detener la transición,
+conservar volumen/claves y corregir hacia adelante. No recrear credenciales de un
+PVC ni restaurar un dump encima del init. Backup, HA, Ingress/TLS, NetworkPolicy,
+rol SQL mínimo, imágenes inmutables y recursos necesitan validación operativa.
+
+### Validación sin clúster
+
+Con kubectl/Kustomize, módulo Node `yaml` de herramientas (o HIDRO_YAML_MODULE)
+y PostgreSQL de fixtures nuevo:
+
+```sh
+HIDRO_KUBECTL=/ruta/kubectl HIDRO_EMAIL_TEST_DB_PORT=PUERTO npm run test:k8s
+```
+
+Solo ejecuta `kubectl kustomize --load-restrictor LoadRestrictionsNone` sobre
+fuentes confiables del repositorio y SQL en una base sintética nueva. No accede
+a un contexto ni ejecuta apply. Revisa base/local/mail, referencias de ConfigMap,
+PVC, proxies, cierre de altas y worker. Las tres pruebas no certifican admisión, redes, storage o Pods en ejecución.
+Además se validaron 31 recursos renderizados con kubeconform 0.8.0, modo estricto,
+esquemas Kubernetes 1.37.0: 31 válidos, cero omitidos. Esta validación de esquema
+no sustituye un dry-run contra el API server ni comprueba políticas del destino. Referencia del generador:
+[Kustomize oficial](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/).
+
+## Seguimiento — avance 19
+
+La [validación funcional local](../docs/pruebas/kubernetes-integracion-avance-19.md)
+ejecutó realmente Web/Admin/backend/PostgreSQL en un kind exclusivo, con pruebas
+de negocio, persistencia y OTP simulado. Ver [guía para otra laptop](avance19/README.md).
+No utiliza el clúster sedapal-test ni acredita operación productiva.

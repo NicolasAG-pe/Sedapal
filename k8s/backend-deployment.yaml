@@ -50,9 +50,12 @@ spec:
                 secretKeyRef:
                   name: sedapal-secrets
                   key: AUTH_TOKEN_SECRET
+            # Cerrar altas hasta verificar esquema, trabajador y correo.
+            - name: EMAIL_REGISTRATION_ENABLED
+              value: "0"
             # Ajustar a los orígenes públicos al configurar Ingress/TLS.
             - name: CORS_ALLOWED_ORIGINS
-              value: "http://localhost:8080,http://localhost:8081"
+              value: "http://localhost:8080,http://localhost:8081,https://localhost"
           # El endpoint existente comprueba también la conexión a PostgreSQL.
           readinessProbe:
             httpGet:

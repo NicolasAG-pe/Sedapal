@@ -22,7 +22,7 @@ function verifyClientRuntime(directory) {
     walk(directory);
     for (const required of ['index.html', 'hm-api-config.js', 'shared/api.js', 'shared/ui.js', 'shared/styles.css', 'assets/css/client.css',
         'shared/icons.js','shared/assets/hm-symbol.svg','assets/css/app-layout.css','assets/js/client-home.js',
-        'assets/js/client-session.js', 'assets/js/documents.js', 'assets/vendor/socket.io.min.js', 'assets/vendor/jspdf.umd.min.js']) {
+        'assets/js/client-session.js', 'assets/js/native-state.js', 'assets/js/registration-state.js', 'assets/js/documents.js', 'assets/vendor/socket.io.min.js', 'assets/vendor/jspdf.umd.min.js']) {
         if (!fs.existsSync(path.join(directory, required))) throw new Error('Falta recurso cliente: ' + required);
     }
     const html = fs.readFileSync(path.join(directory, 'index.html'), 'utf8');

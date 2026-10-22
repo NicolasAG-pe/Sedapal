@@ -2,6 +2,14 @@
 
 Fuente: [init.sql](../Base-de-Datos/init.sql) y [migraciones](../Base-de-Datos/migrations/) de **v1.0.0**, commit `135cb54`. Esta guía describe estructura, no conteos actuales de registros. No se consultó Neon ni la base local durante la actualización documental.
 
+**Desarrollo posterior — H02:** el `init.sql` actual añade UNIQUE de
+`recibos(id_suministro,periodo)` y `pagos(id_recibo)`. Para bases existentes se
+preparó [005](../Base-de-Datos/migrations/005_integridad_recibos.sql), con
+[preflight de lectura](../Base-de-Datos/checks/005_integridad_recibos.sql) y
+[plan de históricos sin borrado](integridad-recibos.md). Solo se validó en bases
+sintéticas nuevas; no está aplicada en Neon ni cambia retrospectivamente la
+descripción histórica de v1.0.0 que sigue abajo.
+
 ## Tablas y columnas
 
 `BIGSERIAL` crea un identificador BIGINT con secuencia; las columnas PK son no nulas. Los tipos y restricciones siguientes corresponden al SQL, sin inferir reglas de aplicación como restricciones adicionales.

@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 module.exports = async function ({ chrome:c, origin, output, pool, request, admin, user, password,
-  adminSupply, userSupply, png, wait, pause, ok, expiredToken }) {
+  adminSupply, userSupply, png, wait, pause, ok, expiredToken, mailbox }) {
   const receipt = await request('POST','/api/admin/recibos',admin.token,{numero_suministro:userSupply,
     periodo:'Cliente UI fixture',fecha_emision:'2026-10-01',fecha_vencimiento:'2030-11-01',monto:45,consumo_m3:15},201);
   const dates=(await pool.query('SELECT fecha_emision::text,fecha_vencimiento::text FROM recibos WHERE id_recibo=$1',[receipt.recibo.id_recibo])).rows[0];
@@ -35,6 +35,7 @@ module.exports = async function ({ chrome:c, origin, output, pool, request, admi
   await pause(1500);
   if(await c.evaluate('document.getElementById("spotlight-pop").classList.contains("open")'))await c.click('#spot-skip');
   await wait(()=>c.evaluate('!document.body.classList.contains("tutorial-open")'),'tutorial inicial cerrado');
+  await require('./chatbot-ui-checks.cjs')({client:c,wait,ok});
   await require('./visual-checks.cjs')(c,output,'client-dashboard');
   await require('./visual-checks.cjs')(c,output,'client-dashboard-mobile',390,844);
   await require('./visual-checks.cjs')(c,output,'client-dashboard-landscape',640,360);
@@ -53,6 +54,15 @@ module.exports = async function ({ chrome:c, origin, output, pool, request, admi
   await c.evaluate('location.hash="admin-recibos"');await pause(500);
   assert.equal(await c.evaluate('document.querySelector(".dash-sec.active").id'),'sec-inicio');
   await nav('historial','document.getElementById("cards").textContent.includes("Cliente UI fixture")');
+  await c.click('[data-filter="Pagado"]');
+  await wait(()=>c.evaluate('!document.getElementById("cards").textContent.includes("Cliente UI fixture")'),'filtro pagado excluye emitido');
+  assert.equal(await c.evaluate('document.querySelectorAll("[data-filter].active").length'),1);
+  await c.click('[data-filter="Pendiente"]');
+  await wait(()=>c.evaluate('!document.getElementById("cards").textContent.includes("Cliente UI fixture")'),'filtro pendiente excluye emitido');
+  await c.click('[data-filter="Emitido"]');
+  await wait(()=>c.evaluate('document.getElementById("cards").textContent.includes("Cliente UI fixture")'),'filtro emitido incluye recibo');
+  await c.click('[data-filter="Todos"]');
+  ok('Filtros integrados: Pagado/Pendiente/Emitido/Todos cambian recibos y mantienen una selección activa');
   await require('./visual-checks.cjs')(c,output,'client-recibos-small',320,760);
   await c.evaluate(`(()=>{const card=[...document.querySelectorAll('#cards .card')].find(n=>n.textContent.includes('Cliente UI fixture'));card.querySelector('[data-act=detail]').click();})()`);
   await wait(()=>c.evaluate('document.getElementById("detail-modal").classList.contains("open")'),'detalle recibo');
@@ -96,6 +106,16 @@ module.exports = async function ({ chrome:c, origin, output, pool, request, admi
   await c.click('#inc-view');await wait(()=>c.evaluate('document.getElementById("inc-list").textContent.includes("Incidencia cliente con foto")'),'incidencias actualizadas');
   await c.evaluate(`(()=>{const button=[...document.querySelectorAll('#inc-list button')].find(n=>/foto/i.test(n.textContent));if(!button)throw Error('Sin foto');button.click();})()`);
   await wait(()=>c.evaluate('document.getElementById("foto-img").naturalWidth>0'),'foto autenticada cliente');await c.click('#foto-close');
+  await c.click('#btn-nueva-incidencia');
+  await c.fill('#inc-tipo','Fuga de agua');await c.fill('#inc-desc','Incidencia sin coordenadas tras ubicación fallida');await c.fill('#inc-dir','Dirección sintética');
+  await c.click('#inc-geo');await wait(()=>c.evaluate('document.getElementById("inc-coords").textContent.includes("-12.05")'),'primera posición sintética');
+  await c.command('Emulation.setGeolocationOverride',{}); // Proveedor no disponible tras una posición válida.
+  await c.click('#inc-geo');await wait(()=>c.evaluate('document.getElementById("inc-coords").textContent.includes("Sin ubicación compartida")'),'error de ubicación seguro');
+  await c.submit('#inc-form');await wait(()=>c.evaluate('!document.getElementById("inc-ok").hidden'),'incidencia sin ubicación');
+  const noPosition=(await pool.query("SELECT latitud,longitud FROM incidencias WHERE descripcion='Incidencia sin coordenadas tras ubicación fallida'")).rows[0];
+  assert.equal(noPosition.latitud,null,'Un fallo posterior no debe reutilizar coordenadas anteriores');assert.equal(noPosition.longitud,null);
+  await c.click('#inc-view');await wait(()=>c.evaluate('!document.getElementById("incident-modal").classList.contains("open")'),'cerrar incidencia sin ubicación');
+  ok('Cliente: ubicación fallida posterior retira coordenadas anteriores y permite registrar sin posición');
   await nav('cortes','document.getElementById("cortes-list").textContent.includes("Corte cliente fixture")');
   await nav('notificaciones','document.getElementById("notif-list").children.length>0');
   await c.evaluate(`(()=>{const b=[...document.querySelectorAll('#notif-list button')].find(n=>/leída/i.test(n.textContent));if(!b)throw Error('Sin notificación pendiente');b.click();})()`);
@@ -145,13 +165,55 @@ module.exports = async function ({ chrome:c, origin, output, pool, request, admi
   await require('./visual-checks.cjs').matrix(c,output,'client-register','client');
   for(const [id,value] of Object.entries({'reg-correo':'registro@fixture.invalid','reg-suministro':'900000003','reg-pass':password,'reg-pass2':password}))await c.fill('#'+id,value);
   await c.submit('#register-form');
+  await wait(()=>c.evaluate('!document.getElementById("verify-email-form").hidden'),'pantalla de verificación');
+  assert.equal(Number((await pool.query("SELECT count(*) AS n FROM usuarios WHERE correo='registro@fixture.invalid'")).rows[0].n),0);
+  assert.equal(await c.evaluate('sessionStorage.getItem("hm_token")'),null);
+  assert.equal(await c.evaluate('document.getElementById("reg-pass").value'), '');
+  assert.equal(await c.evaluate('document.getElementById("reg-pass2").value'), '');
+  assert.equal(await c.evaluate('document.getElementById("btn-resend-email").disabled'),true);
+  const stored = await c.evaluate('sessionStorage.getItem("hm_email_pending")');
+  assert.equal(stored.includes(password),false);
+  assert.equal(stored.includes('codigo'),false);
+  await require('./visual-checks.cjs').matrix(c,output,'client-verify-email','client');
+  const mensajes = ()=>fs.readFileSync(mailbox,'utf8').trim().split('\n').map(JSON.parse).filter(m=>m.correo==='registro@fixture.invalid');
+  await wait(()=>mensajes().length===1,'primer correo del worker');
+  await wait(()=>c.evaluate('!document.getElementById("btn-check-email").disabled'),'consulta disponible');
+  await c.click('#btn-check-email');
+  await wait(()=>c.evaluate('!document.getElementById("btn-verify-email").disabled'),'código preparado');
+  await c.fill('#verify-code','12');await c.submit('#verify-email-form');
+  assert.match(await c.evaluate('document.getElementById("verify-error").textContent'),/seis dígitos/);
+  const primerCodigo = mensajes().at(-1).codigo;
+  // Simular el paso del cooldown únicamente en datos sintéticos y reloj de UI.
+  await pool.query("UPDATE registros_correo_envios SET enviado_en=enviado_en-INTERVAL '61 seconds'");
+  await c.evaluate('const pending=JSON.parse(sessionStorage.getItem("hm_email_pending"));pending.reenvioHasta=Date.now()-1000;sessionStorage.setItem("hm_email_pending",JSON.stringify(pending));');
+  await c.goto(origin+'/cliente/index.html');
+  await wait(()=>c.evaluate('!document.getElementById("verify-email-form").hidden'),'restaurar registro pendiente');
+  assert.equal(await c.evaluate('document.getElementById("verify-code").value'),'');
+  await c.evaluate(`window.__sockets=[];const originalIO=window.io;window.io=Object.assign((...args)=>{const s=originalIO(...args);__sockets.push(s);return s;},originalIO);void 0;`);
+  await c.click('#btn-resend-email'); await c.click('#btn-resend-email');
+  await wait(()=>mensajes().length===2,'nuevo correo del worker');
+  assert.equal(mensajes().length,2,'Doble clic envía una sola solicitud');
+  assert.notEqual(mensajes().at(-1).codigo,primerCodigo);
+  await wait(()=>c.evaluate('!document.getElementById("btn-check-email").disabled'),'consulta del reenvío');
+  await c.click('#btn-check-email');
+  await wait(()=>c.evaluate('!document.getElementById("btn-verify-email").disabled'),'nuevo código preparado');
+  await c.fill('#verify-code',primerCodigo);await c.submit('#verify-email-form');
+  await wait(()=>c.evaluate('document.getElementById("verify-error").classList.contains("show")'),'rechazar código anterior');
+  assert.equal(await c.evaluate('document.getElementById("view-dashboard").classList.contains("active")'),false);
+  await c.fill('#verify-code',mensajes().at(-1).codigo);await c.submit('#verify-email-form');
   await wait(async()=>Number((await pool.query("SELECT count(*) AS n FROM usuarios WHERE correo='registro@fixture.invalid' AND rol='usuario'")).rows[0].n)===1,'registro cliente');
-  await wait(()=>c.evaluate('document.getElementById("register-form").hidden'),'volver login');await login('900000003');
+  await wait(()=>c.evaluate('!document.getElementById("login-form").hidden'),'volver login');
+  assert.equal(await c.evaluate('sessionStorage.getItem("hm_email_pending")'),null);
+  assert.equal(await c.evaluate('sessionStorage.getItem("hm_token")'),null);
+  assert.equal(await c.evaluate('document.getElementById("suministro").value'),'900000003');
+  assert.ok((await pool.query("SELECT correo_verificado_en FROM usuarios WHERE correo='registro@fixture.invalid'")).rows[0].correo_verificado_en);
+  ok('Cliente: OTP, correo pendiente tras recarga, cooldown, reenvío con doble clic y código anterior rechazado; sin cuenta ni JWT antes de confirmar');
+  await login('900000003');
   await wait(()=>c.evaluate('document.getElementById("view-dashboard").classList.contains("active")'),'login nuevo usuario');
   await nav('perfil','document.getElementById("pf-correo").textContent==="registro@fixture.invalid"');
   assert.equal(await c.evaluate('document.body.textContent.includes("cliente@fixture.invalid")'),false);
   await wait(()=>c.evaluate('__sockets.filter(s=>s.connected).length===1'),'socket nuevo usuario');
-  assert.equal(await c.evaluate('__sockets.length'),2);
+  assert.equal(await c.evaluate('__sockets.length'),1,'Una conexión nueva tras recargar y confirmar');
   await c.evaluate(`const expiryFetch=window.fetch;window.fetch=(url,options={})=>expiryFetch(url,String(url).includes('/api/me/perfil')?{...options,headers:{...options.headers,Authorization:'Bearer '+${JSON.stringify(expiredToken)}}}:options);`);
   await c.click('[data-sec="inicio"]');await pause(200);await c.click('[data-sec="perfil"]');
   await wait(()=>c.evaluate('!document.getElementById("view-dashboard").classList.contains("active")'),'cierre por JWT expirado');
