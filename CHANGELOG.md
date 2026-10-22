@@ -4,6 +4,20 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 22 de octubre de 2026 — avance 17: recuperar registro OTP tras reinicio
+
+- UUID y suministro pendientes persistidos antes del POST en un estado Android
+  separado, cifrado y fuera de backup; sin OTP, contraseña, correo ni JWT.
+  Recuperación consulta SQL antes de habilitar acciones, conserva UUID/idempotencia
+  ante respuestas perdidas y respeta plazos/estados de la outbox sin modificarla.
+- Confirmación, solicitud cerrada y abandono retiran metadatos. Lectura fallida
+  impide crear otro UUID; respuestas tardías de un registro abandonado se descartan.
+  Web conserva recuperación OTP de pestaña; autenticación sigue solo en memoria.
+- Verificados 7 escenarios nativos OTP/Keystore y 12 de regresión de sesión,
+  18 OTP/transición, 25 comprobaciones E2E cliente/Admin y suite Node 110 OK/una
+  omisión condicional. Corregidas carreras del harness con SKIP LOCKED/botones
+  ocupados; sin cambiar la outbox. Resultados y límites en el informe del avance 17.
+
 ### 21 de octubre de 2026 — avance 17: sesión Android cifrada y validada
 
 - Reproducida pérdida de sesión y UUID OTP al terminar el proceso Android.

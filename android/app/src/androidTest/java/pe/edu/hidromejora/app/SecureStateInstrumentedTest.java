@@ -46,6 +46,11 @@ public class SecureStateInstrumentedTest {
             try {store.read("session");fail("Se aceptó un ciphertext alterado");}catch(GeneralSecurityException expected){}
             store.clear("session");assertNull(store.read("session"));assertFalse(file.exists());
             store.write("session",synthetic);assertEquals(synthetic,store.read("session"));
-        }finally{store.clear("session");}
+            String metadata="{\"id\":\"b7bfca9a-4aa7-4e27-a379-8243c4467622\",\"suministro\":\"900000721\"}";
+            store.write("registration",metadata);store.clear("session");
+            assertEquals(metadata,store.read("registration"));
+            store.write("session",synthetic);store.clear("registration");
+            assertEquals(synthetic,store.read("session"));assertNull(store.read("registration"));
+        }finally{store.clear("session");store.clear("registration");}
     }
 }

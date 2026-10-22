@@ -62,7 +62,10 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  }
  async function saved(){return page.evaluate(()=>HMNativeState.readSession());}
  async function setSaved(token){await page.evaluate(t=>HMNativeState.writeSession(t),token);}
- async function noPlainToken(){assert.equal(await page.evaluate(()=>sessionStorage.getItem('hm_token')),null);assert.equal(await page.evaluate(()=>localStorage.getItem('hm_token')),null);}
+ async function noPlainToken(){
+  const clean=await page.evaluate(()=>sessionStorage.getItem('hm_token')===null&&localStorage.getItem('hm_token')===null);
+  assert.ok(clean,'No JWT en Web Storage'); // Tampoco incluir el valor en un fallo de aserción.
+ }
  async function logout(){await page.evaluate(()=>document.getElementById('btn-logout').click());await loginScreen();assert.ok(!(await saved()).token,'Credencial retirada');await noPlainToken();}
  try{
   report.database=ctx.connection.database;
@@ -74,6 +77,11 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   android('install','-r',path.join(output,'app/outputs/apk/androidTest/debug/app-debug-androidTest.apk'));
   const instrument=android('shell','am','instrument','-w','-e','class','pe.edu.hidromejora.app.SecureStateInstrumentedTest','-e','hidroSecureFixture','1',pkg+'.test/androidx.test.runner.AndroidJUnitRunner');
   fs.writeFileSync(path.join(output,'instrumentation.txt'),instrument);assert.match(instrument,/OK \(1 test\)/);ok('Android Keystore: clave no exportable, GCM/IV distinto, alteración rechazada y borrado confirmado');
+  if(process.argv.includes('--otp')){
+   android('shell','am','start','-n',pkg+'/.MainActivity');await attach();
+   await require('./android-otp-native.cjs')({ctx,getPage:()=>page,restart,until,ok,screenshot});
+   report.result='passed';return;
+  }
   for(const n of [711,712]){
    const account=ctx.registro(n),pending=(await ctx.request('register',account,202)).data;await ctx.drain();await ctx.request('verify-email',ctx.verificar(pending.registro_id,ctx.codigo(account.correo)),201);
   }
@@ -87,7 +95,8 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   }
   const claims=jwt.decode(tokenA);const expired=jwt.sign({...claims,exp:Math.floor(Date.now()/1000)-1},process.env.AUTH_TOKEN_SECRET);
   await setSaved(expired);await restart();await loginScreen();assert.ok(!(await saved()).token);ok('JWT expirado: se retira la credencial y no se muestran datos privados');
-  await setSaved(tokenA.slice(0,-1)+(tokenA.endsWith('a')?'b':'a'));await restart();await loginScreen();assert.ok(!(await saved()).token);ok('JWT alterado: backend rechaza y Android limpia credencial');
+  const altered=tokenA.split('.');altered[2]=(altered[2].startsWith('a')?'b':'a')+altered[2].slice(1);
+  await setSaved(altered.join('.'));await restart();await loginScreen();assert.ok(!(await saved()).token);ok('JWT alterado: backend rechaza y Android limpia credencial');
   await login(supplyA);await ctx.db.query("UPDATE usuarios SET activo=false WHERE correo='cliente711@example.invalid'");await restart();await loginScreen();assert.ok(!(await saved()).token);ok('Cuenta deshabilitada: 403 impide restauración y elimina credencial');
   await ctx.db.query("UPDATE usuarios SET activo=true WHERE correo='cliente711@example.invalid'");await login(supplyA);await logout();await restart();await loginScreen();assert.ok(!(await saved()).token);ok('Logout confirmado sigue cerrado después de reabrir Android');
   await login(supplyA);await logout();await login(supplyB);await page.evaluate(()=>document.querySelector('[data-sec="perfil"]').click());
@@ -105,7 +114,11 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   await dashboard(supplyB);assert.equal(sessionRequests-before,1);ok('Sin internet no hay datos privados; reconexión/reintento visible hacen una sola restauración');
   const logs=execFileSync(adb,['-s',serial,'logcat','-d'],{encoding:'utf8',maxBuffer:32*1024*1024});assert.ok(!logs.includes(tokenA)&&!logs.includes(tokenB)&&!logs.includes(password),'No credenciales en logcat');ok('Logcat sin JWT ni contraseña del flujo; logging del bridge desactivado también en debug');
   await logout();report.result='passed';
- }catch(error){report.result='failed';report.errors.push(error.message);throw error;}
+ }catch(error){
+  report.result='failed';report.errors.push(error.message);
+  fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2),{mode:0o600});
+  console.error('Fallo antes de limpieza: '+error.message);throw error;
+ }
  finally{
   try{android('shell','svc','wifi','enable');}catch(_){}
   await detach();await ctx.close();fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2),{mode:0o600});console.log('Evidencia local: '+path.relative(root,output));

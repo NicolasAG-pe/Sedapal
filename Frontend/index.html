@@ -888,6 +888,7 @@
 <script src="assets/js/client-home.js"></script>
 <script src="assets/js/documents.js"></script>
 <script src="assets/js/native-state.js"></script>
+<script src="assets/js/registration-state.js"></script>
 <script src="assets/js/client-session.js"></script>
 <!-- Socket.IO cliente vendorizado (v4.8.4, igual que el backend): el script
      absoluto /socket.io/socket.io.js no resuelve en el WebView Android
@@ -969,7 +970,7 @@
   const fmtFechaLarga = window.HMShared.ui.date;
   let clienteCorreo='';
   let restauracionBloqueada=false, tareaRestauracion=null, reintentoSalida=false;
-  async function guardarSesion(token, rol){ limpiarVerificacion(); await sesionCliente.establish(token, rol); }
+  function guardarSesion(token, rol){return sesionCliente.establish(token, rol);}
   function obtenerToken(){ return sesionCliente.token(); }
   function limpiarSesion(){ return sesionCliente.clear(); }
   function mostrarEstadoSesion(mensaje,reintentar=false,salida=false){
@@ -1004,7 +1005,7 @@
     try{ detenerTiempoReal(); }catch(e){}
     try{ stopCortesPolling(); }catch(e){}
     const retirada=limpiarSesion();
-    limpiarVerificacion();
+    const retiradaRegistro=limpiarVerificacion();
     mostrarLogin();
     clienteCorreo='';
     window.HMShared.ui.clearFormLocks(document);
@@ -1028,7 +1029,7 @@
     }catch(e){}
     showView(viewLogin);
     if(sesionCliente.isNative())mostrarEstadoSesion('Cerrando sesión…');
-    try{await retirada;}catch(_){
+    try{await Promise.all([retirada,retiradaRegistro]);}catch(_){
       mostrarEstadoSesion('No se pudo cerrar la sesión de forma segura. Reintenta para retirar la credencial.',true,true);
       return;
     }
@@ -4949,10 +4950,10 @@ async function descargarConstanciaPDF(r, btn){
     verifyForm.removeAttribute('aria-busy');
     verifyError.classList.remove('show');
     verifyStatus.textContent = '';
-    try{ sessionStorage.removeItem('hm_email_pending'); }catch(_){}
+    const removal=window.HMRegistrationState.clear();removal.catch(()=>{});return removal;
   }
-  function persistirVerificacion(){
-    try{sessionStorage.setItem('hm_email_pending',JSON.stringify(registroPendiente));return true;}catch(_){return false;}
+  async function persistirVerificacion(){
+    try{await window.HMRegistrationState.save(registroPendiente);return true;}catch(_){return false;}
   }
   function actualizarReenvio(){
     if(!registroPendiente)return;
@@ -4986,8 +4987,11 @@ async function descargarConstanciaPDF(r, btn){
     if(loginFoot)loginFoot.hidden=true;
     loginTitle.textContent='Verifica tu correo';actualizarReenvio();verifyCode.focus();
   }
-  function completarVerificacion(suministro){
-    limpiarVerificacion();mostrarLogin();inpSupply.value=suministro;inpPass.value='';inpPass.focus();
+  async function completarVerificacion(suministro){
+    try{await limpiarVerificacion();}catch(_){
+      mostrarLogin();showError('Correo verificado. No pudimos retirar el estado temporal; reintenta al abrir la aplicación.');return;
+    }
+    mostrarLogin();inpSupply.value=suministro;inpPass.value='';inpPass.focus();
     showSuccess('Correo verificado. Ya puedes iniciar sesión.');
   }
   async function consultarCorreo(){
@@ -4999,10 +5003,12 @@ async function descargarConstanciaPDF(r, btn){
       });
       const data=await resp.json().catch(()=>null);
       if(registroPendiente!==pendiente)return;
-      if(resp.ok && data?.estado==='verificado'){completarVerificacion(pendiente.suministro);return;}
+      if(resp.ok && data?.estado==='verificado'){await completarVerificacion(pendiente.suministro);return;}
       if(resp.ok && data?.estado==='cerrado'){
         pendiente.aceptada=true;pendiente.estadoSolicitud='cerrado';pendiente.motivo=data.motivo;pendiente.problemaConsulta='';
-        clearInterval(consultaCorreoTimer);persistirVerificacion();
+        clearInterval(consultaCorreoTimer);
+        // Conservar motivo visible, retirar solo el estado durable ya innecesario.
+        await window.HMRegistrationState.clear();
       }else if(resp.ok && data?.estado==='pendiente'){
         guardarVerificacion(data,pendiente.suministro,false);
         if(!['en_cola','procesando'].includes(data.estado_envio))clearInterval(consultaCorreoTimer);
@@ -5057,7 +5063,7 @@ async function descargarConstanciaPDF(r, btn){
       if(!resp.ok || !data || data.estado !== (reenviar ? 'pendiente' : 'ok')){
         if(reenviar && resp.status===429){
           registroPendiente.reenvioHasta = Date.now()+Math.max(1,Number(resp.headers.get('Retry-After')) || 60)*1000;
-          try{sessionStorage.setItem('hm_email_pending',JSON.stringify(registroPendiente));}catch(_){}
+          persistirVerificacion();
         }
         showVerifyError((data && data.mensaje) || 'No se pudo completar la verificación. Inténtalo nuevamente.');
         await consultarCorreo();return;
@@ -5066,7 +5072,7 @@ async function descargarConstanciaPDF(r, btn){
         guardarVerificacion(data,suministro); verifyCode.value='';
         verifyStatus.textContent='Solicitamos un nuevo código. El anterior ya no es válido.';
       }else{
-        completarVerificacion((data.usuario && data.usuario.numero_suministro) || suministro);
+        await completarVerificacion((data.usuario && data.usuario.numero_suministro) || suministro);
       }
     }catch(error){
       if(version===verificacionVersion && !esAbortado(error)){
@@ -5083,7 +5089,13 @@ async function descargarConstanciaPDF(r, btn){
   document.getElementById('btn-retry-registration').addEventListener('click',()=>{regSuministro.value=registroPendiente.suministro;mostrarRegistro(true);});
   window.addEventListener('online',()=>{if(registroPendiente)consultarCorreo();});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden && registroPendiente)consultarCorreo();});
-  btnRestartRegister.addEventListener('click', ()=>{limpiarVerificacion();regForm.reset();mostrarRegistro();});
+  btnRestartRegister.addEventListener('click', async()=>{
+    if(verificacionOcupada)return;
+    btnRestartRegister.disabled=true;
+    try{await limpiarVerificacion();regForm.reset();mostrarRegistro();}
+    catch(_){showVerifyError('No pudimos retirar la solicitud de este dispositivo. Reintenta antes de usar otros datos.');}
+    finally{btnRestartRegister.disabled=false;}
+  });
 
   function validarRegistro(correo, suministro, pass, pass2){
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)){
@@ -5111,6 +5123,7 @@ async function descargarConstanciaPDF(r, btn){
     try{
 
     let _hmEpoch=sesionCliente.generation();
+    const registroVersion=verificacionVersion;
     e.preventDefault();
     const correo = regCorreo.value.trim();
     const suministro = regSuministro.value.trim();
@@ -5127,12 +5140,13 @@ async function descargarConstanciaPDF(r, btn){
     let solicitudEnviada=false;
     try{
       await sesionCliente.comprobarRegistro();
-      if(_hmEpoch!==sesionCliente.generation())return;
+      if(_hmEpoch!==sesionCliente.generation() || registroVersion!==verificacionVersion)return;
       if(registroPendiente?.aceptada){mostrarVerificacion();return;}
       if(registroPendiente && registroPendiente.suministro!==suministro)throw new Error('Hay una solicitud sin confirmar. Usa «Usar otros datos» para iniciar otra.');
       if(!registroPendiente)registroPendiente={id:sesionCliente.nuevoRegistroId(),suministro,venceEn:null,aceptada:false,
         solicitudHasta:Date.now()+3600000,reenvioHasta:Date.now()+60000};
-      if(!persistirVerificacion()){registroPendiente=null;throw new Error('No se pudo guardar la solicitud en este dispositivo. Revisa el almacenamiento e inténtalo de nuevo.');}
+      if(!await persistirVerificacion()){registroPendiente=null;throw new Error('No se pudo guardar la solicitud en este dispositivo. Revisa el almacenamiento e inténtalo de nuevo.');}
+      if(_hmEpoch!==sesionCliente.generation() || registroVersion!==verificacionVersion)return;
       solicitudEnviada=true;
       const resp = await conSesion(() => (sesionCliente.authFetch('/api/auth/otp/register', {
         method: 'POST',
@@ -5147,6 +5161,7 @@ async function descargarConstanciaPDF(r, btn){
         })
       })), _hmEpoch);
       const data = await conSesion(() => (resp.json().catch(()=>null)), _hmEpoch);
+      if(registroVersion!==verificacionVersion)return;
       if(resp.status>=500 || (resp.ok && (!data || data.estado!=='pendiente')))throw new Error('Respuesta no confirmada.');
       if(!resp.ok || !data || data.estado !== 'pendiente' || !data.registro_id){
         showRegError('' + ((data && data.mensaje) || 'No se pudo crear la cuenta. Inténtalo nuevamente.'));
@@ -5160,7 +5175,7 @@ async function descargarConstanciaPDF(r, btn){
       btnRegisterText.textContent = 'Crear cuenta';
       guardarVerificacion(data, suministro);
     }catch(err){
-      if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
+      if(esAbortado(err) || _hmEpoch!==sesionCliente.generation() || registroVersion!==verificacionVersion)return;
       console.error('No se pudo confirmar la solicitud de registro.');
       if(solicitudEnviada && registroPendiente){
         regPass.value='';regPass2.value='';mostrarVerificacion();iniciarConsultaCorreo();
@@ -5240,6 +5255,8 @@ async function descargarConstanciaPDF(r, btn){
         showError('Esta aplicación es exclusiva para clientes. Usa el panel administrativo.');
         return;
       }
+      await limpiarVerificacion();
+      if(_hmEpoch!==sesionCliente.generation())return;
       const establecimiento=guardarSesion(authData.token, authData.usuario.rol);
       _hmEpoch=sesionCliente.generation();
       await conSesion(()=>establecimiento,_hmEpoch);
@@ -5412,8 +5429,19 @@ async function descargarConstanciaPDF(r, btn){
   const clientDefaults=new Map([...document.querySelectorAll('#view-dashboard [id],.overlay [id],#toast-success-msg')]
     .filter(element=>element.children.length===0 || ['btn-pay-detail','pay-confirm'].includes(element.id))
     .map(element=>[element.id,element.innerHTML]));
-  function restaurarRegistroDePagina(){try{
-    const saved=JSON.parse(sessionStorage.getItem('hm_email_pending') || 'null');
+  async function restaurarRegistroDePagina(){try{
+    const version=verificacionVersion;
+    if(sesionCliente.isNative())mostrarEstadoSesion('Recuperando tu solicitud pendiente…');
+    const saved=await window.HMRegistrationState.read();
+    if(sesionCliente.isUser() || version!==verificacionVersion)return;
+    if(sesionCliente.isNative()){
+      ocultarEstadoSesion();mostrarLogin();
+      if(!saved)return;
+      // Nada del disco habilita verificación/reenvío: consultar SQL primero.
+      registroPendiente={id:saved.id,suministro:saved.suministro,aceptada:false,venceEn:null,
+        solicitudHasta:Date.now()+3600000,reenvioHasta:Date.now()+60000};
+      reenvioTimer=setInterval(actualizarReenvio,1000);mostrarVerificacion();iniciarConsultaCorreo();return;
+    }
     if(saved && /^[a-f0-9-]{36}$/i.test(saved.id) && /^\d{9}$/.test(saved.suministro) &&
         (saved.venceEn===null || Number.isFinite(Date.parse(saved.venceEn))) && Number.isFinite(saved.reenvioHasta) &&
         saved.reenvioHasta<=Date.now()+3600000 && saved.solicitudHasta>Date.now() && saved.solicitudHasta<=Date.now()+3600000){
@@ -5421,11 +5449,14 @@ async function descargarConstanciaPDF(r, btn){
         aceptada:saved.aceptada!==false,estadoSolicitud:saved.estadoSolicitud,motivo:saved.motivo,
         solicitudHasta:saved.solicitudHasta,reenvioHasta:saved.reenvioHasta};
       reenvioTimer=setInterval(actualizarReenvio,1000); mostrarVerificacion(); iniciarConsultaCorreo();
-    }else{sessionStorage.removeItem('hm_email_pending');}
-  }catch(_){try{sessionStorage.removeItem('hm_email_pending');}catch(_){} }}
+    }else{await window.HMRegistrationState.clear();}
+  }catch(_){
+    if(sesionCliente.isNative())mostrarEstadoSesion('No pudimos recuperar la solicitud pendiente del dispositivo. Reintenta antes de comenzar otro registro.',true);
+    else showError('No pudimos recuperar la solicitud pendiente de esta pestaña.');
+  }}
   function restaurarInicio(){
     if(tareaRestauracion)return tareaRestauracion;
-    if(!sesionCliente.isNative()){restaurarRegistroDePagina();return Promise.resolve();}
+    if(!sesionCliente.isNative())return restaurarRegistroDePagina();
     mostrarEstadoSesion('Comprobando tu sesión…');
     const tarea=(async()=>{
       const result=await sesionCliente.restore();
@@ -5436,10 +5467,11 @@ async function descargarConstanciaPDF(r, btn){
       }
       ocultarEstadoSesion();
       if(result.state==='authenticated'){
-        limpiarVerificacion();clienteCorreo=result.data.usuario.correo || '';
+        try{await limpiarVerificacion();}catch(_){await cerrarSesionCompleta('Reintenta para retirar el estado temporal.');return;}
+        clienteCorreo=result.data.usuario.correo || '';
         await entrarDashboard(result.data.suministro.numero_suministro,sesionCliente.generation());
       }else{
-        mostrarLogin();restaurarRegistroDePagina();
+        mostrarLogin();await restaurarRegistroDePagina();
         if(result.state==='ended')showError('Tu sesión terminó o la cuenta no está habilitada. Inicia sesión nuevamente.');
       }
     })();

@@ -247,3 +247,8 @@ correo real, cambio de credenciales, datos reales ni publicación de APK.
 - Documentación: `CHANGELOG.md`, `docs/ANDROID.md`, `ANDROID-RELEASE.md`,
   `android-transicion.md`, `API.md`, `auditoria-produccion.md`, `verificacion-correo.md`,
   `correo-outbox.md`. Sin nueva migración ni modificación de pagos/recibos.
+
+Seguimiento OTP (avance 17): Android conserva únicamente UUID/suministro en un
+estado cifrado independiente de la sesión. Recupera por consulta al backend;
+ningún dato del disco habilita OTP/reenvío sin validar SQL. Ver el
+[informe de sesión y OTP](pruebas/android-sesion-persistente.md).

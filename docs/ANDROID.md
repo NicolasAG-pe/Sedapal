@@ -86,3 +86,8 @@ Una debug no actualiza una release ni viceversa si difieren los certificados. La
 ## Validación
 
 Hay pruebas unitarias del payload PDF y una prueba instrumental de applicationId. Compilar instrumentación no equivale a ejecutarla en un dispositivo. La release v1.0.0 fue validada físicamente por el propietario, incluyendo fotos, ubicación, PDF, Atrás y tiempo real; eso no certifica todos los dispositivos o versiones WebView. Evidencia y comandos: [TESTING](TESTING.md).
+
+Seguimiento OTP (avance 17): Android conserva únicamente UUID/suministro en un
+estado cifrado independiente de la sesión. Recupera por consulta al backend;
+ningún dato del disco habilita OTP/reenvío sin validar SQL. Ver el
+[informe de sesión y OTP](pruebas/android-sesion-persistente.md).

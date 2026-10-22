@@ -319,3 +319,8 @@ La futura prueba productiva no queda acreditada por esta tabla. Acordar responsa
 ## 14. Conclusión
 
 Las pruebas respaldan la base funcional del registro OTP y la limpieza acotada, con compatibilidad de login de cuentas anteriores en fixtures. **No respaldan publicar la nueva versión hoy.** H01–H04 y los requisitos H06/H07 bloquean la salida; H05 limita cualquier uso oficial. El siguiente avance propuesto es acordar la transición Android/backend y corregir la integridad concurrente con cambios separados, revisados y comprobados, manteniendo esta auditoría como registro del estado previo.
+
+Seguimiento OTP (avance 17): Android conserva únicamente UUID/suministro en un
+estado cifrado independiente de la sesión. Recupera por consulta al backend;
+ningún dato del disco habilita OTP/reenvío sin validar SQL. Ver el
+[informe de sesión y OTP](pruebas/android-sesion-persistente.md).

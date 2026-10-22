@@ -28,7 +28,9 @@
     "cap:sync": "node scripts/sync-android.cjs",
     "cap:open": "npx cap open android",
     "android:gradle": "bash scripts/android-gradle.sh",
-    "android:release": "node scripts/build-android-release.cjs"
+    "android:release": "node scripts/build-android-release.cjs",
+    "test:android:otp": "node --test scripts/test/registration-state.test.cjs scripts/test/android-transition.cjs",
+    "test:android:otp:native": "node scripts/test/android-session-native.cjs --otp"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",

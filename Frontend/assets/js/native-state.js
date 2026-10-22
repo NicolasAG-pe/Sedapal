@@ -16,5 +16,8 @@
   global.HMNativeState={isNative:()=>native,
     readSession:()=>call('readSession'),
     writeSession:token=>call('writeSession',{token}),
-    clearSession:()=>call('clearSession')};
+    clearSession:()=>call('clearSession'),
+    readRegistration:()=>call('readRegistration'),
+    writeRegistration:pending=>call('writeRegistration',{pending}),
+    clearRegistration:()=>call('clearRegistration')};
 })(window);

@@ -8,6 +8,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import java.security.GeneralSecurityException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.json.JSONObject;
 
 /** Nunca registra argumentos/respuestas. Capacitor loggingBehavior debe ser none. */
 @CapacitorPlugin(name = "HidroSecureState")
@@ -51,5 +52,38 @@ public class HidroSecureStatePlugin extends Plugin {
     @PluginMethod
     public void clearSession(PluginCall call) {
         execute(call, store -> { store.clear("session"); return new JSObject(); });
+    }
+
+    @PluginMethod
+    public void readRegistration(PluginCall call) {
+        execute(call, store -> {
+            JSObject result = new JSObject();
+            try {
+                String saved = store.read("registration");
+                if (saved != null) result.put("pending", new JSONObject(saved));
+            } catch (GeneralSecurityException | org.json.JSONException ignored) {
+                store.clear("registration");
+                result.put("invalid", true);
+            }
+            return result;
+        });
+    }
+
+    @PluginMethod
+    public void writeRegistration(PluginCall call) {
+        JSObject pending = call.getObject("pending");
+        String id = pending == null ? "" : pending.optString("id", "");
+        String supply = pending == null ? "" : pending.optString("suministro", "");
+        if (!id.matches("(?i)[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}") || !supply.matches("[0-9]{9}")) {
+            call.reject("Solicitud pendiente inválida."); return;
+        }
+        // Lista cerrada: ningún campo adicional puede persistir un OTP o credencial.
+        JSObject minimal = new JSObject(); minimal.put("id", id); minimal.put("suministro", supply);
+        execute(call, store -> { store.write("registration", minimal.toString()); return new JSObject(); });
+    }
+
+    @PluginMethod
+    public void clearRegistration(PluginCall call) {
+        execute(call, store -> { store.clear("registration"); return new JSObject(); });
     }
 }

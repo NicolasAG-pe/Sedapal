@@ -144,3 +144,134 @@ Referencias primarias:
 [KeyGenParameterSpec](https://developer.android.com/reference/android/security/keystore/KeyGenParameterSpec),
 [noBackupFilesDir](https://developer.android.com/reference/android/content/Context#getNoBackupFilesDir()),
 [configuración Capacitor 7](https://capacitorjs.com/docs/v7/config).
+
+## Incremento 2: recuperación durable del registro OTP
+
+`HMRegistrationState` separa el registro pendiente de la sesión autenticada. En
+Android persiste **solo `{id, suministro}`**, cifrado en otro archivo y con otra
+clave/AAD (`registration`), fuera de backup. El plugin aplica una lista cerrada de
+campos; no acepta correo, contraseña, OTP, JWT, plazos ni estados como autoridad.
+Web conserva su estado OTP no secreto en sessionStorage, limitado a la pestaña.
+
+El guardado se confirma antes del POST inicial. Si se pierde la respuesta o muere
+el proceso, se lee el mismo UUID y se consulta `/api/auth/verification-status`;
+no se repite el POST automáticamente. Antes de esa consulta quedan deshabilitados
+verificación/reenvío. SQL decide existencia, vigencia de solicitud, cinco minutos
+del código, espera de reenvío, intentos y estado del correo. Si el POST nunca llegó,
+se permite reintroducir los mismos datos con el UUID conservado; no se almacenan
+credenciales para repetirlo artificialmente. Sin red se mantiene el identificador
+para consultar otra vez, sin afirmar que el correo se envió.
+
+Los estados en cola, procesando, aceptado, fallido, cancelado y caducado mantienen
+el contrato de la outbox existente. Confirmado/cerrado en backend retira el estado
+durable; se conserva el motivo en pantalla hasta que el usuario continúe. «Usar
+otros datos» espera la retirada antes de abrir otro formulario. Login/logout también
+retiran el estado temporal. La versión del registro descarta respuestas tardías de
+solicitudes abandonadas. Un fallo de lectura nativa bloquea nuevos registros hasta
+reintentar/retirar el estado, evitando generar otro UUID por un error de disco.
+
+No hay migración SQL, cambio de Transactional Outbox, cuota, OTP, contraseña,
+suministro ni creación de cuentas anteriores. Los dos estados tienen operaciones
+de borrado independientes, probadas con Android Keystore real.
+
+### Ubicación: diagnóstico previsto antes del tercer incremento
+
+Se revisarán permisos/proveedores y se repetirá el timeout de WebView con una
+posición GPS simulada del AVD. Si el proveedor Android entrega posición pero la
+API web falla, la solución acotada propuesta es un plugin propio LocationManager,
+sin dependencias, con permisos existentes y el mismo límite de ocho segundos.
+No se aceptará una caché antigua ni coordenadas inventadas. Se mantendrá el
+formulario operativo ante denegación o falta de proveedor. Su implementación solo
+se considerará corrección comprobada después de obtener una posición del proveedor
+real de Android en el AVD; un teléfono físico seguirá siendo requisito independiente.
+
+## Reanudación del 22 de octubre de 2026
+
+Se conserva `cbb0ad0cc6d6ffbd6b8c5d4522d6a38cab11a544` publicado y todo el diff
+OTP pendiente. No se reinició la implementación, hizo pull, cambió de rama ni
+ocultaron cambios locales. La revisión remota de `main` encontró Kubernetes y
+chatbot (commits `d998920` y `9f9a2c3`, main observado `049ca5f`): solo lectura.
+El Draft PR #1 presenta conflictos con main; su resolución/integración queda
+pendiente de autorización y coordinación, sin merge ni rebase en este avance.
+
+### Errores de la interrupción y aislamiento de causas
+
+- `otp-checks.log`: cinco timeouts del navegador durante carga/interacción; no
+  errores de lógica OTP acreditados por esos timeouts. La configuración de una
+  ejecución previa también carecía de `PLAYWRIGHT_BROWSERS_PATH`; se usa ahora
+  el Chromium instalado, sin descargar ni cambiar dependencias.
+- `native-session-after-otp.log`: llegó hasta JWT vencido; después hubo timeout y
+  Android dejó de exponer el servicio Wi-Fi. `emulator.log` registra fallos de
+  contexto gráfico/ColorBuffer. La sesión anterior observó unos 11 GB residentes
+  del emulador y swap agotada. Esto indica un entorno degradado; no permite
+  atribuir por sí solo el timeout a la lógica de sesión/OTP.
+- `e2e-otp.log`: dashboard cliente excedió el plazo, sin errores JavaScript; tres
+  errores 400 de transporte Socket.IO en el reporte de esa ejecución. No se
+  cuentan sus comprobaciones parciales como una regresión completa aprobada.
+- Se conservan todos esos logs. La repetición sin AVD y con navegador pesado
+  único aprobó **18/18 OTP/transición** y **25 comprobaciones E2E cliente/Admin**,
+  con cero errores JavaScript y cero recursos fallidos. No fue necesario aumentar
+  plazos ni cambiar código de producción para hacer pasar esos escenarios.
+
+Entorno retomado: Debian 13, Node 20.19.2, Java Temurin 21.0.12.1+1 y Gradle
+8.11.1 mediante `scripts/android-gradle.sh` (Java global ausente no significa JDK
+inexistente). AVD original independiente, sin borrar datos, reiniciado con
+SwiftShader y Vulkan desactivado, 2 GB/dos CPU. Se ejecutan suites pesadas en
+serie; no se modifican los servicios Docker existentes. PostgreSQL 18 de fixtures
+nuevo `hidro-session17-test-20261022`, solo loopback, volumen propio persistente y
+base aleatoria por ejecución. Resend se simula; no se leen variables productivas.
+
+Regresión Node de esta reanudación: **111 pruebas, 110 aprobadas y una omisión
+condicional H02**, cero fallos. Incluye correo/OTP/outbox, SQL, concurrencia de
+recibos/pagos, sesión, estado OTP, configuración, firma, candidato y documentos.
+La omisión es la reproducción histórica condicionada, no una aprobación nativa.
+Evidencia nueva bajo `artifacts/android-session-17/resume-20261022/`; los reportes
+privados y APK permanecen excluidos de Git.
+
+La primera repetición OTP nativa del día encontró además una **carrera del
+harness**, reproducible con equipo desahogado: el tercer evento seguía `pendiente`,
+con cero intentos, después de que `ctx.drain()` devolviera un ciclo vacío. El
+trabajador usa advisory locks y `SKIP LOCKED`; una consulta concurrente de estado
+puede aplazar correctamente la toma del evento. La prueba ahora repite ciclos
+acotados hasta comprobar `aceptado`/`fallido` en SQL, como el sondeo real del
+trabajador. No se alteraron locks, cuotas, estados ni reintentos productivos.
+También se muta el primer carácter de firma JWT en la prueba de token alterado,
+evitando ambigüedad de bits de relleno Base64URL del último carácter.
+
+Otro punto del harness OTP pulsaba por JavaScript «Comprobar estado» incluso
+cuando el botón estaba deshabilitado por una consulta anterior: el clic se perdía
+y la prueba esperaba una pantalla que nunca había solicitado. Se usa ahora el
+clic de Playwright con espera de botón habilitado, igual que en Chromium, sin
+cambiar los bloqueos de la aplicación. El harness guarda los fallos antes de su
+limpieza para conservar diagnóstico aunque una conexión de depuración se bloquee.
+
+Para reducir carga gráfica del AVD se utiliza 540×1170/220 dpi en la reanudación;
+conserva el tamaño lógico de 1080×2340/440 dpi. Es configuración exclusiva del
+emulador de pruebas, sin cambio de estilos, manifiesto ni artefacto release.
+
+### Resultado OTP nativo retomado
+
+Ejecución final `artifacts/android-session-native-3QivMo/result.json`: **7
+comprobaciones aprobadas**, una de ellas instrumentación Keystore real y seis
+escenarios OTP, cero errores. Runtime recompilado/sincronizado con API local:
+1.1.0/código 3, `pe.edu.hidromejora.app`. Recuperación del UUID tras force-stop,
+respuesta de registro perdida, replay concurrente con un evento, estados de cola/
+procesamiento/aceptación, código incorrecto/vencido, proveedor fallido, reenvío,
+reinicio, confirmación con respuesta perdida, un usuario/suministro y limpieza de
+estado tras confirmación/caducidad/abandono. El descarte de respuesta se simula
+en fetch de la WebView después del commit; no equivale a una desconexión física
+de radio en ese escenario. PostgreSQL, transacciones y WebView sí son reales.
+
+El estado nativo leído solo contiene UUID/suministro; Web Storage no contiene la
+solicitud Android. La prueba instrumental comprueba independencia de los dos
+archivos/claves al borrar cada estado y conservar el otro. La APK debug local
+está excluida de Git; no actualiza una release con certificado distinto.
+
+Regresión nativa posterior al OTP: `artifacts/android-session-native-MjoKvM/result.json`,
+**12 comprobaciones aprobadas**, cero errores; incluye el mismo ciclo completo de
+sesión del incremento 1 con ambos estados nativos habilitados. Un GET y un socket
+por restauración válida, rechazo de tokens alterados/vencidos y cuenta inactiva,
+logout persistente, identidad separada, arranque sin internet/reconexión y logcat
+sin JWT/contraseña. La muerte del proceso sigue simulada por señal al UID propio,
+no por LMKD real. Esquema/API/retención/CLI de correo también se repitieron con
+bases nuevas y proveedor simulado, sin modificar servicios o bases históricas.
