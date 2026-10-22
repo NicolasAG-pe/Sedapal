@@ -9,6 +9,17 @@ comprobó firma, instalación sobre la APK oficial y conservación de localStora
 en un AVD Android 15. [Transición OTP y pendientes productivos](android-transicion.md).
 Fuente del versionado: [android/app/build.gradle](../android/app/build.gradle); entorno nativo: [ANDROID](ANDROID.md).
 
+## Candidata local del avance 17
+
+La [validación de sesión, OTP y ubicación](pruebas/android-sesion-persistente.md)
+compiló otra candidata 1.1.0/3 desde `5f73bcf`, en salida Gradle exclusiva,
+sin sobrescribir el artefacto del avance 16. Usa la misma firma permanente,
+runtime HTTPS nuevo y no es depurable. SHA-256:
+`d8632a4ae4a39e3d7a501bd05ed72e63717e32e63269389ba71a9a29d0fd8f71`.
+APK, material de firma y reportes privados siguen fuera de Git; no se distribuyó.
+Los resultados de actualización/instrumentación y requisitos pendientes quedan
+en ese informe. La única APK publicada sigue siendo 1.0.0/código 2.
+
 ## Publicación y validación de v1.0.0
 
 Publicada el 8 de octubre de 2026, tag `v1.0.0`, commit `135cb54173ee60e2f528738805564773e3c32e8b`.

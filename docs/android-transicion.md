@@ -258,3 +258,9 @@ el proveedor GPS del AVD, mismo límite de ocho segundos, sin permisos/plugins
 nuevos. Error de reutilización de coordenadas anteriores reproducido en SQL y
 corregido; validación en teléfono físico pendiente. Evidencia y límites en el
 [informe nativo del avance 17](pruebas/android-sesion-persistente.md).
+
+Cierre del avance 17: candidata final firmada actualizada sobre 1.0.0 sin
+desinstalar, con UID/preferencias conservados y Keystore release instrumentado.
+Esto no acredita el backend productivo; coordinar `/api/auth/session` y el
+contrato OTP/outbox antes de distribuir. Conflictos con main quedan pendientes
+sin merge/rebase; [evidencia final](pruebas/android-sesion-persistente.md).

@@ -330,3 +330,8 @@ el proveedor GPS del AVD, mismo límite de ocho segundos, sin permisos/plugins
 nuevos. Error de reutilización de coordenadas anteriores reproducido en SQL y
 corregido; validación en teléfono físico pendiente. Evidencia y límites en el
 [informe nativo del avance 17](pruebas/android-sesion-persistente.md).
+
+Cierre del avance 17: sesión/OTP/ubicación y actualización firmada verificadas
+en AVD con datos sintéticos; no se cierran por ello los requisitos operativos
+productivos, validación física ni límites de revocación de JWT. La candidata
+permanece local, sin distribución. Ver [informe](pruebas/android-sesion-persistente.md).

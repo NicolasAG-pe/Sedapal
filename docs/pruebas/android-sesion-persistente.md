@@ -356,3 +356,120 @@ La limpieza detiene la aplicación del AVD tanto en éxito como en fallo antes d
 cerrar la API temporal, conservando estado cifrado, documentos y bases sintéticas.
 La prueba final terminó con código 0; las ejecuciones parciales anteriores quedan
 identificadas como fallidas y no se mezclan con estos ocho resultados.
+
+## Compilación firmada final del avance 17
+
+Fuentes de aplicación `5f73bcffe8e89bcab4da5893f08ecd9fc10620a4`. La modificación
+posterior es únicamente la espera de arranque en la prueba instrumental de
+actualización y esta documentación; no cambia el runtime de la candidata.
+Se usaron `scripts/sync-android.cjs` y el wrapper oficial `scripts/android-gradle.sh`
+con firma permanente cargada por `android-release-signing.cjs` solo en memoria.
+La salida Gradle es nueva y exclusiva: no se retiró la protección del script
+release contra sobrescrituras ni se reemplazó la APK local del avance 16.
+
+| Artefacto local, no distribuido | Resultado |
+| --- | --- |
+| `artifacts/android/builds/avance17-release-qHA9GS/app/outputs/apk/release/app-release.apk` | `pe.edu.hidromejora.app`, 1.1.0 / código 3, 3.402.071 bytes; release no depurable. |
+| SHA-256 | `d8632a4ae4a39e3d7a501bd05ed72e63717e32e63269389ba71a9a29d0fd8f71` |
+| Certificado SHA-256 | `ea195e488d3746cfc846a3dbe69f188fb242e6eda7f5391d05b3ba203ad0b972`, idéntico a la APK oficial 1.0.0 y a la instrumentación firmada. |
+
+`assembleRelease`, cuatro pruebas Java release y lint aprobados; 16 avisos y cero
+errores de lint. Instrumentación compilada y firmada con la identidad existente,
+sin cambiar el keystore. `apksigner verify` aprobó APK oficial, candidata y test.
+Los checksums de ambas APK anteriores (1.0.0 oficial y 1.1.0 del avance 16) se
+comprobaron de nuevo y permanecen intactos. El digest de 1.0.0 coincide con el
+asset oficial consultado en GitHub el 22 de octubre.
+
+Auditoría del APK: HTML byte a byte igual a Frontend actual; 20 recursos de texto
+revisados, configuración HTTPS productiva y bridge sin logging; sin código Admin,
+`.env`, keystore ni patrones de claves privadas/Resend/JWT empaquetados. Es una
+inspección acotada de artefacto, no una certificación formal de ausencia de toda
+vulnerabilidad. No se contactó el backend productivo para escrituras: esta release
+se instala sin conectividad, y las pruebas funcionales usan la debug/API aislada.
+Evidencia: `release-result.json`, `release-audit.json`, `apk-assets-audit.json` y
+logs privados de la compilación, bajo el directorio de reanudación.
+
+## Actualización firmada final 1.0.0 → 1.1.0
+
+AVD nuevo `hm_110_upgrade17b_api35`, Android 15, `emulator-5584`, 1080×2340/440 dpi,
+Wi-Fi/datos apagados y modo avión activado **antes de instalar la aplicación**.
+APK oficial con digest confirmado → instrumentación firmada/seed → `install -r`
+de la candidata final → instrumentación/verify → prueba Keystore release.
+**Tres ejecuciones instrumentales aprobadas y proceso de validación con código 0**.
+
+- Oficial 1.0.0 / código 2 y candidata 1.1.0 / código 3: mismo paquete y certificado.
+- UID `10209` antes/después; primera instalación `2026-10-22 11:14:23` conservada.
+- Preferencia real del tutorial y marcador sintético de localStorage conservados;
+  WebView nativa, origen `https://localhost`, plugin de documentos y login correctos.
+- Keystore en release: clave no exportable, GCM/ciphertext alterado rechazado,
+  borrado confirmado y estados sesión/registro independientes. Ningún JWT real
+  o cuenta productiva se introdujo en este AVD.
+- No se desinstaló entre ambas instalaciones ni se eliminó información/volúmenes.
+
+La prueba instrumental espera ahora que el formulario termine el arranque
+asíncrono, además de DOM listo. El primer driver local interpretó `pm path` con
+código 1 (paquete ausente) como error; después buscó un campo `userId` que no
+aparecía en ese dumpsys. Se corrigió usando `pm list packages -U` y se repitió
+completa en **otro AVD nuevo**, conservando el anterior, sin downgrade o desinstalar.
+Los intentos parciales no se cuentan como actualización completamente verificada.
+Evidencia final: `upgrade-result.json`, `upgrade-seed.txt`, `upgrade-verify.txt`,
+`release-secure-state.txt` y dumps de paquete anteriores/posteriores en reanudación.
+
+Esto acredita actualización e integridad local en AVD, no login contra producción.
+Después de actualizar desde 1.0.0 será necesario iniciar sesión una vez: esa APK
+no tenía credencial durable cifrada que migrar. No se guarda una contraseña ni se
+confía en la copia antigua de Web Storage para evitar ese primer login. Las cuentas
+históricas con contraseña/suministro existentes siguen admitidas en la API aislada.
+
+## Cierre y requisitos pendientes
+
+| Verificación realmente ejecutada | Resultado final |
+| --- | --- |
+| Sesión Android WebView/Keystore | 12 comprobaciones aprobadas. |
+| OTP Android WebView/SQL/outbox simulada | 7 comprobaciones aprobadas. |
+| Ubicación y regresión funcional Android | 8 comprobaciones aprobadas; inspección PDF adicional confirmada. |
+| Actualización release y Keystore release | Tres ejecuciones instrumentales aprobadas, sin desinstalar. |
+| Node backend/SQL/configuración/seguridad/documentos | 110 aprobadas, una omisión condicional H02; cero fallos. |
+| OTP/transición Chromium y estado durable unitario | 18 aprobadas. |
+| E2E Chromium cliente/Admin después de ubicación | 26 comprobaciones, cero errores JS/recursos fallidos. |
+| Comprobación final focalizada Node | 31 aprobadas. |
+| Java release y lint | Cuatro aprobadas; cero errores lint, 16 avisos. |
+
+No se suman estas filas como casos únicos: algunas comprobaciones se repiten entre
+suites. Chromium y los descartes de respuestas simulados no se presentan como
+pruebas físicas de radio ni como renderizado Android. Todas las últimas ejecuciones
+citadas aprobaron; las anteriores fallidas se conservaron y sus causas/correcciones
+están descritas, sin ocultarlas o convertirlas en aprobaciones.
+
+Antes de distribuir: teléfono Android de pruebas, GPS en condiciones reales,
+ubicación aproximada/denegación permanente, cámara/visores, otros Android/WebView,
+accesibilidad y muerte real por LMKD. Completar coordinación del backend con
+`/api/auth/session`, migraciones/outbox, remitente/trabajador/monitoreo y canario
+previamente autorizados. La revocación central/refresh tokens siguen sin existir;
+no se extendió el JWT de ocho horas. Los conflictos del Draft PR con main requieren
+coordinación/autorización posterior; no se fusionó Kubernetes ni chatbot.
+
+No se hizo despliegue, migración productiva, correo real, Release, distribución de
+APK o cambio de keystore. `feature/verificacion-correo` mantiene las dos guardas
+Vercel desactivadas. Los nuevos commits se verifican en GitHub; no hay despliegues
+GitHub/Vercel asociados. No se seleccionó ni cambió configuración Render.
+
+Para repetir, utilizar exclusivamente PostgreSQL de fixtures nuevo (puerto
+loopback) y el AVD `hm_110_debug_api35` en `emulator-5582`; los harness nativos
+rechazan dispositivos/AVD distintos y generan recursos nuevos antes de compilar.
+Playwright debe estar en la ruta local del avance 16 o `HIDRO_PLAYWRIGHT_MODULE`.
+Ejecutar suites pesadas en serie y detener el AVD antes del E2E Chromium.
+
+```bash
+export HIDRO_EMAIL_TEST_DB_PORT=32768 # Solo contenedor/base de fixtures aislados.
+export PLAYWRIGHT_BROWSERS_PATH=artifacts/vercel-validation/browsers
+npm run test:android:session
+npm run test:android:otp
+npm run test:android:native
+npm run test:android:otp:native
+npm run test:android:location:native
+```
+
+La candidata firmada permanece en la salida local indicada; no reutilizar assets
+debug de otro backend para compilar release. Los AVD, bases, PDF y reportes
+sintéticos quedan conservados localmente; no se versionan.

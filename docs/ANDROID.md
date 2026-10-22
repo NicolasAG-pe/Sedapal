@@ -21,7 +21,9 @@ de backup. El JWT se mantiene únicamente en memoria web; Android lo restaura so
 después de validar cuenta, rol y suministro con `/api/auth/session`. No se amplía
 su duración de ocho horas ni se añaden refresh tokens. El bridge no registra datos
 ni siquiera en debug. Logout espera la retirada nativa y limpia datos/socket.
-La recuperación OTP y ubicación se documentan por incrementos en ese informe.
+La recuperación OTP y ubicación quedaron verificadas en AVD en ese informe.
+La candidata final firmada actualizó 1.0.0 sin desinstalar y conservó UID y
+preferencias; no hay distribución nueva ni validación física de 1.1.0.
 
 ## Plataforma
 

@@ -53,7 +53,7 @@ public class AndroidUpgradeInstrumentedTest {
             BridgeActivity activity = (BridgeActivity) started;
             long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
             while (!"true".equals(evaluate(activity,
-                "document.readyState === 'complete' && !!document.getElementById('login-form')"))) {
+                "document.readyState === 'complete' && !!document.getElementById('login-form') && !document.getElementById('login-form').hidden"))) {
                 assertTrue("No cargó el runtime local", System.nanoTime() < deadline);
                 Thread.sleep(100);
             }

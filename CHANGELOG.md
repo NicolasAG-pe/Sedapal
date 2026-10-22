@@ -4,6 +4,19 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 22 de octubre de 2026 — avance 17: cierre de validación y actualización firmada
+
+- Candidata final 1.1.0/3 compilada en salida exclusiva con recursos actuales,
+  HTTPS y firma permanente; ambas APK anteriores intactas. Cuatro pruebas Java
+  release, lint sin errores y auditoría de assets sin Admin/patrones de secretos.
+- APK oficial 1.0.0/2 → install -r de la candidata sin desinstalar: mismo UID,
+  certificado, fecha de primera instalación y preferencias. Seed/verify y prueba
+  de Keystore en release aprobadas en AVD nuevo sin conectividad.
+- Espera instrumental adaptada al arranque asíncrono; informe, checksum, causas
+  de fallos del harness y resultados nativos/Chromium separados. Pruebas finales
+  focalizadas: 31 aprobadas. Pendientes físicos/productivos y conflictos del PR
+  documentados; sin distribución, despliegue ni integración con main.
+
 ### 22 de octubre de 2026 — avance 17: ubicación Android y coordenadas seguras
 
 - Timeout reproducido con permisos/proveedor GPS operativo: petición BALANCED
