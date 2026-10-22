@@ -4,6 +4,20 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 22 de octubre de 2026 — avance 20: protección de la rama integrada
+
+- Exclusión explícita de `integration/avance-18` en ambos `vercel.json`,
+  conservando la protección de `feature/verificacion-correo` y la política de
+  las demás ramas. Sintaxis JSON y comparación con la configuración previa
+  comprobadas; no se cambian servicios ni credenciales.
+- Guía Kubernetes con clon independiente, descarga de PostgreSQL y comprobación
+  básica de cuatro servicios; sin depender de archivos privados de otra laptop.
+- Conexiones Git y últimos builds Vercel inspeccionados. Render confirmado en
+  modo lectura: rama `main`, raíz `Backend`, autodespliegue y previews apagados.
+  No se repiten suites funcionales ni se inicia o modifica un clúster.
+- Evidencia y alcance de publicación en
+  `docs/pruebas/publicacion-integracion-avance-20.md`.
+
 ### 22 de octubre de 2026 — avance 17: cierre de validación y actualización firmada
 
 - Candidata final 1.1.0/3 compilada en salida exclusiva con recursos actuales,

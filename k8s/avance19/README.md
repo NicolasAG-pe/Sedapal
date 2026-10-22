@@ -7,15 +7,28 @@ el clúster del compañero `sedapal-test`. No es una configuración productiva.
 
 ## Preparación en otra laptop
 
-Se necesita recibir el commit local de avance 19 en `integration/avance-18`;
-todavía no está publicado. Trabajar sobre ese checkout, sin fusionar main.
+Una vez confirmada la publicación de `integration/avance-18`, descargar un
+checkout independiente y comparar su hash con el comunicado por el equipo:
+
+```sh
+git clone --branch integration/avance-18 --single-branch https://github.com/NicolasAG-pe/Sedapal.git Sedapal-integracion
+cd Sedapal-integracion
+git status --short --branch
+git log -1 --oneline
+```
+
+No fusionar main para reproducir esta validación. No copiar `.env`, secretos,
+kubeconfig, bases ni directorios `artifacts` de otra laptop. Cada entorno genera
+sus propias credenciales y datos sintéticos.
 
 Herramientas comprobadas: Linux amd64/Debian, Docker 29.9.1, kind 0.33.0,
 kubectl 1.37.1 y Node 20.19.2 (contenedor backend Node 22.23.4).
 El nodo está fijado a Kubernetes 1.37.0 con digest en `kind.yaml`.
 La máquina de validación tenía 15 GiB RAM y unos 30 GiB libres antes de arrancar;
 comprobar recursos/virtualización y espacio propios. Los puertos 8084/8085 deben
-estar libres. No hay que modificar el kubeconfig global ni instalar un JDK.
+estar libres. Si ya existe un clúster ajeno llamado `hidro-avance19`, no reutilizar
+estos scripts allí: usar una máquina o entorno independiente. No hay que modificar
+el kubeconfig global ni instalar un JDK.
 
 Usar herramientas existentes en PATH, o indicar ejecutables privados:
 
@@ -43,14 +56,34 @@ docker build -f Admin/Dockerfile -t hidro-avance18-admin:local .
 En esta validación se reutilizaron las tres imágenes del avance 18: **no se
 reconstruyeron**. Se contrastaron hashes del backend/worker, HTML y conocimiento
 Sedapal con las fuentes. No basta con que coincida el nombre de una etiqueta.
-PostgreSQL `postgres:18` debe existir localmente (si falta, obtener la imagen
-oficial). No se cargan datos o volúmenes de Compose.
+PostgreSQL `postgres:18` debe existir localmente. Si falta, obtener la imagen
+oficial antes del arranque:
+
+```sh
+docker pull postgres:18
+```
+
+No se cargan datos o volúmenes de Compose.
 
 ## Arranque y pruebas
 
 ```sh
 bash k8s/avance19/start.sh
 node k8s/avance19/verify.cjs
+bash k8s/avance19/kube.sh get pods,deployments,services,pvc
+curl --fail http://localhost:8084/api/health
+curl --fail http://localhost:8085/api/health
+```
+
+Los cuatro servicios (`web`, `admin`, `backend`, `db`) deben quedar Ready y ambos
+endpoints health deben devolver estado `ok`. Abrir cliente en
+http://localhost:8084 y Admin en http://localhost:8085. `verify.cjs` crea y comprueba
+cuentas sintéticas, sesión, permisos, recibos/pagos/incidencias y Socket.IO.
+No necesita `npm install` en el host; las dependencias backend están en su imagen.
+
+Las siguientes pruebas adicionales son opcionales y van después del verificador:
+
+```sh
 node k8s/avance19/browser.cjs
 node k8s/avance19/persistence.cjs
 node k8s/avance19/otp-fixture.cjs --simulated-only
@@ -133,7 +166,8 @@ con cero réplicas. No iniciar Android ni conectar dispositivos reales.
 
 ## Publicación posterior
 
-El código se conserva local. Antes de push, se necesita autorización y revisar
-los despliegues automáticos de `integration/avance-18`: los guardias Vercel de
-`feature/verificacion-correo` no cubren por sí solos esta rama. No ejecutar push,
-merge o PR como parte de esta guía de validación local.
+Ambos `vercel.json` excluyen explícitamente `integration/avance-18` y conservan la
+exclusión de `feature/verificacion-correo`; no cambian la política de `main`.
+La publicación requiere comprobar además las conexiones Git/raíces de Vercel y
+las ramas/autodespliegues/vistas previas de Render. Una exclusión Vercel no protege
+otros proveedores. No ejecutar push, merge o PR como parte de esta guía local.
