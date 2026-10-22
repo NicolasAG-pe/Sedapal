@@ -362,3 +362,11 @@ La instalación y los flujos principales de la APK release fueron validados en u
 
 - Se excluyen secretos, respaldos y artefactos privados del contexto Docker.
 - Tres builds locales y comprobaciones de contenido sin red aprobados; sin publicación, despliegue ni cambios a los servicios existentes.
+
+### Avance 18 — regresión integrada y Android nativo
+
+- Chatbot probado en DOM real Chromium/WebView: fuente oficial, prioridad de recibos y contenido tratado como texto. Filtros comprobados en ambos entornos.
+- Android nativo: sesión 13/13, OTP 7/7, ubicación/funciones 9/9; PDF completo e inspeccionado en visor Android. Primer ensayo de automatización interrumpido documentado sin contarlo como aprobado.
+- Regresión final Node: 114 aprobadas/1 omisión condicional; modo histórico separado 12/1 inversa. E2E Chromium 28 comprobaciones, sin errores. Node 22 en imagen: 56/1 más 18/18 de correo.
+- Kubernetes: 31 recursos válidos con esquema estricto; sin clúster ni despliegues. Tres imágenes locales construidas y comprobadas.
+- Informe y documentación Android/auditoría actualizados; release anterior conservada. Integración solo local: publicación, firma de release integrada, actualización desde 1.0.0 y operación Kubernetes pendientes.

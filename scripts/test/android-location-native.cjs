@@ -58,7 +58,15 @@ module.exports=async function({ctx,getPage,android,restart,until,ok,screenshot,l
  android('shell','settings','put','system','accelerometer_rotation','0');android('shell','settings','put','system','user_rotation','1');await pause(700);screenshot('location-landscape');android('shell','settings','put','system','user_rotation','0');
  await nav('perfil');await until(()=>p().evaluate(()=>document.getElementById('pf-correo').textContent==='cliente731@example.invalid'),'Perfil de identidad restaurada');await until(()=>ctx.io.engine.clientsCount===1,'un socket tras permisos/navegación/rotación');ok('Sesión restaurada tras cambio de permisos, Perfil, Atrás, rotación y Socket.IO único');
  const receipt=await api('/api/admin/recibos',{numero_suministro:supply,periodo:'Nativo avance17',fecha_emision:'2026-10-01',fecha_vencimiento:'2030-11-01',monto:45,consumo_m3:15},admin.token);
- await nav('historial');await until(()=>p().evaluate(()=>document.getElementById('cards').textContent.includes('Nativo avance17')),'recibo recibido en WebView');await p().evaluate(()=>[...document.querySelectorAll('#cards .card')].find(e=>e.textContent.includes('Nativo avance17')).querySelector('[data-act=detail]').click());
+ await nav('historial');await until(()=>p().evaluate(()=>document.getElementById('cards').textContent.includes('Nativo avance17')),'recibo recibido en WebView');
+ await p().locator('[data-filter="Pagado"]').click();
+ await until(()=>p().evaluate(()=>!document.getElementById('cards').textContent.includes('Nativo avance17')),'filtro pagado en Android');
+ await p().locator('[data-filter="Emitido"]').click();
+ await until(()=>p().evaluate(()=>document.getElementById('cards').textContent.includes('Nativo avance17')),'filtro emitido en Android');
+ assert.equal(await p().evaluate(()=>document.querySelectorAll('[data-filter].active').length),1);
+ await p().locator('[data-filter="Todos"]').click();
+ ok('Filtros en WebView Android: Pagado excluye Emitido, Emitido lo recupera y Todos restablece la lista');
+ await p().evaluate(()=>[...document.querySelectorAll('#cards .card')].find(e=>e.textContent.includes('Nativo avance17')).querySelector('[data-act=detail]').click());
  const before=android('shell','find','/sdcard/Download','-name','*.pdf').trim().split('\n');await p().locator('#btn-pdf').click();await nativeTap(n=>/action_menu_save|save_button/.test(n['resource-id']||'')||/^(Save|Guardar)$/i.test(n.text||''));
  let pdf;await until(()=>{pdf=android('shell','find','/sdcard/Download','-name','*.pdf').trim().split('\n').find(f=>f.endsWith('.pdf')&&!before.includes(f));return !!pdf&&Number(android('shell','stat','-c','%s',pdf).trim())>1000;},'PDF escrito mediante SAF');
  await until(()=>/(?:topResumedActivity|mResumedActivity)=.*com\.google\.android\.apps\.docs\/com\.google\.android\.apps\.viewer\.PdfViewerActivity/.test(android('shell','dumpsys','activity','activities')),'visor PDF Android abierto');

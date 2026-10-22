@@ -28,11 +28,13 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  const supplyA='900000711',supplyB='900000712',password=ctx.registro(711).password;
  const screenshot=name=>fs.writeFileSync(path.join(output,name+'.png'),execFileSync(adb,['-s',serial,'exec-out','screencap','-p'],{timeout:30000}));
  async function attach(){
+  console.log('AVD: conectando WebView');
   const devices=await _android.devices({omitDriverInstall:true});device=devices.find(d=>d.serial()===serial);assert.ok(device,'AVD conectado');
   for(const other of devices)if(other!==device)await other.close();
   const view=await device.webView({pkg},{timeout:20000});page=await view.page();page.setDefaultTimeout(25000);
   await page.waitForFunction(()=>document.readyState==='complete',null,{polling:100});
   assert.equal(await page.evaluate(()=>Capacitor.getPlatform()),'android');
+  console.log('AVD: WebView Android listo');
  }
  async function detach(){if(device){await device.close();device=null;}}
  async function restart(mode='force-stop'){
@@ -96,6 +98,8 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   }
   await ctx.db.query("UPDATE usuarios SET correo_verificado_en=NULL WHERE correo='cliente711@example.invalid'");
   android('shell','am','start','-n',pkg+'/.MainActivity');await attach();await login(supplyA);await noPlainToken();
+  await require('./chatbot-ui-checks.cjs')({client:{click:selector=>page.locator(selector).click(),
+    fill:(selector,value)=>page.locator(selector).fill(value),evaluate:expression=>page.evaluate(expression)},wait:until,ok});
   const tokenA=(await saved()).token;assert.ok(typeof tokenA==='string'&&tokenA.length>50);
   const ciphertext=execFileSync(adb,['-s',serial,'exec-out','run-as',pkg,'cat','no_backup/hm-secure-v1/session.bin']);assert.ok(!ciphertext.includes(Buffer.from(tokenA)),'JWT no aparece en ciphertext');
   ok('Primer login y cuenta histórica: JWT persistido cifrado, sin copias en localStorage/sessionStorage');

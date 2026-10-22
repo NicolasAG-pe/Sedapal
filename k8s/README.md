@@ -43,7 +43,11 @@ for app in web admin backend; do
 done
 ```
 
-Si el registro es privado, configurar también imagePullSecrets en los Pods.
+Si se usa el overlay mail, actualizar también la imagen de
+`k8s/mail/worker-deployment.yaml` al mismo digest/etiqueta del backend, o crear
+un overlay superior con `images` que transforme ambas referencias. No dejar el
+placeholder del worker. Si el registro es privado, configurar también
+imagePullSecrets en los Pods.
 Los recursos son una base inicial: ajustar memoria, CPU y almacenamiento con
 mediciones de la aplicación.
 
@@ -183,6 +187,8 @@ HIDRO_KUBECTL=/ruta/kubectl HIDRO_EMAIL_TEST_DB_PORT=PUERTO npm run test:k8s
 Solo ejecuta `kubectl kustomize --load-restrictor LoadRestrictionsNone` sobre
 fuentes confiables del repositorio y SQL en una base sintética nueva. No accede
 a un contexto ni ejecuta apply. Revisa base/local/mail, referencias de ConfigMap,
-PVC, proxies, cierre de altas y worker. No certifica esquema OpenAPI, admisión,
-redes, storage o Pods en ejecución. Referencia del generador:
+PVC, proxies, cierre de altas y worker. Las tres pruebas no certifican admisión, redes, storage o Pods en ejecución.
+Además se validaron 31 recursos renderizados con kubeconform 0.8.0, modo estricto,
+esquemas Kubernetes 1.37.0: 31 válidos, cero omitidos. Esta validación de esquema
+no sustituye un dry-run contra el API server ni comprueba políticas del destino. Referencia del generador:
 [Kustomize oficial](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/).
