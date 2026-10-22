@@ -1,0 +1,55 @@
+# Preparado pero detenido. Habilitar solo tras autorización y canario de correo.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: email-worker
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: email-worker
+  template:
+    metadata:
+      labels:
+        app: email-worker
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: email-worker
+          image: REGISTRO/sedapal-backend:VERSION
+          command: ["node", "workers/email-outbox.cjs", "--run"]
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: EMAIL_WORKER_ENABLED
+              value: "1"
+            - name: EMAIL_WORKER_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: sedapal-mail-secrets
+                  key: EMAIL_WORKER_DATABASE_URL
+            - name: EMAIL_WORKER_EXPECTED_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: sedapal-secrets
+                  key: POSTGRES_DB
+            - name: EMAIL_OUTBOX_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sedapal-mail-secrets
+                  key: EMAIL_OUTBOX_KEY
+            - name: RESEND_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sedapal-mail-secrets
+                  key: RESEND_API_KEY
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: "1"
+              memory: 256Mi

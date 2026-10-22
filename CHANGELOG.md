@@ -348,3 +348,12 @@ La instalación y los flujos principales de la APK release fueron validados en u
 - Evidencia y plan: `docs/pruebas/integracion-avance-18.md`.
 
 - Integración de main conservando ambos historiales y resolución específica de servidor/comandos; chatbot y filtros preservados. Node: 114 OK/1 omisión; Chromium: 17 OK. Kubernetes aún pendiente de ajuste.
+
+### Avance 18 — compatibilidad Kubernetes preparada
+
+- Init generado desde SQL vigente, base/overlays coherentes y CORS Android.
+- Worker OTP independiente preparado detenido, secretos externos y cierre explícito de altas por defecto; sin modificar cuentas/sesiones existentes.
+- Verificador Kubernetes no usa registro legado ni promoción automática.
+- Tres pruebas locales aprobadas: renderizado/controles, SQL nuevo y migraciones 003–006 repetibles, rechazo 503 sin encolar. No se ejecutó Kubernetes.
+
+- Regresión del cambio operativo: 45/45 backend/contrato/sesión/outbox; solicitudes ya enviadas siguen consultables y confirmables durante la pausa.

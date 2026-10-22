@@ -65,3 +65,25 @@ Primer control: Node 115 pruebas (114 aprobadas, una omisión condicional H02),
 Chromium 17/17 (transición OTP y perfil/navegación), chatbot incluido 4/4.
 PostgreSQL 18 nuevo exclusivo, puerto loopback 32769, Resend simulado.
 Los manifiestos heredados aún requieren la corrección indicada abajo.
+
+## Preparación Kubernetes comprobada
+
+Se elimina la copia SQL antigua del ConfigMap: `k8s/base/kustomization.yaml`
+genera el init desde la fuente vigente. Overlay local y correo usan esta base.
+CORS incluye Android; se prepara worker separado con cero réplicas y referencias
+a secretos externos. `EMAIL_REGISTRATION_ENABLED=0` cierra altas/reenvíos de forma
+explícita incluso con claves configuradas. No cambia login ni JWT de ocho horas.
+El verificador local ya no intenta crear usuarios con el contrato antiguo ni
+promueve roles: requiere cuentas sintéticas provisionadas por separado.
+
+kubectl v1.37.1/Kustomize v5.8.1, binario descargado del proveedor y SHA256
+comprobado, solo como herramienta local ignorada; parser Node yaml del sistema.
+Tres pruebas aprobadas: render base/local/mail y controles estructurales; SQL
+renderizado ejecutado en base nueva, 003–006 aplicadas dos veces allí; registro
+cerrado responde 503 sin filas ni eventos aun con configuración sintética válida.
+No se aplicaron recursos, no se consultó ningún clúster, no hubo dry-run de
+servidor, validación OpenAPI, prueba de Pods/PVC/red/recuperación o envío real.
+PVC existentes requieren migración manual autorizada; readiness solo consulta BD.
+La guía Kubernetes conserva los aportes e identifica estas condiciones pendientes.
+
+Regresión tras el cierre operativo: 45/45 pruebas backend, sesión, contrato y outbox aprobadas, sin proveedor real. La pausa también conserva consulta/confirmación de una solicitud ya enviada (comprobado).

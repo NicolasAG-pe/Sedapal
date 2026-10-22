@@ -698,7 +698,8 @@ try {
 }
 catch (_) { console.error('Configuración de correo inválida; registro deshabilitado.'); }
 const registroCorreo = crearRegistroCorreo({ pool, key: configCorreo && configCorreo.key, from: configCorreo && configCorreo.from,
-    secreto: configCorreo && configCorreo.secreto, generarClaveHash, verificarClave });
+    secreto: configCorreo && configCorreo.secreto, generarClaveHash, verificarClave,
+    altasHabilitadas: process.env.EMAIL_REGISTRATION_ENABLED !== '0' });
 registrarRutasCorreo(app, registroCorreo, { registro: limiteRegistro,
     verificacion: limitadorGenerico(30, 15), reenvio: limitadorGenerico(10, 15), consulta: limitadorGenerico(240, 15) });
 
