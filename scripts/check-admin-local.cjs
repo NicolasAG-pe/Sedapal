@@ -7,6 +7,8 @@ const fs = require('node:fs');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const WebSocket = require('ws');
+const webOrigin = process.env.TEST_WEB_ORIGIN || 'http://localhost:8080';
+const adminOrigin = process.env.TEST_ADMIN_ORIGIN || 'http://localhost:8081';
 async function socket(base, origin, token) {
   await new Promise((resolve, reject) => {
     const ws = new WebSocket(base.replace(/^http/, 'ws') + '/socket.io/?EIO=4&transport=websocket', { origin });
@@ -34,7 +36,7 @@ async function socket(base, origin, token) {
     const sign = account => jwt.sign({ id_usuario: Number(account.id_usuario) }, process.env.AUTH_TOKEN_SECRET, { expiresIn: '2m' });
     const adminToken = sign(admin), userToken = sign(user), base = 'http://admin';
     async function request(endpoint, method = 'GET', token, body) {
-      return fetch(base + endpoint, { method, headers: { Origin: 'http://localhost:8081', ...(token ? { Authorization: 'Bearer ' + token } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      return fetch(base + endpoint, { method, headers: { Origin: adminOrigin, ...(token ? { Authorization: 'Bearer ' + token } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
         ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(10000) });
     }
     for (const client of ['http://web', base]) {
@@ -48,7 +50,7 @@ async function socket(base, origin, token) {
       const type = asset.endsWith('.svg') ? 'image/svg+xml' : asset.endsWith('.css') ? 'text/css' : 'javascript';
       assert.ok(response.headers.get('content-type')?.includes(type), asset + ': debe servir el recurso, no un fallback HTML.');
     }
-    console.log('OK: web/8080 y admin/8081; assets, proxies y health con PostgreSQL real.');
+    console.log('OK: web y admin; assets, proxies y health con PostgreSQL real.');
     const source = fs.readFileSync('/app/server.js','utf8');
     const routes = [...source.matchAll(/app\.(get|post|patch)\(["'](\/api\/admin\/[^"']+)["'], requiereAdmin/g)];
     assert.equal(routes.length, 19);
@@ -65,12 +67,12 @@ async function socket(base, origin, token) {
     const photo = (await pool.query('SELECT id_incidencia FROM incidencias WHERE foto IS NOT NULL LIMIT 1')).rows[0];
     if(photo) assert.equal((await request('/api/admin/incidencias/'+photo.id_incidencia+'/foto','GET',adminToken)).status,200);
     console.log('OK: resumen, usuarios/detalle, recibos, cortes, incidencias, pagos, atención y cuenta reales.');
-    const cors = await fetch(base+'/api/auth/login', { method:'OPTIONS', headers:{Origin:'http://localhost:8081','Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type,authorization'} });
-    assert.equal(cors.headers.get('access-control-allow-origin'),'http://localhost:8081');
+    const cors = await fetch(base+'/api/auth/login', { method:'OPTIONS', headers:{Origin:adminOrigin,'Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type,authorization'} });
+    assert.equal(cors.headers.get('access-control-allow-origin'),adminOrigin);
     const polling = await request('/socket.io/?EIO=4&transport=polling'); assert.equal(polling.status,200);
-    assert.equal(polling.headers.get('access-control-allow-origin'),'http://localhost:8081');
-    await socket(base,'http://localhost:8081',adminToken);
-    await socket('http://web','http://localhost:8080',userToken);
-    console.log('OK: CORS 8081 y Socket.IO autenticado por ambos proxies, sin escrituras aceptadas.');
+    assert.equal(polling.headers.get('access-control-allow-origin'),adminOrigin);
+    await socket(base,adminOrigin,adminToken);
+    await socket('http://web',webOrigin,userToken);
+    console.log('OK: CORS administrativo y Socket.IO autenticado por ambos proxies, sin escrituras aceptadas.');
   } finally { await pool.end(); }
 })().catch(error => { console.error(error.message); process.exitCode=1; });

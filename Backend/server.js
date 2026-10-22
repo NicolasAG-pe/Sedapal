@@ -90,6 +90,13 @@ if (!obtenerSecretoAuth()) {
 }
 
 const pool = new Pool(configuracion.database);
+// PostgreSQL puede cerrar conexiones inactivas durante reinicios o cortes de red.
+// pg descarta esos clientes; manejar el evento evita terminar el proceso Node.
+pool.on('error', (error) => {
+    console.error('Conexión inactiva de PostgreSQL interrumpida; se renovará al consultar.', {
+        codigo: error.code || 'desconocido'
+    });
+});
 
 
 // ==========================================

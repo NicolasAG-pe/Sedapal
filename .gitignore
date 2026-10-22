@@ -49,3 +49,6 @@ www-android/
 dist-web/
 dist-admin/
 .generated/
+
+# Herramientas, kubeconfig y credenciales del clúster local.
+.local/
