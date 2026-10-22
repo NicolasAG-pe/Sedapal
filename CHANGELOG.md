@@ -340,3 +340,9 @@ Publicada el 8 de octubre de 2026. Referencia: [Release v1.0.0](https://github.c
 - Distribución directa de la APK mediante GitHub Releases; sin publicación en Google Play.
 
 La instalación y los flujos principales de la APK release fueron validados en un teléfono físico por el propietario. La infraestructura local Docker permanece independiente de producción.
+
+## Avance 18 — auditoría de integración local
+
+- Se documentan conflictos y riesgos antes de integrar main en un worktree aislado.
+- Se conservan las ramas originales y los 22 commits; sin push ni despliegues.
+- Evidencia y plan: `docs/pruebas/integracion-avance-18.md`.
