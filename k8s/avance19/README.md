@@ -167,7 +167,8 @@ con cero réplicas. No iniciar Android ni conectar dispositivos reales.
 ## Publicación posterior
 
 Ambos `vercel.json` excluyen explícitamente `integration/avance-18` y conservan la
-exclusión de `feature/verificacion-correo`; no cambian la política de `main`.
+exclusión de `feature/verificacion-correo`. El avance 21 también excluye `main`
+para que una futura fusión autorizada no dispare despliegues Git Vercel.
 La publicación requiere comprobar además las conexiones Git/raíces de Vercel y
 las ramas/autodespliegues/vistas previas de Render. Una exclusión Vercel no protege
 otros proveedores. No ejecutar push, merge o PR como parte de esta guía local.

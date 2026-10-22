@@ -4,6 +4,20 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 22 de octubre de 2026 — avance 21: preparar PR definitivo sin despliegue
+
+- `main` excluido del despliegue Git en ambos `vercel.json` de la integración,
+  conservando las otras exclusiones y campos. El cambio protege el futuro
+  commit de fusión; no modifica main ni servicios externos en este avance.
+- Ancestro main y los 22 commits de PR #1 comprobados; revisión de servidor,
+  HTML/chatbot/filtros y comandos sin cambios funcionales nuevos.
+- Regresión: 66 pruebas aprobadas y tres de Perfil aprobadas al indicar la
+  caché Chromium existente; el primer intento falló por ruta de herramienta.
+- Auditoría de historial, esquema/migraciones, evidencia Android/Kubernetes y
+  pendientes productivos en `docs/pruebas/integracion-main-avance-21.md`.
+- Se prepara un Draft PR independiente; la fusión con merge commit conserva
+  el historial y requiere autorización posterior. PR #1 no se fusiona aparte.
+
 ### 22 de octubre de 2026 — avance 20: protección de la rama integrada
 
 - Exclusión explícita de `integration/avance-18` en ambos `vercel.json`,

@@ -2,7 +2,8 @@
   "git": {
     "deploymentEnabled": {
       "feature/verificacion-correo": false,
-      "integration/avance-18": false
+      "integration/avance-18": false,
+      "main": false
     }
   },
   "framework": null,
