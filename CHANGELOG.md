@@ -33,6 +33,16 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 23 de octubre de 2026 — montaje de secretos proyectados de Render
+
+- El primer deploy del supervisor rechazó el secret file con ELOOP: Render lo
+  proyecta mediante un enlace. Se permite resolver únicamente dentro del volumen
+  protegido de secretos; destinos externos y directorios escribibles por terceros
+  siguen rechazados. La copia del worker conserva permisos 0600.
+- 59 comprobaciones Node22/PostgreSQL18 aprobadas, incluidos enlace del proveedor,
+  escape del volumen y permisos inseguros. La versión previa siguió atendiendo
+  durante el fallo; sin envío ni cambios de datos por ese despliegue fallido.
+
 ### 23 de octubre de 2026 — supervisor gratuito de API/worker y canario Gmail
 
 - Opt-in de dos procesos dentro de la instancia existente de Render, autorizado
