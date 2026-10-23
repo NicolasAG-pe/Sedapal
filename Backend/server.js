@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
 const { Pool } = require("pg");
 const { obtenerConfiguracion } = require('./config');
-const { obtenerConfigCorreo } = require('./resend-mail');
+const { obtenerConfigCorreo } = require('./email-provider');
 const { obtenerClaveOutbox } = require('./outbox-crypto');
 const { crearRegistroCorreo, registrarRutasCorreo } = require('./email-registration');
 const { crearServicioRecibos, responderErrorRecibo } = require('./receipt-transactions');
@@ -95,6 +95,13 @@ if (!obtenerSecretoAuth()) {
 
 const pool = new Pool(configuracion.database);
 const servicioRecibos = crearServicioRecibos({ pool, validarRecibo: validarReciboAdmin });
+// PostgreSQL puede cerrar conexiones inactivas durante reinicios o cortes de red.
+// pg descarta esos clientes; manejar el evento evita terminar el proceso Node.
+pool.on('error', (error) => {
+    console.error('Conexión inactiva de PostgreSQL interrumpida; se renovará al consultar.', {
+        codigo: error.code || 'desconocido'
+    });
+});
 
 
 // ==========================================
@@ -691,7 +698,9 @@ try {
 }
 catch (_) { console.error('Configuración de correo inválida; registro deshabilitado.'); }
 const registroCorreo = crearRegistroCorreo({ pool, key: configCorreo && configCorreo.key, from: configCorreo && configCorreo.from,
-    secreto: configCorreo && configCorreo.secreto, generarClaveHash, verificarClave });
+    proveedor: configCorreo?.provider || 'resend',
+    secreto: configCorreo && configCorreo.secreto, generarClaveHash, verificarClave,
+    altasHabilitadas: process.env.EMAIL_REGISTRATION_ENABLED === '1' });
 registrarRutasCorreo(app, registroCorreo, { registro: limiteRegistro,
     verificacion: limitadorGenerico(30, 15), reenvio: limitadorGenerico(10, 15), consulta: limitadorGenerico(240, 15) });
 

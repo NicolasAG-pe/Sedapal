@@ -4,6 +4,18 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 23 de octubre de 2026 — Gmail API preparado, sin activar envíos
+
+- Proveedor Gmail opcional en el worker; Resend sigue predeterminado. MIME UTF-8,
+  OAuth de escritorio con PKCE y solo gmail.send; tokens en archivos privados 0600.
+- Proveedor congelado dentro del payload cifrado; Gmail no repite envíos ambiguos
+  ni leases recuperados. Se conservan OTP, outbox, límites y seguridad de main.
+- 54 comprobaciones locales Node22/PostgreSQL18 aprobadas y construcción Docker
+  verificada; incluidos worker Gmail independiente simulado y confirmación OTP.
+- CLI Google Cloud aislada preparada. Cuenta/proyecto Cloud, cliente y consentimiento
+  reales pendientes de acceso del propietario; no se enviaron correos, no se activó
+  Render ni se modificó Neon. Procedimiento y límites en docs/gmail-otp.md.
+
 ### 22 de octubre de 2026 — avance 17: cierre de validación y actualización firmada
 
 - Candidata final 1.1.0/3 compilada en salida exclusiva con recursos actuales,

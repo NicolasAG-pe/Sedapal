@@ -17,15 +17,15 @@ test('Outbox PostgreSQL: atomicidad, recuperación, concurrencia, privacidad y l
         if (failure) throw Object.assign(new Error('fixture proveedor privado'), failure);
         return { id: 'synthetic-provider-id' };
     };
-    const worker = () => crearProcesadorOutbox({ pool, key, enviarCodigo: send });
-    async function fixture({ commit = true } = {}) {
+    const worker = (proveedor = 'resend') => crearProcesadorOutbox({ pool, key, enviarCodigo: send, proveedor });
+    async function fixture({ commit = true, proveedor = 'resend' } = {}) {
         const client = await pool.connect(), id = crypto.randomUUID();
         const otp = crearCodigo(id,secret), correo = `outbox${++sequence}@example.invalid`;
         try {
             await client.query('BEGIN');
             await client.query(`INSERT INTO registros_correo_pendientes(id,correo,numero_suministro,clave_hash,codigo_hash,codigo_vence_en)
                 VALUES ($1,$2,$3,'fixture-hash',$4,clock_timestamp())`, [id,correo,String(940000000+sequence),otp.hash]);
-            const event = await encolarCorreo(client, { registroId:id,correo,codigo:otp.codigo,hash:otp.hash,from:'fixture@example.invalid',key });
+            const event = await encolarCorreo(client, { registroId:id,correo,codigo:otp.codigo,hash:otp.hash,from:'fixture@example.invalid',key,proveedor });
             if (commit) await client.query('COMMIT');
             else {
                 assert.equal((await worker().procesarUno()).estado,'vacio');
@@ -113,6 +113,36 @@ test('Outbox PostgreSQL: atomicidad, recuperación, concurrencia, privacidad y l
             assert.equal((await worker().procesarUno()).estado,'aceptado');
             const r=await row(f.event);assert.ok(r.codigo_vence_en.getTime()>Date.now()+290000);
             assert.equal(r.codigo_hash,f.otp.hash);assert.match(calls.at(-1).mensaje,new RegExp(f.otp.codigo));
+        });
+        await t.test('Gmail congela proveedor cifrado; Resend no consume ni modifica su evento', async () => {
+            const f = await fixture({ proveedor: 'gmail' }), n = calls.length;
+            assert.equal((await worker().procesarUno()).estado, 'proveedor_incompatible');
+            assert.equal(calls.length, n); assert.equal((await row(f.event)).intentos, 0);
+            assert.equal((await worker('gmail').procesarUno()).estado, 'aceptado');
+            assert.equal(calls.length, n + 1); assert.equal(JSON.parse(calls.at(-1).mensaje).hidro_mail_v, undefined);
+        });
+        await t.test('Gmail: timeout ambiguo terminal, payload purgado y nunca reenviado', async () => {
+            const f = await fixture({ proveedor: 'gmail' }), n = calls.length; failure = { tipo: 'ambiguo' };
+            assert.equal((await worker('gmail').procesarUno()).estado, 'ambiguo'); failure = undefined;
+            assert.equal((await row(f.event)).intentos, 1); assert.equal((await row(f.event)).payload, null);
+            assert.equal((await row(f.event)).hubo_ambiguedad, true);
+            assert.equal((await worker('gmail').procesarUno()).estado, 'vacio'); assert.equal(calls.length, n + 1);
+        });
+        await t.test('Gmail: crash tras envío y lease vencido no causan una segunda llamada', async () => {
+            const f = await fixture({ proveedor: 'gmail' }), w = worker('gmail'), old = await w.tomar();
+            await send({ mensaje: 'fixture accepted before crash', envioId: old.id }); const n = calls.length;
+            await pool.query("UPDATE correo_outbox SET bloqueado_hasta=clock_timestamp()-INTERVAL '1 second' WHERE id=$1", [f.event]);
+            assert.equal((await worker().procesarUno()).estado, 'proveedor_incompatible');
+            assert.equal((await worker('gmail').procesarUno()).estado, 'ambiguo');
+            assert.equal(calls.length, n); assert.equal((await row(f.event)).payload, null);
+            assert.equal(await w.finalizar(old, { id: 'late' }), 'sin_lease');
+        });
+        await t.test('Gmail reintenta únicamente rechazo transitorio explícito, conserva UUID/OTP', async () => {
+            const f = await fixture({ proveedor: 'gmail' }), n = calls.length; failure = { tipo: 'transitorio', retryAfter: 60 };
+            assert.equal((await worker('gmail').procesarUno()).estado, 'reintento'); failure = undefined;
+            await ready(f.event); assert.equal((await worker('gmail').procesarUno()).estado, 'aceptado');
+            assert.equal(calls.length, n + 2); assert.equal(calls.at(-1).mensaje, calls.at(-2).mensaje);
+            assert.equal(calls.at(-1).envioId, calls.at(-2).envioId);
         });
         await t.test('Integridad de estados, FK e índices; sin transacciones/conexiones abandonadas', async () => {
             const f=await fixture();

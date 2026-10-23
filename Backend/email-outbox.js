@@ -2,12 +2,13 @@
 const crypto = require('node:crypto');
 const { cifrarMensaje, descifrarMensaje, idClave } = require('./outbox-crypto');
 const { construirMensaje } = require('./resend-mail');
+const { envolverMensaje, abrirMensaje } = require('./mail-envelope');
 const { OTP_TTL_SECONDS } = require('./email-otp');
 const activos = "('pendiente','procesando','reintento')";
 
-async function encolarCorreo(client, { registroId, correo, codigo, hash, from, key }) {
+async function encolarCorreo(client, { registroId, correo, codigo, hash, from, key, proveedor = 'resend' }) {
     const id = crypto.randomUUID();
-    const payload = cifrarMensaje(construirMensaje(from, correo, codigo), key, id, registroId);
+    const payload = cifrarMensaje(envolverMensaje(construirMensaje(from, correo, codigo), proveedor), key, id, registroId);
     await client.query('INSERT INTO public.registros_correo_envios(id,registro_id) VALUES ($1,$2)', [id, registroId]);
     await client.query('INSERT INTO public.correo_outbox(id,codigo_hash,payload,clave_id) VALUES ($1,$2,$3,$4)', [id, hash, payload, idClave(key)]);
     return id;
@@ -18,7 +19,8 @@ async function cancelarEventos(client, registroId) {
         WHERE e.id=o.id AND e.registro_id=$1 AND o.estado IN ${activos}`, [registroId]);
 }
 
-function crearProcesadorOutbox({ pool, key, enviarCodigo }) {
+function crearProcesadorOutbox({ pool, key, enviarCodigo, proveedor = 'resend' }) {
+    if (!['resend', 'gmail'].includes(proveedor)) throw new Error('Proveedor outbox inválido.');
     async function tx(fn) {
         const client = await pool.connect(); let discard;
         try {
@@ -33,7 +35,8 @@ function crearProcesadorOutbox({ pool, key, enviarCodigo }) {
     }
     async function terminal(client, id, estado, error = null) {
         await client.query(`UPDATE public.correo_outbox SET estado=$2,payload=NULL,
-            lease_token=NULL,bloqueado_hasta=NULL,ultimo_error=$3,finalizado_en=clock_timestamp() WHERE id=$1`, [id, estado, error]);
+            lease_token=NULL,bloqueado_hasta=NULL,ultimo_error=$3,hubo_ambiguedad=hubo_ambiguedad OR $4,
+            finalizado_en=clock_timestamp() WHERE id=$1`, [id, estado, error, estado === 'ambiguo']);
     }
     async function tomar() {
         const { rows: candidates } = await pool.query(`SELECT o.id,e.registro_id,p.correo,p.numero_suministro
@@ -58,12 +61,23 @@ function crearProcesadorOutbox({ pool, key, enviarCodigo }) {
                     OR (estado='procesando' AND bloqueado_hasta<=clock_timestamp())) FOR UPDATE SKIP LOCKED`, [c.id]);
                 if (!o) return null;
                 if (o.clave_id !== idClave(key)) return { estado: 'clave_incompatible' };
+                try {
+                    const envelope = abrirMensaje(descifrarMensaje(o.payload, key, o.id, p.id));
+                    if (envelope.proveedor !== proveedor) return { estado: 'proveedor_incompatible' };
+                } catch (_) {
+                    await terminal(client, o.id, 'fallido', 'cifrado'); return { estado: 'fallido' };
+                }
                 if (p.invalidado || p.consumido_en || p.codigo_hash !== o.codigo_hash || p.intentos >= 5) {
                     await terminal(client, o.id, 'cancelado'); return { estado: 'cancelado' };
                 }
                 const { rows: [clock] } = await client.query('SELECT clock_timestamp() AS ahora');
                 const now = clock.ahora.getTime(), recovered = o.estado === 'procesando';
                 const ambiguous = o.hubo_ambiguedad || recovered;
+                // Gmail carece de clave idempotente: una aceptación previa puede
+                // haberse perdido antes de persistir. Nunca repetir ese envío.
+                if (proveedor === 'gmail' && ambiguous) {
+                    await terminal(client, o.id, 'ambiguo', 'ambiguo'); return { estado: 'ambiguo' };
+                }
                 if (p.vence_en.getTime() <= now || o.intentos >= 5 ||
                     (o.enviar_hasta && o.enviar_hasta.getTime() <= now) ||
                     (!o.iniciado_en && p.vence_en.getTime() < now + OTP_TTL_SECONDS * 1000)) {
@@ -99,6 +113,9 @@ function crearProcesadorOutbox({ pool, key, enviarCodigo }) {
             }
             const tipo = ['transitorio','permanente','ambiguo','cifrado','caducado'].includes(outcome.tipo) ? outcome.tipo : 'ambiguo';
             const ambiguous = o.hubo_ambiguedad || tipo === 'ambiguo';
+            if (proveedor === 'gmail' && ambiguous) {
+                await terminal(client, job.id, 'ambiguo', tipo); return 'ambiguo';
+            }
             if (['permanente','cifrado'].includes(tipo)) {
                 await terminal(client, job.id, ambiguous ? 'ambiguo' : 'fallido', tipo); return ambiguous ? 'ambiguo' : 'fallido';
             }
@@ -128,7 +145,7 @@ function crearProcesadorOutbox({ pool, key, enviarCodigo }) {
         // Presupuesto calculado por PostgreSQL; no depende del desfase absoluto de relojes.
         const enviarHasta = new Date(Date.now() + Math.floor(remaining));
         let mensaje;
-        try { mensaje = descifrarMensaje(job.payload, key, job.id, job.registro_id); }
+        try { mensaje = abrirMensaje(descifrarMensaje(job.payload, key, job.id, job.registro_id)).mensaje; }
         catch (_) { return { estado: await finalizar(job, { tipo: 'cifrado' }) }; }
         let outcome;
         try {

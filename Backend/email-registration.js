@@ -16,9 +16,9 @@ const uuid = valor => typeof valor === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a
 const CONTRATO_CORREO = 'otp-outbox-v1';
 const ACTUALIZAR_CLIENTE = 'Actualiza Hidro-Mejora para crear una cuenta y verificar tu correo. Si ya tienes cuenta, puedes iniciar sesión normalmente.';
 
-function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verificarClave }) {
-    function disponible() {
-        if (!key || !from || !secreto) throw new ErrorRegistro(503, 'El registro no está disponible temporalmente. Intenta más tarde.');
+function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verificarClave, altasHabilitadas = true, proveedor = 'resend' }) {
+    function disponible(paraAlta = false) {
+        if ((paraAlta && !altasHabilitadas) || !key || !from || !secreto) throw new ErrorRegistro(503, 'El registro no está disponible temporalmente. Intenta más tarde.');
     }
     async function transaccion(operacion) {
         const cliente = await pool.connect();
@@ -73,7 +73,7 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verif
         await cancelarEventos(cliente, pendiente.id);
         await cliente.query(`UPDATE registros_correo_pendientes
             SET codigo_hash=$2,codigo_vence_en=clock_timestamp() WHERE id=$1`, [pendiente.id, hash]);
-        await encolarCorreo(cliente, { registroId: pendiente.id, correo: pendiente.correo, codigo, hash, from, key });
+        await encolarCorreo(cliente, { registroId: pendiente.id, correo: pendiente.correo, codigo, hash, from, key, proveedor });
         const { rows: [r] } = await cliente.query('SELECT vence_en FROM registros_correo_pendientes WHERE id=$1', [pendiente.id]);
         return { estado: 'pendiente', estado_envio: 'en_cola', registro_id: pendiente.id, vence_en: null,
             solicitud_vence_en: r.vence_en, reenvio_en_segundos: OTP_RESEND_SECONDS,
@@ -109,7 +109,7 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verif
     }
     return {
         async registrar(body = {}) {
-            disponible();
+            disponible(true);
             const correo = typeof body.correo === 'string' ? body.correo.trim().toLowerCase() : '';
             const suministro = typeof body.numero_suministro === 'string' ? body.numero_suministro.trim() : '';
             const password = body.password;
@@ -151,7 +151,7 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verif
             });
         },
         async reenviar(body = {}) {
-            disponible();
+            disponible(true);
             if (!uuid(body.registro_id)) throw invalido();
             return transaccion(async cliente => {
                 const r = await buscar(cliente, body.registro_id);
