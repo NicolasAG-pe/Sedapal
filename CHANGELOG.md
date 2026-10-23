@@ -4,6 +4,16 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 22 de octubre de 2026 — avance 23: exigir activación explícita de altas
+
+- Reproducido en Docker aislado: con secretos de correo válidos y bandera ausente,
+  el backend aceptaba un registro (202). Ahora solo `EMAIL_REGISTRATION_ENABLED=1`
+  habilita altas/reenvíos; ausencia u otro valor mantiene 503 sin encolar.
+- Plantillas con altas/worker detenidos y claves separadas; al actualizar se
+  conserva el secreto JWT vigente. Fixtures OTP habilitados de forma explícita.
+- Regresión de ausencia de bandera con PostgreSQL sintético, contrato, sesión y
+  outbox. Sin cambios productivos, merge ni push en este avance de preparación.
+
 ### 22 de octubre de 2026 — avance 21: preparar PR definitivo sin despliegue
 
 - `main` excluido del despliegue Git en ambos `vercel.json` de la integración,

@@ -146,7 +146,7 @@ async function browser(executable) {
       env: { ...process.env, PORT: String(backendPort), DATABASE_URL: '', DB_HOST: '127.0.0.1', DB_PORT: String(port),
         POSTGRES_DB: database, POSTGRES_USER: 'hm_fixture', POSTGRES_PASSWORD: 'fixture-only-not-production',
         AUTH_TOKEN_SECRET: 'isolated-e2e-fixture-secret-not-production', NODE_ENV: 'development', CORS_ALLOWED_ORIGINS: origin,
-        EMAIL_OUTBOX_KEY:outboxKey, EMAIL_OTP_SECRET: crypto.randomBytes(32).toString('hex'), RESEND_API_KEY:'fixture-provider-key',
+        EMAIL_REGISTRATION_ENABLED:'1', EMAIL_OUTBOX_KEY:outboxKey, EMAIL_OTP_SECRET: crypto.randomBytes(32).toString('hex'), RESEND_API_KEY:'fixture-provider-key',
         RESEND_FROM:'correo@fixture.invalid', HIDRO_TEST_MAILBOX:mailbox } });
     backend.stdout.on('data', data => { serverOutput += data; }); backend.stderr.on('data', data => { serverOutput += data; });
     await wait(async () => { try { return (await fetch(base + '/api/health')).ok; } catch (_) { return false; } }, 'API aislada');
