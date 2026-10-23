@@ -224,3 +224,13 @@ POST Gmail, configuración incompleta, timeout, SIGTERM y aislamiento del canari
 La imagen final pasó arranque/readiness/health, SIGKILL del worker, reinicio del
 contenedor y cierre SIGTERM con exit0. Se conservan todos los volúmenes de prueba.
 No se extrapolan esas pruebas a recepción física de correo ni a Android real.
+
+
+El primer despliegue real del supervisor detectó ELOOP al abrir el secret file
+proyectado por Render. Se corrigió el adaptador del montaje: solo para entradas
+inmediatas del directorio de secretos gestionado por la plataforma se resuelve el
+enlace, exigiendo destino dentro del mismo volumen, directorio protegido y propietario
+confiable. La apertura final conserva O_NOFOLLOW. Enlaces arbitrarios, escapes y
+raíces escribibles por terceros se rechazan. El lector de credenciales del worker
+sigue exigiendo archivo regular 0600 y no se modifica. Las 59 pruebas posteriores
+incluyen estos casos y las regresiones del supervisor, OTP y outbox.

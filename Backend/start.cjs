@@ -6,13 +6,25 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { validarCredenciales, validarRemitente } = require('./gmail-mail');
 
-function prepararCredenciales(env) {
+function prepararCredenciales(env, { secretDirectory = '/etc/secrets' } = {}) {
     if ((env.EMAIL_PROVIDER || 'resend') !== 'gmail') return { env, cleanup() {} };
     let fd, directory;
     try {
         // El secret file de Render es de solo lectura y puede tener otro modo.
         // Solo la copia efímera 0600 se entrega al lector estricto del worker.
-        fd = fs.openSync(env.GMAIL_CREDENTIALS_FILE, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+        let source = env.GMAIL_CREDENTIALS_FILE;
+        try { fd = fs.openSync(source, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW); }
+        catch (error) {
+            if (error.code !== 'ELOOP' || path.dirname(path.resolve(source)) !== path.resolve(secretDirectory)) throw error;
+            // Render/Kubernetes proyectan secretos mediante enlaces dentro del volumen.
+            // No seguir enlaces locales arbitrarios ni destinos fuera del volumen privado.
+            const base = fs.realpathSync(secretDirectory), baseStat = fs.statSync(base);
+            const resolved = fs.realpathSync(source);
+            if (!baseStat.isDirectory() || baseStat.mode & 0o022 ||
+                (process.getuid && ![0, process.getuid()].includes(baseStat.uid)) || !resolved.startsWith(base + path.sep)) throw new Error();
+            source = resolved;
+            fd = fs.openSync(source, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+        }
         const stat = fs.fstatSync(fd);
         if (!stat.isFile() || stat.size > 65536) throw new Error();
         const raw = fs.readFileSync(fd, 'utf8');

@@ -67,3 +67,21 @@ test('copia efímera 0600 desde secret file, conserva el original y rechaza enla
     const link = path.join(dir, 'link'); fs.symlinkSync(file, link); assert.throws(() => prepararCredenciales({ ...env, GMAIL_CREDENTIALS_FILE: link }));
     fs.rmSync(dir, { recursive: true });
 });
+test('enlace del proveedor solo dentro del volumen de secretos protegido; rechaza escapes', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hm-render-secret-')); fs.chmodSync(dir, 0o700);
+    const root = path.join(dir, 'secrets'), dataDir = path.join(root, '..projection');
+    fs.mkdirSync(root, { mode: 0o755 }); fs.mkdirSync(dataDir, { mode: 0o700 });
+    const sender = 'fixture.sender@gmail.com';
+    const raw = JSON.stringify({ type: 'authorized_user', client_type: 'desktop', sender, scope: SCOPE, account_verified: false,
+        account_check: 'scope_only', client_id: 'fixture.apps.googleusercontent.com', client_secret: 'fixture-secret', refresh_token: 'fixture-refresh' });
+    const original = path.join(dataDir, 'secret.json'), link = path.join(root, 'secret.json');
+    fs.writeFileSync(original, raw, { mode: 0o600 }); fs.symlinkSync('..projection/secret.json', link);
+    const env = { EMAIL_PROVIDER: 'gmail', GMAIL_SENDER: sender, GMAIL_CREDENTIALS_FILE: link };
+    const result = prepararCredenciales(env, { secretDirectory: root });
+    assert.equal(leerJsonPrivado(result.env.GMAIL_CREDENTIALS_FILE).refresh_token, 'fixture-refresh'); result.cleanup();
+    fs.unlinkSync(link); fs.writeFileSync(path.join(dir, 'outside.json'), raw, { mode: 0o600 }); fs.symlinkSync('../outside.json', link);
+    assert.throws(() => prepararCredenciales(env, { secretDirectory: root }));
+    fs.unlinkSync(link); fs.symlinkSync('..projection/secret.json', link); fs.chmodSync(root, 0o777);
+    assert.throws(() => prepararCredenciales(env, { secretDirectory: root }));
+    fs.rmSync(dir, { recursive: true });
+});
