@@ -4,6 +4,17 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 22 de octubre de 2026 — avance 24: proteger publicación de preparación
+
+- Exclusión explícita de `preparation/backend-avance-23` en ambos JSON Vercel,
+  conservando las protecciones anteriores y todas las opciones de build.
+- Proyectos/builds Vercel y Render inspeccionados en lectura; Render mantiene
+  main con autodespliegue/previews apagados. Sin workflows/hooks de GitHub.
+- Se conservan los tres commits del avance 23 y su evidencia de 75 pruebas
+  aprobadas/una omisión. No cambia el backend ni se repiten suites extensas.
+- Publicación/PR Draft de preparación autorizados; sin merge, cambios en Neon,
+  despliegues, correo real, APK ni intervención en Kubernetes.
+
 ### 22 de octubre de 2026 — avance 23: backend y migración ensayados en aislamiento
 
 - Imagen candidata Node 22 y PostgreSQL 18: migraciones 003–006 repetidas,
