@@ -24,6 +24,39 @@
     wrapped.cancel = () => clearTimeout(timer);
     return wrapped;
   }
+  function legacyCopy(text) {
+    if (typeof document === 'undefined' || !document.body) throw new Error('Portapapeles no disponible.');
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.setAttribute('aria-hidden', 'true');
+    area.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+    document.body.appendChild(area);
+    const selection = document.getSelection ? document.getSelection() : null;
+    const previous = selection && selection.rangeCount ? selection.getRangeAt(0) : null;
+    area.select();
+    if (area.setSelectionRange) area.setSelectionRange(0, area.value.length);
+    let copied = false;
+    try { copied = document.execCommand('copy'); } finally {
+      area.remove();
+      if (previous && selection) { selection.removeAllRanges(); selection.addRange(previous); }
+    }
+    if (!copied) throw new Error('No se pudo copiar el texto.');
+    return true;
+  }
+  function copyText(value) {
+    const text = value === undefined || value === null ? '' : String(value);
+    if (!text) return Promise.reject(new Error('No hay texto para copiar.'));
+    const clipboard = global.navigator && global.navigator.clipboard;
+    if (clipboard && typeof clipboard.writeText === 'function') {
+      return clipboard.writeText(text).then(() => true).catch(error => {
+        if (typeof document === 'undefined') throw error;
+        return legacyCopy(text);
+      });
+    }
+    try { legacyCopy(text); return Promise.resolve(true); }
+    catch (error) { return Promise.reject(error); }
+  }
   const formLocks = new WeakMap();
   function beginForm(form) {
     if (formLocks.has(form)) return null;
@@ -71,7 +104,7 @@
     root.addEventListener('reset',event=>event.target.querySelectorAll('[aria-invalid]').forEach(field=>field.removeAttribute('aria-invalid')));
   }
   global.HMShared.ui = {
-    node, date, debounce, beginForm, clearFormLocks, installFormUX,
+    node, date, debounce, beginForm, clearFormLocks, installFormUX, copyText,
     money: value => 'S/ ' + Number(value).toFixed(2),
     isAborted: error => !!error && error.name === 'AbortError'
   };

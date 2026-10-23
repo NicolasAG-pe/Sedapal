@@ -633,6 +633,7 @@
 
       <div class="dialog-actions">
         <button class="btn btn-ghost" id="detail-close-2" type="button">Cerrar</button>
+        <button class="btn btn-ghost" id="btn-copy-detail" type="button">Copiar datos</button>
         <button class="btn btn-sky" id="btn-pay-detail" type="button">Pagar ahora</button>
         <button class="btn btn-primary" id="btn-pdf" type="button">Descargar recibo</button>
         <button class="btn btn-primary" id="btn-constancia" type="button" hidden>Constancia de pago</button>
@@ -671,7 +672,7 @@
           <span class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg></span>
           <h4>Pago exitoso</h4>
           <p id="pay-success-text">Tu recibo fue cancelado.</p>
-          <div><span class="pay-code" id="pay-code">—</span></div>
+          <div class="pay-code-row"><span class="pay-code" id="pay-code">—</span><button class="btn-sm detail" id="pay-copy" type="button">Copiar código</button></div>
         </div>
         <div class="dialog-actions">
           <button class="btn btn-ghost" id="pay-done" type="button">Cerrar</button>
@@ -1405,6 +1406,19 @@
       toastOk.classList.remove('show');
       showSuccess._hide=setTimeout(()=>toastOk.setAttribute('aria-hidden','true'), 320);
     }, 3600);
+  }
+  function copiarReferencia(texto, mensaje, boton){
+    const valor = String(texto || '').trim();
+    if(!valor || valor === '—'){ showToast('No hay información disponible para copiar.'); return; }
+    const etiqueta = boton ? boton.textContent : '';
+    if(boton){ boton.disabled = true; boton.textContent = 'Copiando…'; }
+    window.HMShared.ui.copyText(valor).then(()=>{
+      showToast(mensaje);
+    }).catch(()=>{
+      showToast('No se pudo copiar. Mantén pulsado el texto para seleccionarlo.');
+    }).finally(()=>{
+      if(boton){ boton.disabled = false; boton.textContent = etiqueta; }
+    });
   }
   function anyModalOpen(){ return !!document.querySelector('.overlay.open, .overlay.closing'); }
   function isDrawerLocked(){ return document.body.dataset.drawerLocked === '1'; }
@@ -3422,6 +3436,17 @@
     let igv  = +(monto - agua - alc).toFixed(2);
     return {agua, alc, igv};
   }
+  function textoReciboParaCopiar(r){
+    return [
+      'Hidro-Mejora · Recibo',
+      'Periodo: ' + r.periodo,
+      'Suministro: ' + ((supplyLabel && supplyLabel.textContent) || '—'),
+      'Monto: ' + fmt(r.monto),
+      'Emisión: ' + r.emision,
+      'Vencimiento: ' + r.vencimiento,
+      'Estado: ' + r.estado
+    ].join('\n');
+  }
   function abrirDetalle(r, opener){
     selected = r;
     document.getElementById('detail-subtitle').textContent = r.etiqueta + ' · Suministro ' + supplyLabel.textContent;
@@ -3636,6 +3661,10 @@ async function descargarConstanciaPDF(r, btn){
     if(!selected) return;
     descargarReciboPDF(selected, ev.currentTarget);
   });
+  document.getElementById('btn-copy-detail').addEventListener('click', ev=>{
+    if(!selected) return;
+    copiarReferencia(textoReciboParaCopiar(selected), 'Datos del recibo copiados.', ev.currentTarget);
+  });
   document.getElementById('btn-constancia').addEventListener('click', ev=>{
     if(!selected) return;
     descargarConstanciaPDF(selected, ev.currentTarget);
@@ -3788,6 +3817,9 @@ async function descargarConstanciaPDF(r, btn){
   });
   document.getElementById('pay-constancia').addEventListener('click', ev=>{
     if(payTarget) descargarConstanciaPDF(payTarget, ev.currentTarget);
+  });
+  document.getElementById('pay-copy').addEventListener('click', ev=>{
+    copiarReferencia(document.getElementById('pay-code').textContent, 'Código de operación copiado.', ev.currentTarget);
   });
   document.getElementById('pay-done').addEventListener('click', ()=>{
     const wasDetail = selected && payTarget && selected.id===payTarget.id && detModal.classList.contains('open');
@@ -4822,8 +4854,13 @@ async function descargarConstanciaPDF(r, btn){
       pgConst.type = 'button'; pgConst.className = 'btn-sm detail'; pgConst.dataset.act = 'const';
       pgConst.textContent = 'Ver constancia';
       pgAcc.appendChild(pgConst);
+      const pgCopy = document.createElement('button');
+      pgCopy.type = 'button'; pgCopy.className = 'btn-sm detail'; pgCopy.dataset.act = 'copy';
+      pgCopy.textContent = 'Copiar código';
+      pgAcc.appendChild(pgCopy);
       art.appendChild(pgAcc);
       pgConst.addEventListener('click', ev=>descargarConstanciaPDF(reciboLiteDesdePago(pg), ev.currentTarget));
+      pgCopy.addEventListener('click', ev=>copiarReferencia(pg.codigo, 'Código de operación copiado.', ev.currentTarget));
       list.appendChild(art);
     });
   }
