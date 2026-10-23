@@ -35,6 +35,7 @@ module.exports = async function ({ chrome:c, origin, output, pool, request, admi
   await pause(1500);
   if(await c.evaluate('document.getElementById("spotlight-pop").classList.contains("open")'))await c.click('#spot-skip');
   await wait(()=>c.evaluate('!document.body.classList.contains("tutorial-open")'),'tutorial inicial cerrado');
+  await require('./chatbot-ui-checks.cjs')({client:c,wait,ok});
   await require('./visual-checks.cjs')(c,output,'client-dashboard');
   await require('./visual-checks.cjs')(c,output,'client-dashboard-mobile',390,844);
   await require('./visual-checks.cjs')(c,output,'client-dashboard-landscape',640,360);
@@ -53,6 +54,15 @@ module.exports = async function ({ chrome:c, origin, output, pool, request, admi
   await c.evaluate('location.hash="admin-recibos"');await pause(500);
   assert.equal(await c.evaluate('document.querySelector(".dash-sec.active").id'),'sec-inicio');
   await nav('historial','document.getElementById("cards").textContent.includes("Cliente UI fixture")');
+  await c.click('[data-filter="Pagado"]');
+  await wait(()=>c.evaluate('!document.getElementById("cards").textContent.includes("Cliente UI fixture")'),'filtro pagado excluye emitido');
+  assert.equal(await c.evaluate('document.querySelectorAll("[data-filter].active").length'),1);
+  await c.click('[data-filter="Pendiente"]');
+  await wait(()=>c.evaluate('!document.getElementById("cards").textContent.includes("Cliente UI fixture")'),'filtro pendiente excluye emitido');
+  await c.click('[data-filter="Emitido"]');
+  await wait(()=>c.evaluate('document.getElementById("cards").textContent.includes("Cliente UI fixture")'),'filtro emitido incluye recibo');
+  await c.click('[data-filter="Todos"]');
+  ok('Filtros integrados: Pagado/Pendiente/Emitido/Todos cambian recibos y mantienen una selección activa');
   await require('./visual-checks.cjs')(c,output,'client-recibos-small',320,760);
   await c.evaluate(`(()=>{const card=[...document.querySelectorAll('#cards .card')].find(n=>n.textContent.includes('Cliente UI fixture'));card.querySelector('[data-act=detail]').click();})()`);
   await wait(()=>c.evaluate('document.getElementById("detail-modal").classList.contains("open")'),'detalle recibo');

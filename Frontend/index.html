@@ -656,6 +656,7 @@
 
       <div class="dialog-actions">
         <button class="btn btn-ghost" id="detail-close-2" type="button">Cerrar</button>
+        <button class="btn btn-ghost" id="btn-copy-detail" type="button">Copiar datos</button>
         <button class="btn btn-sky" id="btn-pay-detail" type="button">Pagar ahora</button>
         <button class="btn btn-primary" id="btn-pdf" type="button">Descargar recibo</button>
         <button class="btn btn-primary" id="btn-constancia" type="button" hidden>Constancia de pago</button>
@@ -694,7 +695,7 @@
           <span class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg></span>
           <h4>Pago exitoso</h4>
           <p id="pay-success-text">Tu recibo fue cancelado.</p>
-          <div><span class="pay-code" id="pay-code">—</span></div>
+          <div class="pay-code-row"><span class="pay-code" id="pay-code">—</span><button class="btn-sm detail" id="pay-copy" type="button">Copiar código</button></div>
         </div>
         <div class="dialog-actions">
           <button class="btn btn-ghost" id="pay-done" type="button">Cerrar</button>
@@ -890,6 +891,7 @@
 <script src="assets/js/native-state.js"></script>
 <script src="assets/js/registration-state.js"></script>
 <script src="assets/js/client-session.js"></script>
+<script src="assets/js/sedapal-knowledge.js"></script>
 <!-- Socket.IO cliente vendorizado (v4.8.4, igual que el backend): el script
      absoluto /socket.io/socket.io.js no resuelve en el WebView Android
      (origen capacitor), así que se sirve local. Copiar de nuevo desde
@@ -1468,6 +1470,19 @@
       showSuccess._hide=setTimeout(()=>toastOk.setAttribute('aria-hidden','true'), 320);
     }, 3600);
   }
+  function copiarReferencia(texto, mensaje, boton){
+    const valor = String(texto || '').trim();
+    if(!valor || valor === '—'){ showToast('No hay información disponible para copiar.'); return; }
+    const etiqueta = boton ? boton.textContent : '';
+    if(boton){ boton.disabled = true; boton.textContent = 'Copiando…'; }
+    window.HMShared.ui.copyText(valor).then(()=>{
+      showToast(mensaje);
+    }).catch(()=>{
+      showToast('No se pudo copiar. Mantén pulsado el texto para seleccionarlo.');
+    }).finally(()=>{
+      if(boton){ boton.disabled = false; boton.textContent = etiqueta; }
+    });
+  }
   function anyModalOpen(){ return !!document.querySelector('.overlay.open, .overlay.closing'); }
   function isDrawerLocked(){ return document.body.dataset.drawerLocked === '1'; }
   /* Bloqueo limpio para Android Chrome / WebView: NO se mueve físicamente
@@ -1628,7 +1643,7 @@
       swap();
     }
   }
-  function fmt(n){ return 'S/ ' + n.toFixed(2); }
+  function fmt(n){ return window.HMShared.ui.money(n); }
   function reciboPagable(r){ return !!r && (r.estado==='Emitido' || r.estado==='Pendiente' || r.estado==='Vencido'); }
   function pad(n){ return String(n).padStart(2,'0'); }
 
@@ -2491,7 +2506,7 @@
     currentFilter = 'Todos'; searchQuery = ''; yearFilter = 'Todos';
     if(searchMes) searchMes.value = '';
     if(filterAnio) filterAnio.value = 'Todos';
-    document.querySelectorAll('.chip-filter').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
+    document.querySelectorAll('[data-filter]').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
     renderCards();
   }
   /* ÚNICA convención de coordenadas del tutorial: rect respecto al
@@ -2928,6 +2943,15 @@
     const t = document.createElement('span');
     t.className = 'hb-time'; t.textContent = hbTime();
     m.appendChild(s); m.appendChild(t);
+    if(data.source){
+      const source = document.createElement('a');
+      source.className = 'hb-act';
+      source.textContent = 'Consultar fuente oficial';
+      source.href = data.source;
+      source.target = '_blank';
+      source.rel = 'noopener noreferrer';
+      m.appendChild(source);
+    }
     if(data.actions && data.actions.length){
       const box = document.createElement('div');
       box.className = 'hb-acts';
@@ -2979,9 +3003,9 @@
     if(hbHuboErrorCarga()){
       addBotMessage('Hola, soy HidroBot. No fue posible cargar toda la información de tu suministro, pero puedes seguir utilizándome para consultas generales y navegación dentro de la plataforma.');
     } else if(recibos.length === 0){
-      addBotMessage('Hola, soy HidroBot, el asistente virtual de Hidro Mejora. Tu suministro está registrado correctamente, pero todavía no hay recibos ni datos de consumo disponibles. Puedo ayudarte con incidencias, cortes de servicio y navegación dentro de la plataforma. ¿En qué puedo ayudarte?');
+      addBotMessage('Hola, soy HidroBot, el asistente virtual de Hidro Mejora. Tu suministro está registrado correctamente, pero todavía no hay recibos ni datos de consumo disponibles. Puedo ayudarte con incidencias, cortes de servicio y navegación dentro de la plataforma. También puedes preguntarme sobre Sedapal. ¿En qué puedo ayudarte?');
     } else {
-      addBotMessage('Hola, soy HidroBot, el asistente virtual de Hidro Mejora. Ya cargué la información de tu suministro y puedo ayudarte con tus recibos, consumo, incidencias, cortes de servicio y navegación dentro de la plataforma. ¿En qué puedo ayudarte?');
+      addBotMessage('Hola, soy HidroBot, el asistente virtual de Hidro Mejora. Ya cargué la información de tu suministro y puedo ayudarte con tus recibos, consumo, incidencias, cortes de servicio y navegación dentro de la plataforma. También puedes preguntarme sobre Sedapal. ¿En qué puedo ayudarte?');
     }
     hidroBotState.greeted = true;
   }
@@ -3116,7 +3140,7 @@
         actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
     }
     if(id === 'greeting'){
-      return {text:'Hola. Soy HidroBot. Puedo ayudarte con recibos, consumo, incidencias, cortes y otras funciones de Hidro Mejora.'};
+      return {text:'Hola. Soy HidroBot. Puedo orientarte sobre Sedapal y ayudarte con recibos, consumo, incidencias y cortes de Hidro Mejora.'};
     }
     if(id === 'receipts'){
       return {text:'En Recibos puedes buscar por mes, filtrar por año o estado, ver el detalle y descargar el PDF de cada recibo.',
@@ -3274,7 +3298,7 @@
     if(id === 'thanks'){
       return {text:'Con gusto. Si necesitas revisar otra función de Hidro Mejora, puedes preguntarme.'};
     }
-    return {text:'No pude identificar exactamente esa consulta. Puedo ayudarte con recibos, pagos, consumo, incidencias, cortes de servicio, tutorial y atención al cliente.',
+    return {text:'Puedo orientarte sobre Sedapal, sus canales, sedes y trámites, además de tus recibos, consumo y cortes. Prueba con «¿Qué es Sedapal?» o «¿Cómo contacto a Sedapal?».',
       actions:[createBotAction('Ver recibos', ()=>hbGo('historial')),
                createBotAction('Reportar incidencia', (b)=>{ minimizeBot(); openIncidentModal(null, b); }),
                createBotAction('Necesito ayuda', ()=>hbGo('ayuda'))]};
@@ -3287,7 +3311,16 @@
     return handleLocalBotMessage(message);
   }
   function handleLocalBotMessage(message){
-    return handleBotIntent(detectBotIntent(message), message);
+    const found = detectBotIntent(message);
+    // Consultas de la cuenta y emergencias conservan sus acciones y datos.
+    const accountIntents = ['last_receipt','pending_receipts','last_payment','payments_count',
+      'payment_code','payment','pdf','cuts_district','cuts_all','cuts_end','no_water',
+      'low_pressure','leak','my_incidents','service_status'];
+    if(accountIntents.indexOf(found.intent) === -1){
+      const general = window.HMSedapalKnowledge.answer(message);
+      if(general) return general;
+    }
+    return handleBotIntent(found, message);
   }
   function submitBotText(text){
     if(!sesionCliente.isUser()) return;
@@ -3467,6 +3500,17 @@
     let igv  = +(monto - agua - alc).toFixed(2);
     return {agua, alc, igv};
   }
+  function textoReciboParaCopiar(r){
+    return [
+      'Hidro-Mejora · Recibo',
+      'Periodo: ' + r.periodo,
+      'Suministro: ' + ((supplyLabel && supplyLabel.textContent) || '—'),
+      'Monto: ' + fmt(r.monto),
+      'Emisión: ' + r.emision,
+      'Vencimiento: ' + r.vencimiento,
+      'Estado: ' + r.estado
+    ].join('\n');
+  }
   function abrirDetalle(r, opener){
     selected = r;
     document.getElementById('detail-subtitle').textContent = r.etiqueta + ' · Suministro ' + supplyLabel.textContent;
@@ -3484,7 +3528,7 @@
     document.getElementById('d-bar-agua').style.width = '60%';
     document.getElementById('d-bar-alc').style.width = '22%';
     document.getElementById('d-bar-igv').style.width = '18%';
-    document.getElementById('d-deuda').textContent = r.estado==='Pagado' ? 'S/ 0.00 (cancelado)' : fmt(r.monto);
+    document.getElementById('d-deuda').textContent = r.estado==='Pagado' ? fmt(0) + ' (cancelado)' : fmt(r.monto);
     // La API real no envía lecturas de medidor: mostrar "No disponible" sin romper el detalle.
     document.getElementById('d-lecturas').textContent = (Number.isFinite(r.lecturaAnterior) && Number.isFinite(r.lecturaActual))
       ? (Number(r.lecturaAnterior).toFixed(1) + ' → ' + Number(r.lecturaActual).toFixed(1) + ' m³')
@@ -3681,6 +3725,10 @@ async function descargarConstanciaPDF(r, btn){
     if(!selected) return;
     descargarReciboPDF(selected, ev.currentTarget);
   });
+  document.getElementById('btn-copy-detail').addEventListener('click', ev=>{
+    if(!selected) return;
+    copiarReferencia(textoReciboParaCopiar(selected), 'Datos del recibo copiados.', ev.currentTarget);
+  });
   document.getElementById('btn-constancia').addEventListener('click', ev=>{
     if(!selected) return;
     descargarConstanciaPDF(selected, ev.currentTarget);
@@ -3782,7 +3830,7 @@ async function descargarConstanciaPDF(r, btn){
       target.estado = 'Pagado';
       if(Number.isFinite(montoReal)) target.monto = montoReal;
       document.getElementById('pay-success-text').textContent =
-        'Recibo ' + target.etiqueta + ' cancelado por ' + fmt(target.monto) + '. Deuda actual: S/ 0.00.';
+        'Recibo ' + target.etiqueta + ' cancelado por ' + fmt(target.monto) + '. Deuda actual: ' + fmt(0) + '.';
       document.getElementById('pay-code').textContent = codigoReal;
       showPayState('success');
       showSuccess('Pago registrado. El recibo ahora figura como Pagado.');
@@ -3833,6 +3881,9 @@ async function descargarConstanciaPDF(r, btn){
   });
   document.getElementById('pay-constancia').addEventListener('click', ev=>{
     if(payTarget) descargarConstanciaPDF(payTarget, ev.currentTarget);
+  });
+  document.getElementById('pay-copy').addEventListener('click', ev=>{
+    copiarReferencia(document.getElementById('pay-code').textContent, 'Código de operación copiado.', ev.currentTarget);
   });
   document.getElementById('pay-done').addEventListener('click', ()=>{
     const wasDetail = selected && payTarget && selected.id===payTarget.id && detModal.classList.contains('open');
@@ -4887,8 +4938,13 @@ async function descargarConstanciaPDF(r, btn){
       pgConst.type = 'button'; pgConst.className = 'btn-sm detail'; pgConst.dataset.act = 'const';
       pgConst.textContent = 'Ver constancia';
       pgAcc.appendChild(pgConst);
+      const pgCopy = document.createElement('button');
+      pgCopy.type = 'button'; pgCopy.className = 'btn-sm detail'; pgCopy.dataset.act = 'copy';
+      pgCopy.textContent = 'Copiar código';
+      pgAcc.appendChild(pgCopy);
       art.appendChild(pgAcc);
       pgConst.addEventListener('click', ev=>descargarConstanciaPDF(reciboLiteDesdePago(pg), ev.currentTarget));
+      pgCopy.addEventListener('click', ev=>copiarReferencia(pg.codigo, 'Código de operación copiado.', ev.currentTarget));
       list.appendChild(art);
     });
   }
@@ -5328,7 +5384,7 @@ async function descargarConstanciaPDF(r, btn){
     searchQuery = ''; yearFilter = 'Todos';
     if(searchMes) searchMes.value = '';
     if(filterAnio) filterAnio.value = 'Todos';
-    document.querySelectorAll('.chip-filter').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
+    document.querySelectorAll('[data-filter]').forEach(c=>c.classList.toggle('active', c.dataset.filter==='Todos'));
     // Entrada al dashboard: header fade + contenido rise + cards stagger (una vez por login).
     try{
       document.body.classList.add('dash-enter');
@@ -5436,9 +5492,9 @@ async function descargarConstanciaPDF(r, btn){
   document.querySelectorAll('[data-report]').forEach(b=>b.addEventListener('click', ()=>openIncidentModal()));
   document.getElementById('btn-copies-head').addEventListener('click', ev=>abrirCopias(false, ev.currentTarget));
 
-  document.querySelectorAll('.chip-filter').forEach(ch=>{
+  document.querySelectorAll('[data-filter]').forEach(ch=>{
     ch.addEventListener('click', ()=>{
-      document.querySelectorAll('.chip-filter').forEach(c=>c.classList.remove('active'));
+      document.querySelectorAll('[data-filter]').forEach(c=>c.classList.remove('active'));
       ch.classList.add('active');
       currentFilter = ch.dataset.filter;
       if(!loading) renderCards();

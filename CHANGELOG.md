@@ -2,6 +2,20 @@
 
 Este archivo registra cambios publicados y comprobados. Para futuras versiones, añadir una entrada nueva arriba con su fecha y cambios relevantes, sin repetir los manuales.
 
+## En desarrollo — mejoras de interfaz
+
+### 23 de octubre de 2026 — referencias copiables e importes legibles
+
+- Cliente: acciones para copiar los datos del recibo y el código de operación
+  desde el detalle, el historial de pagos y la confirmación, con Clipboard API
+  y respaldo para WebView. Los avisos reutilizan el sistema accesible existente.
+- Cliente/Admin: importes en formato es-PE con separador de miles y dos decimales;
+  los valores inválidos se muestran como cero sin romper la vista.
+- Se conserva `test:receipts` de `main` junto a `test:ui`; el conflicto de
+  `package.json` queda resuelto sin eliminar scripts de ninguna rama.
+- Validación focalizada: configuración, chatbot, documentos e interfaz compartida.
+  Sin cambios de API, base de datos, secretos, despliegues ni APK.
+
 ## En desarrollo — verificación de correo
 
 ### 23 de octubre de 2026 — Gmail API preparado, sin activar envíos
@@ -15,6 +29,96 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 - CLI Google Cloud aislada preparada. Cuenta/proyecto Cloud, cliente y consentimiento
   reales pendientes de acceso del propietario; no se enviaron correos, no se activó
   Render ni se modificó Neon. Procedimiento y límites en docs/gmail-otp.md.
+- Rama de preparación actualizada con main `c5301c6`; conflictos resueltos por
+  archivo conservando el cierre de altas, los avances del equipo y ambos proveedores.
+
+### 22 de octubre de 2026 — avance 24: diagnóstico y respaldo preparados
+
+- Draft PR #6 abierto desde la rama de preparación, sin fusión. Vercel conserva
+  cero despliegues de la rama y Render mantiene autodespliegue/previews apagados.
+- Diagnóstico SQL manual READ ONLY con identidad esperada, catálogo, conteos,
+  secuencias, huellas y preflight 005; no se conecta ni se ejecuta en Neon.
+- Cinco grupos locales aprobados con datos sintéticos: guardias, esquema previo,
+  migraciones, conservación/restauración de filas/FKs/secuencias y PNG/MIME,
+  más include psql real. Ensayos iniciales corregidos y conservados localmente.
+- Plan y autorizaciones por etapas en `docs/pruebas/preproduccion-avance-24.md`:
+  copia real cifrada/restaurable aún pendiente, sin rollback al backend antiguo;
+  parada temprana de worker 137 documentada. Código probado en avance 23 intacto.
+- Sin respaldo real, consultas Neon, migraciones/despliegues productivos, correo,
+  cambios Kubernetes o APK. Dumps/credenciales/evidencias excluidos de Git.
+
+### 22 de octubre de 2026 — avance 24: proteger publicación de preparación
+
+- Exclusión explícita de `preparation/backend-avance-23` en ambos JSON Vercel,
+  conservando las protecciones anteriores y todas las opciones de build.
+- Proyectos/builds Vercel y Render inspeccionados en lectura; Render mantiene
+  main con autodespliegue/previews apagados. Sin workflows/hooks de GitHub.
+- Se conservan los tres commits del avance 23 y su evidencia de 75 pruebas
+  aprobadas/una omisión. No cambia el backend ni se repiten suites extensas.
+- Publicación/PR Draft de preparación autorizados; sin merge, cambios en Neon,
+  despliegues, correo real, APK ni intervención en Kubernetes.
+
+### 22 de octubre de 2026 — avance 23: backend y migración ensayados en aislamiento
+
+- Imagen candidata Node 22 y PostgreSQL 18: migraciones 003–006 repetidas,
+  filas históricas sintéticas/FKs/secuencias conservadas y dos respaldos
+  restaurados en bases nuevas. 005 rechaza inconsistencias sin corregir datos.
+- Suite final: 75 aprobadas, cero fallidas y una omisión condicional; modo
+  histórico separado 12/1 inversa. API/Admin/Socket.IO, cinco grupos Chromium,
+  chatbot, pagos, incidencias y documentos comprobados sobre la candidata.
+- OTP probado con API/worker separados y proveedor sin HTTP real; altas
+  principales cerradas. Se documenta parada temprana 137 y parada lista 0.
+- Harnesses locales con guardias y plan por etapas en
+  `docs/pruebas/backend-produccion-avance-23.md`: respaldo real, auditoría 005,
+  configuración y recuperación diferenciada de código/datos aún pendientes.
+- Render inspeccionado solo en lectura, live antiguo y automatismos apagados.
+  Sin cambios en Neon, despliegues, nueva APK, merge, PR ni push; commits solo locales.
+
+### 22 de octubre de 2026 — avance 23: corregir dependencia de validación IPv6
+
+- Auditoría npm: aviso moderado GHSA-rxp7-6hxx-x8q5 en `ip-address`,
+  transitiva de `express-rate-limit`. Lockfile actualizado únicamente de
+  10.7.3 a 10.7.4 dentro del rango existente, sin nuevas dependencias.
+- Instalación limpia, auditoría npm y suite Node 22 repetidas; evidencia y
+  límites en el informe del avance 23. Sin cambios remotos ni despliegues.
+
+### 22 de octubre de 2026 — avance 23: exigir activación explícita de altas
+
+- Reproducido en Docker aislado: con secretos de correo válidos y bandera ausente,
+  el backend aceptaba un registro (202). Ahora solo `EMAIL_REGISTRATION_ENABLED=1`
+  habilita altas/reenvíos; ausencia u otro valor mantiene 503 sin encolar.
+- Plantillas con altas/worker detenidos y claves separadas; al actualizar se
+  conserva el secreto JWT vigente. Fixtures OTP habilitados de forma explícita.
+- Regresión de ausencia de bandera con PostgreSQL sintético, contrato, sesión y
+  outbox. Sin cambios productivos, merge ni push en este avance de preparación.
+
+### 22 de octubre de 2026 — avance 21: preparar PR definitivo sin despliegue
+
+- `main` excluido del despliegue Git en ambos `vercel.json` de la integración,
+  conservando las otras exclusiones y campos. El cambio protege el futuro
+  commit de fusión; no modifica main ni servicios externos en este avance.
+- Ancestro main y los 22 commits de PR #1 comprobados; revisión de servidor,
+  HTML/chatbot/filtros y comandos sin cambios funcionales nuevos.
+- Regresión: 66 pruebas aprobadas y tres de Perfil aprobadas al indicar la
+  caché Chromium existente; el primer intento falló por ruta de herramienta.
+- Auditoría de historial, esquema/migraciones, evidencia Android/Kubernetes y
+  pendientes productivos en `docs/pruebas/integracion-main-avance-21.md`.
+- Se prepara un Draft PR independiente; la fusión con merge commit conserva
+  el historial y requiere autorización posterior. PR #1 no se fusiona aparte.
+
+### 22 de octubre de 2026 — avance 20: protección de la rama integrada
+
+- Exclusión explícita de `integration/avance-18` en ambos `vercel.json`,
+  conservando la protección de `feature/verificacion-correo` y la política de
+  las demás ramas. Sintaxis JSON y comparación con la configuración previa
+  comprobadas; no se cambian servicios ni credenciales.
+- Guía Kubernetes con clon independiente, descarga de PostgreSQL y comprobación
+  básica de cuatro servicios; sin depender de archivos privados de otra laptop.
+- Conexiones Git y últimos builds Vercel inspeccionados. Render confirmado en
+  modo lectura: rama `main`, raíz `Backend`, autodespliegue y previews apagados.
+  No se repiten suites funcionales ni se inicia o modifica un clúster.
+- Evidencia y alcance de publicación en
+  `docs/pruebas/publicacion-integracion-avance-20.md`.
 
 ### 22 de octubre de 2026 — avance 17: cierre de validación y actualización firmada
 
@@ -352,3 +456,42 @@ Publicada el 8 de octubre de 2026. Referencia: [Release v1.0.0](https://github.c
 - Distribución directa de la APK mediante GitHub Releases; sin publicación en Google Play.
 
 La instalación y los flujos principales de la APK release fueron validados en un teléfono físico por el propietario. La infraestructura local Docker permanece independiente de producción.
+
+## Avance 18 — auditoría de integración local
+
+- Se documentan conflictos y riesgos antes de integrar main en un worktree aislado.
+- Se conservan las ramas originales y los 22 commits; sin push ni despliegues.
+- Evidencia y plan: `docs/pruebas/integracion-avance-18.md`.
+
+- Integración de main conservando ambos historiales y resolución específica de servidor/comandos; chatbot y filtros preservados. Node: 114 OK/1 omisión; Chromium: 17 OK. Kubernetes aún pendiente de ajuste.
+
+### Avance 18 — compatibilidad Kubernetes preparada
+
+- Init generado desde SQL vigente, base/overlays coherentes y CORS Android.
+- Worker OTP independiente preparado detenido, secretos externos y cierre explícito de altas por defecto; sin modificar cuentas/sesiones existentes.
+- Verificador Kubernetes no usa registro legado ni promoción automática.
+- Tres pruebas locales aprobadas: renderizado/controles, SQL nuevo y migraciones 003–006 repetibles, rechazo 503 sin encolar. No se ejecutó Kubernetes.
+
+- Regresión del cambio operativo: 45/45 backend/contrato/sesión/outbox; solicitudes ya enviadas siguen consultables y confirmables durante la pausa.
+
+### Avance 18 — contexto e imágenes locales
+
+- Se excluyen secretos, respaldos y artefactos privados del contexto Docker.
+- Tres builds locales y comprobaciones de contenido sin red aprobados; sin publicación, despliegue ni cambios a los servicios existentes.
+
+### Avance 18 — regresión integrada y Android nativo
+
+- Chatbot probado en DOM real Chromium/WebView: fuente oficial, prioridad de recibos y contenido tratado como texto. Filtros comprobados en ambos entornos.
+- Android nativo: sesión 13/13, OTP 7/7, ubicación/funciones 9/9; PDF completo e inspeccionado en visor Android. Primer ensayo de automatización interrumpido documentado sin contarlo como aprobado.
+- Regresión final Node: 114 aprobadas/1 omisión condicional; modo histórico separado 12/1 inversa. E2E Chromium 28 comprobaciones, sin errores. Node 22 en imagen: 56/1 más 18/18 de correo.
+- Kubernetes: 31 recursos válidos con esquema estricto; sin clúster ni despliegues. Tres imágenes locales construidas y comprobadas.
+- Informe y documentación Android/auditoría actualizados; release anterior conservada. Integración solo local: publicación, firma de release integrada, actualización desde 1.0.0 y operación Kubernetes pendientes.
+
+## Avance 19 — Kubernetes local integrado verificado
+
+- Arranque kind exclusivo `hidro-avance19`, kubeconfig privado, puertos 8084/8085 e imágenes del avance 18 reutilizadas, sin reconstrucción ni cambios al clúster del compañero/Compose.
+- Fallback de importación de plataforma local para índices Docker/containerd incompletos; reutilización y guardia de Secret/PVC sin regenerar credenciales históricas.
+- Web/Admin/backend/PostgreSQL listos; login/sesión, roles/19 rutas, recibos/pagos/incidencias, CORS, chatbot y Socket.IO comprobados mediante Kubernetes real y Chromium.
+- Persistencia tras recrear Pod DB con PVC y filas conservadas; backend recuperado sin reinicios.
+- API OTP interna y worker en Pods separados, base nueva/migraciones 003–006 y proveedor sin HTTP real: UUID idempotente, cola, confirmación y login aprobados; altas principales cerradas y fixtures detenidos.
+- Informe `docs/pruebas/kubernetes-integracion-avance-19.md` y guía `k8s/avance19/README.md`; solo commit local, sin push, publicación de APK o intervención productiva.

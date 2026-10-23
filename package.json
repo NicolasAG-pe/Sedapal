@@ -23,7 +23,9 @@
     "maintenance:email": "node Backend/maintenance/email-cleanup.cjs",
     "test:email:live": "node Backend/test/email-live.cjs --live",
     "test:email:e2e": "node scripts/test/admin-e2e.cjs",
+    "test:chatbot": "node --test scripts/test/hidrobot.test.cjs",
     "test:documents": "node --test scripts/test/documents.test.cjs",
+    "test:ui": "node --test scripts/test/ui-money.test.cjs",
     "test:receipts": "node --test Backend/test/receipt-concurrency.cjs Backend/test/receipt-schema.cjs",
     "cap:www": "bash scripts/sync-capacitor-www.sh",
     "cap:sync": "node scripts/sync-android.cjs",
@@ -32,7 +34,8 @@
     "android:release": "node scripts/build-android-release.cjs",
     "test:android:otp": "node --test scripts/test/registration-state.test.cjs scripts/test/android-transition.cjs",
     "test:android:otp:native": "node scripts/test/android-session-native.cjs --otp",
-    "test:android:location:native": "node scripts/test/android-session-native.cjs --location"
+    "test:android:location:native": "node scripts/test/android-session-native.cjs --location",
+    "test:k8s": "node --test scripts/test/k8s-integration.test.cjs"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",

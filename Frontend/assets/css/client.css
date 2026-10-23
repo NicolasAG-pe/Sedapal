@@ -619,6 +619,8 @@
   .pay-ok .big svg{width:30px;height:30px}
   .pay-ok h4{color:var(--navy);margin-bottom:.25rem}
   .pay-ok p{font-size:.86rem;color:var(--muted);margin-bottom:.7rem}
+  .pay-code-row{display:flex;align-items:center;justify-content:center;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem}
+  .pay-code-row .pay-code{margin-bottom:0}
   .pay-code{display:inline-block;background:var(--bg);border:1px dashed #9fb3c8;border-radius:8px;
     padding:.3rem .8rem;font-weight:700;color:var(--navy);letter-spacing:.04em;margin-bottom:.8rem}
   .inc-item{background:#fff;border:1px solid var(--border);border-radius:12px;padding:.8rem .9rem;display:grid;gap:.3rem}

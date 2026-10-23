@@ -335,3 +335,12 @@ Cierre del avance 17: sesión/OTP/ubicación y actualización firmada verificada
 en AVD con datos sintéticos; no se cierran por ello los requisitos operativos
 productivos, validación física ni límites de revocación de JWT. La candidata
 permanece local, sin distribución. Ver [informe](pruebas/android-sesion-persistente.md).
+
+
+Seguimiento de avance 18: [integración local de Android, chatbot y Kubernetes](pruebas/integracion-avance-18.md).
+Se conservan historiales en una rama aislada; pruebas WebView de sesión/OTP/
+ubicación y chatbot aprobadas. Kubernetes solo se renderizó/validó con SQL nuevo,
+sin aplicar recursos; altas cerradas por defecto y worker preparado detenido.
+La release firmada del avance 17 permanece intacta. Una release con la integración
+y su actualización desde 1.0.0 requieren nueva validación antes de distribuir.
+No se modifican main, la rama del PR ni servicios productivos.

@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      automountServiceAccountToken: false
+      containers:
+        - name: backend
+          # Construir desde Backend/Dockerfile y publicar antes del despliegue.
+          image: REGISTRO/sedapal-backend:VERSION
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: PORT
+              value: "3000"
+            # DNS del Service de PostgreSQL en el mismo namespace.
+            - name: DB_HOST
+              value: db
+            - name: DB_PORT
+              value: "5432"
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: sedapal-secrets
+                  key: POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: sedapal-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sedapal-secrets
+                  key: POSTGRES_PASSWORD
+            - name: AUTH_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: sedapal-secrets
+                  key: AUTH_TOKEN_SECRET
+            # Cerrar altas hasta verificar esquema, trabajador y correo.
+            - name: EMAIL_REGISTRATION_ENABLED
+              value: "0"
+            # Ajustar a los orígenes públicos al configurar Ingress/TLS.
+            - name: CORS_ALLOWED_ORIGINS
+              value: "http://localhost:8080,http://localhost:8081,https://localhost"
+          # El endpoint existente comprueba también la conexión a PostgreSQL.
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+    - name: http
+      port: 3000
+      targetPort: http
