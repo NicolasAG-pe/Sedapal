@@ -19,7 +19,8 @@ function configurarProveedorWorker(env) {
         return { provider, apiKey: env.RESEND_API_KEY.trim() };
     }
     const sender = gmail.validarRemitente(env.GMAIL_SENDER);
-    return { provider, gmail: { sender, credentials: gmail.validarCredenciales(gmail.leerJsonPrivado(env.GMAIL_CREDENTIALS_FILE), sender) } };
+    return { provider, gmail: { sender, allowedRecipient: env.EMAIL_REGISTRATION_ALLOWED_EMAIL || null,
+        credentials: gmail.validarCredenciales(gmail.leerJsonPrivado(env.GMAIL_CREDENTIALS_FILE), sender) } };
 }
 function crearRemitenteProveedor(config) {
     return config.provider === 'gmail' ? gmail.crearRemitenteGmail(config.gmail) : resend.crearRemitente({ apiKey: config.apiKey }, { maxAttempts: 1 });

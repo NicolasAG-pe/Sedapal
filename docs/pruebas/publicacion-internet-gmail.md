@@ -108,3 +108,25 @@ aplicación OAuth que permanezca en Testing; no se asume autorización permanent
 
 Fuentes de las limitaciones de alojamiento: [Render Free](https://render.com/docs/free)
 y [Background Workers](https://render.com/docs/background-workers).
+
+
+## Continuación autorizada: supervisor y canario
+
+El propietario autorizó expresamente fusionar PR #8 mediante merge commit una vez
+validadas las comprobaciones y usar el worker como proceso separado en el contenedor
+actual de Render Free. Aceptó compartir reinicios/suspensión. No se contratan servicios.
+
+La implementación y protocolo están en docs/gmail-otp.md. Las 58 comprobaciones
+Node22/PostgreSQL18 y las cuatro verificaciones de la imagen final aprobaron sin
+correos reales. Cola productiva revisada vacía, destino verificado y 117 filas
+existentes registradas con huellas completas en una referencia privada nueva.
+La renovación OAuth real se comprobó de nuevo sin enviar correo.
+
+La primera activación debe mantener EMAIL_REGISTRATION_ALLOWED_EMAIL fijado a la
+única dirección autorizada. Se requiere que el propietario inicie el registro desde
+la APK para que el UUID y las credenciales del formulario pertenezcan al dispositivo;
+no se crea una solicitud paralela por HTTP que la APK no pueda recuperar.
+La aceptación Gmail se comprobará en outbox; la recepción, confirmación OTP y login
+físico requieren evidencia del propietario. No se retira la restricción antes de ese
+resultado. No se necesita otra APK: esta modificación solo afecta al servidor y
+conserva la candidata pública 1.1.1/4 y su firma.

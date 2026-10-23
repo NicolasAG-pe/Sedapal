@@ -180,3 +180,47 @@ Fuentes oficiales: [scopes](https://developers.google.com/workspace/gmail/api/au
 [OAuth de escritorio](https://developers.google.com/identity/protocols/oauth2/native-app),
 [caducidad de refresh tokens](https://developers.google.com/identity/protocols/oauth2#expiration),
 [errores Gmail](https://developers.google.com/workspace/gmail/api/guides/handle-errors).
+
+
+## Worker compartido autorizado en Render Free
+
+El propietario autorizó el 23/10/2026 ejecutar el worker existente como proceso
+separado dentro del contenedor de la API, aceptando compartir reinicios y suspensión
+por inactividad. Esta decisión sustituye la propuesta previa de dos servicios
+independientes; no crea un servicio de pago ni modifica Kubernetes.
+
+`node start.cjs` es el PID1. Sin opt-in conserva API sola. Con
+`EMAIL_WORKER_SHARED_CONTAINER=1` y `EMAIL_WORKER_ENABLED=1`, prepara una copia efímera
+privada del secret file, inicia el worker por IPC y espera que valide base y tabla
+outbox. Solo entonces inicia la API. La API hija no recibe las rutas/variables de
+credenciales del worker. Ambos comparten la confianza del contenedor; no constituye
+una separación de privilegios del sistema operativo.
+
+Una salida inesperada de cualquier hijo cierra al otro y termina el contenedor con
+error. Render puede reiniciarlo; el supervisor no reintenta envíos por su cuenta.
+SIGTERM drena API/Socket.IO y PostgreSQL, permite finalizar el trabajo en curso y
+cierra ambos; a los 25 segundos fuerza únicamente sus hijos propios si no terminaron.
+API y worker separados/Kubernetes conservan su uso anterior mediante comando explícito.
+
+Variables adicionales, solo privadas en el servidor:
+
+```dotenv
+EMAIL_WORKER_SHARED_CONTAINER=1
+EMAIL_WORKER_ENABLED=1
+EMAIL_REGISTRATION_ENABLED=1
+EMAIL_REGISTRATION_ALLOWED_EMAIL=CORREO_CANARIO_AUTORIZADO
+```
+
+La restricción del canario bloquea otros registros antes de abrir SQL y otros envíos
+antes de renovar o llamar a Gmail. También limita reenvíos. No revela el correo
+permitido al cliente y no amplía los permisos OAuth. Una vez confirmados recepción,
+verificación y login desde la APK con datos móviles, el propietario autoriza quitar
+esa restricción mediante configuración y un despliegue controlado del mismo código.
+Hasta entonces no se anuncia el registro general como habilitado.
+
+Validación nueva: 58 comprobaciones con Node22/PostgreSQL18 y proveedor simulado,
+incluyendo procesos reales, OTP, login, caídas de cada hijo, recuperación sin nuevo
+POST Gmail, configuración incompleta, timeout, SIGTERM y aislamiento del canario.
+La imagen final pasó arranque/readiness/health, SIGKILL del worker, reinicio del
+contenedor y cierre SIGTERM con exit0. Se conservan todos los volúmenes de prueba.
+No se extrapolan esas pruebas a recepción física de correo ni a Android real.

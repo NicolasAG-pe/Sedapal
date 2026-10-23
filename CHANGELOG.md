@@ -33,6 +33,20 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 23 de octubre de 2026 — supervisor gratuito de API/worker y canario Gmail
+
+- Opt-in de dos procesos dentro de la instancia existente de Render, autorizado
+  por el propietario sin contratar servicios. API espera readiness del worker;
+  una caída cierra ambos para recuperar el contenedor completo sin repetir envíos.
+- SIGTERM drena HTTP/Socket.IO/PostgreSQL y el worker; timeout limitado solo sobre
+  hijos propios. Secret file copiado exclusivamente a una ruta efímera 0700/0600.
+- Canario por correo aplicado antes de SQL en altas y antes de Gmail en transporte;
+  reenvíos respetan la restricción. No cambia TTL, intentos, outbox, Resend o JWT.
+- 58 comprobaciones Node22/PostgreSQL18 aislado aprobadas y cuatro verificaciones
+  de imagen final: arranque, caída del worker, recuperación y parada real Docker.
+- Activación productiva limitada y confirmación física se documentan aparte;
+  no se asume entrega Gmail ni registro general antes de la evidencia del propietario.
+
 ### 23 de octubre de 2026 — conservar y renovar la autorización Gmail sin exigir identidad
 
 - Corrige la pérdida del grant cuando tokeninfo omite email/sub con solo gmail.send.

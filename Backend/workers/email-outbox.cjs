@@ -27,13 +27,15 @@ async function main(argv = process.argv.slice(2), env = process.env, { stdout = 
             idle_in_transaction_session_timeout: 10000, application_name: 'hidro-email-outbox' });
         pool.on('error', () => { failed = true; stop = true; });
         if ((await pool.query('SELECT current_database() AS nombre')).rows[0].nombre !== config.expected) throw new Error('Destino incorrecto.');
+        await pool.query('SELECT id FROM public.correo_outbox LIMIT 0');
         const worker = crearProcesadorOutbox({ pool, key: config.key,
             proveedor: config.provider, enviarCodigo: crearRemitenteProveedor(config) });
         process.on('SIGTERM', stopHandler); process.on('SIGINT', stopHandler);
+        if (process.send) process.send({ event: 'email_worker_ready' });
         do {
             const result = await worker.procesarUno();
             if (['clave_incompatible', 'proveedor_incompatible'].includes(result.estado)) throw new Error('Configuración incompatible.');
-            stdout.write(JSON.stringify(result) + '\n');
+            if (argv[0] === '--once' || result.estado !== 'vacio') stdout.write(JSON.stringify(result) + '\n');
             if (argv[0] === '--once') break;
             if (!stop && result.estado === 'vacio') await delay(1000);
         } while (!stop);

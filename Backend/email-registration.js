@@ -16,7 +16,11 @@ const uuid = valor => typeof valor === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a
 const CONTRATO_CORREO = 'otp-outbox-v1';
 const ACTUALIZAR_CLIENTE = 'Actualiza Hidro-Mejora para crear una cuenta y verificar tu correo. Si ya tienes cuenta, puedes iniciar sesión normalmente.';
 
-function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verificarClave, altasHabilitadas = true, proveedor = 'resend' }) {
+function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verificarClave, altasHabilitadas = true, proveedor = 'resend', correoPermitido = null }) {
+    if (correoPermitido !== null && (typeof correoPermitido !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoPermitido))) throw new Error('Destinatario canario inválido.');
+    function permitirCorreo(correo) {
+        if (correoPermitido !== null && correo !== correoPermitido.toLowerCase()) throw new ErrorRegistro(503, 'El registro no está disponible temporalmente. Intenta más tarde.');
+    }
     function disponible(paraAlta = false) {
         if ((paraAlta && !altasHabilitadas) || !key || !from || !secreto) throw new ErrorRegistro(503, 'El registro no está disponible temporalmente. Intenta más tarde.');
     }
@@ -116,6 +120,7 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verif
             if (correo.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
                 throw new ErrorRegistro(400, 'Correo electrónico inválido.');
             }
+            permitirCorreo(correo);
             if (!/^\d{9}$/.test(suministro)) throw new ErrorRegistro(400, 'El número de suministro debe contener 9 dígitos.');
             if (typeof password !== 'string' || password.length < 8 || password.length > 128 ||
                 !/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
@@ -155,6 +160,7 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verif
             if (!uuid(body.registro_id)) throw invalido();
             return transaccion(async cliente => {
                 const r = await buscar(cliente, body.registro_id);
+                permitirCorreo(r.correo);
                 await comprobarEnvios(cliente, r.correo, r.numero_suministro);
                 await comprobarCuenta(cliente, r.correo, r.numero_suministro);
                 // Los reenvíos NO reinician el contador de intentos.

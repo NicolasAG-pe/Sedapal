@@ -47,8 +47,9 @@ function crearMime(mensaje, envioId, sender) {
         `--${boundary}`, 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', base64(m.html),
         `--${boundary}--`, ''].join('\r\n');
 }
-function crearRemitenteGmail({ sender, credentials }, { fetchImpl = fetch, timeoutMs = 10000 } = {}) {
+function crearRemitenteGmail({ sender, credentials, allowedRecipient = null }, { fetchImpl = fetch, timeoutMs = 10000 } = {}) {
     sender = validarRemitente(sender); validarCredenciales(credentials, sender);
+    if (allowedRecipient !== null && !mailbox(allowedRecipient)) throw new Error('Destinatario canario inválido.');
     if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 10000) throw new Error('Timeout Gmail inválido.');
     let cached, refreshing;
     async function accessToken(signal) {
@@ -83,6 +84,7 @@ function crearRemitenteGmail({ sender, credentials }, { fetchImpl = fetch, timeo
         try {
             const body = mensaje ?? construirMensaje(sender, correo, codigo);
             if (typeof body !== 'string' || Buffer.byteLength(body) > 16384) throw new Error();
+            if (allowedRecipient !== null && JSON.parse(body).to?.[0]?.toLowerCase() !== allowedRecipient.toLowerCase()) throw new Error();
             raw = Buffer.from(crearMime(body, envioId, sender)).toString('base64url');
         } catch (_) { throw fallo('permanente'); }
         const token = await accessToken(signal()); // Renovar OAuth nunca envía correo.

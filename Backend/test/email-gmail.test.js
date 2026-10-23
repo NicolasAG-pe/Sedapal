@@ -19,6 +19,17 @@ test('Gmail conserva el cierre explícito de altas y reenvíos antes de consulta
     await assert.rejects(service.registrar({}), { status: 503 });
     await assert.rejects(service.reenviar({}), { status: 503 });
 });
+test('canario: API bloquea otros correos antes de SQL y Gmail bloquea antes de renovar/enviar', async () => {
+    const service = crearRegistroCorreo({ pool: { connect() { throw Error('No debe conectar'); } }, key: Buffer.alloc(32),
+        from: sender, secreto: 's'.repeat(64), correoPermitido: sender });
+    await assert.rejects(service.registrar({ correo: 'other@example.invalid' }), { status: 503 });
+    let calls = 0;
+    const send = crearRemitenteGmail({ sender, credentials, allowedRecipient: sender }, { fetchImpl: async url => {
+        calls++; return url === TOKEN_URL ? oauth() : Response.json({ id: 'fixture' });
+    } });
+    await assert.rejects(send(request('other@example.invalid')), { tipo: 'permanente' }); assert.equal(calls, 0);
+    assert.equal((await send(request(sender))).id, 'fixture'); assert.equal(calls, 2);
+});
 test('MIME UTF-8, cuenta explícita, tres dominios y caché de access token sin clave idempotente ficticia', async () => {
     const calls = [];
     const send = crearRemitenteGmail({ sender, credentials }, { fetchImpl: async (url, options) => {
