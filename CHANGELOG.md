@@ -16,6 +16,19 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 - Validación focalizada: configuración, chatbot, documentos e interfaz compartida.
   Sin cambios de API, base de datos, secretos, despliegues ni APK.
 
+## 1.1.1 — candidata de publicación por Internet
+
+- Android: versión 1.1.1/código 4, API pública HTTPS y certificado permanente
+  compatible con 1.0.0/2 y candidatas 1.1.0/3; no se sobrescriben APK anteriores.
+- Backend Gmail del PR #8 desplegado manualmente en Render desde `4b0781e`,
+  con credenciales en secret file y claves anteriores conservadas. Registro y
+  worker permanecen apagados hasta aprobar su alojamiento sin coste.
+- Respaldo productivo cifrado y restauración aislada comprobados. 003–006 ya
+  presentes, sin migraciones repetidas ni cambios en datos históricos/fotografías.
+- 48 comprobaciones de correo/outbox Node22/PostgreSQL18 y 24 de firma/transición
+  e interfaz Chromium aprobadas. Compilación, unitarias Android y lint aprobados;
+  prueba física con datos móviles y OTP real pendientes. No se enviaron correos.
+
 ## En desarrollo — verificación de correo
 
 ### 23 de octubre de 2026 — conservar y renovar la autorización Gmail sin exigir identidad
