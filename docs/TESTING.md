@@ -15,6 +15,7 @@ casos condicionales; no son nuevas pruebas en Neon ni en teléfono físico.
 | Prueba | Ejecución | Alcance |
 |---|---|---|
 | Configuración | `npm run test:config` | Configuración PostgreSQL local/TLS externo, puertos, orígenes, fechas DATE y build público separado. |
+| Interfaz compartida | `npm run test:ui` | Formato monetario es-PE con dos decimales, separador de miles y tolerancia a importes inválidos. |
 | PDF | `npm run test:documents` | A4, datos registrados, ausencia de desglose ficticio, constancia, nombres, paginación y puente nativo simulado. Requiere Poppler. |
 | Firma release | `node --test scripts/test/android-release-signing.test.cjs` | Variables y permisos de fixtures, firma fuera del repositorio, errores sin valores privados. No utiliza la clave release real. |
 | Perfil | `node --test scripts/test/profile-navigation.test.cjs` | Cuenta móvil/hash/escritorio, una carga por entrada, hash inicial y cancelación de respuesta tras logout. API y Socket.IO simulados. |

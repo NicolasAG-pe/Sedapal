@@ -2,6 +2,20 @@
 
 Este archivo registra cambios publicados y comprobados. Para futuras versiones, añadir una entrada nueva arriba con su fecha y cambios relevantes, sin repetir los manuales.
 
+## En desarrollo — mejoras de interfaz
+
+### 23 de octubre de 2026 — referencias copiables e importes legibles
+
+- Cliente: acciones para copiar los datos del recibo y el código de operación
+  desde el detalle, el historial de pagos y la confirmación, con Clipboard API
+  y respaldo para WebView. Los avisos reutilizan el sistema accesible existente.
+- Cliente/Admin: importes en formato es-PE con separador de miles y dos decimales;
+  los valores inválidos se muestran como cero sin romper la vista.
+- Se conserva `test:receipts` de `main` junto a `test:ui`; el conflicto de
+  `package.json` queda resuelto sin eliminar scripts de ninguna rama.
+- Validación focalizada: configuración, chatbot, documentos e interfaz compartida.
+  Sin cambios de API, base de datos, secretos, despliegues ni APK.
+
 ## En desarrollo — verificación de correo
 
 ### 22 de octubre de 2026 — avance 24: diagnóstico y respaldo preparados

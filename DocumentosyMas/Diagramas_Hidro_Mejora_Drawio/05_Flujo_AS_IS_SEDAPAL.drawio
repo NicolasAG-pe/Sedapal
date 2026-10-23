@@ -1,0 +1,327 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" version="24.7.17">
+  <diagram id="hidro-5" name="AS-IS: atención digital actual de SEDAPAL con carriles">
+    <mxGraphModel dx="2660" dy="5350" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2660" pageHeight="5350" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="Figura 5. AS-IS: atención digital actual de SEDAPAL con carriles" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="20" width="2580" height="45" />
+        </mxCell>
+        <mxCell id="3" value="Responsabilidades por actor y canal · Flujo conceptual basado en servicios oficiales publicados" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=15;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="65" width="2580" height="30" />
+        </mxCell>
+        <mxCell id="4" value="Nota. Los círculos A–D enlazan la selección con cada recorrido en esta misma página. Se modelan responsabilidades públicas; no se describe la arquitectura interna de SEDAPAL ni una auditoría de su app." style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;verticalAlign=top;fontSize=15;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="5260" width="2580" height="65" />
+        </mxCell>
+        <mxCell id="5" value="Cliente&#10;(actor humano)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;swimlane;horizontal=1;startSize=74;collapsible=0;container=1;rounded=0;fontSize=21;fontStyle=1;fillColor=#edf4fb;swimlaneFillColor=#ffffff;strokeColor=#8593a0;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="140" width="650" height="4460" />
+        </mxCell>
+        <mxCell id="6" value="Canales digitales de SEDAPAL&#10;Sedapal Móvil · Aquanet · Clarita" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;swimlane;horizontal=1;startSize=74;collapsible=0;container=1;rounded=0;fontSize=21;fontStyle=1;fillColor=#eef6f0;swimlaneFillColor=#ffffff;strokeColor=#8593a0;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="690" y="140" width="650" height="4460" />
+        </mxCell>
+        <mxCell id="7" value="Atención de SEDAPAL&#10;Personal de Aquafono / canal de atención" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;swimlane;horizontal=1;startSize=74;collapsible=0;container=1;rounded=0;fontSize=21;fontStyle=1;fillColor=#fff6e8;swimlaneFillColor=#ffffff;strokeColor=#8593a0;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1340" y="140" width="650" height="4460" />
+        </mxCell>
+        <mxCell id="8" value="Servicio de pago en línea&#10;Canal oficial de pago" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;swimlane;horizontal=1;startSize=74;collapsible=0;container=1;rounded=0;fontSize=21;fontStyle=1;fillColor=#f4effb;swimlaneFillColor=#ffffff;strokeColor=#8593a0;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1990" y="140" width="650" height="4460" />
+        </mxCell>
+        <mxCell id="9" value="Inicio: necesita consultar, pagar&#10;o solicitar atención" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="130" width="510" height="112" />
+        </mxCell>
+        <mxCell id="10" value="¿Qué necesita&#10;gestionar?" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rhombus;fillColor=#fff2cc;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="150.0" y="300" width="350" height="150" />
+        </mxCell>
+        <mxCell id="11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="9" target="10">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="12" value="A" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;fontSize=24;fontStyle=1;fillColor=#e1edf8;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="62" y="550" width="56" height="56" />
+        </mxCell>
+        <mxCell id="13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="10" target="12">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="365" y="655" />
+              <mxPoint x="130" y="655" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="14" value="B" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;fontSize=24;fontStyle=1;fillColor=#e1edf8;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="217" y="550" width="56" height="56" />
+        </mxCell>
+        <mxCell id="15" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="10" target="14">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="365" y="655" />
+              <mxPoint x="285" y="655" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="16" value="C" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;fontSize=24;fontStyle=1;fillColor=#e1edf8;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="377" y="550" width="56" height="56" />
+        </mxCell>
+        <mxCell id="17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="10" target="16">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="365" y="655" />
+              <mxPoint x="445" y="655" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="18" value="D" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;fontSize=24;fontStyle=1;fillColor=#e1edf8;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="532" y="550" width="56" height="56" />
+        </mxCell>
+        <mxCell id="19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="10" target="18">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="365" y="655" />
+              <mxPoint x="600" y="655" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="20" value="A · RECIBOS, CONSUMO Y PAGO" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=21;fontStyle=1;fontColor=#45596c;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="825" width="2540" height="40" />
+        </mxCell>
+        <mxCell id="21" value="A" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;ellipse;fillColor=#e1edf8;fontStyle=1;fontSize=24;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="297.0" y="745" width="56" height="56" />
+        </mxCell>
+        <mxCell id="22" value="Abrir Sedapal Móvil o Aquanet;&#10;registrarse si es el primer acceso&#10;y confirmar el correo [S2, S3]" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="860" width="510" height="130" />
+        </mxCell>
+        <mxCell id="23" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="21" target="22">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="24" value="Habilitar el acceso con la verificación&#10;del canal: datos personales y del suministro;&#10;en la app, datos de 2 recibos [S2, S3]" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="860" width="510" height="130" />
+        </mxCell>
+        <mxCell id="25" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="22" target="24">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="26" value="Iniciar sesión y solicitar&#10;la información del suministro" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="1070" width="510" height="112" />
+        </mxCell>
+        <mxCell id="27" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="24" target="26">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="28" value="Mostrar deuda, detalle de facturación,&#10;consumo y recibos disponibles [S1, S2]" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="1070" width="510" height="112" />
+        </mxCell>
+        <mxCell id="29" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="26" target="28">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="30" value="Revisar la información y seleccionar&#10;el recibo que necesita consultar" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="1270" width="510" height="112" />
+        </mxCell>
+        <mxCell id="31" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="28" target="30">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="32" value="¿Desea pagar&#10;el recibo?" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rhombus;fillColor=#fff2cc;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="150.0" y="1450" width="350" height="150" />
+        </mxCell>
+        <mxCell id="33" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="30" target="32">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="34" value="Obtener una copia del recibo&#10;si la necesita [S1]" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="1680" width="510" height="112" />
+        </mxCell>
+        <mxCell id="35" value="Realizar el pago en línea mediante&#10;las opciones del canal oficial;&#10;revisar el resultado [S1]" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="8">
+          <mxGeometry as="geometry" x="70.0" y="1680" width="510" height="125" />
+        </mxCell>
+        <mxCell id="36" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="32" target="34">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="365" y="1770" />
+              <mxPoint x="1015" y="1770" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="37" value="Sí" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="32" target="35">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="365" y="1730" />
+              <mxPoint x="2315" y="1730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="38" value="Presentar la información disponible&#10;sobre la operación realizada" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="1850" width="510" height="112" />
+        </mxCell>
+        <mxCell id="39" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="35" target="38">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="40" value="Fin A: consulta/copia disponible&#10;o resultado del intento de pago" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="2020" width="510" height="112" />
+        </mxCell>
+        <mxCell id="41" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=1;entryX=1;entryY=0.5;" edge="1" parent="1" source="34" target="40">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="710" y="1932" />
+              <mxPoint x="710" y="2216" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="42" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="38" target="40">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="43" value="B · INCIDENCIAS Y ATENCIÓN" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=21;fontStyle=1;fontColor=#45596c;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="2350" width="2540" height="40" />
+        </mxCell>
+        <mxCell id="44" value="B" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;ellipse;fillColor=#e1edf8;fontStyle=1;fontSize=24;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="297.0" y="2270" width="56" height="56" />
+        </mxCell>
+        <mxCell id="45" value="Describir el problema o solicitud&#10;y facilitar los datos del canal" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="2400" width="510" height="112" />
+        </mxCell>
+        <mxCell id="46" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="44" target="45">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="47" value="¿Canal de&#10;atención elegido?" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rhombus;fillColor=#fff2cc;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="150.0" y="2380" width="350" height="150" />
+        </mxCell>
+        <mxCell id="48" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="45" target="47">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="49" value="App: reportar incidencia.&#10;Aquanet: consulta, reclamo o requerimiento&#10;según el servicio disponible [S1, S6]" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="2640" width="510" height="130" />
+        </mxCell>
+        <mxCell id="50" value="Aquafono: recibir consulta o reporte&#10;con suministro o datos de contacto;&#10;brindar orientación [S4]" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="7">
+          <mxGeometry as="geometry" x="70.0" y="2640" width="510" height="130" />
+        </mxCell>
+        <mxCell id="51" value="Digital" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="47" target="49">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="52" value="Telefónico" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" edge="1" parent="1" source="47" target="50">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1255" y="2595" />
+              <mxPoint x="1665" y="2595" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="53" value="Fin B: reporte/solicitud presentado&#10;o respuesta del canal utilizado;&#10;atención posterior según el proceso" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="2840" width="510" height="130" />
+        </mxCell>
+        <mxCell id="54" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="49" target="53">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="55" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="50" target="53">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1665" y="2950" />
+              <mxPoint x="365" y="2950" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="56" value="C · CORTES Y AVISOS" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=21;fontStyle=1;fontColor=#45596c;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="3210" width="2540" height="40" />
+        </mxCell>
+        <mxCell id="57" value="C" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;ellipse;fillColor=#e1edf8;fontStyle=1;fontSize=24;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="297.0" y="3130" width="56" height="56" />
+        </mxCell>
+        <mxCell id="58" value="Seleccionar consulta de interrupciones&#10;en los canales disponibles" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="3260" width="510" height="112" />
+        </mxCell>
+        <mxCell id="59" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="57" target="58">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="60" value="Mostrar información de cortes&#10;o interrupciones publicada&#10;en Aquanet / app [S2, S6, S7]" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="3260" width="510" height="125" />
+        </mxCell>
+        <mxCell id="61" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="58" target="60">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="62" value="Fin C: revisar la información&#10;relacionada con su servicio o zona" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="3460" width="510" height="112" />
+        </mxCell>
+        <mxCell id="63" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="60" target="62">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="64" value="D · ORIENTACIÓN" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=21;fontStyle=1;fontColor=#45596c;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="3840" width="2540" height="40" />
+        </mxCell>
+        <mxCell id="65" value="D" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;ellipse;fillColor=#e1edf8;fontStyle=1;fontSize=24;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="297.0" y="3760" width="56" height="56" />
+        </mxCell>
+        <mxCell id="66" value="Plantear la consulta; en Clarita ingresar&#10;nombre y suministro, y elegir el tema [S5]" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="3890" width="510" height="112" />
+        </mxCell>
+        <mxCell id="67" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="65" target="66">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="68" value="Clarita / Aquanet: brindar información&#10;sobre los temas disponibles&#10;en el canal [S2, S5]" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="3890" width="510" height="125" />
+        </mxCell>
+        <mxCell id="69" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="66" target="68">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="70" value="¿Necesita atención&#10;adicional?" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rhombus;fillColor=#fff2cc;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="150.0" y="4040" width="350" height="150" />
+        </mxCell>
+        <mxCell id="71" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="68" target="70">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="72" value="Brindar orientación por Aquafono&#10;según la consulta del usuario [S4]" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="7">
+          <mxGeometry as="geometry" x="70.0" y="4060" width="510" height="112" />
+        </mxCell>
+        <mxCell id="73" value="Sí · Aquafono [S4]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="70" target="72">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="74" value="Fin D: orientación recibida" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="4280" width="510" height="112" />
+        </mxCell>
+        <mxCell id="75" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="70" target="74">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="76" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="72" target="74">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1665" y="4370" />
+              <mxPoint x="365" y="4370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="77" value="Lectura del AS-IS: SEDAPAL ya dispone de consulta, pagos, copias, consumo, incidencias y orientación digital.&#10;Los carriles asignan responsabilidades a cliente, canales, atención y pago. Los recorridos son alternativas según la necesidad.&#10;No se afirma que los canales estén desconectados internamente ni que falten notificaciones, persistencia o actualizaciones en tiempo real." style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rounded=1;align=left;spacing=18;fillColor=#f5f5f5;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="4700" width="2540" height="145" />
+        </mxCell>
+        <mxCell id="78" value="Referencias y trazabilidad · Fuentes verificadas el 8 de octubre de 2026" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="4865" width="2540" height="40" />
+        </mxCell>
+        <UserObject id="79" label="[S1] SEDAPAL · Servicios y alcance de Sedapal Móvil" link="https://www.gob.pe/12788-obtener-informacion-sobre-mi-servicio-de-agua-sedapal-movil">
+          <mxCell style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=16;fontColor=#225c9a;" vertex="1" parent="1">
+            <mxGeometry as="geometry" x="60" y="4920" width="1240" height="43" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="80" label="[S2] SEDAPAL · Oficina virtual Aquanet" link="https://www.gob.pe/institucion/sedapal/pages/12766-acceder-a-la-oficina-virtual-de-sedapal-aquanet">
+          <mxCell style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=16;fontColor=#225c9a;" vertex="1" parent="1">
+            <mxGeometry as="geometry" x="1360" y="4920" width="1240" height="43" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="81" label="[S3] SEDAPAL · Registro en la app (folleto, marzo de 2025)" link="https://cdn.www.gob.pe/uploads/document/file/6162943/3990617-unete-al-cambio-descarga-la-app-1.pdf?v=1743542437">
+          <mxCell style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=16;fontColor=#225c9a;" vertex="1" parent="1">
+            <mxGeometry as="geometry" x="60" y="4968" width="1240" height="43" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="82" label="[S4] SEDAPAL · Aquafono" link="https://www.gob.pe/institucion/sedapal/pages/12786-llamar-a-sedapal-aquafono">
+          <mxCell style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=16;fontColor=#225c9a;" vertex="1" parent="1">
+            <mxGeometry as="geometry" x="1360" y="4968" width="1240" height="43" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="83" label="[S5] SEDAPAL · Chatbot Clarita" link="https://www.gob.pe/47196-hacer-consultas-sobre-mi-servicio-de-agua-chatbot-clarita-de-sedapal">
+          <mxCell style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=16;fontColor=#225c9a;" vertex="1" parent="1">
+            <mxGeometry as="geometry" x="60" y="5016" width="1240" height="43" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="84" label="[S6] SEDAPAL · Canales comerciales (folleto, marzo de 2024)" link="https://cdn.www.gob.pe/uploads/document/file/5980864/3990617-sedapal-contigo%282%29.pdf?v=1719517315">
+          <mxCell style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=16;fontColor=#225c9a;" vertex="1" parent="1">
+            <mxGeometry as="geometry" x="1360" y="5016" width="1240" height="43" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="85" label="[S7] App Store · Descripción publicada por SEDAPAL de su app" link="https://apps.apple.com/pe/app/app-sedapal/id1551821338">
+          <mxCell style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=16;fontColor=#225c9a;" vertex="1" parent="1">
+            <mxGeometry as="geometry" x="60" y="5064" width="1240" height="43" />
+          </mxCell>
+        </UserObject>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
