@@ -4,6 +4,14 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 22 de octubre de 2026 — avance 23: corregir dependencia de validación IPv6
+
+- Auditoría npm: aviso moderado GHSA-rxp7-6hxx-x8q5 en `ip-address`,
+  transitiva de `express-rate-limit`. Lockfile actualizado únicamente de
+  10.7.3 a 10.7.4 dentro del rango existente, sin nuevas dependencias.
+- Instalación limpia, auditoría npm y suite Node 22 repetidas; evidencia y
+  límites en el informe del avance 23. Sin cambios remotos ni despliegues.
+
 ### 22 de octubre de 2026 — avance 23: exigir activación explícita de altas
 
 - Reproducido en Docker aislado: con secretos de correo válidos y bandera ausente,
