@@ -4,6 +4,66 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 22 de octubre de 2026 — avance 24: diagnóstico y respaldo preparados
+
+- Draft PR #6 abierto desde la rama de preparación, sin fusión. Vercel conserva
+  cero despliegues de la rama y Render mantiene autodespliegue/previews apagados.
+- Diagnóstico SQL manual READ ONLY con identidad esperada, catálogo, conteos,
+  secuencias, huellas y preflight 005; no se conecta ni se ejecuta en Neon.
+- Cinco grupos locales aprobados con datos sintéticos: guardias, esquema previo,
+  migraciones, conservación/restauración de filas/FKs/secuencias y PNG/MIME,
+  más include psql real. Ensayos iniciales corregidos y conservados localmente.
+- Plan y autorizaciones por etapas en `docs/pruebas/preproduccion-avance-24.md`:
+  copia real cifrada/restaurable aún pendiente, sin rollback al backend antiguo;
+  parada temprana de worker 137 documentada. Código probado en avance 23 intacto.
+- Sin respaldo real, consultas Neon, migraciones/despliegues productivos, correo,
+  cambios Kubernetes o APK. Dumps/credenciales/evidencias excluidos de Git.
+
+### 22 de octubre de 2026 — avance 24: proteger publicación de preparación
+
+- Exclusión explícita de `preparation/backend-avance-23` en ambos JSON Vercel,
+  conservando las protecciones anteriores y todas las opciones de build.
+- Proyectos/builds Vercel y Render inspeccionados en lectura; Render mantiene
+  main con autodespliegue/previews apagados. Sin workflows/hooks de GitHub.
+- Se conservan los tres commits del avance 23 y su evidencia de 75 pruebas
+  aprobadas/una omisión. No cambia el backend ni se repiten suites extensas.
+- Publicación/PR Draft de preparación autorizados; sin merge, cambios en Neon,
+  despliegues, correo real, APK ni intervención en Kubernetes.
+
+### 22 de octubre de 2026 — avance 23: backend y migración ensayados en aislamiento
+
+- Imagen candidata Node 22 y PostgreSQL 18: migraciones 003–006 repetidas,
+  filas históricas sintéticas/FKs/secuencias conservadas y dos respaldos
+  restaurados en bases nuevas. 005 rechaza inconsistencias sin corregir datos.
+- Suite final: 75 aprobadas, cero fallidas y una omisión condicional; modo
+  histórico separado 12/1 inversa. API/Admin/Socket.IO, cinco grupos Chromium,
+  chatbot, pagos, incidencias y documentos comprobados sobre la candidata.
+- OTP probado con API/worker separados y proveedor sin HTTP real; altas
+  principales cerradas. Se documenta parada temprana 137 y parada lista 0.
+- Harnesses locales con guardias y plan por etapas en
+  `docs/pruebas/backend-produccion-avance-23.md`: respaldo real, auditoría 005,
+  configuración y recuperación diferenciada de código/datos aún pendientes.
+- Render inspeccionado solo en lectura, live antiguo y automatismos apagados.
+  Sin cambios en Neon, despliegues, nueva APK, merge, PR ni push; commits solo locales.
+
+### 22 de octubre de 2026 — avance 23: corregir dependencia de validación IPv6
+
+- Auditoría npm: aviso moderado GHSA-rxp7-6hxx-x8q5 en `ip-address`,
+  transitiva de `express-rate-limit`. Lockfile actualizado únicamente de
+  10.7.3 a 10.7.4 dentro del rango existente, sin nuevas dependencias.
+- Instalación limpia, auditoría npm y suite Node 22 repetidas; evidencia y
+  límites en el informe del avance 23. Sin cambios remotos ni despliegues.
+
+### 22 de octubre de 2026 — avance 23: exigir activación explícita de altas
+
+- Reproducido en Docker aislado: con secretos de correo válidos y bandera ausente,
+  el backend aceptaba un registro (202). Ahora solo `EMAIL_REGISTRATION_ENABLED=1`
+  habilita altas/reenvíos; ausencia u otro valor mantiene 503 sin encolar.
+- Plantillas con altas/worker detenidos y claves separadas; al actualizar se
+  conserva el secreto JWT vigente. Fixtures OTP habilitados de forma explícita.
+- Regresión de ausencia de bandera con PostgreSQL sintético, contrato, sesión y
+  outbox. Sin cambios productivos, merge ni push en este avance de preparación.
+
 ### 22 de octubre de 2026 — avance 21: preparar PR definitivo sin despliegue
 
 - `main` excluido del despliegue Git en ambos `vercel.json` de la integración,

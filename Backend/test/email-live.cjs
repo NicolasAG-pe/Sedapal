@@ -102,7 +102,7 @@ async function ejecutar({ modo, leer = leerOculto, escribir = console.log } = {}
         Object.assign(process.env, { DATABASE_URL: '', DB_HOST: c.host, DB_PORT: String(c.port),
             POSTGRES_DB: c.database, POSTGRES_USER: c.user, POSTGRES_PASSWORD: c.password,
             AUTH_TOKEN_SECRET: crypto.randomBytes(32).toString('hex'), EMAIL_OTP_SECRET: secreto,
-            EMAIL_OUTBOX_KEY:crypto.randomBytes(32).toString('base64'),
+            EMAIL_REGISTRATION_ENABLED:'1', EMAIL_OUTBOX_KEY:crypto.randomBytes(32).toString('base64'),
             RESEND_FROM: 'onboarding@resend.dev', NODE_ENV: 'test', PORT: '3000', CORS_ALLOWED_ORIGINS: '' });
         if (simulado) {
             process.env.RESEND_API_KEY = 'fixture-provider-key';

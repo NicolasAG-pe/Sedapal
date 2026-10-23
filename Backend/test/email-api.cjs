@@ -6,7 +6,7 @@ const { crearRegistroCorreo } = require('../email-registration');
 const { crearProcesadorOutbox } = require('../email-outbox');
 const { crearRemitente } = require('../resend-mail');
 
-async function iniciar({ autoDrain = true } = {}) {
+async function iniciar({ autoDrain = true, registrationEnabled = process.env.EMAIL_REGISTRATION_ENABLED ?? '1' } = {}) {
     const { pool: db, connection } = await nuevaBase('api');
     await db.query(sql('init.sql'));
     const authSecret = crypto.randomBytes(32).toString('hex');
@@ -14,6 +14,9 @@ async function iniciar({ autoDrain = true } = {}) {
         POSTGRES_DB: connection.database, POSTGRES_USER: connection.user, POSTGRES_PASSWORD: connection.password,
         AUTH_TOKEN_SECRET: authSecret, EMAIL_OTP_SECRET: crypto.randomBytes(32).toString('hex'),
         EMAIL_OUTBOX_KEY: crypto.randomBytes(32).toString('base64'), RESEND_API_KEY: 'fixture-provider-key', RESEND_FROM: 'correo@example.invalid', NODE_ENV: 'test' });
+    // Los fixtures habilitan altas explícitamente; null reproduce configuración ausente.
+    if (registrationEnabled === null) delete process.env.EMAIL_REGISTRATION_ENABLED;
+    else process.env.EMAIL_REGISTRATION_ENABLED = String(registrationEnabled);
     const originalFetch = global.fetch;
     const mensajes = [];
     let proveedorFalla = false;
