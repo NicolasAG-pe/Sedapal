@@ -28,7 +28,11 @@ Se creó un respaldo completo AES-256 sin dump plano en disco, con conexión ver
 CA confiable y validación de hostname. Descifrado/SHA verificados y restauración en
 PostgreSQL 18 nuevo, red interna y volumen independiente. Comparación aprobada:
 13 tablas, 117 filas, 4 fotografías/413.596 bytes, relaciones y 8 valores de secuencia.
-Catálogo actual: 122 restricciones y 28 índices. Se preservaron permisos/propietarios
+Catálogo actual: 122 restricciones y 28 índices, cotejados en la restauración.
+Cinco diferencias textuales son la representación equivalente de casts varchar[]
+a text[] frente a casts de cada elemento: se normalizó exclusivamente ese patrón
+y el resto del catálogo coincide. No se alteró ninguna restricción.
+Se preservaron permisos/propietarios
 en la restauración, según el procedimiento ensayado. Material privado y evidencia
 solo en artifacts ignorados y claves de recuperación fuera del repositorio.
 
@@ -70,7 +74,9 @@ restauración para sobrescribir producción ni se avanzaron secuencias productiv
 APK firmada: `artifacts/android/hidro-mejora-v1.1.1-release.apk`.
 Tamaño 3.405.385 bytes. SHA-256:
 `541b4c9d70a52396266358d786032db47c85e99aa2ae4d7ae1bcf5eb28c3bb4b`.
-Se prepara como prerelease para que el propietario pueda instalarla y completar
+Se publicó como [prerelease v1.1.1](https://github.com/NicolasAG-pe/Sedapal/releases/tag/v1.1.1),
+tag en `40ea51e`. Asset y checksum publicados, copia descargada desde GitHub
+coincidente con la APK local. No reemplaza v1.0.0 como Latest. El propietario puede completar
 la validación física. Los APK anteriores y la firma permanente se conservan.
 No había dispositivos adb conectados. Instalación/actualización real de esta APK,
 registro, recepción OTP, confirmación y login desde datos móviles siguen pendientes;

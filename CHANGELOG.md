@@ -16,8 +16,10 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 - Validación focalizada: configuración, chatbot, documentos e interfaz compartida.
   Sin cambios de API, base de datos, secretos, despliegues ni APK.
 
-## 1.1.1 — candidata de publicación por Internet
+## 1.1.1 — prerelease para prueba por Internet
 
+- APK publicada como prerelease v1.1.1, tag en 40ea51e, sin sustituir la estable
+  v1.0.0. Descarga autenticada y checksum comprobados; prueba física pendiente.
 - Android: versión 1.1.1/código 4, API pública HTTPS y certificado permanente
   compatible con 1.0.0/2 y candidatas 1.1.0/3; no se sobrescriben APK anteriores.
 - Backend Gmail del PR #8 desplegado manualmente en Render desde `4b0781e`,

@@ -18,6 +18,8 @@ contiene HidroBot, OTP y sesión segura, sin Admin ni secretos privados conocido
 
 Archivo: `artifacts/android/hidro-mejora-v1.1.1-release.apk`, 3.405.385 bytes.
 SHA-256: `541b4c9d70a52396266358d786032db47c85e99aa2ae4d7ae1bcf5eb28c3bb4b`.
+[Descarga pública de la prerelease](https://github.com/NicolasAG-pe/Sedapal/releases/download/v1.1.1/hidro-mejora-v1.1.1-release.apk).
+Tag `v1.1.1`, fuente `40ea51e`; la release estable v1.0.0 sigue siendo Latest.
 Es una candidata para prueba física: la publicación definitiva de OTP depende del
 worker, actualmente apagado. Las pruebas de Chromium no certifican funcionamiento
 nativo ni conexión móvil del teléfono. [Informe de publicación](pruebas/publicacion-internet-gmail.md).
