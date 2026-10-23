@@ -4,6 +4,22 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 22 de octubre de 2026 — avance 23: backend y migración ensayados en aislamiento
+
+- Imagen candidata Node 22 y PostgreSQL 18: migraciones 003–006 repetidas,
+  filas históricas sintéticas/FKs/secuencias conservadas y dos respaldos
+  restaurados en bases nuevas. 005 rechaza inconsistencias sin corregir datos.
+- Suite final: 75 aprobadas, cero fallidas y una omisión condicional; modo
+  histórico separado 12/1 inversa. API/Admin/Socket.IO, cinco grupos Chromium,
+  chatbot, pagos, incidencias y documentos comprobados sobre la candidata.
+- OTP probado con API/worker separados y proveedor sin HTTP real; altas
+  principales cerradas. Se documenta parada temprana 137 y parada lista 0.
+- Harnesses locales con guardias y plan por etapas en
+  `docs/pruebas/backend-produccion-avance-23.md`: respaldo real, auditoría 005,
+  configuración y recuperación diferenciada de código/datos aún pendientes.
+- Render inspeccionado solo en lectura, live antiguo y automatismos apagados.
+  Sin cambios en Neon, despliegues, nueva APK, merge, PR ni push; commits solo locales.
+
 ### 22 de octubre de 2026 — avance 23: corregir dependencia de validación IPv6
 
 - Auditoría npm: aviso moderado GHSA-rxp7-6hxx-x8q5 en `ip-address`,
