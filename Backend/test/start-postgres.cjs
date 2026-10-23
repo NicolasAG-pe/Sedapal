@@ -43,7 +43,8 @@ test('API/worker reales: canario, OTP, login, SIGTERM, caídas y recuperación s
         const env = { ...process.env, NODE_ENV: 'production', PORT: String(port), CORS_ALLOWED_ORIGINS: 'https://localhost',
             DATABASE_URL: db, AUTH_TOKEN_SECRET: crypto.randomBytes(48).toString('hex'), EMAIL_OTP_SECRET: crypto.randomBytes(48).toString('hex'),
             EMAIL_OUTBOX_KEY: crypto.randomBytes(32).toString('base64'), EMAIL_PROVIDER: 'gmail', GMAIL_SENDER: sender,
-            GMAIL_CREDENTIALS_FILE: credentialFile, EMAIL_REGISTRATION_ALLOWED_EMAIL: recipient, EMAIL_REGISTRATION_ENABLED: '1',
+            GMAIL_CREDENTIALS_FILE: '/missing/fixture.json', GMAIL_CREDENTIALS_JSON: fs.readFileSync(credentialFile, 'utf8'),
+            EMAIL_REGISTRATION_ALLOWED_EMAIL: recipient, EMAIL_REGISTRATION_ENABLED: '1',
             EMAIL_WORKER_SHARED_CONTAINER: '1', EMAIL_WORKER_ENABLED: '1', EMAIL_WORKER_DATABASE_URL: db,
             EMAIL_WORKER_EXPECTED_DATABASE: connection.database, HIDRO_GMAIL_TEST_MAILBOX: mailbox, HIDRO_GMAIL_TEST_CODE_FILE: codeFile,
             NODE_OPTIONS: '--require=' + path.join(__dirname, 'gmail-fixture.cjs') };

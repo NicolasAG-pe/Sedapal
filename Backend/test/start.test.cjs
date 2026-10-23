@@ -16,7 +16,7 @@ function fixture(env = {}, resist = false) {
         } });
     return { ...controller, calls, signals, cleaned: () => cleaned };
 }
-const enabled = { EMAIL_WORKER_SHARED_CONTAINER: '1', EMAIL_WORKER_ENABLED: '1', EMAIL_REGISTRATION_ENABLED: '1', GMAIL_CREDENTIALS_FILE: '/etc/secrets/fixture', EMAIL_WORKER_DATABASE_URL: 'private-fixture-url' };
+const enabled = { EMAIL_WORKER_SHARED_CONTAINER: '1', EMAIL_WORKER_ENABLED: '1', EMAIL_REGISTRATION_ENABLED: '1', GMAIL_CREDENTIALS_FILE: '/etc/secrets/fixture', GMAIL_CREDENTIALS_JSON: 'fixture-private-json', EMAIL_WORKER_DATABASE_URL: 'private-fixture-url' };
 test('por defecto conserva solo API; SIGTERM cierra el contenedor sin error', async () => {
     const f = fixture(); assert.equal(f.calls.length, 1); assert.match(f.calls[0].args[0], /server.js$/);
     f.signals.emit('SIGTERM'); assert.equal(await f.done, 0); assert.deepEqual(f.calls[0].child.kills, ['SIGTERM']);
@@ -28,8 +28,21 @@ test('espera readiness del worker y no pasa rutas privadas a la API; cierra ambo
     f.calls[0].child.emit('message', { event: 'email_worker_ready' }); assert.equal(f.calls.length, 2);
     f.calls[0].child.emit('message', { event: 'email_worker_ready' }); assert.equal(f.calls.length, 2);
     assert.equal(f.calls[1].options.env.GMAIL_CREDENTIALS_FILE, undefined); assert.equal(f.calls[1].options.env.EMAIL_WORKER_DATABASE_URL, undefined);
+    assert.equal(f.calls[0].options.env.GMAIL_CREDENTIALS_JSON, undefined); assert.equal(f.calls[1].options.env.GMAIL_CREDENTIALS_JSON, undefined);
     f.signals.emit('SIGTERM'); f.signals.emit('SIGINT'); assert.equal(await f.done, 0); assert.equal(f.cleaned(), 1);
     for (const c of f.calls) assert.deepEqual(c.child.kills, ['SIGTERM']);
+});
+test('secreto JSON privado evita proyecciones incompatibles y desaparece del entorno del worker', () => {
+    const sender = 'fixture.sender@gmail.com';
+    const raw = JSON.stringify({ type: 'authorized_user', client_type: 'desktop', sender, scope: SCOPE, account_verified: false,
+        account_check: 'scope_only', client_id: 'fixture.apps.googleusercontent.com', client_secret: 'fixture-secret', refresh_token: 'fixture-refresh' });
+    const env = { EMAIL_PROVIDER: 'gmail', GMAIL_SENDER: sender, GMAIL_CREDENTIALS_FILE: '/missing/fixture', GMAIL_CREDENTIALS_JSON: raw };
+    const result = prepararCredenciales(env); assert.equal(result.env.GMAIL_CREDENTIALS_JSON, undefined);
+    assert.equal(fs.statSync(result.env.GMAIL_CREDENTIALS_FILE).mode & 0o777, 0o600);
+    assert.equal(leerJsonPrivado(result.env.GMAIL_CREDENTIALS_FILE).refresh_token, 'fixture-refresh'); result.cleanup();
+    for (const invalid of ['invalid fixture JSON', 'x'.repeat(65537), JSON.stringify({ ...JSON.parse(raw), scope: 'openid' })]) {
+        assert.throws(() => prepararCredenciales({ ...env, GMAIL_CREDENTIALS_JSON: invalid }), /preparar la credencial/);
+    }
 });
 test('caída de API o worker cierra al otro con error y no reinicia trabajos dentro del proceso', async () => {
     for (const index of [0, 1]) {

@@ -12,28 +12,34 @@ function prepararCredenciales(env, { secretDirectory = '/etc/secrets' } = {}) {
     try {
         // El secret file de Render es de solo lectura y puede tener otro modo.
         // Solo la copia efímera 0600 se entrega al lector estricto del worker.
-        let source = env.GMAIL_CREDENTIALS_FILE;
-        try { fd = fs.openSync(source, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW); }
-        catch (error) {
-            if (error.code !== 'ELOOP' || path.dirname(path.resolve(source)) !== path.resolve(secretDirectory)) throw error;
-            // Render/Kubernetes proyectan secretos mediante enlaces dentro del volumen.
-            // No seguir enlaces locales arbitrarios ni destinos fuera del volumen privado.
-            const base = fs.realpathSync(secretDirectory), baseStat = fs.statSync(base);
-            const resolved = fs.realpathSync(source);
-            if (!baseStat.isDirectory() || baseStat.mode & 0o022 ||
-                (process.getuid && ![0, process.getuid()].includes(baseStat.uid)) || !resolved.startsWith(base + path.sep)) throw new Error();
-            source = resolved;
-            fd = fs.openSync(source, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+        let source = env.GMAIL_CREDENTIALS_FILE, raw;
+        if (env.GMAIL_CREDENTIALS_JSON) {
+            if (typeof env.GMAIL_CREDENTIALS_JSON !== 'string' || Buffer.byteLength(env.GMAIL_CREDENTIALS_JSON) > 65536) throw new Error();
+            raw = env.GMAIL_CREDENTIALS_JSON;
+        } else {
+            try { fd = fs.openSync(source, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW); }
+            catch (error) {
+                if (error.code !== 'ELOOP' || path.dirname(path.resolve(source)) !== path.resolve(secretDirectory)) throw error;
+                // Render/Kubernetes proyectan secretos mediante enlaces dentro del volumen.
+                // No seguir enlaces locales arbitrarios ni destinos fuera del volumen privado.
+                const base = fs.realpathSync(secretDirectory), baseStat = fs.statSync(base);
+                const resolved = fs.realpathSync(source);
+                if (!baseStat.isDirectory() || baseStat.mode & 0o022 ||
+                    (process.getuid && ![0, process.getuid()].includes(baseStat.uid)) || !resolved.startsWith(base + path.sep)) throw new Error();
+                source = resolved;
+                fd = fs.openSync(source, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
+            }
+            const stat = fs.fstatSync(fd);
+            if (!stat.isFile() || stat.size > 65536) throw new Error();
+            raw = fs.readFileSync(fd, 'utf8');
         }
-        const stat = fs.fstatSync(fd);
-        if (!stat.isFile() || stat.size > 65536) throw new Error();
-        const raw = fs.readFileSync(fd, 'utf8');
         validarCredenciales(JSON.parse(raw), validarRemitente(env.GMAIL_SENDER));
         directory = fs.mkdtempSync(path.join(os.tmpdir(), 'hidro-gmail-'));
         fs.chmodSync(directory, 0o700);
         const file = path.join(directory, 'credentials.json');
         fs.writeFileSync(file, raw, { mode: 0o600, flag: 'wx' });
-        return { env: { ...env, GMAIL_CREDENTIALS_FILE: file }, cleanup() { fs.rmSync(directory, { recursive: true }); } };
+        const childEnv = { ...env, GMAIL_CREDENTIALS_FILE: file }; delete childEnv.GMAIL_CREDENTIALS_JSON;
+        return { env: childEnv, cleanup() { fs.rmSync(directory, { recursive: true }); } };
     } catch (error) {
         if (directory) fs.rmSync(directory, { recursive: true });
         throw Object.assign(new Error('No se pudo preparar la credencial privada Gmail.'),
@@ -84,7 +90,7 @@ function supervisar({ env = process.env, spawnImpl = spawn, signals = process,
         if (stopping || apiStarted) return;
         apiStarted = true;
         const apiEnv = { ...env, EMAIL_WORKER_ENABLED: '0' };
-        for (const key of ['GMAIL_CREDENTIALS_FILE', 'EMAIL_WORKER_DATABASE_URL', 'EMAIL_WORKER_EXPECTED_DATABASE']) delete apiEnv[key];
+        for (const key of ['GMAIL_CREDENTIALS_FILE', 'GMAIL_CREDENTIALS_JSON', 'EMAIL_WORKER_DATABASE_URL', 'EMAIL_WORKER_EXPECTED_DATABASE']) delete apiEnv[key];
         const child = launch('api', [path.join(__dirname, 'server.js')], apiEnv);
         log({ event: 'api_started', pid: child.pid });
     }
@@ -94,7 +100,8 @@ function supervisar({ env = process.env, spawnImpl = spawn, signals = process,
         if ((!shared && enabled) || (shared && !enabled && env.EMAIL_REGISTRATION_ENABLED === '1')) throw new Error();
         if (shared && enabled) {
             prepared = prepare(env);
-            const child = launch('worker', [path.join(__dirname, 'workers/email-outbox.cjs'), '--run'], prepared.env, true);
+            const workerEnv = { ...prepared.env }; delete workerEnv.GMAIL_CREDENTIALS_JSON;
+            const child = launch('worker', [path.join(__dirname, 'workers/email-outbox.cjs'), '--run'], workerEnv, true);
             startupTimer = setTimeout(() => { log({ event: 'worker_start_timeout' }); stop(1); }, startupMs);
             child.on('message', message => {
                 if (message?.event !== 'email_worker_ready' || stopping || apiStarted) return;
