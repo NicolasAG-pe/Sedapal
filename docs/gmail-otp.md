@@ -8,39 +8,35 @@ siguen aplicándose cuotas, políticas antispam y la posibilidad de rechazo del 
 
 ## Estado de Google Cloud
 
-La sesión del conector Gmail no es una sesión administrativa de Google Cloud ni
-puede prestar sus tokens al backend. Hay una cuenta conectada identificada y se
-solicitó confirmar que sea el remitente autorizado. Inicialmente no había `gcloud`; se preparó la CLI oficial en
-`~/.local/share/hidro-mejora/google-cloud-sdk/bin/gcloud`, sin modificar el PATH
-ni instalar paquetes Debian. Usa configuración separada en
-`~/.config/hidro-mejora/google-cloud/` (0700), estadísticas desactivadas y todavía
-ninguna cuenta autenticada. El navegador de esta sesión no está conectado. Por ello
-**no se pudo verificar el ID de “My First Project”, habilitar Gmail API, crear el
-consentimiento/cliente ni obtener tokens reales**. No inferir un ID por el nombre.
+La cuenta remitente fue confirmada expresamente por el propietario. La CLI
+administrativa está autenticada con esa misma cuenta y un único **My First Project**
+activo fue identificado por su ID. Gmail API ya figuraba habilitada; no se repitió
+la habilitación ni se crearon recursos adicionales.
 
-Para que la CLI pueda habilitar la API automáticamente falta iniciar sesión
-una sola vez en un terminal local (sin pegar códigos o contraseñas en el chat):
+Google tokeninfo comprobó la identidad de la sesión Cloud existente y su email
+verificado. El email, el identificador Google inmutable y el proyecto se guardaron
+solo en `~/.config/hidro-mejora/gmail/authorized-sender.json` (0600, carpeta 0700),
+sin guardar ese access token ni ampliar permisos del futuro cliente Gmail.
+El conector Gmail pertenece a otra cuenta y no se usa como remitente ni se reutilizan
+sus tokens. Las identidades privadas no se publican en esta guía.
 
-```sh
-CLOUDSDK_CONFIG="$HOME/.config/hidro-mejora/google-cloud" \
-CLOUDSDK_CORE_DISABLE_USAGE_REPORTING=true \
-  "$HOME/.local/share/hidro-mejora/google-cloud-sdk/bin/gcloud" auth login
-```
+La CLI está en `~/.local/share/hidro-mejora/google-cloud-sdk/bin/gcloud`, con
+configuración privada separada en `~/.config/hidro-mejora/google-cloud/`, sin cambios
+al PATH/Debian y con estadísticas desactivadas. No hace falta repetir el login.
 
-Es la sesión administrativa de Cloud, separada del cliente OAuth del worker.
-No concede permisos Gmail al backend. Después se verificará el proyecto por su
-ID y nombre exactos y se habilitará exclusivamente `gmail.googleapis.com`; no se
-crea facturación. No se ejecutó ese login ni la habilitación durante esta entrega.
-
-Para automatizar las pantallas OAuth hace falta conectar el navegador con Google Cloud
-a la sesión del agente. Con esa conexión se puede continuar sin pedir contraseñas.
-La autorización Google final la realiza el propietario; si aparece un acuerdo de
-políticas o un permiso nuevo, el propietario completa ese paso.
+**Punto de parada: cliente OAuth de escritorio y consentimiento.** No hay navegador
+conectado que el agente pueda controlar ni un JSON de cliente descargado disponible.
+No se pudo crear/comprobar la pantalla OAuth o el cliente y todavía no existen tokens
+Gmail del backend. Para automatizar las pantallas hace falta conectar el navegador
+con Google Cloud a la sesión; el propietario realiza el consentimiento y cualquier
+aceptación de políticas. No se usa el cliente del SDK Cloud, un cliente IAP ni una
+cuenta de servicio como sustituto del cliente Gmail del proyecto.
 
 Si el propietario prefiere completar solo la preparación inicial en su navegador:
 
 1. Abrir [Gmail API](https://console.cloud.google.com/apis/library/gmail.googleapis.com),
-   elegir el proyecto existente **My First Project**, comprobar su ID y pulsar **Habilitar**.
+   elegir el proyecto existente **My First Project** y comprobar su ID;
+   la habilitación de Gmail API ya está comprobada, no repetirla.
    No crear otro proyecto, habilitar facturación ni contratar servicios.
 2. [Google Auth Platform](https://console.cloud.google.com/auth/overview): nombre
    `Hidro-Mejora OTP`, soporte/contacto del propietario. Para Gmail personal,
@@ -59,7 +55,10 @@ La guía no certifica que esas acciones ya se hayan ejecutado.
 
 ## Autorización local automatizada, sin enviar
 
-La carpeta privada anterior está preparada, todavía sin tokens. Una vez disponible
+La carpeta privada anterior y la identidad autorizada están preparadas, todavía sin tokens Gmail.
+También existe `worker.env` privado (0600), fijado al remitente confirmado y con
+registro/worker en 0; no se carga automáticamente. `authorize.sh` privado (0700)
+ejecuta el flujo con esa cuenta una vez guardado el JSON oficial como `desktop.json`. Una vez disponible
 el JSON oficial del cliente de escritorio:
 
 ```sh
@@ -75,12 +74,17 @@ la contraseña, imprime tokens ni registra el callback/código. Abre ese enlace,
 selecciona la cuenta remitente y concede exclusivamente **Enviar correo**.
 No solicita permisos del conector Gmail ni reutiliza sus credenciales.
 
-Comprueba audience y scope con tokeninfo por HTTPS/Authorization; si Google devuelve
-email, también comprueba el remitente. Con solo `gmail.send`, Google puede omitir
-el email: en ese caso el propietario verifica la cuenta en la pantalla de consentimiento.
-El envío usa `users/REMITENTE/messages/send`, no `users/me`, para impedir que un
-token de otra cuenta envíe como el remitente configurado. No se añade lectura del
-buzón para verificar identidad. Una configuración local no demuestra envío real.
+Comprueba audience y scope con tokeninfo por HTTPS/Authorization. Exige un email
+Google que coincida con el remitente o, si Google omite email con `gmail.send`, un
+subject idéntico a la identidad Google previamente comprobada y guardada en el
+archivo privado. La pista `login_hint` o mirar manualmente la pantalla no sustituyen
+esa verificación. Si no hay identidad comprobable, se detiene sin guardar el refresh
+token; no se solicita lectura del buzón, perfil ni scopes adicionales para forzarlo.
+
+Cuando existe `authorized-sender.json`, también exige que el JSON de escritorio
+corresponda al proyecto autorizado antes de abrir la autorización. El worker solo
+acepta credenciales marcadas como identidad verificada por tokeninfo y remitente
+exacto. El envío usa además `users/REMITENTE/messages/send`, no `users/me`.
 
 El resultado guarda exclusivamente el refresh token y configuración del cliente
 necesaria en `credentials.json` (modo `0600`); los access tokens solo viven en memoria.
@@ -149,7 +153,9 @@ registro público durante ese canario.
 
 ## Evidencia y límites
 
-**54 comprobaciones aprobadas, cero fallidas** en la ejecución final. También se
+**54 comprobaciones aprobadas, cero fallidas** en la integración inicial; el
+endurecimiento posterior de identidad aprobó **16 comprobaciones focalizadas**
+OAuth/Gmail y worker independiente con Node22/PostgreSQL18 aislados. También se
 construyó la imagen `hidro-gmail-otp:local` y se comprobó `worker --help` con red
 desactivada. Pruebas focalizadas en Node22/PostgreSQL18 nuevos y aislados, datos sintéticos y
 proveedores simulados. Gmail, Outlook y Hotmail se prueban como direcciones de MIME,

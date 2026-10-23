@@ -25,6 +25,7 @@ test('Registro → outbox cifrada Gmail → proceso worker independiente simulad
         const code = JSON.parse(envelope.mensaje).text.match(/: (\d{6})/)[1];
         const credentialFile = path.join(dir, 'credentials.json'), mailbox = path.join(dir, 'mail.txt');
         fs.writeFileSync(credentialFile, JSON.stringify({ type: 'authorized_user', client_type: 'desktop', sender, scope: SCOPE,
+            account_verified: true, account_check: 'tokeninfo_email',
             client_id: 'fixture.apps.googleusercontent.com', client_secret: 'fixture-secret', refresh_token: 'fixture-refresh' }), { mode: 0o600 });
         const env = { ...process.env, EMAIL_PROVIDER: 'gmail', GMAIL_SENDER: sender, GMAIL_CREDENTIALS_FILE: credentialFile,
             EMAIL_WORKER_ENABLED: '1', EMAIL_WORKER_DATABASE_URL: `postgres://hm_fixture:fixture-only-not-production@127.0.0.1:${connection.port}/${connection.database}`,

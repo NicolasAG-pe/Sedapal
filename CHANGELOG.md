@@ -18,6 +18,18 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 23 de octubre de 2026 — fijar identidad del remitente Gmail autorizado
+
+- Cuenta Cloud y proyecto existentes comprobados; Gmail API ya habilitada. Identidad
+  inmutable del remitente guardada solo en configuración privada 0600.
+- OAuth exige email exacto o subject Google comprobado, scope exclusivo gmail.send
+  y proyecto de escritorio coincidente. Sin identidad demostrable no guarda tokens;
+  el worker rechaza credenciales no verificadas. No se usan tokens del conector.
+- Cliente OAuth/consentimiento pendientes del navegador; sin correos ni cambios
+  productivos en Neon o Render.
+- 16 pruebas focalizadas aprobadas con Node22/PostgreSQL18 aislados: cuenta y
+  proyecto incorrectos rechazados, identidad obligatoria y worker simulado compatible.
+
 ### 23 de octubre de 2026 — Gmail API preparado, sin activar envíos
 
 - Proveedor Gmail opcional en el worker; Resend sigue predeterminado. MIME UTF-8,

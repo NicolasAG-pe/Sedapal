@@ -16,7 +16,7 @@ function crearSolicitud(clientId, sender, redirectUri) {
         code_challenge: crypto.createHash('sha256').update(verifier).digest('base64url') });
     return { url: url.toString(), state, verifier };
 }
-async function intercambiar({ client, sender, code, verifier, redirectUri }, fetchImpl = fetch) {
+async function intercambiar({ client, sender, code, verifier, redirectUri, expectedSubject }, fetchImpl = fetch) {
     const r = await fetchImpl(TOKEN_URL, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(10000),
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({
             client_id: client.client_id, client_secret: client.client_secret, grant_type: 'authorization_code',
@@ -28,12 +28,19 @@ async function intercambiar({ client, sender, code, verifier, redirectUri }, fet
         headers: { Authorization: `Bearer ${data.access_token}`, 'Content-Type': 'application/x-www-form-urlencoded' } });
     if (!check.ok) { await check.body?.cancel(); throw new Error('No se pudo comprobar el alcance OAuth.'); }
     const info = await check.json();
-    if (info.aud !== client.client_id || info.scope !== SCOPE || (info.email && info.email.toLowerCase() !== sender)) {
+    if (info.aud !== client.client_id || info.scope !== SCOPE || info.email_verified === false || info.email_verified === 'false' ||
+        (info.email && info.email.toLowerCase() !== sender)) {
         throw new Error('El cliente, alcance o remitente OAuth no coincide.');
+    }
+    const subject = info.sub || info.user_id;
+    if (expectedSubject && subject && subject !== expectedSubject) throw new Error('La identidad Google no corresponde al remitente autorizado.');
+    if (!info.email && (!expectedSubject || subject !== expectedSubject)) {
+        throw new Error('Google no permitió comprobar la identidad del remitente con el alcance concedido.');
     }
     return { type: 'authorized_user', client_type: 'desktop', client_id: client.client_id,
         client_secret: client.client_secret, refresh_token: data.refresh_token, scope: SCOPE, sender,
-        account_check: info.email ? 'tokeninfo_email' : 'consent_screen_and_explicit_gmail_user_id',
+        account_check: info.email ? 'tokeninfo_email' : 'tokeninfo_subject', account_verified: true,
+        ...(subject ? { google_subject: subject } : {}),
         created_at: new Date().toISOString() };
 }
 async function autorizar({ clientFile, output, sender, onUrl = value => process.stdout.write(value + '\n'), fetchImpl = fetch, timeoutMs = 300000 }) {
@@ -47,6 +54,13 @@ async function autorizar({ clientFile, output, sender, onUrl = value => process.
     if (!fs.existsSync(parent)) throw new Error('La carpeta privada de salida debe existir.');
     const stat = fs.statSync(parent);
     if (!stat.isDirectory() || stat.mode & 0o077 || (process.getuid && stat.uid !== process.getuid())) throw new Error('La carpeta privada necesita propietario actual y permisos 0700.');
+    // Identidad obtenida de Google mediante la sesión Cloud ya autorizada.
+    // No usa sus tokens para enviar ni pide más scopes al cliente Gmail.
+    const pinFile = path.join(parent, 'authorized-sender.json');
+    const pin = fs.existsSync(pinFile) ? leerJsonPrivado(pinFile) : null;
+    if (pin && (pin.sender !== sender || pin.scope !== SCOPE || !/^\d+$/.test(pin.google_subject) || client.project_id !== pin.project_id)) {
+        throw new Error('El cliente OAuth o el remitente no corresponden al proyecto autorizado.');
+    }
     const root = path.resolve(__dirname, '..');
     for (const file of [clientFile, output]) {
         const relative = path.relative(root, path.resolve(file));
@@ -74,7 +88,7 @@ async function autorizar({ clientFile, output, sender, onUrl = value => process.
             activeSocket = req.socket;
             try {
                 const result = await intercambiar({ client, sender, code: callback.searchParams.get('code'),
-                    verifier: request.verifier, redirectUri }, fetchImpl);
+                    verifier: request.verifier, redirectUri, expectedSubject: pin?.google_subject }, fetchImpl);
                 if (settled) { res.destroy(); return; }
                 fs.writeFileSync(output, JSON.stringify(result, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
                 res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });

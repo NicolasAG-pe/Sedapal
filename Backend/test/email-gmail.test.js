@@ -9,6 +9,7 @@ const { crearSolicitud, intercambiar, autorizar } = require('../../scripts/gmail
 const { crearRegistroCorreo } = require('../email-registration');
 const sender = 'fixture.sender@gmail.com';
 const credentials = { type: 'authorized_user', client_type: 'desktop', sender, scope: SCOPE,
+    account_verified: true, account_check: 'tokeninfo_email',
     client_id: 'fixture.apps.googleusercontent.com', client_secret: 'synthetic-client-secret', refresh_token: 'synthetic-refresh-token' };
 const request = (recipient = 'fixture@outlook.com') => ({ mensaje: construirMensaje(sender, recipient, '123456'), envioId: crypto.randomUUID() });
 const oauth = () => Response.json({ access_token: 'synthetic-access-token', expires_in: 3600, scope: SCOPE });
@@ -120,7 +121,7 @@ test('intercambio OAuth simulado verifica cliente/scope; no almacena access toke
     const fetchImpl = async (url, options) => {
         calls.push({ url, options });
         return url === TOKEN_URL ? Response.json({ access_token: 'fixture-access', refresh_token: 'fixture-refresh', scope: SCOPE }) :
-            Response.json({ aud: credentials.client_id, scope: SCOPE });
+            Response.json({ aud: credentials.client_id, scope: SCOPE, email: sender });
     };
     const result = await intercambiar({ client: credentials, sender, code: 'fixture-code', verifier: 'fixture', redirectUri: 'http://127.0.0.1:1234/oauth2/callback' }, fetchImpl);
     assert.equal(result.refresh_token, 'fixture-refresh'); assert.equal(result.access_token, undefined);
@@ -170,4 +171,28 @@ test('OAuth rechaza scopes heredados o remitente ajeno; no usa privilegios de le
         await assert.rejects(intercambiar({ client: credentials, sender, code: 'fixture', verifier: 'fixture', redirectUri: 'http://127.0.0.1:1234/oauth2/callback' },
             async url => url === TOKEN_URL ? Response.json({ access_token: 'fixture', refresh_token: 'fixture', scope: SCOPE }) : Response.json(info)));
     }
+});
+test('sender exacto: exige email verificado por tokeninfo o subject Google previamente autorizado', async () => {
+    const args = { client: credentials, sender, code: 'fixture', verifier: 'fixture', redirectUri: 'http://127.0.0.1:1234/oauth2/callback', expectedSubject: '1234567890' };
+    for (const info of [{ aud: credentials.client_id, scope: SCOPE },
+        { aud: credentials.client_id, scope: SCOPE, sub: '9999999999' },
+        { aud: credentials.client_id, scope: SCOPE, email: sender, email_verified: false },
+        { aud: credentials.client_id, scope: SCOPE, sub: args.expectedSubject, email: 'other@gmail.com' }]) {
+        await assert.rejects(intercambiar(args, async url => url === TOKEN_URL ?
+            Response.json({ access_token: 'fixture', refresh_token: 'fixture', scope: SCOPE }) : Response.json(info)));
+    }
+    const result = await intercambiar(args, async url => url === TOKEN_URL ?
+        Response.json({ access_token: 'fixture', refresh_token: 'fixture', scope: SCOPE }) :
+        Response.json({ aud: credentials.client_id, scope: SCOPE, sub: args.expectedSubject }));
+    assert.equal(result.sender, sender); assert.equal(result.account_check, 'tokeninfo_subject'); assert.equal(result.account_verified, true);
+    assert.throws(() => crearRemitenteGmail({ sender, credentials: { ...credentials, account_verified: false } }));
+});
+test('la identidad privada fijada rechaza cliente de otro proyecto antes de iniciar OAuth', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hm-gmail-pin-')); fs.chmodSync(dir, 0o700);
+    const clientFile = path.join(dir, 'desktop.json');
+    fs.writeFileSync(clientFile, JSON.stringify({ installed: { ...credentials, project_id: 'other-project' } }), { mode: 0o600 });
+    fs.writeFileSync(path.join(dir, 'authorized-sender.json'), JSON.stringify({ sender, scope: SCOPE, google_subject: '1234567890', project_id: 'authorized-project' }), { mode: 0o600 });
+    await assert.rejects(autorizar({ clientFile, output: path.join(dir, 'credentials.json'), sender,
+        fetchImpl: () => { throw Error('No debe conectar'); }, onUrl: () => { throw Error('No debe iniciar'); } }), /proyecto autorizado/);
+    fs.rmSync(dir, { recursive: true });
 });

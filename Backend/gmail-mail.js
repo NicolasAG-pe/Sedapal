@@ -23,7 +23,8 @@ function leerJsonPrivado(file) {
 function validarCredenciales(data, sender) {
     if (data.type !== 'authorized_user' || data.scope !== SCOPE || data.sender !== sender ||
         typeof data.client_id !== 'string' || !data.client_id.endsWith('.apps.googleusercontent.com') ||
-        !data.client_secret || !data.refresh_token || data.client_type !== 'desktop') throw new Error('Credenciales Gmail incompatibles.');
+        !data.client_secret || !data.refresh_token || data.client_type !== 'desktop' || data.account_verified !== true ||
+        !['tokeninfo_email', 'tokeninfo_subject'].includes(data.account_check)) throw new Error('Credenciales Gmail incompatibles.');
     return data;
 }
 function fallo(tipo, retryAfter = 0) {
