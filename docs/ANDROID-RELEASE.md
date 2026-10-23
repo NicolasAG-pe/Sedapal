@@ -9,6 +9,21 @@ comprobó firma, instalación sobre la APK oficial y conservación de localStora
 en un AVD Android 15. [Transición OTP y pendientes productivos](android-transicion.md).
 Fuente del versionado: [android/app/build.gradle](../android/app/build.gradle); entorno nativo: [ANDROID](ANDROID.md).
 
+## Candidata 1.1.1 para publicación por Internet
+
+Se compiló 1.1.1/código 4 con Java 21 y el script oficial, conservando todos los
+artefactos anteriores. La firma coincide con la APK pública 1.0.0 y el fingerprint
+permanente. API y Socket.IO usan `https://hidro-mejora-api.onrender.com`; el runtime
+contiene HidroBot, OTP y sesión segura, sin Admin ni secretos privados conocidos.
+
+Archivo: `artifacts/android/hidro-mejora-v1.1.1-release.apk`, 3.405.385 bytes.
+SHA-256: `541b4c9d70a52396266358d786032db47c85e99aa2ae4d7ae1bcf5eb28c3bb4b`.
+[Descarga pública de la prerelease](https://github.com/NicolasAG-pe/Sedapal/releases/download/v1.1.1/hidro-mejora-v1.1.1-release.apk).
+Tag `v1.1.1`, fuente `40ea51e`; la release estable v1.0.0 sigue siendo Latest.
+Es una candidata para prueba física: la publicación definitiva de OTP depende del
+worker, actualmente apagado. Las pruebas de Chromium no certifican funcionamiento
+nativo ni conexión móvil del teléfono. [Informe de publicación](pruebas/publicacion-internet-gmail.md).
+
 ## Candidata local del avance 17
 
 La [validación de sesión, OTP y ubicación](pruebas/android-sesion-persistente.md)

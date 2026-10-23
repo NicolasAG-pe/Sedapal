@@ -8,7 +8,7 @@ const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
 const { Pool } = require("pg");
 const { obtenerConfiguracion } = require('./config');
-const { obtenerConfigCorreo } = require('./resend-mail');
+const { obtenerConfigCorreo } = require('./email-provider');
 const { obtenerClaveOutbox } = require('./outbox-crypto');
 const { crearRegistroCorreo, registrarRutasCorreo } = require('./email-registration');
 const { crearServicioRecibos, responderErrorRecibo } = require('./receipt-transactions');
@@ -698,7 +698,9 @@ try {
 }
 catch (_) { console.error('Configuración de correo inválida; registro deshabilitado.'); }
 const registroCorreo = crearRegistroCorreo({ pool, key: configCorreo && configCorreo.key, from: configCorreo && configCorreo.from,
+    proveedor: configCorreo?.provider || 'resend',
     secreto: configCorreo && configCorreo.secreto, generarClaveHash, verificarClave,
+    correoPermitido: process.env.EMAIL_REGISTRATION_ALLOWED_EMAIL || null,
     altasHabilitadas: process.env.EMAIL_REGISTRATION_ENABLED === '1' });
 registrarRutasCorreo(app, registroCorreo, { registro: limiteRegistro,
     verificacion: limitadorGenerico(30, 15), reenvio: limitadorGenerico(10, 15), consulta: limitadorGenerico(240, 15) });
@@ -2517,11 +2519,21 @@ app.get("/api/admin/resumen", requiereAdmin, async (req, res) => {
 const httpServer = http.createServer(app);
 configurarTiempoReal(httpServer);
 
-if (require.main === module) httpServer.listen(PORT, "0.0.0.0", () => {
-    console.log(
-        `API Hidro Mejora ejecutándose en el puerto ${PORT}`
-    );
-});
+if (require.main === module) {
+    let stopping = false;
+    const shutdown = () => {
+        if (stopping) return; stopping = true;
+        const timer = setTimeout(() => process.exit(1), 20000); timer.unref();
+        ioTiempoReal.close(() => {
+            pool.end().then(() => { clearTimeout(timer); process.exit(0); })
+                .catch(() => { console.error('No se completó el cierre de la API.'); process.exit(1); });
+        });
+    };
+    process.once('SIGTERM', shutdown); process.once('SIGINT', shutdown);
+    httpServer.listen(PORT, "0.0.0.0", () => {
+        console.log(`API Hidro Mejora ejecutándose en el puerto ${PORT}`);
+    });
+}
 
 // Permite pruebas HTTP aisladas sin iniciar un puerto al importar.
 module.exports = { app, pool, httpServer, io: ioTiempoReal };

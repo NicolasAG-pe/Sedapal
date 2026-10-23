@@ -16,7 +16,75 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 - Validación focalizada: configuración, chatbot, documentos e interfaz compartida.
   Sin cambios de API, base de datos, secretos, despliegues ni APK.
 
+## 1.1.1 — prerelease para prueba por Internet
+
+- APK publicada como prerelease v1.1.1, tag en 40ea51e, sin sustituir la estable
+  v1.0.0. Descarga autenticada y checksum comprobados; prueba física pendiente.
+- Android: versión 1.1.1/código 4, API pública HTTPS y certificado permanente
+  compatible con 1.0.0/2 y candidatas 1.1.0/3; no se sobrescriben APK anteriores.
+- Backend Gmail del PR #8 desplegado manualmente en Render desde `4b0781e`,
+  con credenciales en secret file y claves anteriores conservadas. Registro y
+  worker permanecen apagados hasta aprobar su alojamiento sin coste.
+- Respaldo productivo cifrado y restauración aislada comprobados. 003–006 ya
+  presentes, sin migraciones repetidas ni cambios en datos históricos/fotografías.
+- 48 comprobaciones de correo/outbox Node22/PostgreSQL18 y 24 de firma/transición
+  e interfaz Chromium aprobadas. Compilación, unitarias Android y lint aprobados;
+  prueba física con datos móviles y OTP real pendientes. No se enviaron correos.
+
 ## En desarrollo — verificación de correo
+
+### 23 de octubre de 2026 — supervisor gratuito de API/worker y canario Gmail
+
+- Opt-in de dos procesos dentro de la instancia existente de Render, autorizado
+  por el propietario sin contratar servicios. API espera readiness del worker;
+  una caída cierra ambos para recuperar el contenedor completo sin repetir envíos.
+- SIGTERM drena HTTP/Socket.IO/PostgreSQL y el worker; timeout limitado solo sobre
+  hijos propios. Secret file copiado exclusivamente a una ruta efímera 0700/0600.
+- Canario por correo aplicado antes de SQL en altas y antes de Gmail en transporte;
+  reenvíos respetan la restricción. No cambia TTL, intentos, outbox, Resend o JWT.
+- 58 comprobaciones Node22/PostgreSQL18 aislado aprobadas y cuatro verificaciones
+  de imagen final: arranque, caída del worker, recuperación y parada real Docker.
+- Activación productiva limitada y confirmación física se documentan aparte;
+  no se asume entrega Gmail ni registro general antes de la evidencia del propietario.
+
+### 23 de octubre de 2026 — conservar y renovar la autorización Gmail sin exigir identidad
+
+- Corrige la pérdida del grant cuando tokeninfo omite email/sub con solo gmail.send.
+  Conserva ambos tokens en archivos privados 0600 y registra por separado que la
+  identidad no está verificada automáticamente; no usa getProfile ni otros permisos.
+- Reutiliza credenciales existentes, verifica renovación/audience/scope y conserva
+  el archivo anterior ante errores. Escrituras atómicas y PKCE/state mantenidos.
+- El backend admite el estado explícito scope_only; el remitente sigue fijado en
+  el endpoint Gmail. Registro y worker locales permanecen desactivados.
+- 17 pruebas focalizadas simuladas aprobadas con Node22; consentimiento, renovación
+  real y carga de credenciales locales comprobados. Sin correos, cambios Render/Neon
+  ni secretos versionados.
+
+### 23 de octubre de 2026 — fijar identidad del remitente Gmail autorizado
+
+- Cuenta Cloud y proyecto existentes comprobados; Gmail API ya habilitada. Identidad
+  inmutable del remitente guardada solo en configuración privada 0600.
+- OAuth exige email exacto o subject Google comprobado, scope exclusivo gmail.send
+  y proyecto de escritorio coincidente. Sin identidad demostrable no guarda tokens;
+  el worker rechaza credenciales no verificadas. No se usan tokens del conector.
+- Cliente OAuth/consentimiento pendientes del navegador; sin correos ni cambios
+  productivos en Neon o Render.
+- 16 pruebas focalizadas aprobadas con Node22/PostgreSQL18 aislados: cuenta y
+  proyecto incorrectos rechazados, identidad obligatoria y worker simulado compatible.
+
+### 23 de octubre de 2026 — Gmail API preparado, sin activar envíos
+
+- Proveedor Gmail opcional en el worker; Resend sigue predeterminado. MIME UTF-8,
+  OAuth de escritorio con PKCE y solo gmail.send; tokens en archivos privados 0600.
+- Proveedor congelado dentro del payload cifrado; Gmail no repite envíos ambiguos
+  ni leases recuperados. Se conservan OTP, outbox, límites y seguridad de main.
+- 54 comprobaciones locales Node22/PostgreSQL18 aprobadas y construcción Docker
+  verificada; incluidos worker Gmail independiente simulado y confirmación OTP.
+- CLI Google Cloud aislada preparada. Cuenta/proyecto Cloud, cliente y consentimiento
+  reales pendientes de acceso del propietario; no se enviaron correos, no se activó
+  Render ni se modificó Neon. Procedimiento y límites en docs/gmail-otp.md.
+- Rama de preparación actualizada con main `c5301c6`; conflictos resueltos por
+  archivo conservando el cierre de altas, los avances del equipo y ambos proveedores.
 
 ### 22 de octubre de 2026 — avance 24: diagnóstico y respaldo preparados
 
