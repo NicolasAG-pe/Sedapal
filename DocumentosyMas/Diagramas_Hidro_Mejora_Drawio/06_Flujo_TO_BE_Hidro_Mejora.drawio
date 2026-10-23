@@ -1,0 +1,397 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" version="24.7.17">
+  <diagram id="hidro-6" name="TO-BE: Hidro Mejora con carriles por responsabilidad">
+    <mxGraphModel dx="2660" dy="6200" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2660" pageHeight="6200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="Figura 6. TO-BE: Hidro Mejora con carriles por responsabilidad" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="20" width="2580" height="45" />
+        </mxCell>
+        <mxCell id="3" value="Propuesta del informe · Mismo frontend web/Android · Sesión protegida, datos propios y seguimiento" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=15;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="65" width="2580" height="30" />
+        </mxCell>
+        <mxCell id="4" value="Nota. Los círculos A–D enlazan con recorridos alternativos. El prototipo es académico: no se presenta como app oficial ni como integración con el ERP o una pasarela bancaria de SEDAPAL." style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;verticalAlign=top;fontSize=15;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="6110" width="2580" height="65" />
+        </mxCell>
+        <mxCell id="5" value="Cliente&#10;(actor humano)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;swimlane;horizontal=1;startSize=74;collapsible=0;container=1;rounded=0;fontSize=21;fontStyle=1;fillColor=#edf4fb;swimlaneFillColor=#ffffff;strokeColor=#8593a0;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="140" width="650" height="5400" />
+        </mxCell>
+        <mxCell id="6" value="Aplicación Hidro Mejora&#10;Frontend web / Android con Capacitor" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;swimlane;horizontal=1;startSize=74;collapsible=0;container=1;rounded=0;fontSize=21;fontStyle=1;fillColor=#eef6f0;swimlaneFillColor=#ffffff;strokeColor=#8593a0;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="690" y="140" width="650" height="5400" />
+        </mxCell>
+        <mxCell id="7" value="Servidor y datos del prototipo&#10;API Express · PostgreSQL · Socket.IO" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;swimlane;horizontal=1;startSize=74;collapsible=0;container=1;rounded=0;fontSize=21;fontStyle=1;fillColor=#fff6e8;swimlaneFillColor=#ffffff;strokeColor=#8593a0;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1340" y="140" width="650" height="5400" />
+        </mxCell>
+        <mxCell id="8" value="Administrador&#10;(actor humano con permisos" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;swimlane;horizontal=1;startSize=74;collapsible=0;container=1;rounded=0;fontSize=21;fontStyle=1;fillColor=#f4effb;swimlaneFillColor=#ffffff;strokeColor=#8593a0;strokeWidth=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1990" y="140" width="650" height="5400" />
+        </mxCell>
+        <mxCell id="9" value="Inicio: abrir Hidro Mejora&#10;e ingresar credenciales registradas" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="130" width="510" height="112" />
+        </mxCell>
+        <mxCell id="10" value="Enviar solicitud de autenticación&#10;a la API (RF-01)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="130" width="510" height="112" />
+        </mxCell>
+        <mxCell id="11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="9" target="10">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="12" value="¿Credenciales&#10;válidas?" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rhombus;fillColor=#fff2cc;" vertex="1" parent="7">
+          <mxGeometry as="geometry" x="150.0" y="310" width="350" height="150" />
+        </mxCell>
+        <mxCell id="13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="10" target="12">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="14" value="Mostrar acceso rechazado;&#10;no habilitar recursos privados" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="540" width="510" height="112" />
+        </mxCell>
+        <mxCell id="15" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=0.5;entryY=0;" edge="1" parent="1" source="12" target="14">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1405" y="525" />
+              <mxPoint x="1015" y="525" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="16" value="Fin del intento: puede&#10;volver a iniciar sesión" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="540" width="510" height="112" />
+        </mxCell>
+        <mxCell id="17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="14" target="16">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="18" value="Entregar JWT y aplicar permisos;&#10;consultar suministro asociado&#10;(RF-01, RF-02, RN-01, RN-03)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="7">
+          <mxGeometry as="geometry" x="70.0" y="540" width="510" height="130" />
+        </mxCell>
+        <mxCell id="19" value="Sí" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="12" target="18">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="20" value="Mostrar dashboard y módulos&#10;disponibles para el usuario" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="760" width="510" height="112" />
+        </mxCell>
+        <mxCell id="21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="18" target="20">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="22" value="¿Qué necesita&#10;gestionar?" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rhombus;fillColor=#fff2cc;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="150.0" y="745" width="350" height="150" />
+        </mxCell>
+        <mxCell id="23" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="20" target="22">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="24" value="A" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;fontSize=24;fontStyle=1;fillColor=#e1edf8;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="62" y="970" width="56" height="56" />
+        </mxCell>
+        <mxCell id="25" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="22" target="24">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="365" y="1075" />
+              <mxPoint x="130" y="1075" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="26" value="B" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;fontSize=24;fontStyle=1;fillColor=#e1edf8;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="217" y="970" width="56" height="56" />
+        </mxCell>
+        <mxCell id="27" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="22" target="26">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="365" y="1075" />
+              <mxPoint x="285" y="1075" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="28" value="C" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;fontSize=24;fontStyle=1;fillColor=#e1edf8;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="377" y="970" width="56" height="56" />
+        </mxCell>
+        <mxCell id="29" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="22" target="28">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="365" y="1075" />
+              <mxPoint x="445" y="1075" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="30" value="D" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;fontSize=24;fontStyle=1;fillColor=#e1edf8;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="532" y="970" width="56" height="56" />
+        </mxCell>
+        <mxCell id="31" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="22" target="30">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="365" y="1075" />
+              <mxPoint x="600" y="1075" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="32" value="A · RECIBOS, CONSUMO Y REGISTRO DE PAGO" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=21;fontStyle=1;fontColor=#45596c;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="1240" width="2540" height="40" />
+        </mxCell>
+        <mxCell id="33" value="A" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;ellipse;fillColor=#e1edf8;fontStyle=1;fontSize=24;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="297.0" y="1160" width="56" height="56" />
+        </mxCell>
+        <mxCell id="34" value="Consultar historial, buscar/filtrar&#10;y seleccionar un recibo" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="1260" width="510" height="112" />
+        </mxCell>
+        <mxCell id="35" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="33" target="34">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="36" value="Solicitar los recibos y su detalle&#10;a través de la API (RF-03, RF-04)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="1260" width="510" height="112" />
+        </mxCell>
+        <mxCell id="37" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="34" target="36">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="38" value="Validar JWT y relación usuario–suministro;&#10;consultar recibos en PostgreSQL" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="7">
+          <mxGeometry as="geometry" x="70.0" y="1260" width="510" height="120" />
+        </mxCell>
+        <mxCell id="39" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="36" target="38">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="40" value="Presentar historial, detalle, consumo&#10;y gráficos de la respuesta (RF-03, RF-04)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="1440" width="510" height="112" />
+        </mxCell>
+        <mxCell id="41" value="Respuesta" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="38" target="40">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="42" value="¿Registrar pago&#10;en el prototipo?" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rhombus;fillColor=#fff2cc;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="150.0" y="1520" width="350" height="150" />
+        </mxCell>
+        <mxCell id="43" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="40" target="42">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="44" value="Validar operación y recibo; registrar&#10;el pago permitido en PostgreSQL.&#10;Si se rechaza, conservar estado anterior&#10;(RF-06, RN-05)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="7">
+          <mxGeometry as="geometry" x="70.0" y="1740" width="510" height="150" />
+        </mxCell>
+        <mxCell id="45" value="Sí" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="42" target="44">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="365" y="1840" />
+              <mxPoint x="1665" y="1840" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="46" value="Mostrar resultado; generar comprobante&#10;PDF con jsPDF si lo solicita (RF-05).&#10;Ante cambio con evento definido,&#10;actualizar la vista vía Socket.IO (RF-12)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="1970" width="510" height="150" />
+        </mxCell>
+        <mxCell id="47" value="Respuesta / evento si corresponde" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="44" target="46">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="48" value="No: continuar consulta" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="42" target="46">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="640" y="1735" />
+              <mxPoint x="640" y="2185" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="49" value="Fin A: detalle, comprobante&#10;o estado del pago registrado" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="2180" width="510" height="112" />
+        </mxCell>
+        <mxCell id="50" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="46" target="49">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="51" value="B · INCIDENCIAS Y SOLICITUDES DE ATENCIÓN" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=21;fontStyle=1;fontColor=#45596c;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="2510" width="2540" height="40" />
+        </mxCell>
+        <mxCell id="52" value="B" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;ellipse;fillColor=#e1edf8;fontStyle=1;fontSize=24;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="297.0" y="2430" width="56" height="56" />
+        </mxCell>
+        <mxCell id="53" value="Completar incidencia o solicitud.&#10;Foto y ubicación opcionales&#10;para incidencia (RF-07, RF-10)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="2540" width="510" height="130" />
+        </mxCell>
+        <mxCell id="54" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="52" target="53">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="55" value="Enviar formulario a la API" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="2540" width="510" height="112" />
+        </mxCell>
+        <mxCell id="56" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="53" target="55">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="57" value="¿Datos y permisos&#10;válidos?" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rhombus;fillColor=#fff2cc;" vertex="1" parent="7">
+          <mxGeometry as="geometry" x="150.0" y="2520" width="350" height="150" />
+        </mxCell>
+        <mxCell id="58" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="55" target="57">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="59" value="Informar los datos que debe corregir;&#10;no crear el registro" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="2770" width="510" height="112" />
+        </mxCell>
+        <mxCell id="60" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="57" target="59">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1400" y="2735" />
+              <mxPoint x="1400" y="2966" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="61" value="Corregir" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="59" target="53">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="640" y="2966" />
+              <mxPoint x="640" y="2745" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="62" value="Guardar en PostgreSQL; dejar disponible&#10;para gestión y emitir evento&#10;si corresponde (RF-07, RF-10, RF-12)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="7">
+          <mxGeometry as="geometry" x="70.0" y="2770" width="510" height="130" />
+        </mxCell>
+        <mxCell id="63" value="Sí" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="57" target="62">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="64" value="Mostrar confirmación y estado disponible;&#10;el cliente puede consultar el seguimiento" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="3000" width="510" height="125" />
+        </mxCell>
+        <mxCell id="65" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="62" target="64">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="66" value="Fin del registro: reporte o solicitud&#10;disponible para seguimiento" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="3000" width="510" height="125" />
+        </mxCell>
+        <mxCell id="67" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="64" target="66">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="68" value="Gestión posterior: iniciar sesión&#10;y seleccionar el registro&#10;con permisos administrativos" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="8">
+          <mxGeometry as="geometry" x="70.0" y="3000" width="510" height="130" />
+        </mxCell>
+        <mxCell id="69" value="Cuando el administrador lo gestiona" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;dashed=1;" edge="1" parent="1" source="62" target="68">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1950" y="2975" />
+              <mxPoint x="2315" y="2975" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="70" value="Actualizar información o estado&#10;según acciones permitidas&#10;(RF-08, RF-10, RN-02, RN-07)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="8">
+          <mxGeometry as="geometry" x="70.0" y="3230" width="510" height="125" />
+        </mxCell>
+        <mxCell id="71" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="68" target="70">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="72" value="Verificar JWT y permisos; guardar cambio&#10;y emitir evento definido por Socket.IO" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="7">
+          <mxGeometry as="geometry" x="70.0" y="3230" width="510" height="125" />
+        </mxCell>
+        <mxCell id="73" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="70" target="72">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="74" value="Reflejar actualización en sesiones&#10;conectadas, sin recarga completa&#10;(RF-11, RF-12)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="3450" width="510" height="125" />
+        </mxCell>
+        <mxCell id="75" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="72" target="74">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="76" value="Fin del seguimiento actual:&#10;consultar el estado actualizado" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="3450" width="510" height="125" />
+        </mxCell>
+        <mxCell id="77" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="74" target="76">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="78" value="C · CORTES Y NOTIFICACIONES" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=21;fontStyle=1;fontColor=#45596c;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="3860" width="2540" height="40" />
+        </mxCell>
+        <mxCell id="79" value="C" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;ellipse;fillColor=#e1edf8;fontStyle=1;fontSize=24;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="297.0" y="3780" width="56" height="56" />
+        </mxCell>
+        <mxCell id="80" value="Consultar cortes y notificaciones&#10;desde la misma aplicación" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="3890" width="510" height="112" />
+        </mxCell>
+        <mxCell id="81" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="79" target="80">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="82" value="Solicitar cortes y notificaciones&#10;asociados al usuario (RF-09, RF-11)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="3890" width="510" height="130" />
+        </mxCell>
+        <mxCell id="83" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="80" target="82">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="84" value="Validar JWT y consultar PostgreSQL" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="7">
+          <mxGeometry as="geometry" x="70.0" y="3890" width="510" height="112" />
+        </mxCell>
+        <mxCell id="85" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="82" target="84">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="86" value="Presentar avisos de la respuesta;&#10;informar si no hay registros disponibles" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="4065" width="510" height="112" />
+        </mxCell>
+        <mxCell id="87" value="Respuesta" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="84" target="86">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="88" value="Fin de consulta: información&#10;de cortes o notificaciones disponible" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="4065" width="510" height="112" />
+        </mxCell>
+        <mxCell id="89" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="86" target="88">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="90" value="Cuando corresponde: gestionar cortes&#10;o notificaciones con sesión autorizada" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="8">
+          <mxGeometry as="geometry" x="70.0" y="4130" width="510" height="125" />
+        </mxCell>
+        <mxCell id="91" value="Gestión posterior, si corresponde" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;dashed=1;" edge="1" parent="1" source="84" target="90">
+          <mxGeometry as="geometry" relative="1">
+            <Array as="points">
+              <mxPoint x="1950" y="4086" />
+              <mxPoint x="1950" y="4332" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="92" value="Guardar el cambio autorizado&#10;y emitir el evento definido&#10;(RF-09, RF-11, RF-12)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="7">
+          <mxGeometry as="geometry" x="70.0" y="4130" width="510" height="125" />
+        </mxCell>
+        <mxCell id="93" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="90" target="92">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="94" value="Mostrar información disponible y&#10;recibir eventos cuando se emiten" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="4350" width="510" height="125" />
+        </mxCell>
+        <mxCell id="95" value="Evento si corresponde" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="92" target="94">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="96" value="Fin C: avisos consultados&#10;y actualizaciones recibidas" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="4350" width="510" height="125" />
+        </mxCell>
+        <mxCell id="97" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="94" target="96">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="98" value="D · TUTORIAL E HIDROBOT" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=21;fontStyle=1;fontColor=#45596c;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="4770" width="2540" height="40" />
+        </mxCell>
+        <mxCell id="99" value="D" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;ellipse;fillColor=#e1edf8;fontStyle=1;fontSize=24;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="297.0" y="4690" width="56" height="56" />
+        </mxCell>
+        <mxCell id="100" value="Seleccionar tutorial o consultar HidroBot&#10;(RF-13, RF-14)" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="4800" width="510" height="112" />
+        </mxCell>
+        <mxCell id="101" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="99" target="100">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="102" value="Tutorial: guía de navegación.&#10;HidroBot: respuestas mediante reglas&#10;e intenciones programadas en la interfaz" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;" vertex="1" parent="6">
+          <mxGeometry as="geometry" x="70.0" y="4800" width="510" height="130" />
+        </mxCell>
+        <mxCell id="103" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" edge="1" parent="1" source="100" target="102">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="104" value="Fin D: recibir orientación&#10;sobre el uso de Hidro Mejora" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;fontSize=20;spacing=12;rounded=1;arcSize=50;fillColor=#f1f1f1;fontStyle=1;" vertex="1" parent="5">
+          <mxGeometry as="geometry" x="70.0" y="5050" width="510" height="112" />
+        </mxCell>
+        <mxCell id="105" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="102" target="104">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="106" value="Este recorrido se ejecuta en el frontend; no exige escritura en PostgreSQL ni un servicio externo de IA." style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=18;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="730" y="5320" width="1220" height="70" />
+        </mxCell>
+        <mxCell id="107" value="Mejoras del informe: experiencia común web/Android; datos relacionados con el usuario y suministro; persistencia, seguimiento y permisos;&#10;actualizaciones mediante eventos; orientación integrada. Cliente y administrador son actores humanos; frontend y servidor son componentes internos.&#10;La confirmación de un reporte no implica reparación física. El pago solo se registra en el prototipo: no se procesa dinero ni se supone una pasarela bancaria." style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rounded=1;align=left;spacing=18;fillColor=#f5f5f5;fontSize=18;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="5650" width="2540" height="145" />
+        </mxCell>
+        <mxCell id="108" value="Referencias y trazabilidad · Fuentes verificadas el 8 de octubre de 2026" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=18;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="60" y="5815" width="2540" height="40" />
+        </mxCell>
+        <UserObject id="109" label="Informe_Hidro_Mejora_APA7_Corregido.docx · §§ 1.5, 2.4–2.7, 3.3–3.5 y 4.4" link="file:///home/saul-lab/Downloads/Informe_Hidro_Mejora_APA7_Corregido.docx">
+          <mxCell style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=16;fontColor=#225c9a;" vertex="1" parent="1">
+            <mxGeometry as="geometry" x="60" y="5870" width="1240" height="43" />
+          </mxCell>
+        </UserObject>
+        <UserObject id="110" label="Contraste con el servicio oficial: Sedapal Móvil [S1]" link="https://www.gob.pe/12788-obtener-informacion-sobre-mi-servicio-de-agua-sedapal-movil">
+          <mxCell style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=16;fontColor=#225c9a;" vertex="1" parent="1">
+            <mxGeometry as="geometry" x="1360" y="5870" width="1240" height="43" />
+          </mxCell>
+        </UserObject>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

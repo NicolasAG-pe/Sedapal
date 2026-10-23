@@ -1,0 +1,107 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" version="24.7.17">
+  <diagram id="hidro-4" name="Diagrama de actividades del flujo cliente-servidor">
+    <mxGraphModel dx="1320" dy="2290" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1320" pageHeight="2290" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2" value="Figura 4. Diagrama de actividades del flujo cliente-servidor" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=24;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="20" width="1240" height="45" />
+        </mxCell>
+        <mxCell id="3" value="4.4.2 Diagrama de actividades de los procesos principales" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;fontSize=15;fontColor=#555555;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="65" width="1240" height="30" />
+        </mxCell>
+        <mxCell id="4" value="Nota. El flujo resume la interacción entre frontend, Nginx, API, PostgreSQL y Socket.IO. Cloudflare Tunnel se utiliza como apoyo de pruebas externas y no como componente obligatorio del flujo lógico." style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;text;align=left;verticalAlign=top;fontSize=15;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="40" y="2200" width="1240" height="65" />
+        </mxCell>
+        <mxCell id="5" value="" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;fillColor=#000000;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="645" y="115" width="30" height="30" />
+        </mxCell>
+        <mxCell id="6" value="Cliente inicia sesión en web o Android" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rounded=1;arcSize=35;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="365.0" y="180" width="590" height="100" />
+        </mxCell>
+        <mxCell id="7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="5" target="6">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="8" value="Frontend envía solicitud a /api/" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rounded=1;arcSize=35;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="395.0" y="350" width="530" height="100" />
+        </mxCell>
+        <mxCell id="9" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="6" target="8">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="10" value="Nginx enruta la solicitud" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rounded=1;arcSize=35;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="435.0" y="520" width="450" height="100" />
+        </mxCell>
+        <mxCell id="11" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="8" target="10">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="12" value="¿JWT válido?" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rhombus;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="525" y="695" width="270" height="130" />
+        </mxCell>
+        <mxCell id="13" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="10" target="12">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="14" value="API Node.js / Express procesa la petición" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rounded=1;arcSize=35;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="80" y="935" width="600" height="100" />
+        </mxCell>
+        <mxCell id="15" value="Se informa acceso no autorizado" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rounded=1;arcSize=35;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="825" y="935" width="445" height="100" />
+        </mxCell>
+        <mxCell id="16" value="Sí" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.25;exitY=0.75;entryX=0.5;entryY=0;" edge="1" parent="1" source="12" target="14">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="17" value="No" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;exitX=0.75;exitY=0.75;entryX=0.5;entryY=0;" edge="1" parent="1" source="12" target="15">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="18" value="" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="1028" y="1115" width="40" height="40" />
+        </mxCell>
+        <mxCell id="19" value="" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;" vertex="1" parent="18">
+          <mxGeometry as="geometry" x="7" y="7" width="26" height="26" />
+        </mxCell>
+        <mxCell id="20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="15" target="18">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="21" value="PostgreSQL consulta o actualiza datos" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rounded=1;arcSize=35;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="95.0" y="1105" width="570" height="100" />
+        </mxCell>
+        <mxCell id="22" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="14" target="21">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="23" value="API devuelve respuesta al frontend" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rounded=1;arcSize=35;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="110.0" y="1275" width="540" height="100" />
+        </mxCell>
+        <mxCell id="24" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="21" target="23">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="25" value="Frontend muestra historial, detalle o módulo solicitado" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rounded=1;arcSize=35;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="30.0" y="1445" width="700" height="100" />
+        </mxCell>
+        <mxCell id="26" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="23" target="25">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="27" value="Si existe un cambio relevante, Socket.IO emite el evento" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rounded=1;arcSize=35;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="20.0" y="1615" width="720" height="100" />
+        </mxCell>
+        <mxCell id="28" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="25" target="27">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="29" value="Cliente/administrador actualiza la vista sin recargar la página" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;rounded=1;arcSize=35;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="5.0" y="1785" width="750" height="100" />
+        </mxCell>
+        <mxCell id="30" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="27" target="29">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+        <mxCell id="31" value="" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;" vertex="1" parent="1">
+          <mxGeometry as="geometry" x="360" y="1970" width="40" height="40" />
+        </mxCell>
+        <mxCell id="32" value="" style="whiteSpace=wrap;html=0;fontFamily=Arial;fontSize=18;strokeColor=#222222;fillColor=#ffffff;strokeWidth=2;ellipse;" vertex="1" parent="31">
+          <mxGeometry as="geometry" x="7" y="7" width="26" height="26" />
+        </mxCell>
+        <mxCell id="33" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=0;fontFamily=Arial;fontSize=16;strokeWidth=2;strokeColor=#222222;endArrow=block;endFill=1;labelBackgroundColor=#ffffff;" edge="1" parent="1" source="29" target="31">
+          <mxGeometry as="geometry" relative="1" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
