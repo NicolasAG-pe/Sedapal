@@ -9,6 +9,7 @@
     "test:config": "node --test Backend/test/config.test.js Backend/test/receipt-date.test.js scripts/test/public-api-config.test.js",
     "test:chatbot": "node --test scripts/test/hidrobot.test.cjs",
     "test:documents": "node --test scripts/test/documents.test.cjs",
+    "test:ui": "node --test scripts/test/ui-money.test.cjs",
     "cap:www": "bash scripts/sync-capacitor-www.sh",
     "cap:sync": "node scripts/sync-android.cjs",
     "cap:open": "npx cap open android",

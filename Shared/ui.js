@@ -105,7 +105,11 @@
   }
   global.HMShared.ui = {
     node, date, debounce, beginForm, clearFormLocks, installFormUX, copyText,
-    money: value => 'S/ ' + Number(value).toFixed(2),
+    money: value => {
+      const amount = Number(value);
+      return 'S/ ' + (Number.isFinite(amount) ? amount : 0)
+        .toLocaleString('es-PE', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    },
     isAborted: error => !!error && error.name === 'AbortError'
   };
   if(typeof document!=='undefined')installFormUX(document);

@@ -1579,7 +1579,7 @@
       swap();
     }
   }
-  function fmt(n){ return 'S/ ' + n.toFixed(2); }
+  function fmt(n){ return window.HMShared.ui.money(n); }
   function reciboPagable(r){ return !!r && (r.estado==='Emitido' || r.estado==='Pendiente' || r.estado==='Vencido'); }
   function pad(n){ return String(n).padStart(2,'0'); }
 
@@ -3464,7 +3464,7 @@
     document.getElementById('d-bar-agua').style.width = '60%';
     document.getElementById('d-bar-alc').style.width = '22%';
     document.getElementById('d-bar-igv').style.width = '18%';
-    document.getElementById('d-deuda').textContent = r.estado==='Pagado' ? 'S/ 0.00 (cancelado)' : fmt(r.monto);
+    document.getElementById('d-deuda').textContent = r.estado==='Pagado' ? fmt(0) + ' (cancelado)' : fmt(r.monto);
     // La API real no envía lecturas de medidor: mostrar "No disponible" sin romper el detalle.
     document.getElementById('d-lecturas').textContent = (Number.isFinite(r.lecturaAnterior) && Number.isFinite(r.lecturaActual))
       ? (Number(r.lecturaAnterior).toFixed(1) + ' → ' + Number(r.lecturaActual).toFixed(1) + ' m³')
@@ -3766,7 +3766,7 @@ async function descargarConstanciaPDF(r, btn){
       target.estado = 'Pagado';
       if(Number.isFinite(montoReal)) target.monto = montoReal;
       document.getElementById('pay-success-text').textContent =
-        'Recibo ' + target.etiqueta + ' cancelado por ' + fmt(target.monto) + '. Deuda actual: S/ 0.00.';
+        'Recibo ' + target.etiqueta + ' cancelado por ' + fmt(target.monto) + '. Deuda actual: ' + fmt(0) + '.';
       document.getElementById('pay-code').textContent = codigoReal;
       showPayState('success');
       showSuccess('Pago registrado. El recibo ahora figura como Pagado.');
