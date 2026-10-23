@@ -33,6 +33,16 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 23 de octubre de 2026 — alternativa de secreto privado para el montaje Render
+
+- La proyección real no cumple las condiciones del lector protegido. Se admite
+  GMAIL_CREDENTIALS_JSON como variable secreta del servidor, validada y copiada a
+  archivo efímero 0600 sin relajar el lector de archivos ni seguir enlaces externos.
+- El JSON se retira del entorno de API y worker hijos. No se imprime ni se incluye
+  en Docker, Git, frontend o APK. El secret file existente se conserva.
+- 60 comprobaciones Node22/PostgreSQL18 aprobadas, incluidos JSON inválido, alcance
+  excesivo, tamaño, permisos privados, procesos reales y regresiones OTP/outbox.
+
 ### 23 de octubre de 2026 — montaje de secretos proyectados de Render
 
 - El primer deploy del supervisor rechazó el secret file con ELOOP: Render lo

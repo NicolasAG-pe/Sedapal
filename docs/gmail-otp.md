@@ -234,3 +234,12 @@ confiable. La apertura final conserva O_NOFOLLOW. Enlaces arbitrarios, escapes y
 raíces escribibles por terceros se rechazan. El lector de credenciales del worker
 sigue exigiendo archivo regular 0600 y no se modifica. Las 59 pruebas posteriores
 incluyen estos casos y las regresiones del supervisor, OTP y outbox.
+
+
+Si el montaje real no cumple las condiciones anteriores, no se flexibiliza el lector:
+se puede configurar GMAIL_CREDENTIALS_JSON como variable **secreta** privada de Render.
+El supervisor limita el tamaño, valida cliente/scope/remitente, crea el mismo archivo
+efímero 0600 y retira el JSON del entorno de API y worker hijos. No se declara como
+ARG/ENV de Docker ni se copia al contexto/imagen. El secret file anterior se conserva.
+La alternativa cuenta con pruebas de JSON/alcance inválidos, tamaño, permisos y
+retirada de ambos entornos; el lector normal sigue rechazando enlaces inseguros.
