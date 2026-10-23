@@ -1,3 +1,20 @@
 backups/
 documentacion/java-docs/
 node_modules/
+
+# Excluir del contexto material privado y salidas locales.
+.env
+.env.*
+*.jks
+*.keystore
+release.env
+keystore.properties
+artifacts/
+.local/
+.gradle/
+**/backups/
+**/node_modules/
+*.dump
+*.dump.*
+*.apk
+*.aab

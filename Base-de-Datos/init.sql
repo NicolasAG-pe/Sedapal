@@ -14,6 +14,7 @@ CREATE TABLE usuarios (
     rol VARCHAR(20) NOT NULL DEFAULT 'usuario',
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     activo BOOLEAN NOT NULL DEFAULT TRUE,
+    correo_verificado_en TIMESTAMPTZ,
 
     CONSTRAINT chk_rol_usuario
         CHECK (rol IN ('usuario', 'admin'))
@@ -39,6 +40,65 @@ CREATE TABLE suministros (
 );
 
 
+-- Nuevos registros: no crean cuentas hasta confirmar el correo.
+CREATE TABLE registros_correo_pendientes (
+    id UUID PRIMARY KEY,
+    correo VARCHAR(120) NOT NULL CHECK (correo = lower(trim(correo))),
+    numero_suministro VARCHAR(20) NOT NULL CHECK (numero_suministro ~ '^[0-9]{9}$'),
+    clave_hash VARCHAR(255) NOT NULL,
+    codigo_hash CHAR(64) NOT NULL CHECK (codigo_hash ~ '^[a-f0-9]{64}$'),
+    codigo_vence_en TIMESTAMPTZ NOT NULL,
+    intentos SMALLINT NOT NULL DEFAULT 0 CHECK (intentos BETWEEN 0 AND 5),
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    vence_en TIMESTAMPTZ NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '1 hour'),
+    consumido_en TIMESTAMPTZ,
+    invalidado BOOLEAN NOT NULL DEFAULT FALSE
+);
+CREATE TABLE registros_correo_envios (
+    id UUID PRIMARY KEY,
+    registro_id UUID NOT NULL REFERENCES registros_correo_pendientes(id) ON DELETE CASCADE,
+    enviado_en TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_registro_correo ON registros_correo_pendientes(correo);
+CREATE INDEX idx_registro_suministro ON registros_correo_pendientes(numero_suministro);
+CREATE INDEX idx_registro_vencimiento ON registros_correo_pendientes(vence_en,id);
+CREATE INDEX idx_registro_envios ON registros_correo_envios(registro_id, enviado_en);
+
+CREATE TABLE public.correo_outbox (
+    id UUID PRIMARY KEY REFERENCES public.registros_correo_envios(id) ON DELETE CASCADE,
+    codigo_hash CHAR(64) NOT NULL CHECK (codigo_hash ~ '^[a-f0-9]{64}$'),
+    estado VARCHAR(16) NOT NULL DEFAULT 'pendiente' CHECK (estado IN
+        ('pendiente','procesando','reintento','aceptado','fallido','caducado','cancelado','ambiguo')),
+    payload BYTEA,
+    clave_version SMALLINT NOT NULL DEFAULT 1 CHECK (clave_version=1),
+    clave_id CHAR(16) NOT NULL CHECK (clave_id ~ '^[a-f0-9]{16}$'),
+    intentos SMALLINT NOT NULL DEFAULT 0 CHECK (intentos BETWEEN 0 AND 5),
+    creado_en TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    disponible_en TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    iniciado_en TIMESTAMPTZ,
+    codigo_vence_en TIMESTAMPTZ,
+    enviar_hasta TIMESTAMPTZ,
+    lease_token UUID,
+    bloqueado_hasta TIMESTAMPTZ,
+    aceptado_en TIMESTAMPTZ,
+    finalizado_en TIMESTAMPTZ,
+    proveedor_id VARCHAR(120),
+    hubo_ambiguedad BOOLEAN NOT NULL DEFAULT FALSE,
+    ultimo_error VARCHAR(16) CHECK (ultimo_error IN ('transitorio','permanente','ambiguo','cifrado','caducado')),
+    CHECK ((estado IN ('pendiente','procesando','reintento')) = (payload IS NOT NULL)),
+    CHECK (payload IS NULL OR octet_length(payload) BETWEEN 29 AND 16384),
+    CHECK ((estado='procesando' AND lease_token IS NOT NULL AND bloqueado_hasta IS NOT NULL) OR
+        (estado<>'procesando' AND lease_token IS NULL AND bloqueado_hasta IS NULL)),
+    CHECK ((estado IN ('pendiente','procesando','reintento')) = (finalizado_en IS NULL)),
+    CHECK ((iniciado_en IS NULL AND codigo_vence_en IS NULL AND enviar_hasta IS NULL) OR
+        (iniciado_en IS NOT NULL AND codigo_vence_en IS NOT NULL AND enviar_hasta IS NOT NULL AND enviar_hasta<codigo_vence_en)),
+    CHECK (estado<>'aceptado' OR (aceptado_en IS NOT NULL AND proveedor_id IS NOT NULL))
+);
+CREATE INDEX idx_correo_outbox_disponible ON public.correo_outbox(disponible_en,id)
+    WHERE estado IN ('pendiente','reintento');
+CREATE INDEX idx_correo_outbox_lease ON public.correo_outbox(bloqueado_hasta,id)
+    WHERE estado='procesando';
+
 -- RECIBOS
 CREATE TABLE recibos (
     id_recibo BIGSERIAL PRIMARY KEY,
@@ -59,7 +119,9 @@ CREATE TABLE recibos (
 
     CONSTRAINT fk_recibo_suministro
         FOREIGN KEY (id_suministro)
-        REFERENCES suministros(id_suministro)
+        REFERENCES suministros(id_suministro),
+
+    CONSTRAINT uq_recibos_suministro_periodo UNIQUE (id_suministro, periodo)
 );
 
 
@@ -77,7 +139,9 @@ CREATE TABLE pagos (
 
     CONSTRAINT fk_pago_recibo
         FOREIGN KEY (id_recibo)
-        REFERENCES recibos(id_recibo)
+        REFERENCES recibos(id_recibo),
+
+    CONSTRAINT uq_pagos_recibo UNIQUE (id_recibo)
 );
 
 

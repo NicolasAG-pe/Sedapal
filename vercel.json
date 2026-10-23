@@ -1,4 +1,12 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "feature/verificacion-correo": false,
+      "integration/avance-18": false,
+      "main": false,
+      "preparation/backend-avance-23": false
+    }
+  },
   "framework": null,
   "buildCommand": "node scripts/build-web.js admin",
   "outputDirectory": "artifacts/web/admin",

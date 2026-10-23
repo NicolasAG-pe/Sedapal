@@ -8,6 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const http = require('node:http');
+const crypto = require('node:crypto');
 const { spawn } = require('node:child_process');
 const { createRequire } = require('node:module');
 const requireBackend = createRequire(path.resolve('Backend/package.json'));
@@ -92,20 +93,21 @@ async function browser(executable) {
 }
 
 (async () => {
-  const port = Number(process.env.HIDRO_TEST_DB_PORT);
+  const port = Number(process.env.HIDRO_EMAIL_TEST_DB_PORT || process.env.HIDRO_TEST_DB_PORT);
   assert.ok(Number.isInteger(port) && port > 0, 'HIDRO_TEST_DB_PORT obligatorio: puerto de PostgreSQL tmpfs aislado.');
   const output = process.env.HIDRO_TEST_REPORT_DIR
     ? path.join(process.env.HIDRO_TEST_REPORT_DIR, 'run_' + Date.now())
     : fs.mkdtempSync(path.join(os.tmpdir(), 'hidro-admin-e2e-'));
   fs.mkdirSync(output, { recursive: true });
-  const connection = { host: '127.0.0.1', port, database: 'hm_admin_test', user: 'hm_fixture', password: 'fixture-only-not-production' };
+  const mailbox = path.resolve(output, 'mailbox.jsonl');
+  const connection = { host: '127.0.0.1', port, database: process.env.HIDRO_EMAIL_TEST_DB_PORT ? 'hm_email_test' : 'hm_admin_test', user: 'hm_fixture', password: 'fixture-only-not-production' };
   const database = 'hm_admin_test_' + Date.now();
   const parent = new Pool(connection);
   let pool;
-  let backend, web, chrome;
+  let backend, worker, web, chrome;
   let serverOutput = '';
   try {
-    assert.equal((await parent.query('SELECT current_database() AS db')).rows[0].db, 'hm_admin_test');
+    assert.equal((await parent.query('SELECT current_database() AS db')).rows[0].db, connection.database);
     // Una base nueva por ejecución; conservar incluso los fixtures anteriores.
     await parent.query('CREATE DATABASE "' + database + '"');
     await parent.end();
@@ -139,20 +141,31 @@ async function browser(executable) {
     });
     await new Promise(resolve => web.listen(0, '127.0.0.1', resolve));
     const origin = 'http://127.0.0.1:' + web.address().port;
-    backend = spawn(process.execPath, ['server.js'], { cwd: path.join(root, 'Backend'), stdio: ['ignore', 'pipe', 'pipe'],
+    const outboxKey=crypto.randomBytes(32).toString('base64');
+    backend = spawn(process.execPath, ['--require', path.join(root,'Backend/test/resend-fixture.cjs'), 'server.js'], { cwd: path.join(root, 'Backend'), stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, PORT: String(backendPort), DATABASE_URL: '', DB_HOST: '127.0.0.1', DB_PORT: String(port),
         POSTGRES_DB: database, POSTGRES_USER: 'hm_fixture', POSTGRES_PASSWORD: 'fixture-only-not-production',
-        AUTH_TOKEN_SECRET: 'isolated-e2e-fixture-secret-not-production', NODE_ENV: 'development', CORS_ALLOWED_ORIGINS: origin } });
+        AUTH_TOKEN_SECRET: 'isolated-e2e-fixture-secret-not-production', NODE_ENV: 'development', CORS_ALLOWED_ORIGINS: origin,
+        EMAIL_REGISTRATION_ENABLED:'1', EMAIL_OUTBOX_KEY:outboxKey, EMAIL_OTP_SECRET: crypto.randomBytes(32).toString('hex'), RESEND_API_KEY:'fixture-provider-key',
+        RESEND_FROM:'correo@fixture.invalid', HIDRO_TEST_MAILBOX:mailbox } });
     backend.stdout.on('data', data => { serverOutput += data; }); backend.stderr.on('data', data => { serverOutput += data; });
     await wait(async () => { try { return (await fetch(base + '/api/health')).ok; } catch (_) { return false; } }, 'API aislada');
+    worker=spawn(process.execPath,['--require',path.join(root,'Backend/test/resend-fixture.cjs'),
+      path.join(root,'Backend/workers/email-outbox.cjs'),'--run'],{stdio:['ignore','pipe','pipe'],env:{...process.env,
+      EMAIL_WORKER_ENABLED:'1',EMAIL_WORKER_DATABASE_URL:`postgres://hm_fixture:fixture-only-not-production@127.0.0.1:${port}/${database}`,
+      EMAIL_WORKER_EXPECTED_DATABASE:database,EMAIL_OUTBOX_KEY:outboxKey,RESEND_API_KEY:'fixture-provider-key',HIDRO_TEST_MAILBOX:mailbox}});
+    worker.stdout.on('data',data=>{serverOutput+=data;});worker.stderr.on('data',data=>{serverOutput+=data;});
     async function request(method, endpoint, token, body, status) {
-      const response = await fetch(base + endpoint, { method, headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+      const response = await fetch(base + endpoint, { method, headers: { 'Content-Type': 'application/json', 'X-Hidro-Auth-Contract':'otp-outbox-v1', ...(token ? { Authorization: 'Bearer ' + token } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(endpoint==='/api/auth/register'?{...body,solicitud_id:crypto.randomUUID()}:body) }) });
       if (status) assert.equal(response.status, status, method + ' ' + endpoint);
       record(method, endpoint, response.status);
       return response.headers.get('content-type')?.includes('application/json') ? response.json() : response.arrayBuffer();
     }
     for (const [supply, email] of [[adminSupply, 'admin@fixture.invalid'], [userSupply, 'cliente@fixture.invalid']]) {
-      await request('POST', '/api/auth/register', null, { numero_suministro: supply, correo: email, password }, 201);
+      const pending = await request('POST', '/api/auth/register', null, { numero_suministro: supply, correo: email, password }, 202);
+      await wait(()=>fs.existsSync(mailbox) && fs.readFileSync(mailbox,'utf8').includes(email),'worker sintético');
+      const message = fs.readFileSync(mailbox,'utf8').trim().split('\n').map(JSON.parse).filter(m=>m.correo===email).at(-1);
+      await request('POST', '/api/auth/verify-email', null, {registro_id:pending.registro_id,codigo:message.codigo}, 201);
     }
     await pool.query("UPDATE usuarios SET rol='admin' WHERE correo='admin@fixture.invalid'");
     const admin = await request('POST', '/api/auth/login', null, { numero_suministro: adminSupply, password }, 200);
@@ -175,7 +188,7 @@ async function browser(executable) {
     ok('Las 19 rutas administrativas rechazan usuario normal (403) y ausencia de JWT (401)');
     const receipt = await request('POST', '/api/admin/recibos', admin.token, { numero_suministro: userSupply, periodo: 'Pago fixture', fecha_emision: '2026-01-01', fecha_vencimiento: '2026-02-01', monto: 30, consumo_m3: 10 }, 201);
     await request('POST', '/api/pagos', user.token, { id_recibo: receipt.recibo.id_recibo, metodo: 'Tarjeta' }, 201);
-    const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aS1sAAAAASUVORK5CYII=';
+    const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
     const incident = await request('POST', '/api/incidencias', user.token, { tipo: 'Fuga de agua', descripcion: 'Reporte de prueba aislada', referencia: 'Dirección fixture', foto_base64: 'data:image/png;base64,' + png, foto_mime: 'image/png' }, 201);
     const attention = await request('POST', '/api/atencion', user.token, { categoria: 'Facturación', asunto: 'Consulta fixture', descripcion: 'Solicitud de prueba aislada' }, 201);
     ok('Datos de prueba creados únicamente en hm_admin_test');
@@ -325,7 +338,7 @@ async function browser(executable) {
     ok('Segundo login crea una conexión nueva y no conserva conexiones anteriores');
 
     await require('./client-checks.cjs')({ chrome, origin, output, pool, request, admin, user, password,
-      adminSupply, userSupply, supplyId, png, wait, pause, ok, expiredToken });
+      adminSupply, userSupply, supplyId, png, wait, pause, ok, expiredToken, mailbox });
 
     for (const route of routes) {
       const method = route[1].toUpperCase();
@@ -343,6 +356,7 @@ async function browser(executable) {
     console.error(error.message); process.exitCode = 1;
   } finally {
     if (chrome) await chrome.close();
+    if (worker && worker.exitCode===null){const stopped=new Promise(resolve=>worker.once('exit',resolve));worker.kill('SIGTERM');await stopped;}
     if (backend) backend.kill('SIGTERM');
     if (web) await new Promise(resolve => web.close(resolve));
     if (pool) await pool.end();

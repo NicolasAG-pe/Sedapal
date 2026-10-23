@@ -1,3 +1,7 @@
+> Evidencia histórica del compañero, anterior a la integración OTP/outbox.
+> No se repitió en avance 18 y no acredita el backend integrado. Ver el
+> [informe nuevo](../../docs/pruebas/integracion-avance-18.md).
+
 # Validación local — 21 de octubre de 2026
 
 Rama: `feature/vercel-to-k8s`. Entorno: Linux x86_64, Docker, Kind v0.33.0,

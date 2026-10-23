@@ -1,0 +1,10 @@
+{
+  "git": {
+    "deploymentEnabled": {
+      "feature/verificacion-correo": false,
+      "integration/avance-18": false,
+      "main": false,
+      "preparation/backend-avance-23": false
+    }
+  }
+}

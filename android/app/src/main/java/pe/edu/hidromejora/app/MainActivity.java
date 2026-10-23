@@ -7,6 +7,7 @@ public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(HidroDocumentsPlugin.class);
+        registerPlugin(HidroSecureStatePlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

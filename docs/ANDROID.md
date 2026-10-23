@@ -2,6 +2,29 @@
 
 Configuración de **v1.0.0**, contrastada con [capacitor.config.js](../capacitor.config.js), [Gradle app](../android/app/build.gradle), [variables Gradle](../android/variables.gradle) y [manifiesto](../android/app/src/main/AndroidManifest.xml).
 
+## Desarrollo posterior — avance 15
+
+El [plan de transición Android/OTP](android-transicion.md) documenta H01, guardia
+de compatibilidad, recuperación de solicitudes, pruebas y publicación coordinada.
+La configuración nativa conserva la identidad de v1.0.0 y propone 1.1.0/código 3.
+Los permisos, SDK, firma pública, esquema HTTPS y plugins siguen sin cambios.
+El [avance 16](pruebas/android-1.1.0-nativo.md) compiló el candidato y comprobó
+la actualización firmada sobre 1.0.0 en un AVD Android 15 sin desinstalar.
+Los flujos funcionales usan otro AVD con APK debug y backend aislado. No hay
+distribución nueva ni validación de esta candidata en teléfono físico.
+
+## Desarrollo posterior — avance 17
+
+La [persistencia segura de sesión](pruebas/android-sesion-persistente.md) utiliza
+un plugin propio basado en Android Keystore y AES-GCM, con archivos privados fuera
+de backup. El JWT se mantiene únicamente en memoria web; Android lo restaura solo
+después de validar cuenta, rol y suministro con `/api/auth/session`. No se amplía
+su duración de ocho horas ni se añaden refresh tokens. El bridge no registra datos
+ni siquiera en debug. Logout espera la retirada nativa y limpia datos/socket.
+La recuperación OTP y ubicación quedaron verificadas en AVD en ese informe.
+La candidata final firmada actualizó 1.0.0 sin desinstalar y conservó UID y
+preferencias; no hay distribución nueva ni validación física de 1.1.0.
+
 ## Plataforma
 
 | Elemento | Valor |
@@ -50,7 +73,7 @@ REST mantiene los datos de Neon mediante Render. Socket.IO usa la misma base pú
 ## Comportamiento nativo
 
 - **Permisos:** INTERNET, ACCESS_COARSE_LOCATION y ACCESS_FINE_LOCATION. No se solicitan permisos de almacenamiento para PDF ni ubicación en segundo plano.
-- **Ubicación:** `navigator.geolocation.getCurrentPosition`, petición puntual con timeout; el usuario puede rechazarla. No hay mapas nuevos ni seguimiento continuo.
+- **Ubicación:** `navigator.geolocation.getCurrentPosition`, petición puntual de alta precisión en Android, sin caché web y con timeout de ocho segundos. El usuario puede rechazarla o continuar sin coordenadas. Una petición fallida retira la posición anterior y los callbacks de formularios cerrados se descartan. No hay mapas nuevos ni seguimiento continuo.
 - **Fotografías:** selector HTML de archivos, JPG/PNG/WebP, máximo 2 MB; FileReader genera data URL para la API. La disponibilidad de cámara/galería depende del selector WebView/sistema; no existe plugin propio de cámara.
 - **PDF:** `HidroDocumentsPlugin` registrado por MainActivity. Valida nombre y contenido, usa Storage Access Framework/ACTION_CREATE_DOCUMENT, guarda fuera del hilo visual y solicita apertura con un visor disponible. Cancelar no informa éxito; si falta visor el archivo puede seguir guardado. No requiere acceso general al almacenamiento.
 - **Atrás:** cierra modal, menú o minimiza HidroBot; durante tutorial conserva el recorrido. Desde una sección secundaria vuelve a Inicio; desde Inicio/login permite salir con App. No produce un segundo logout implícito.
@@ -65,3 +88,17 @@ Una debug no actualiza una release ni viceversa si difieren los certificados. La
 ## Validación
 
 Hay pruebas unitarias del payload PDF y una prueba instrumental de applicationId. Compilar instrumentación no equivale a ejecutarla en un dispositivo. La release v1.0.0 fue validada físicamente por el propietario, incluyendo fotos, ubicación, PDF, Atrás y tiempo real; eso no certifica todos los dispositivos o versiones WebView. Evidencia y comandos: [TESTING](TESTING.md).
+
+Seguimiento OTP (avance 17): Android conserva únicamente UUID/suministro en un
+estado cifrado independiente de la sesión. Recupera por consulta al backend;
+ningún dato del disco habilita OTP/reenvío sin validar SQL. Ver el
+[informe de sesión y OTP](pruebas/android-sesion-persistente.md).
+
+
+Seguimiento de avance 18: [integración local de Android, chatbot y Kubernetes](pruebas/integracion-avance-18.md).
+Se conservan historiales en una rama aislada; pruebas WebView de sesión/OTP/
+ubicación y chatbot aprobadas. Kubernetes solo se renderizó/validó con SQL nuevo,
+sin aplicar recursos; altas cerradas por defecto y worker preparado detenido.
+La release firmada del avance 17 permanece intacta. Una release con la integración
+y su actualización desde 1.0.0 requieren nueva validación antes de distribuir.
+No se modifican main, la rama del PR ni servicios productivos.

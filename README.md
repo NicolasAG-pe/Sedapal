@@ -22,6 +22,21 @@ Versión distribuida: **v1.0.0**, Android 6.0 o superior.
 
 Los pagos registran operaciones del prototipo sin cargos bancarios. Los PDF son referenciales. HidroBot utiliza reglas locales; las notificaciones no son push. Más detalles en la [guía del producto](docs/MEJORA-PROFESIONAL.md).
 
+## Verificación de correo en desarrollo
+
+La rama `feature/verificacion-correo` incorpora códigos OTP mediante Resend para
+confirmar el correo antes de crear cuentas nuevas. El proceso incremental se
+revisa en el [Draft PR #1](https://github.com/NicolasAG-pe/Sedapal/pull/1), con
+commits por avance y registro en [CHANGELOG.md](CHANGELOG.md).
+
+Consulta la [configuración, contrato y pruebas](docs/verificacion-correo.md).
+El avance 14 incorpora una [outbox transaccional cifrada](docs/correo-outbox.md);
+el trabajador permanece desactivado y requiere habilitación posterior autorizada.
+Esta mejora requiere las migraciones pendientes 003–006 y variables privadas
+de API/trabajador, según la guía, antes de
+habilitar nuevos registros; su publicación en producción queda pendiente de
+autorización. Las cuentas anteriores conservan su acceso.
+
 ## Arquitectura y tecnologías
 
 Producción: **Android → Render → Neon** y **Admin Vercel → Render → Neon**. El frontend de cliente se empaqueta en Android y no se publica como web de usuarios.

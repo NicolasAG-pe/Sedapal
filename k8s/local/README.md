@@ -1,3 +1,8 @@
+> Avance 18: esta guía describe operaciones futuras que requieren autorización.
+> No se ejecutó up.sh ni se aplicaron manifiestos durante la integración. Altas
+> cerradas por defecto; PVC anterior requiere migraciones manuales 003–006.
+> La validación histórica del compañero no acredita el código integrado.
+
 # Prueba local de Sedapal en Kubernetes
 
 Clúster Kind `sedapal-test`, namespace `sedapal`. Las herramientas y el kubeconfig
@@ -27,17 +32,18 @@ si no existen, valida los manifiestos contra el servidor y espera los despliegue
 Reutiliza el volumen existente y no necesita publicar imágenes en un registro.
 El overlay adapta imágenes, puertos y CORS; no modifica los YAML de producción.
 
-`verify.cjs` crea dos cuentas de prueba en este clúster y promueve únicamente la
-cuenta administrativa que coincide con correo y suministro. En ejecuciones
-posteriores comprueba las contraseñas existentes; no las cambia. Las credenciales
-están en `.local/k8s/state/accounts.json` (permiso 600). El login pide el campo
-`numero_suministro` y `password`, no el correo. Las cuentas de prueba nunca se
-crean por aplicar los manifiestos de producción.
+**Actualización avance 18:** `verify.cjs` ya no crea ni promueve cuentas por
+el registro antiguo: su contrato ahora devuelve 426 y el nuevo requiere OTP.
+Requiere cuentas sintéticas previamente provisionadas por un operador en el
+clúster exclusivo y archivo privado `.local/k8s/state/accounts.json` (600),
+objetos `admin`/`user` con `correo`, `numero_suministro` y `password`. No ejecutar
+contra cuentas reales. La provisión/verificación Kubernetes de estas cuentas
+queda pendiente; el harness local del avance 18 usa bases nuevas y Resend simulado.
+No activar correo real para conseguir fixtures.
 
 La verificación prueba login por ambos proxies, roles, recursos del panel,
 rechazo 401/403 de las 19 rutas administrativas, CORS, Socket.IO autenticado,
-creación de una solicitud, respuesta administrativa y lectura por el usuario.
-Cada ejecución agrega una solicitud de prueba.
+contrato legacy 426 y validación de sesión. No crea solicitudes ni modifica roles.
 
 ## Navegador y persistencia
 
