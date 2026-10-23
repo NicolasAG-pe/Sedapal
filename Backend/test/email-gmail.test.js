@@ -5,7 +5,7 @@ const { SCOPE, TOKEN_URL, TOKEN_INFO_URL, leerJsonPrivado, crearRemitenteGmail }
 const { obtenerConfigCorreo, configurarProveedorWorker } = require('../email-provider');
 const { construirMensaje } = require('../resend-mail');
 const { envolverMensaje, abrirMensaje } = require('../mail-envelope');
-const { crearSolicitud, intercambiar, autorizar } = require('../../scripts/gmail-oauth.cjs');
+const { crearSolicitud, intercambiar, renovar, autorizar } = require('../../scripts/gmail-oauth.cjs');
 const { crearRegistroCorreo } = require('../email-registration');
 const sender = 'fixture.sender@gmail.com';
 const credentials = { type: 'authorized_user', client_type: 'desktop', sender, scope: SCOPE,
@@ -116,7 +116,7 @@ test('OAuth PKCE solicita exclusivamente gmail.send, state aleatorio y sin scope
     assert.equal(u.searchParams.get('code_challenge_method'), 'S256'); assert.notEqual(a.state, b.state);
     assert.equal(u.searchParams.get('code_challenge'), crypto.createHash('sha256').update(a.verifier).digest('base64url'));
 });
-test('intercambio OAuth simulado verifica cliente/scope; no almacena access token ni envía', async () => {
+test('intercambio OAuth simulado verifica cliente/scope y conserva ambos tokens sin enviar', async () => {
     let calls = [];
     const fetchImpl = async (url, options) => {
         calls.push({ url, options });
@@ -124,7 +124,7 @@ test('intercambio OAuth simulado verifica cliente/scope; no almacena access toke
             Response.json({ aud: credentials.client_id, scope: SCOPE, email: sender });
     };
     const result = await intercambiar({ client: credentials, sender, code: 'fixture-code', verifier: 'fixture', redirectUri: 'http://127.0.0.1:1234/oauth2/callback' }, fetchImpl);
-    assert.equal(result.refresh_token, 'fixture-refresh'); assert.equal(result.access_token, undefined);
+    assert.equal(result.refresh_token, 'fixture-refresh'); assert.equal(result.access_token, 'fixture-access');
     assert.deepEqual(calls.map(c => c.url), [TOKEN_URL, TOKEN_INFO_URL]);
     assert.equal(calls[1].options.headers.Authorization, 'Bearer fixture-access');
 });
@@ -143,7 +143,7 @@ test('callback local rechaza state ajeno; cancela/cierra servidor sin guardar to
     await fetch(denied).catch(() => {}); await rejected;
     assert.equal(requests, 0); assert.equal(fs.existsSync(output), false); fs.rmSync(dir, { recursive: true });
 });
-test('callback correcto guarda solo refresh token privado y cierra el listener sin enviar correo', async () => {
+test('callback sin identidad guarda ambos tokens 0600, estado separado y cierra el listener sin enviar correo', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hm-gmail-success-')); fs.chmodSync(dir, 0o700);
     const clientFile = path.join(dir, 'desktop.json'), output = path.join(dir, 'token.json');
     fs.writeFileSync(clientFile, JSON.stringify({ installed: credentials }), { mode: 0o600 });
@@ -152,7 +152,7 @@ test('callback correcto guarda solo refresh token privado y cierra el listener s
         fetchImpl: async url => {
             calls++;
             return url === TOKEN_URL ? Response.json({ access_token: 'fixture-short-lived', refresh_token: 'fixture-refresh', scope: SCOPE }) :
-                Response.json({ aud: credentials.client_id, scope: SCOPE, email: sender });
+                Response.json({ aud: credentials.client_id, scope: SCOPE });
         } });
     while (!callback) await new Promise(r => setTimeout(r, 1));
     const redirect = new URL(callback.searchParams.get('redirect_uri'));
@@ -161,8 +161,14 @@ test('callback correcto guarda solo refresh token privado y cierra el listener s
     assert.equal(response.headers.get('cache-control'), 'no-store'); await response.text();
     await pending; assert.equal(calls, 2); assert.equal(fs.statSync(output).mode & 0o777, 0o600);
     const stored = JSON.parse(fs.readFileSync(output, 'utf8'));
-    assert.equal(stored.refresh_token, 'fixture-refresh'); assert.equal(stored.access_token, undefined);
+    assert.equal(stored.refresh_token, 'fixture-refresh'); assert.equal(stored.access_token, 'fixture-short-lived');
     assert.equal(stored.scope, SCOPE); assert.equal(stored.sender, sender);
+    assert.equal(stored.account_verified, false); assert.equal(stored.account_check, 'scope_only');
+    assert.equal(fs.statSync(output + '.identity.json').mode & 0o777, 0o600);
+    const identity = JSON.parse(fs.readFileSync(output + '.identity.json', 'utf8'));
+    assert.equal(identity.verified_automatically, false);
+    assert.ok(!JSON.stringify(identity).includes('fixture-refresh'));
+    assert.equal(configurarProveedorWorker({ EMAIL_PROVIDER: 'gmail', GMAIL_SENDER: sender, GMAIL_CREDENTIALS_FILE: output }).provider, 'gmail');
     assert.ok(!fs.readFileSync(output, 'utf8').includes('fixture-code')); fs.rmSync(dir, { recursive: true });
 });
 test('OAuth rechaza scopes heredados o remitente ajeno; no usa privilegios de lectura', async () => {
@@ -172,10 +178,9 @@ test('OAuth rechaza scopes heredados o remitente ajeno; no usa privilegios de le
             async url => url === TOKEN_URL ? Response.json({ access_token: 'fixture', refresh_token: 'fixture', scope: SCOPE }) : Response.json(info)));
     }
 });
-test('sender exacto: exige email verificado por tokeninfo o subject Google previamente autorizado', async () => {
+test('identidad opcional: rechaza contradicciones explícitas y distingue permiso de identidad', async () => {
     const args = { client: credentials, sender, code: 'fixture', verifier: 'fixture', redirectUri: 'http://127.0.0.1:1234/oauth2/callback', expectedSubject: '1234567890' };
-    for (const info of [{ aud: credentials.client_id, scope: SCOPE },
-        { aud: credentials.client_id, scope: SCOPE, sub: '9999999999' },
+    for (const info of [{ aud: credentials.client_id, scope: SCOPE, sub: '9999999999' },
         { aud: credentials.client_id, scope: SCOPE, email: sender, email_verified: false },
         { aud: credentials.client_id, scope: SCOPE, sub: args.expectedSubject, email: 'other@gmail.com' }]) {
         await assert.rejects(intercambiar(args, async url => url === TOKEN_URL ?
@@ -185,7 +190,44 @@ test('sender exacto: exige email verificado por tokeninfo o subject Google previ
         Response.json({ access_token: 'fixture', refresh_token: 'fixture', scope: SCOPE }) :
         Response.json({ aud: credentials.client_id, scope: SCOPE, sub: args.expectedSubject }));
     assert.equal(result.sender, sender); assert.equal(result.account_check, 'tokeninfo_subject'); assert.equal(result.account_verified, true);
+    const noIdentity = await intercambiar(args, async url => url === TOKEN_URL ?
+        Response.json({ access_token: 'fixture', refresh_token: 'fixture', scope: SCOPE }) : Response.json({ aud: credentials.client_id, scope: SCOPE }));
+    assert.equal(noIdentity.account_check, 'scope_only'); assert.equal(noIdentity.account_verified, false);
+    assert.equal(typeof crearRemitenteGmail({ sender, credentials: noIdentity }), 'function');
     assert.throws(() => crearRemitenteGmail({ sender, credentials: { ...credentials, account_verified: false } }));
+});
+test('renovación valida cliente/scope, conserva refresh token y no usa endpoints Gmail', async () => {
+    const calls = [];
+    const args = { client: credentials, credentials: { ...credentials, account_verified: false, account_check: 'scope_only' }, sender };
+    const result = await renovar(args, async (url, options) => {
+        calls.push(url);
+        if (url === TOKEN_URL) {
+            const body = new URLSearchParams(options.body);
+            assert.equal(body.get('grant_type'), 'refresh_token'); assert.equal(body.get('refresh_token'), credentials.refresh_token);
+            return Response.json({ access_token: 'fixture-renewed', expires_in: 3600 });
+        }
+        assert.equal(url, TOKEN_INFO_URL); return Response.json({ aud: credentials.client_id, scope: SCOPE });
+    });
+    assert.deepEqual(calls, [TOKEN_URL, TOKEN_INFO_URL]); assert.equal(result.refresh_token, credentials.refresh_token);
+    assert.equal(result.access_token, 'fixture-renewed'); assert.ok(result.expiry_date > Date.now()); assert.equal(result.account_verified, false);
+    await assert.rejects(renovar({ ...args, client: { ...credentials, client_id: 'other.apps.googleusercontent.com' } }, () => { throw Error('No debe llamar'); }), /otro cliente/);
+    await assert.rejects(renovar(args, async () => Response.json({ access_token: 'fixture', expires_in: 3600, scope: SCOPE + ' openid' })), /incompatible/);
+    await assert.rejects(renovar(args, async url => url === TOKEN_URL ? oauth() : Response.json({ aud: 'other', scope: SCOPE })), /no coincide/);
+});
+test('credenciales existentes se renuevan sin consentimiento y un fallo conserva el archivo', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hm-gmail-reuse-')); fs.chmodSync(dir, 0o700);
+    const clientFile = path.join(dir, 'desktop.json'), output = path.join(dir, 'token.json');
+    fs.writeFileSync(clientFile, JSON.stringify({ installed: credentials }), { mode: 0o600 });
+    fs.writeFileSync(output, JSON.stringify(credentials), { mode: 0o600 });
+    const options = { clientFile, output, sender, onUrl: () => { throw Error('No debe pedir consentimiento'); } };
+    try {
+        const before = fs.readFileSync(output, 'utf8');
+        await assert.rejects(autorizar({ ...options, fetchImpl: async () => new Response('', { status: 400 }) }), /renovación/);
+        assert.equal(fs.readFileSync(output, 'utf8'), before);
+        const result = await autorizar({ ...options, fetchImpl: async url => url === TOKEN_URL ? oauth() : Response.json({ aud: credentials.client_id, scope: SCOPE }) });
+        assert.equal(result.reused, true); assert.equal(fs.statSync(output).mode & 0o777, 0o600);
+        assert.equal(JSON.parse(fs.readFileSync(output)).refresh_token, credentials.refresh_token);
+    } finally { fs.rmSync(dir, { recursive: true }); }
 });
 test('la identidad privada fijada rechaza cliente de otro proyecto antes de iniciar OAuth', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hm-gmail-pin-')); fs.chmodSync(dir, 0o700);

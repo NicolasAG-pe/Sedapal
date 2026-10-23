@@ -5,7 +5,7 @@ const path = require('node:path');
 const http = require('node:http');
 const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
-const { SCOPE, TOKEN_URL, TOKEN_INFO_URL, leerJsonPrivado, validarRemitente } = require('../Backend/gmail-mail');
+const { SCOPE, TOKEN_URL, TOKEN_INFO_URL, leerJsonPrivado, validarRemitente, validarCredenciales } = require('../Backend/gmail-mail');
 function crearSolicitud(clientId, sender, redirectUri) {
     const verifier = crypto.randomBytes(48).toString('base64url');
     const state = crypto.randomBytes(32).toString('base64url');
@@ -16,13 +16,7 @@ function crearSolicitud(clientId, sender, redirectUri) {
         code_challenge: crypto.createHash('sha256').update(verifier).digest('base64url') });
     return { url: url.toString(), state, verifier };
 }
-async function intercambiar({ client, sender, code, verifier, redirectUri, expectedSubject }, fetchImpl = fetch) {
-    const r = await fetchImpl(TOKEN_URL, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(10000),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({
-            client_id: client.client_id, client_secret: client.client_secret, grant_type: 'authorization_code',
-            code, code_verifier: verifier, redirect_uri: redirectUri }).toString() });
-    if (!r.ok) { await r.body?.cancel(); throw new Error('Google rechazó el intercambio OAuth.'); }
-    const data = await r.json();
+async function comprobarToken({ client, sender, data, expectedSubject }, fetchImpl) {
     if (!data.access_token || !data.refresh_token || data.scope !== SCOPE) throw new Error('Google no concedió exactamente gmail.send y acceso offline.');
     const check = await fetchImpl(TOKEN_INFO_URL, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(10000),
         headers: { Authorization: `Bearer ${data.access_token}`, 'Content-Type': 'application/x-www-form-urlencoded' } });
@@ -34,22 +28,58 @@ async function intercambiar({ client, sender, code, verifier, redirectUri, expec
     }
     const subject = info.sub || info.user_id;
     if (expectedSubject && subject && subject !== expectedSubject) throw new Error('La identidad Google no corresponde al remitente autorizado.');
-    if (!info.email && (!expectedSubject || subject !== expectedSubject)) {
-        throw new Error('Google no permitió comprobar la identidad del remitente con el alcance concedido.');
-    }
+    // gmail.send autoriza envío, no identificación: la ausencia de email/sub es normal.
+    const verified = Boolean(info.email || (expectedSubject && subject === expectedSubject));
     return { type: 'authorized_user', client_type: 'desktop', client_id: client.client_id,
-        client_secret: client.client_secret, refresh_token: data.refresh_token, scope: SCOPE, sender,
-        account_check: info.email ? 'tokeninfo_email' : 'tokeninfo_subject', account_verified: true,
+        client_secret: client.client_secret, refresh_token: data.refresh_token, access_token: data.access_token,
+        ...(Number.isFinite(data.expires_in) && data.expires_in > 0 ? { expiry_date: Date.now() + data.expires_in * 1000 } : {}), scope: SCOPE, sender,
+        account_check: info.email ? 'tokeninfo_email' : verified ? 'tokeninfo_subject' : 'scope_only', account_verified: verified,
         ...(subject ? { google_subject: subject } : {}),
         created_at: new Date().toISOString() };
 }
-async function autorizar({ clientFile, output, sender, onUrl = value => process.stdout.write(value + '\n'), fetchImpl = fetch, timeoutMs = 300000 }) {
+async function intercambiar({ client, sender, code, verifier, redirectUri, expectedSubject }, fetchImpl = fetch) {
+    const r = await fetchImpl(TOKEN_URL, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(10000),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({
+            client_id: client.client_id, client_secret: client.client_secret, grant_type: 'authorization_code',
+            code, code_verifier: verifier, redirect_uri: redirectUri }).toString() });
+    if (!r.ok) { await r.body?.cancel(); throw new Error('Google rechazó el intercambio OAuth.'); }
+    return comprobarToken({ client, sender, data: await r.json(), expectedSubject }, fetchImpl);
+}
+function guardarPrivado(file, data, { nuevo = false } = {}) {
+    // Evita truncar una credencial recuperable si falla la escritura.
+    const temporary = file + '.' + crypto.randomUUID() + '.tmp';
+    try {
+        fs.writeFileSync(temporary, JSON.stringify(data, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
+        if (nuevo) { fs.linkSync(temporary, file); fs.unlinkSync(temporary); }
+        else { leerJsonPrivado(file); fs.renameSync(temporary, file); }
+    } finally { if (fs.existsSync(temporary)) fs.unlinkSync(temporary); }
+}
+function guardarIdentidad(output, credential) {
+    const file = output + '.identity.json';
+    guardarPrivado(file, { sender_expected: credential.sender, verified_automatically: credential.account_verified,
+        method: credential.account_check, checked_at: new Date().toISOString(),
+        note: 'El remitente configurado y login_hint no prueban la identidad del token. gmail.send no requiere email ni getProfile.' },
+    { nuevo: !fs.existsSync(file) });
+}
+async function renovar({ client, credentials, sender, expectedSubject }, fetchImpl = fetch) {
+    validarCredenciales(credentials, sender);
+    if (credentials.client_id !== client.client_id || credentials.client_secret !== client.client_secret) throw new Error('La credencial pertenece a otro cliente OAuth.');
+    const response = await fetchImpl(TOKEN_URL, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(10000),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ grant_type: 'refresh_token',
+            client_id: client.client_id, client_secret: client.client_secret, refresh_token: credentials.refresh_token }).toString() });
+    if (!response.ok) { await response.body?.cancel(); throw new Error('Google rechazó la renovación OAuth; las credenciales anteriores se conservan.'); }
+    const data = await response.json();
+    if (!data.access_token || (data.scope !== undefined && data.scope !== SCOPE) || !Number.isFinite(data.expires_in) || data.expires_in <= 0) throw new Error('Renovación OAuth incompatible.');
+    const result = await comprobarToken({ client, sender, expectedSubject,
+        data: { ...data, refresh_token: data.refresh_token || credentials.refresh_token, scope: SCOPE } }, fetchImpl);
+    return { ...credentials, ...result, created_at: credentials.created_at || result.created_at, refreshed_at: new Date().toISOString() };
+}
+async function autorizar({ clientFile, output, sender, onUrl = value => process.stdout.write(value + '\n'), fetchImpl = fetch, timeoutMs = 900000 }) {
     sender = validarRemitente(sender);
     const client = leerJsonPrivado(clientFile).installed;
     if (!client?.client_id?.endsWith('.apps.googleusercontent.com') || !client.client_secret ||
         (client.auth_uri && client.auth_uri !== 'https://accounts.google.com/o/oauth2/auth') ||
         (client.token_uri && client.token_uri !== TOKEN_URL)) throw new Error('Se requiere JSON oficial de cliente OAuth de escritorio.');
-    if (fs.existsSync(output)) throw new Error('La salida ya existe; no se sobrescriben credenciales anteriores.');
     const parent = path.dirname(path.resolve(output));
     if (!fs.existsSync(parent)) throw new Error('La carpeta privada de salida debe existir.');
     const stat = fs.statSync(parent);
@@ -68,6 +98,11 @@ async function autorizar({ clientFile, output, sender, onUrl = value => process.
             try { execFileSync('git', ['check-ignore', '--quiet', '--', relative], { cwd: root, stdio: 'ignore' }); }
             catch (_) { throw new Error('El archivo OAuth dentro del repositorio debe estar ignorado por Git.'); }
         }
+    }
+    if (fs.existsSync(output)) {
+        const result = await renovar({ client, credentials: leerJsonPrivado(output), sender, expectedSubject: pin?.google_subject }, fetchImpl);
+        guardarPrivado(output, result); guardarIdentidad(output, result);
+        return { output, scope: SCOPE, accountCheck: result.account_check, reused: true };
     }
     let server, timer, activeSocket, settled = false;
     return new Promise((resolve, reject) => {
@@ -90,11 +125,12 @@ async function autorizar({ clientFile, output, sender, onUrl = value => process.
                 const result = await intercambiar({ client, sender, code: callback.searchParams.get('code'),
                     verifier: request.verifier, redirectUri, expectedSubject: pin?.google_subject }, fetchImpl);
                 if (settled) { res.destroy(); return; }
-                fs.writeFileSync(output, JSON.stringify(result, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
+                guardarPrivado(output, result, { nuevo: true });
+                guardarIdentidad(output, result);
                 res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });
                 res.end('Autorización guardada. Puedes cerrar esta pestaña. No se envió ningún correo.');
                 res.on('finish', () => finish(null, { output, scope: SCOPE, accountCheck: result.account_check }));
-            } catch (_) { res.writeHead(400); res.end('No se completó la autorización.'); finish(new Error()); }
+            } catch (_) { res.writeHead(400); res.end('No se completó la autorización.'); res.on('finish', () => finish(new Error())); }
         });
         let request, redirectUri;
         server.once('error', () => finish(new Error()));
@@ -117,4 +153,4 @@ async function main(argv = process.argv.slice(2)) {
     return result;
 }
 if (require.main === module) main().catch(() => { process.stderr.write('Autorización no completada; revisar configuración privada. No se enviaron mensajes.\n'); process.exitCode = 1; });
-module.exports = { crearSolicitud, intercambiar, autorizar };
+module.exports = { crearSolicitud, intercambiar, renovar, autorizar };

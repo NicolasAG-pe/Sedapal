@@ -18,6 +18,19 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 23 de octubre de 2026 — conservar y renovar la autorización Gmail sin exigir identidad
+
+- Corrige la pérdida del grant cuando tokeninfo omite email/sub con solo gmail.send.
+  Conserva ambos tokens en archivos privados 0600 y registra por separado que la
+  identidad no está verificada automáticamente; no usa getProfile ni otros permisos.
+- Reutiliza credenciales existentes, verifica renovación/audience/scope y conserva
+  el archivo anterior ante errores. Escrituras atómicas y PKCE/state mantenidos.
+- El backend admite el estado explícito scope_only; el remitente sigue fijado en
+  el endpoint Gmail. Registro y worker locales permanecen desactivados.
+- 17 pruebas focalizadas simuladas aprobadas con Node22; consentimiento, renovación
+  real y carga de credenciales locales comprobados. Sin correos, cambios Render/Neon
+  ni secretos versionados.
+
 ### 23 de octubre de 2026 — fijar identidad del remitente Gmail autorizado
 
 - Cuenta Cloud y proyecto existentes comprobados; Gmail API ya habilitada. Identidad
