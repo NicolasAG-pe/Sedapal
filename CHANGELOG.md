@@ -4,6 +4,21 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — verificación de correo
 
+### 22 de octubre de 2026 — avance 24: diagnóstico y respaldo preparados
+
+- Draft PR #6 abierto desde la rama de preparación, sin fusión. Vercel conserva
+  cero despliegues de la rama y Render mantiene autodespliegue/previews apagados.
+- Diagnóstico SQL manual READ ONLY con identidad esperada, catálogo, conteos,
+  secuencias, huellas y preflight 005; no se conecta ni se ejecuta en Neon.
+- Cinco grupos locales aprobados con datos sintéticos: guardias, esquema previo,
+  migraciones, conservación/restauración de filas/FKs/secuencias y PNG/MIME,
+  más include psql real. Ensayos iniciales corregidos y conservados localmente.
+- Plan y autorizaciones por etapas en `docs/pruebas/preproduccion-avance-24.md`:
+  copia real cifrada/restaurable aún pendiente, sin rollback al backend antiguo;
+  parada temprana de worker 137 documentada. Código probado en avance 23 intacto.
+- Sin respaldo real, consultas Neon, migraciones/despliegues productivos, correo,
+  cambios Kubernetes o APK. Dumps/credenciales/evidencias excluidos de Git.
+
 ### 22 de octubre de 2026 — avance 24: proteger publicación de preparación
 
 - Exclusión explícita de `preparation/backend-avance-23` en ambos JSON Vercel,
