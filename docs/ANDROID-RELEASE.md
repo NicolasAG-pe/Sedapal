@@ -9,6 +9,20 @@ comprobó firma, instalación sobre la APK oficial y conservación de localStora
 en un AVD Android 15. [Transición OTP y pendientes productivos](android-transicion.md).
 Fuente del versionado: [android/app/build.gradle](../android/app/build.gradle); entorno nativo: [ANDROID](ANDROID.md).
 
+## Candidata local 1.1.2: sesión automática después del OTP
+
+Versión 1.1.2/código 5, misma identidad y firma permanente. Archivo local:
+`artifacts/android/hidro-mejora-v1.1.2-release.apk`, 3.405.717 bytes.
+SHA-256: `a6b81541a210e79ffb6ec8a38c79b8b1260758ab45c246b81fca45ee4439ed93`.
+No publicada; la APK 1.1.1 y su checksum permanecen intactos.
+
+El acceso automático exige la respuesta ampliada de `POST /api/auth/verify-email`.
+Este backend se validó aisladamente y **no se desplegó**: contra un servidor que
+todavía responde sin JWT se mantiene el login normal. No requiere migraciones.
+WebView Android real verificó almacenamiento cifrado, recuperación y logout;
+el informe distingue estas pruebas de Chromium y de la release firmada.
+[Resultados y requisitos de publicación](pruebas/android-otp-sesion-automatica.md).
+
 ## Candidata 1.1.1 para publicación por Internet
 
 Se compiló 1.1.1/código 4 con Java 21 y el script oficial, conservando todos los

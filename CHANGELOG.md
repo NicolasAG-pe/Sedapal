@@ -2,6 +2,20 @@
 
 Este archivo registra cambios publicados y comprobados. Para futuras versiones, añadir una entrada nueva arriba con su fecha y cambios relevantes, sin repetir los manuales.
 
+## 1.1.2 — candidata local, 24 de octubre de 2026
+
+- OTP confirmado: la API entrega un JWT de ocho horas solo después del COMMIT,
+  tras comprobar nuevamente usuario activo, rol y suministro. Se conserva el
+  contrato anterior; la consulta pública y los OTP repetidos nunca recuperan tokens.
+- Cliente: usa la sesión segura existente y entra al dashboard sin otro login,
+  limpia el formulario y muestra la bienvenida. Ante respuesta perdida, backend
+  anterior o fallo de almacenamiento, conserva una recuperación segura por login.
+- Android 1.1.2/código 5: candidata local con certificado permanente y API HTTPS;
+  no sustituye la APK 1.1.1. Pruebas de API/SQL aislado, Chromium, WebView Android,
+  Keystore, reinicio/logout, Gradle y lint verificadas. Sin cambios en producción,
+  esquema PostgreSQL, correo, outbox ni flags de registro.
+- [Resultados y límites de la validación](docs/pruebas/android-otp-sesion-automatica.md).
+
 ## En desarrollo — mejoras de interfaz
 
 ### 23 de octubre de 2026 — referencias copiables e importes legibles
