@@ -241,9 +241,7 @@ test('2FA: perfil/QR, activación, login con segundo factor, recuperación y des
  await page.locator('#two-factor-open').click();await page.locator('#two-factor-password').fill(f.account.password);
  await page.locator('#two-factor-setup').click();await page.locator('#two-factor-qr').waitFor({state:'visible'});
  const {rows:[row]}=await ctx.db.query('SELECT * FROM usuario_2fa m JOIN usuarios u USING(id_usuario) WHERE correo=$1',[f.account.correo]);
- const [,iv,text,tag]=row.pendiente_secreto.split('.'),d=crypto.createDecipheriv('aes-256-gcm',Buffer.from(process.env.TOTP_ENCRYPTION_KEY,'base64'),Buffer.from(iv,'base64'));
- d.setAAD(Buffer.from('hidro-totp-v1:'+row.id_usuario));d.setAuthTag(Buffer.from(tag,'base64'));
- const secret=Buffer.concat([d.update(Buffer.from(text,'base64')),d.final()]).toString('utf8');
+ const secret=require('../../Backend/totp-crypto').crearCifradoTotp(process.env).decrypt(row.pendiente_secreto,row.id_usuario);
  const OTPAuth=require('../../Backend/node_modules/otpauth'),codigo=new OTPAuth.TOTP({secret:OTPAuth.Secret.fromBase32(secret)}).generate();
  await page.locator('#two-factor-confirm-code').fill('12345');
  await page.locator('#two-factor-confirm-code').fill(codigo);await page.locator('#two-factor-confirm button').click();

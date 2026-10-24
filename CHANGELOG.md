@@ -4,6 +4,12 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — auditoría y endurecimiento 2FA (sin lanzamiento)
 
+- Custodia: cifrado v2 con identificador de clave, lectura v1/anillo anterior,
+  respaldo cifrado independiente, restauración 0600 y recifrado SQL transaccional.
+  25 pruebas focalizadas aprobadas; dump/restauración aislada conserva 16 tablas,
+  8 secuencias, fotografía, metadatos MFA y claves recuperadas.
+- Recuperación sin factores: procedimiento humano y límites documentados; sin
+  bypass por correo/suministro ni endpoint administrativo de emergencia.
 - Corregidas carreras demostradas: socket pendiente tras revocación, petición
   de gestión con versión obsoleta y respuesta que repoblaba códigos tras logout.
 - JWT ligado al rol vigente; la migración 007 pendiente incorpora revocación

@@ -53,9 +53,24 @@ Socket.IO usa actualmente un adaptador en memoria y una API. Las pruebas de
 revocación cubren esa arquitectura. Varias réplicas necesitan propagación de
 revocaciones entre instancias y pruebas específicas; no se declara esa garantía.
 
-Pendiente de este avance: procedimiento sin bypass para pérdida total de factores,
-respaldo/rotación/restauración de clave, 2FA Admin local, comprobación de downgrade
-y regresiones nativas finales. Se documentarán los resultados reales al cerrarlo.
+## Segundo incremento: custodia y recuperación
+
+[Custodia y rotación](../seguridad-claves-totp.md): lectura compatible v1/v2,
+identificador de clave, anillo acotado, respaldo cifrado independiente y herramienta
+privada 0600 sin acceso a la base. Rotación con dry-run, límite, destino explícito,
+transacción atómica y conservación de contadores/versiones/códigos usados.
+25 pruebas focalizadas Node 22 aprobaron. La restauración SQL sintética completa
+en otra base preservó 16 tablas, restricciones, 8 secuencias, fotografía y clave.
+El primer ensayo detectó una diferencia equivalente de casts en el deparser de
+PostgreSQL; se normalizó ese caso y se repitió el ensayo completo en bases nuevas.
+
+[Pérdida total de factores](../recuperacion-cuenta-2fa.md): no hay identidad civil
+verificada en el esquema, por lo que no se añade un reset automático. Se requiere
+un procedimiento humano con fuente de titularidad y aprobaciones independientes.
+No se afirma que ese proceso esté habilitado ni se añade una puerta administrativa.
+
+Pendiente de este avance: 2FA Admin local, comprobación de downgrade y regresiones
+nativas finales. Se documentarán sus resultados reales al cerrarlo.
 
 Referencias: [OWASP MFA](https://cheatsheetseries.owasp.org/cheatsheets/Multifactor_Authentication_Cheat_Sheet.html)
 y [almacenamiento criptográfico](https://cheatsheetseries.owasp.org/cheatsheets/Cryptographic_Storage_Cheat_Sheet.html).

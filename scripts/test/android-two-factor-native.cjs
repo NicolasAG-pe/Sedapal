@@ -10,9 +10,7 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,das
  await page().locator('#two-factor-open').click();await page().locator('#two-factor-password').fill(a.password);await page().locator('#two-factor-setup').click();
  await until(()=>page().evaluate(()=>!document.getElementById('two-factor-confirm').hidden),'QR de vinculación');
  const {rows:[m]}=await ctx.db.query('SELECT m.* FROM usuario_2fa m JOIN usuarios u USING(id_usuario) WHERE correo=$1',[a.correo]);
- const [,iv,text,tag]=m.pendiente_secreto.split('.'),d=crypto.createDecipheriv('aes-256-gcm',Buffer.from(process.env.TOTP_ENCRYPTION_KEY,'base64'),Buffer.from(iv,'base64'));
- d.setAAD(Buffer.from('hidro-totp-v1:'+m.id_usuario));d.setAuthTag(Buffer.from(tag,'base64'));
- const secret=Buffer.concat([d.update(Buffer.from(text,'base64')),d.final()]).toString('utf8');
+ const secret=require('../../Backend/totp-crypto').crearCifradoTotp(process.env).decrypt(m.pendiente_secreto,m.id_usuario);
  await page().locator('#two-factor-confirm-code').fill(new OTPAuth.TOTP({secret:OTPAuth.Secret.fromBase32(secret)}).generate());await page().locator('#two-factor-confirm button').click();
  await until(()=>page().evaluate(()=>!document.getElementById('two-factor-codes').hidden),'recuperación visible una vez');
  const codes=(await page().locator('#two-factor-codes-list').textContent()).trim().split('\n');assert.equal(codes.length,10);

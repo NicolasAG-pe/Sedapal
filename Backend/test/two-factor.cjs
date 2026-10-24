@@ -26,9 +26,7 @@ async function account() {
 async function secret(a, pending = false) {
     const m = (await ctx.db.query('SELECT * FROM usuario_2fa WHERE id_usuario=$1', [a.id])).rows[0];
     const raw = pending ? m.pendiente_secreto : m.secreto;
-    const [, iv, text, tag] = raw.split('.'), d = crypto.createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'base64'));
-    d.setAAD(Buffer.from('hidro-totp-v1:' + a.id));d.setAuthTag(Buffer.from(tag, 'base64'));
-    return Buffer.concat([d.update(Buffer.from(text, 'base64')), d.final()]).toString('utf8');
+    return require('../totp-crypto').crearCifradoTotp(process.env).decrypt(raw,a.id);
 }
 function code(secret, ahead = 0) { return new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(secret) }).generate({ timestamp: Date.now() + ahead }); }
 function wrongCode(secret) {

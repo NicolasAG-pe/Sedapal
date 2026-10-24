@@ -2,6 +2,7 @@
 const crypto = require('node:crypto');
 const OTPAuth = require('otpauth');
 const QRCode = require('qrcode');
+const { crearCifradoTotp } = require('./totp-crypto');
 const sha = value => crypto.createHash('sha256').update(value).digest('hex');
 const fail = (status, mensaje) => ({ error: { status, mensaje } });
 const invalid = () => fail(401, 'Código inválido, vencido o ya utilizado.');
@@ -16,25 +17,8 @@ function permiteSesion(token, row) {
         (token.amr.includes('otp') || token.amr.includes('recovery'))));
 }
 function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = () => {}, env = process.env }) {
-    function key() {
-        const raw = env.TOTP_ENCRYPTION_KEY;
-        if (typeof raw !== 'string' || !/^[A-Za-z0-9+/]{43}=$/.test(raw)) return null;
-        const result = Buffer.from(raw, 'base64');
-        return result.length === 32 ? result : null;
-    }
-    function encrypt(secret, id) {
-        const iv = crypto.randomBytes(12), cipher = crypto.createCipheriv('aes-256-gcm', key(), iv);
-        cipher.setAAD(Buffer.from('hidro-totp-v1:' + id));
-        return ['v1', iv.toString('base64'), Buffer.concat([cipher.update(secret, 'utf8'), cipher.final()]).toString('base64'), cipher.getAuthTag().toString('base64')].join('.');
-    }
-    function decrypt(value, id) {
-        const parts = value.split('.'), [v, iv, text, tag] = parts;
-        if (parts.length !== 4 || v !== 'v1' || [iv, text, tag].some(s => Buffer.from(s, 'base64').toString('base64') !== s) ||
-            Buffer.from(iv, 'base64').length !== 12 || Buffer.from(tag, 'base64').length !== 16) throw new Error('Estado 2FA incompatible.');
-        const decipher = crypto.createDecipheriv('aes-256-gcm', key(), Buffer.from(iv, 'base64'));
-        decipher.setAAD(Buffer.from('hidro-totp-v1:' + id));decipher.setAuthTag(Buffer.from(tag, 'base64'));
-        return Buffer.concat([decipher.update(Buffer.from(text, 'base64')), decipher.final()]).toString('utf8');
-    }
+    const cipher = crearCifradoTotp(env), key = () => cipher.available();
+    const encrypt = (secret,id) => cipher.encrypt(secret,id), decrypt = (value,id) => cipher.decrypt(value,id);
     const totp = (secret, label = 'Cuenta') => new OTPAuth.TOTP({ issuer: 'Hidro-Mejora', label,
         algorithm: 'SHA1', digits: 6, period: 30, secret: OTPAuth.Secret.fromBase32(secret) });
     async function tx(action) {
