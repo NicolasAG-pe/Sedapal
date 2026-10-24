@@ -1013,7 +1013,7 @@
   let restauracionBloqueada=false, tareaRestauracion=null, reintentoSalida=false;
   function guardarSesion(token, rol){return sesionCliente.establish(token, rol);}
   const interfaz2fa=window.createHMTwoFactorUI({session:sesionCliente,apiFetch,
-    showLogin:()=>{ocultarEstadoSesion();mostrarLogin();},
+    showLogin:mensaje=>{if(mensaje){cerrarSesionCompleta(mensaje);return;}ocultarEstadoSesion();mostrarLogin();},
     showChallenge:()=>{
       form.hidden=true;regForm.hidden=true;verifyForm.hidden=true;
       authToRegister.hidden=true;authToLogin.hidden=true;
@@ -1022,12 +1022,13 @@
     },
     authenticated:async data=>{
       if(data.usuario?.rol!=='usuario' || !/^\d{9}$/.test(data.suministro?.numero_suministro || '') || !data.token)throw new Error('Respuesta de sesión incompleta.');
+      let epoch=sesionCliente.generation();
       try{
         detenerTiempoReal();
-        const guardado=guardarSesion(data.token,data.usuario.rol),epoch=sesionCliente.generation();
+        const guardado=guardarSesion(data.token,data.usuario.rol);epoch=sesionCliente.generation();
         await conSesion(()=>guardado,epoch);clienteCorreo=data.usuario.correo || '';
         await entrarDashboard(data.suministro.numero_suministro,epoch);
-      }catch(error){await cerrarSesionCompleta('No se pudo guardar la sesión de forma segura. Inicia sesión nuevamente.');throw error;}
+      }catch(error){if(!esAbortado(error)&&epoch===sesionCliente.generation())await cerrarSesionCompleta('No se pudo guardar la sesión de forma segura. Inicia sesión nuevamente.');throw error;}
     },
     showProfile:()=>document.querySelector('[data-sec="perfil"]').click()
   });

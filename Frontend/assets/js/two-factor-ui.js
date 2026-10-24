@@ -21,9 +21,18 @@
       // Un 401 de reautenticación/código no equivale a un JWT caducado: mostrarlo
       // sin cerrar la sesión ni perder el QR; el servidor valida ambos por separado.
       if(privateRoute)options.headers.Authorization='Bearer '+session.token();
-      const res=await session.authFetch(path,options);
-      const data=await res.json();
+      let res,data;
+      try{res=await session.authFetch(path,options);data=await res.json();}
+      catch(error){
+        if(epoch!==generation || error.name==='AbortError')throw error;
+        if(privateRoute && ['/confirm','/disable','/recovery'].some(s=>path.endsWith(s))){
+          clear();showLogin('No pudimos confirmar el resultado de la operación. Vuelve a iniciar sesión; no repitas el cambio. Si regeneraste códigos, usa tu autenticador.');
+          throw new DOMException('Resultado pendiente de verificar.','AbortError');
+        }
+        throw new Error('No se pudo conectar. Revisa tu conexión e inténtalo nuevamente.');
+      }
       if(epoch!==generation)throw new DOMException('Operación cancelada.','AbortError');
+      if(data?.codigo==='SESSION_REAUTH_REQUIRED'){clear();showLogin('Tu sesión cambió. Inicia sesión nuevamente.');throw new DOMException('Sesión cambiada.','AbortError');}
       if(!res.ok)throw new Error(data.mensaje || 'No se pudo verificar el código.');
       return data;
     }
@@ -57,7 +66,8 @@
       clearTimeout(timer);timer=setTimeout(()=>{hidePrivate();el('status').textContent='La configuración caducó. Confirma tu contraseña para iniciar otra.';},Math.max(0,Date.parse(data.vence_en)-Date.now()));
     });});
     async function changed(data){
-      await authenticated(data);pending=null;clearTimeout(timer);hidePrivate();
+      const epoch=generation;await authenticated(data);if(epoch!==generation)return;
+      pending=null;clearTimeout(timer);hidePrivate();
       showProfile();el('controls').hidden=false;
       if(data.codigos_recuperacion){el('codes-list').textContent=data.codigos_recuperacion.join('\n');el('codes').hidden=false;}
       await load();
@@ -74,7 +84,8 @@
       if(!pending || Date.parse(pending.vence_en)<=Date.now())throw new Error('El desafío venció. Vuelve a iniciar sesión.');
       const codigo=el('login-code').value;el('login-code').value='';
       const data=await request('/api/auth/2fa/login',{desafio:pending.desafio,codigo},false);
-      await authenticated(data);pending=null;clearTimeout(timer);el('login').reset();el('login').hidden=true;
+      const epoch=generation;await authenticated(data);if(epoch!==generation)return;
+      pending=null;clearTimeout(timer);el('login').reset();el('login').hidden=true;
     });});
     el('cancel').addEventListener('click',()=>{clear();showLogin();});
     return{clear,load,challenge(data){

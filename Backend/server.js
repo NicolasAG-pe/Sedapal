@@ -203,6 +203,7 @@ function configurarTiempoReal(httpServer){
             }
             const fila = verif.rows[0];
             if (!permiteSesion(datos, fila)) return next(new Error('Autenticación requerida.'));
+            socket.authClaims=datos;
             socket.user = {
                 id_usuario: fila.id_usuario,
                 id_suministro: fila.id_suministro,
@@ -215,8 +216,14 @@ function configurarTiempoReal(httpServer){
         }
     });
 
-    io.on('connection', (socket) => {
+    io.on('connection', async (socket) => {
         try{
+            // Esta sala solo sirve para revocar; nunca recibe datos de negocio.
+            // Entrar antes de releer cierra la carrera handshake/COMMIT/revocación.
+            await socket.join('auth-revocacion:'+Number(socket.user.id_usuario));
+            const actual=await pool.query(`SELECT u.rol,u.activo,COALESCE(m.version,0) AS mfa_version,COALESCE(m.activo,FALSE) AS mfa_activo
+                FROM usuarios u LEFT JOIN usuario_2fa m USING(id_usuario) WHERE u.id_usuario=$1`,[socket.user.id_usuario]);
+            if(!socket.connected || !actual.rows[0]?.activo || !permiteSesion(socket.authClaims,actual.rows[0])){socket.disconnect(true);return;}
             // Rooms asignadas por el SERVIDOR. El cliente nunca elige rooms.
             const u = socket.user;
             socket.join('authenticated');
@@ -227,7 +234,7 @@ function configurarTiempoReal(httpServer){
                 socket.join('suministro:' + Number(u.id_suministro));
             }
             rtLog('Socket conectado: usuario ' + u.id_usuario + ' rol ' + u.rol);
-        }catch(e){}
+        }catch(e){socket.disconnect(true);}
         socket.on('disconnect', () => {
             try{
                 const id = socket.user ? socket.user.id_usuario : '?';
@@ -494,7 +501,7 @@ function respuestaSesion(fila) {
         suministro: { id_suministro: fila.id_suministro, numero_suministro: fila.numero_suministro } };
 }
 const dosFactores = crearDosFactores({ pool, verificarClave, emitirSesion: respuestaSesion,
-    cerrarSockets: id => { if (ioTiempoReal) ioTiempoReal.in('usuario:' + Number(id)).disconnectSockets(true); } });
+    cerrarSockets: id => { if (ioTiempoReal) ioTiempoReal.in(['usuario:' + Number(id),'auth-revocacion:'+Number(id)]).disconnectSockets(true); } });
 
 // ==========================================
 // AUTENTICACIÓN POR TOKEN (JWT 8h) + verificación en DB
@@ -554,8 +561,6 @@ async function requiereAuth(req, res, next){
         }
 
         const fila = verif.rows[0];
-        if (!permiteSesion(datosToken, fila)) return res.status(401).json({ estado: 'error', mensaje: 'Inicia sesión nuevamente para verificar tu cuenta.' });
-
         if (fila.activo === false) {
             return res.status(403).json({
                 estado: "error",
@@ -563,17 +568,20 @@ async function requiereAuth(req, res, next){
             });
         }
 
+        if (!permiteSesion(datosToken, fila)) return res.status(401).json({ estado: 'error', codigo:'SESSION_REAUTH_REQUIRED', mensaje: 'Inicia sesión nuevamente para verificar tu cuenta.' });
+
         req.user = {
             id_usuario: fila.id_usuario,
             id_suministro: fila.id_suministro,
             numero_suministro: fila.numero_suministro,
-            rol: fila.rol
+            rol: fila.rol,
+            mfa_version: fila.mfa_version
         };
 
         return next();
     } catch (e) {
         // En producción, mensaje genérico; detalle solo en log servidor.
-        console.error(esProduccion() ? 'Error de autenticación.' : e);
+        console.error('Error de autenticación.');
         return res.status(500).json({
             estado: "error",
             mensaje: "Error interno del servidor."
@@ -753,8 +761,8 @@ for (const [ruta, action, autenticada] of [
         res.set('Cache-Control','no-store');
         if (autenticada && req.user.rol !== 'usuario') return res.status(403).json({ estado: 'error', mensaje: 'Acceso denegado.' });
         try {
-            const result = autenticada ? await dosFactores[action](req.user.id_usuario, req.body || {}) : await dosFactores[action](req.body || {});
-            if (result.error) return res.status(result.error.status).json({ estado: 'error', mensaje: result.error.mensaje });
+            const result = autenticada ? await dosFactores[action](req.user.id_usuario, req.body || {},req.user) : await dosFactores[action](req.body || {});
+            if (result.error) return res.status(result.error.status).json({ estado: 'error', mensaje: result.error.mensaje, ...(result.error.codigo?{codigo:result.error.codigo}:{}) });
             return res.json(result);
         } catch (_) { return res.status(503).json({ estado: 'error', mensaje: 'No se pudo completar la operación de seguridad. Reintenta más tarde.' }); }
     });

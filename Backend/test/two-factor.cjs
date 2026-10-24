@@ -54,7 +54,7 @@ async function socket(token) {
 test('Migración 007 aditiva/repetible conserva datos anteriores y no activa usuarios', async () => {
     const { pool } = await nuevaBase('totp_legacy');
     try {
-        await pool.query(`CREATE TABLE usuarios(id_usuario BIGSERIAL PRIMARY KEY,correo TEXT,activo BOOLEAN,clave_hash TEXT);
+        await pool.query(`CREATE TABLE usuarios(id_usuario BIGSERIAL PRIMARY KEY,correo TEXT,activo BOOLEAN,clave_hash TEXT,rol TEXT DEFAULT 'usuario');
             CREATE TABLE suministros(id_suministro BIGSERIAL PRIMARY KEY,id_usuario BIGINT REFERENCES usuarios,numero_suministro TEXT);
             INSERT INTO usuarios(correo,activo,clave_hash) VALUES ('legacy@example.invalid',TRUE,'fixture-no-plaintext-password');
             INSERT INTO suministros(id_usuario,numero_suministro) VALUES (1,'980000001')`);
@@ -173,7 +173,8 @@ test('Cambiar recuperación/desactivar exige contraseña y factor; revoca códig
     const a = await enabled();
     await request('/api/auth/2fa/disable', { password: a.password }, a.token, 401);
     await request('/api/auth/2fa/recovery', { password: 'bad-fixture', codigo: a.codes[0] }, a.token, 401);
-    const regen = (await request('/api/auth/2fa/recovery', { password: a.password, codigo: a.codes[0] }, a.token, 200)).data;
+    await request('/api/auth/2fa/recovery', { password: a.password, codigo: a.codes[0] }, a.token, 400);
+    const regen = (await request('/api/auth/2fa/recovery', { password: a.password, codigo: code(a.secret,30000) }, a.token, 200)).data;
     await request('/api/auth/session', undefined, a.token, 401);
     await complete(await challenge(a), a.codes[1], 401);
     const disabled = (await request('/api/auth/2fa/disable', { password: a.password, codigo: regen.codigos_recuperacion[0] }, regen.token, 200)).data;

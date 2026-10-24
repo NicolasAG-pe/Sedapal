@@ -6,11 +6,12 @@ const sha = value => crypto.createHash('sha256').update(value).digest('hex');
 const fail = (status, mensaje) => ({ error: { status, mensaje } });
 const invalid = () => fail(401, 'Código inválido, vencido o ya utilizado.');
 const recoveryHash = (id, code) => sha('hidro-recovery-v1:' + id + ':' + code);
+const sessionEnded = () => ({ error: { status: 401, codigo: 'SESSION_REAUTH_REQUIRED', mensaje: 'Inicia sesión nuevamente para continuar.' } });
 
 // Un token anterior sigue siendo válido solo para una cuenta que nunca cambió 2FA.
 function permiteSesion(token, row) {
     const version = Number(row.mfa_version || 0);
-    return (!token.token_use || token.token_use === 'access') && (token.mfa_version ?? 0) === version && (!row.mfa_activo ||
+    return token.rol === row.rol && (!token.token_use || token.token_use === 'access') && (token.mfa_version ?? 0) === version && (!row.mfa_activo ||
         (Array.isArray(token.amr) && token.amr.includes('pwd') &&
         (token.amr.includes('otp') || token.amr.includes('recovery'))));
 }
@@ -37,12 +38,12 @@ function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = 
     const totp = (secret, label = 'Cuenta') => new OTPAuth.TOTP({ issuer: 'Hidro-Mejora', label,
         algorithm: 'SHA1', digits: 6, period: 30, secret: OTPAuth.Secret.fromBase32(secret) });
     async function tx(action) {
-        const c = await pool.connect();
+        const c = await pool.connect();let discard;
         try {
             await c.query('BEGIN');await c.query("SET LOCAL lock_timeout='2s'");await c.query("SET LOCAL statement_timeout='10s'");
             const result = await action(c);await c.query('COMMIT');return result;
-        } catch (e) { await c.query('ROLLBACK').catch(() => {});throw e; }
-        finally { c.release(); }
+        } catch (e) { await c.query('ROLLBACK').catch(() => {discard=new Error('Conexión 2FA inválida.');});throw e; }
+        finally { c.release(discard); }
     }
     async function account(c, id) {
         // Orden de locks uniforme: usuario, estado 2FA y después desafío/códigos.
@@ -83,15 +84,21 @@ function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = 
         for (const code of codes) await c.query('INSERT INTO usuario_2fa_recuperacion(id_usuario,codigo_hash) VALUES ($1,$2)', [id, recoveryHash(id, code)]);
         return codes;
     }
-    async function manage(id, body, action) {
+    function currentActor(a, actor) {
+        return actor && String(actor.id_usuario)===String(a.u.id_usuario) && actor.rol===a.u.rol && actor.mfa_version===a.m.version;
+    }
+    async function manage(id, body, action, actor, { active, totpOnly = false } = {}) {
         if (!key()) return fail(503, 'La verificación en dos pasos no está disponible.');
         return tx(async c => {
             const a = await account(c, id);
             if (!a) return fail(403, 'Acceso denegado.');
+            if (!currentActor(a,actor)) return sessionEnded();
+            if (a.m.activo!==active) return fail(409, active ? 'Activa primero la verificación en dos pasos.' : 'Desactiva el factor existente antes de configurar otro.');
             if (locked(a)) return fail(429, 'Demasiados intentos. Espera quince minutos.');
             if (!verificarClave(body.password, a.u.clave_hash)) return bad(c, a);
             let method = 'pwd';
             if (a.m.activo) {
+                if (totpOnly && (typeof body.codigo!=='string' || !/^\d{6}$/.test(body.codigo))) return fail(400,'Para generar códigos nuevos usa tu autenticador. Si lo perdiste, desactiva y vuelve a configurar usando un código de recuperación.');
                 method = await factor(c, a, body.codigo);
                 if (!method) return bad(c, a);
             }
@@ -118,7 +125,7 @@ function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = 
             return { estado: 'ok', activo: m?.activo || false, recuperacion: m?.recuperacion || 0,
                 disponible: !!key() && (m?.activo || env.TOTP_ENROLLMENT_ENABLED === '1') };
         },
-        async setup(id, body) {
+        async setup(id, body, actor) {
             if (env.TOTP_ENROLLMENT_ENABLED !== '1') return fail(503, 'La activación de dos factores no está disponible temporalmente.');
             return manage(id, body, async (c, a) => {
                 if (a.m.activo) return fail(409, 'Desactiva el factor existente antes de configurar otro.');
@@ -127,14 +134,15 @@ function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = 
                 await c.query(`UPDATE usuario_2fa SET pendiente_secreto=$2,pendiente_hasta=clock_timestamp()+INTERVAL '5 minutes',
                     reautenticado_en=clock_timestamp() WHERE id_usuario=$1`, [id, encrypt(secret, id)]);
                 return { estado: 'ok', qr, vence_en: new Date(a.now + 300000).toISOString() };
-            });
+            },actor,{active:false});
         },
-        async confirm(id, body) {
+        async confirm(id, body, actor) {
             if (env.TOTP_ENROLLMENT_ENABLED !== '1') return fail(503, 'La activación de dos factores no está disponible temporalmente.');
             if (!key()) return fail(503, 'La verificación en dos pasos no está disponible.');
             const result = await tx(async c => {
                 const a = await account(c, id);
                 if (!a) return fail(403, 'Acceso denegado.');
+                if (!currentActor(a,actor)) return sessionEnded();
                 if (locked(a)) return fail(429, 'Demasiados intentos. Espera quince minutos.');
                 if (a.m.activo || !a.m.pendiente_secreto) return invalid();
                 if (new Date(a.m.pendiente_hasta).getTime() <= a.now || a.now - new Date(a.m.reautenticado_en).getTime() >= 300000) {
@@ -150,22 +158,22 @@ function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = 
             });
             return finish(result);
         },
-        async disable(id, body) {
+        async disable(id, body, actor) {
             const result = await manage(id, body, async (c, a) => {
                 if (!a.m.activo) return fail(409, 'La verificación en dos pasos ya está desactivada.');
                 await c.query(`UPDATE usuario_2fa SET activo=FALSE,secreto=NULL,pendiente_secreto=NULL,pendiente_hasta=NULL,
                     reautenticado_en=NULL,ultimo_paso=-1,version=version+1 WHERE id_usuario=$1`, [id]);
                 await c.query('UPDATE usuario_2fa_recuperacion SET usado_en=COALESCE(usado_en,clock_timestamp()) WHERE id_usuario=$1', [id]);
                 return { estado: 'ok', ...session(a.u, a.m.version + 1, 'pwd') };
-            });
+            },actor,{active:true});
             return finish(result);
         },
-        async regenerate(id, body) {
+        async regenerate(id, body, actor) {
             const result = await manage(id, body, async (c, a, method) => {
                 if (!a.m.activo) return fail(409, 'Activa primero la verificación en dos pasos.');
                 await c.query('UPDATE usuario_2fa SET version=version+1 WHERE id_usuario=$1', [id]);
                 return { estado: 'ok', codigos_recuperacion: await recovery(c, id), ...session(a.u, a.m.version + 1, method) };
-            });
+            },actor,{active:true,totpOnly:true});
             return finish(result);
         },
         async challenge(u) {
@@ -194,7 +202,7 @@ function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = 
                 if (!a || !a.m.activo) return invalid();
                 const { rows: [d] } = await c.query('SELECT * FROM desafios_2fa WHERE id_hash=$1 FOR UPDATE', [hash]);
                 if (locked(a)) return fail(429, 'Demasiados intentos. Espera quince minutos.');
-                if (d.usado_en || d.intentos >= 5 || new Date(d.vence_en).getTime() <= a.now || d.version !== a.m.version || d.clave_huella !== sha(a.u.clave_hash)) return invalid();
+                if (!d || d.usado_en || d.intentos >= 5 || new Date(d.vence_en).getTime() <= a.now || d.version !== a.m.version || d.clave_huella !== sha(a.u.clave_hash)) return invalid();
                 const method = await factor(c, a, body.codigo);
                 if (!method) {
                     await c.query('UPDATE desafios_2fa SET intentos=intentos+1 WHERE id_hash=$1', [hash]);return bad(c, a);

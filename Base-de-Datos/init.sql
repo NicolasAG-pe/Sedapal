@@ -335,4 +335,18 @@ CREATE TABLE IF NOT EXISTS public.desafios_2fa (
 );
 CREATE INDEX IF NOT EXISTS idx_desafios_2fa_usuario ON public.desafios_2fa(id_usuario);
 CREATE INDEX IF NOT EXISTS idx_desafios_2fa_vencimiento ON public.desafios_2fa(vence_en);
+-- Los cambios futuros de permisos/estado revocan también JWT antiguos sin MFA.
+CREATE OR REPLACE FUNCTION public.revocar_2fa_al_cambiar_cuenta() RETURNS trigger
+LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
+BEGIN
+    IF NEW.rol IS DISTINCT FROM OLD.rol OR NEW.activo IS DISTINCT FROM OLD.activo THEN
+        INSERT INTO public.usuario_2fa(id_usuario,version) VALUES (NEW.id_usuario,1)
+        ON CONFLICT (id_usuario) DO UPDATE SET version=public.usuario_2fa.version+1;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE OR REPLACE TRIGGER revocar_2fa_cuenta
+AFTER UPDATE OF rol,activo ON public.usuarios
+FOR EACH ROW EXECUTE FUNCTION public.revocar_2fa_al_cambiar_cuenta();
 COMMIT;

@@ -2,6 +2,19 @@
 
 Este archivo registra cambios publicados y comprobados. Para futuras versiones, añadir una entrada nueva arriba con su fecha y cambios relevantes, sin repetir los manuales.
 
+## En desarrollo — auditoría y endurecimiento 2FA (sin lanzamiento)
+
+- Corregidas carreras demostradas: socket pendiente tras revocación, petición
+  de gestión con versión obsoleta y respuesta que repoblaba códigos tras logout.
+- JWT ligado al rol vigente; la migración 007 pendiente incorpora revocación
+  persistente al cambiar rol/estado, sin modificar las cuentas al aplicarla.
+- Retención acotada de material temporal, sin borrar versiones de seguridad ni
+  pasos TOTP. Regenerar recuperación requiere autenticador disponible; un código
+  de recuperación sigue permitiendo desactivar de forma segura si se perdió.
+- Pruebas focalizadas: 27 backend Node 22 y 18 Chromium aprobadas. Se conserva
+  OTP/sesión automática y las APK existentes. Sin producción ni publicación.
+- [Auditoría y trabajo pendiente](docs/pruebas/auditoria-2fa-seguridad.md).
+
 ## En preparación — 2FA opcional (propuesta 1.2.0 / código 6)
 
 - Perfil: «Seguridad de la cuenta → Verificación en dos pasos», QR privado,
