@@ -16,7 +16,7 @@ before(async()=>{
  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 });
 after(async()=>{if(browser)await browser.close();if(ctx)await ctx.close();});
-async function fixture(t,{legacy=false,device='Pixel 5',viewport}={}){
+async function fixture(t,{legacy=false,legacyVerification=false,device='Pixel 5',viewport}={}){
  const context=await browser.newContext({...devices[device],...(viewport?{viewport}:{}),reducedMotion:'reduce'});
  const page=await context.newPage(),calls=[],errors=[];let offline=false,oldBackend=false,drop='',dropBefore='',mixedBackend=false;
  page.setDefaultTimeout(7000);page.on('pageerror',e=>errors.push(e.message));
@@ -28,7 +28,7 @@ async function fixture(t,{legacy=false,device='Pixel 5',viewport}={}){
   let body;
   if(legacy){
    const file=name.startsWith('/shared/')?'Shared/'+name.slice(8):'Frontend/'+(name==='/'?'index.html':name.slice(1));
-   try{body=execFileSync('git',['show','v1.0.0:'+file],{cwd:root,stdio:['ignore','pipe','ignore']});}catch(_){return route.fulfill({status:404});}
+   try{body=execFileSync('git',['show',(legacy===true?'v1.0.0':legacy)+':'+file],{cwd:root,stdio:['ignore','pipe','ignore']});}catch(_){return route.fulfill({status:404});}
   }else{const file=path.resolve(runtime,'.'+(name==='/'?'/index.html':name));assert.ok(file.startsWith(runtime+path.sep));body=fs.existsSync(file)?fs.readFileSync(file):'';}
   const mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg'};
   return route.fulfill({contentType:mime[path.extname(name)]||'text/html',body});
@@ -43,7 +43,10 @@ async function fixture(t,{legacy=false,device='Pixel 5',viewport}={}){
    'X-Forwarded-For':`192.0.2.${1+(ip++%240)}`,...(req.headers()['x-hidro-auth-contract']?{'X-Hidro-Auth-Contract':req.headers()['x-hidro-auth-contract']}:{}),
    ...(req.headers().authorization?{Authorization:req.headers().authorization}:{})},...(req.postData()?{body:req.postData()}:{})});
   calls.push({path:pathname,status:res.status,body:req.postData()?JSON.parse(req.postData()):null});
-  const body=await res.text();
+  let body=await res.text();
+  if(legacyVerification && pathname==='/api/auth/verify-email' && res.status===201){
+   const data=JSON.parse(body);body=JSON.stringify({estado:data.estado,mensaje:data.mensaje,usuario:{numero_suministro:data.usuario.numero_suministro}});
+  }
   if(drop===pathname){drop='';return route.abort('connectionreset');}
   try{return await route.fulfill({status:res.status,headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':origin,
    ...(res.headers.get('retry-after')?{'Retry-After':res.headers.get('retry-after')}: {})},body});}catch(error){if(!page.isClosed()&&!req.failure())throw error;}
@@ -194,8 +197,34 @@ test('Procesando, OTP incorrecto/vencido y reenvío conservan solicitud hasta ve
  await deliver(p.id);await f.check();
  await f.page.waitForFunction(()=>!document.getElementById('btn-verify-email').disabled);
  await f.page.locator('#verify-code').fill(ctx.codigo(f.account.correo));await f.page.locator('#btn-verify-email').click();
- await f.page.waitForFunction(()=>!document.getElementById('login-form').hidden);
+ await f.page.waitForFunction(()=>document.getElementById('view-dashboard').classList.contains('active'));
+ assert.equal(f.calls.some(c=>c.path==='/api/auth/login'),false,'Sin reutilizar contraseña para otro login');
+ assert.equal(await f.page.locator('#reg-pass').inputValue(),'');
+ assert.equal(await f.page.locator('#verify-code').inputValue(),'');
+ assert.equal(await f.page.evaluate(()=>localStorage.getItem('hm_token') || sessionStorage.getItem('hm_token')),null);
  assert.equal(await f.pending(),null);
+});
+
+test('Respuesta de servidor anterior sin token conserva login normal; estado público no establece sesión',async t=>{
+ const f=await fixture(t,{legacyVerification:true});await f.register();const p=await waitPending(f);
+ await deliver(p.id);await f.check();await f.page.waitForFunction(()=>!document.getElementById('btn-verify-email').disabled);
+ await f.page.locator('#verify-code').fill(ctx.codigo(f.account.correo));await f.page.locator('#btn-verify-email').click();
+ await f.page.waitForFunction(()=>!document.getElementById('login-form').hidden);
+ assert.equal(await f.page.locator('#suministro').inputValue(),f.account.numero_suministro);
+ assert.equal(await f.page.locator('#password').inputValue(),'');
+ assert.equal(await f.page.evaluate(()=>document.getElementById('view-dashboard').classList.contains('active')),false);
+ assert.equal(await f.pending(),null);
+});
+
+test('Cliente publicado v1.1.1 acepta respuesta ampliada y conserva verificación seguida de login',async t=>{
+ const f=await fixture(t,{legacy:'v1.1.1'});await f.register();const p=await waitPending(f);
+ await deliver(p.id);await f.check();await f.page.waitForFunction(()=>!document.getElementById('btn-verify-email').disabled);
+ await f.page.locator('#verify-code').fill(ctx.codigo(f.account.correo));await f.page.locator('#btn-verify-email').click();
+ await f.page.waitForFunction(()=>!document.getElementById('login-form').hidden);
+ assert.equal(await f.page.locator('#suministro').inputValue(),f.account.numero_suministro);
+ await f.page.locator('#password').fill(f.account.password);await f.page.locator('#btn-login').click();
+ await f.page.waitForFunction(()=>document.getElementById('view-dashboard').classList.contains('active'));
+ assert.ok(f.calls.some(c=>c.path==='/api/auth/login'&&c.status===200));
 });
 
 test('CORS acepta cabecera de contrato desde https://localhost sin exigirla al login',async()=>{

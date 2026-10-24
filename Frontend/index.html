@@ -5069,22 +5069,44 @@ async function descargarConstanciaPDF(r, btn){
     if(loginFoot)loginFoot.hidden=true;
     loginTitle.textContent='Verifica tu correo';actualizarReenvio();verifyCode.focus();
   }
-  async function completarVerificacion(suministro){
+  async function completarVerificacion(suministro, sesion){
     try{await limpiarVerificacion();}catch(_){
       mostrarLogin();showError('Correo verificado. No pudimos retirar el estado temporal; reintenta al abrir la aplicación.');return;
+    }
+    regForm.reset();inpPass.value='';
+    // Solo la respuesta directa del OTP puede establecer sesión. El estado público
+    // y los servidores anteriores conservan la recuperación mediante login normal.
+    if(sesion?.token){
+      if(sesion.usuario?.rol!=='usuario' || sesion.suministro?.numero_suministro!==suministro){
+        mostrarLogin();showError('Correo verificado. Inicia sesión para continuar de forma segura.');return;
+      }
+      mostrarEstadoSesion('Preparando tu sesión…');
+      try{
+        const guardado=guardarSesion(sesion.token,sesion.usuario.rol);
+        const epoch=sesionCliente.generation();
+        await conSesion(()=>guardado,epoch);
+        clienteCorreo=sesion.usuario.correo || '';
+        await entrarDashboard(suministro,epoch);
+        if(epoch===sesionCliente.generation() && sesionCliente.isUser())showSuccess('¡Correo verificado! Bienvenido a Hidro-Mejora');
+      }catch(error){
+        if(esAbortado(error))return;
+        await cerrarSesionCompleta('Correo verificado. No pudimos guardar tu sesión de forma segura; inicia sesión nuevamente.');
+      }
+      return;
     }
     mostrarLogin();inpSupply.value=suministro;inpPass.value='';inpPass.focus();
     showSuccess('Correo verificado. Ya puedes iniciar sesión.');
   }
-  async function consultarCorreo(){
-    if(consultandoCorreo || !registroPendiente || verifyForm.hidden || registroPendiente.solicitudHasta<=Date.now())return;
+  async function consultarCorreo(opciones={}){
+    const recuperar=opciones.recuperar===true;
+    if(consultandoCorreo || (verificacionOcupada && !recuperar) || !registroPendiente || verifyForm.hidden || registroPendiente.solicitudHasta<=Date.now())return;
     const pendiente=registroPendiente;consultandoCorreo=true;actualizarReenvio();
     try{
       const resp=await sesionCliente.authFetch('/api/auth/verification-status',{
         method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({registro_id:pendiente.id})
       });
       const data=await resp.json().catch(()=>null);
-      if(registroPendiente!==pendiente)return;
+      if(registroPendiente!==pendiente || (verificacionOcupada && !recuperar))return;
       if(resp.ok && data?.estado==='verificado'){await completarVerificacion(pendiente.suministro);return;}
       if(resp.ok && data?.estado==='cerrado'){
         pendiente.aceptada=true;pendiente.estadoSolicitud='cerrado';pendiente.motivo=data.motivo;pendiente.problemaConsulta='';
@@ -5148,13 +5170,13 @@ async function descargarConstanciaPDF(r, btn){
           persistirVerificacion();
         }
         showVerifyError((data && data.mensaje) || 'No se pudo completar la verificación. Inténtalo nuevamente.');
-        await consultarCorreo();return;
+        await consultarCorreo({recuperar:true});return;
       }
       if(reenviar){
         guardarVerificacion(data,suministro); verifyCode.value='';
         verifyStatus.textContent='Solicitamos un nuevo código. El anterior ya no es válido.';
       }else{
-        await completarVerificacion((data.usuario && data.usuario.numero_suministro) || suministro);
+        await completarVerificacion(suministro,data);
       }
     }catch(error){
       if(version===verificacionVersion && !esAbortado(error)){

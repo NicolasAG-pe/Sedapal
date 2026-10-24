@@ -85,7 +85,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   fs.writeFileSync(path.join(output,'instrumentation.txt'),instrument);assert.match(instrument,/OK \(1 test\)/);ok('Android Keystore: clave no exportable, GCM/IV distinto, alteración rechazada y borrado confirmado');
   if(process.argv.includes('--otp')){
    android('shell','am','start','-n',pkg+'/.MainActivity');await attach();
-   await require('./android-otp-native.cjs')({ctx,getPage:()=>page,restart,until,ok,screenshot});
+   await require('./android-otp-native.cjs')({ctx,getPage:()=>page,restart,until,ok,screenshot,android,dashboard,logout,noPlainToken});
    report.result='passed';return;
   }
   if(process.argv.includes('--location')){
