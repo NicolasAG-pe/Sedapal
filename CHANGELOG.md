@@ -2,6 +2,20 @@
 
 Este archivo registra cambios publicados y comprobados. Para futuras versiones, añadir una entrada nueva arriba con su fecha y cambios relevantes, sin repetir los manuales.
 
+## En preparación — 2FA opcional (propuesta 1.2.0 / código 6)
+
+- Perfil: «Seguridad de la cuenta → Verificación en dos pasos», QR privado,
+  confirmación TOTP, recuperación de un solo uso y desactivación con contraseña
+  reciente más el factor existente. El secreto se cifra con AES-256-GCM en servidor.
+- Login: desafío opaco de cinco minutos, sin JWT hasta completar el segundo
+  factor; límites persistentes, prevención de reutilización y revocación de sesiones
+  y sockets anteriores al cambiar 2FA. Usuarios sin factor mantienen el login.
+- Migración manual 007 aditiva y esquema inicial; solo probados en PostgreSQL 18
+  aislado. Nuevas activaciones cerradas por defecto; ningún cambio en Neon/Render.
+- Se conserva la sesión automática tras OTP de 1.1.2 y su APK firmada intacta.
+  Actualización compatible de `body-parser` 2.3.0 → 2.4.0; audit sin vulnerabilidades.
+- [Informe, pruebas nativas y límites para publicar](docs/pruebas/seguridad-totp.md).
+
 ## 1.1.2 — candidata local, 24 de octubre de 2026
 
 - OTP confirmado: la API entrega un JWT de ocho horas solo después del COMMIT,

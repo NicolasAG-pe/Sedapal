@@ -1123,3 +1123,8 @@
  .hb-input{font-size:16px}.hb-panel{max-height:calc(100dvh - 120px);bottom:calc(80px + env(safe-area-inset-bottom,0px))}
 }
 @media(max-height:500px){#view-login{justify-content:flex-start}.dialog{max-height:94dvh}.hb-panel{max-height:85dvh}}
+.two-factor-settings{margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--border)}
+.two-factor-settings h5{font-size:1rem;margin-bottom:.5rem}
+.two-factor-settings img{display:block;max-width:100%;height:auto;background:#fff;margin:.8rem 0}
+.two-factor-settings pre{font-size:.78rem;white-space:pre-wrap;overflow-wrap:anywhere;user-select:text}
+#two-factor-settings-error,#two-factor-login-error{color:var(--danger,#a32929)}

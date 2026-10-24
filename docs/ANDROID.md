@@ -102,3 +102,13 @@ sin aplicar recursos; altas cerradas por defecto y worker preparado detenido.
 La release firmada del avance 17 permanece intacta. Una release con la integración
 y su actualización desde 1.0.0 requieren nueva validación antes de distribuir.
 No se modifican main, la rama del PR ni servicios productivos.
+## Próxima funcionalidad en revisión: 2FA opcional
+
+La rama `feature/seguridad-totp` prepara TOTP y recuperación de un solo uso.
+Propuesta de publicación: **1.2.0 / versionCode 6**, todavía sin aplicar al
+versionado ni compilar una release nueva. La APK firmada 1.1.2/5 no se modifica.
+La sesión completa sigue usando el Keystore; secretos TOTP, contraseñas,
+desafíos y códigos de recuperación no se guardan en Android.
+El QR se muestra transitoriamente para vincular el autenticador; ese autenticador
+necesariamente conserva su propia copia del secreto. Hidro-Mejora no la persiste.
+[Pruebas y requisitos de despliegue](pruebas/seguridad-totp.md).

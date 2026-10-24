@@ -26,7 +26,7 @@ async function fixture() {
         const state = {};
         const { rows } = await pool.query("SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename");
         for (const { tablename } of rows) {
-            assert.match(tablename, /^[a-z_]+$/);
+            assert.match(tablename, /^[a-z_][a-z0-9_]*$/);
             state[tablename] = (await pool.query(`SELECT to_jsonb(t) AS row FROM public.${tablename} t ORDER BY to_jsonb(t)::text`)).rows;
         }
         return state;

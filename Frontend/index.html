@@ -103,6 +103,14 @@
       <button type="button" class="btn btn-ghost" id="btn-retry-registration" hidden>Volver al registro</button>
       <button type="button" class="btn btn-ghost" id="btn-restart-register">Usar otros datos</button>
     </form>
+    <form id="two-factor-login" hidden>
+      <p>Ingresa el código de tu aplicación autenticadora o un código de recuperación de un solo uso.</p>
+      <div class="field"><label for="two-factor-login-code">Código de verificación</label>
+        <input id="two-factor-login-code" type="text" autocomplete="one-time-code" maxlength="35" required /></div>
+      <p id="two-factor-login-error" role="alert"></p>
+      <button class="btn btn-primary" type="submit">Verificar e ingresar</button>
+      <button class="btn btn-ghost" type="button" id="two-factor-cancel">Volver al inicio de sesión</button>
+    </form>
     <div class="auth-switch" id="auth-to-login" hidden>¿Ya tienes una cuenta? <a href="#" id="show-login">Iniciar sesión</a></div>
 
     <div class="login-foot">¿Olvidaste tu clave? <a href="#" id="forgot-link">Recupérala aquí</a> · <a href="#" id="help-link">Ayuda</a></div>
@@ -484,9 +492,39 @@
           </dl>
         </div>
         <div class="support-card" aria-label="Seguridad de la cuenta">
-          <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Seguridad</h4>
+          <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Seguridad de la cuenta</h4>
           <p>Mantén tu cuenta protegida con una contraseña segura.</p>
           <button class="btn btn-sky" id="btn-change-pass" type="button">Cambiar contraseña</button>
+          <section class="two-factor-settings" aria-labelledby="two-factor-title">
+            <h5 id="two-factor-title">Verificación en dos pasos</h5>
+            <p>Necesitarás un cliente compatible en todos tus dispositivos y tu aplicación autenticadora para volver a iniciar sesión.</p>
+            <p id="two-factor-status" role="status">Consulta el estado de protección de tu cuenta.</p>
+            <button class="btn btn-ghost" type="button" id="two-factor-open">Configurar verificación en dos pasos</button>
+            <div id="two-factor-controls" hidden>
+              <form id="two-factor-manage">
+                <div class="field"><label for="two-factor-password">Confirma tu contraseña actual</label>
+                  <input id="two-factor-password" type="password" autocomplete="current-password" maxlength="128" required /></div>
+                <div class="field" id="two-factor-existing" hidden><label for="two-factor-existing-code">Código del factor actual o de recuperación</label>
+                  <input id="two-factor-existing-code" type="text" autocomplete="one-time-code" maxlength="35" /></div>
+                <button class="btn btn-sky" id="two-factor-setup" type="submit">Preparar activación</button>
+                <button class="btn btn-ghost" id="two-factor-recovery" type="button" hidden>Generar nuevos códigos de recuperación</button>
+                <button class="btn btn-ghost" id="two-factor-disable" type="button" hidden>Desactivar verificación en dos pasos</button>
+              </form>
+              <form id="two-factor-confirm" hidden>
+                <p>Escanea este QR con una aplicación autenticadora. Si estás usando el mismo teléfono, abre esta sección en otro dispositivo para escanearlo. Confirma antes de cinco minutos.</p>
+                <img id="two-factor-qr" width="300" height="300" alt="QR privado para vincular tu autenticador" />
+                <div class="field"><label for="two-factor-confirm-code">Código de seis dígitos</label>
+                  <input id="two-factor-confirm-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required /></div>
+                <button class="btn btn-sky" type="submit">Activar y guardar códigos</button>
+              </form>
+              <div id="two-factor-codes" hidden>
+                <p>Guarda estos códigos en un lugar privado fuera de Hidro-Mejora. Solo se muestran ahora y cada uno sirve una vez.</p>
+                <pre id="two-factor-codes-list" tabindex="0" aria-label="Códigos de recuperación"></pre>
+              </div>
+              <p id="two-factor-settings-error" role="alert"></p>
+              <button class="btn btn-ghost" type="button" id="two-factor-close">Cerrar y ocultar datos privados</button>
+            </div>
+          </section>
         </div>
         </div>
       </div>
@@ -891,6 +929,7 @@
 <script src="assets/js/native-state.js"></script>
 <script src="assets/js/registration-state.js"></script>
 <script src="assets/js/client-session.js"></script>
+<script src="assets/js/two-factor-ui.js"></script>
 <script src="assets/js/sedapal-knowledge.js"></script>
 <!-- Socket.IO cliente vendorizado (v4.8.4, igual que el backend): el script
      absoluto /socket.io/socket.io.js no resuelve en el WebView Android
@@ -973,6 +1012,25 @@
   let clienteCorreo='';
   let restauracionBloqueada=false, tareaRestauracion=null, reintentoSalida=false;
   function guardarSesion(token, rol){return sesionCliente.establish(token, rol);}
+  const interfaz2fa=window.createHMTwoFactorUI({session:sesionCliente,apiFetch,
+    showLogin:()=>{ocultarEstadoSesion();mostrarLogin();},
+    showChallenge:()=>{
+      form.hidden=true;regForm.hidden=true;verifyForm.hidden=true;
+      authToRegister.hidden=true;authToLogin.hidden=true;
+      if(loginFoot)loginFoot.hidden=true;if(demoBox)demoBox.hidden=true;
+      loginTitle.textContent='Verificación en dos pasos';inpPass.value='';
+    },
+    authenticated:async data=>{
+      if(data.usuario?.rol!=='usuario' || !/^\d{9}$/.test(data.suministro?.numero_suministro || '') || !data.token)throw new Error('Respuesta de sesión incompleta.');
+      try{
+        detenerTiempoReal();
+        const guardado=guardarSesion(data.token,data.usuario.rol),epoch=sesionCliente.generation();
+        await conSesion(()=>guardado,epoch);clienteCorreo=data.usuario.correo || '';
+        await entrarDashboard(data.suministro.numero_suministro,epoch);
+      }catch(error){await cerrarSesionCompleta('No se pudo guardar la sesión de forma segura. Inicia sesión nuevamente.');throw error;}
+    },
+    showProfile:()=>document.querySelector('[data-sec="perfil"]').click()
+  });
   function obtenerToken(){ return sesionCliente.token(); }
   function limpiarSesion(){ return sesionCliente.clear(); }
   function mostrarEstadoSesion(mensaje,reintentar=false,salida=false){
@@ -1043,6 +1101,7 @@
     showToast(mensaje || 'Sesión cerrada correctamente.');
   }
   function limpiarDatosCliente(){
+    interfaz2fa.clear();
     window.HMClientHome.clear();
     recibos=[]; incidencias=[]; pagos=[]; cortes=[]; cortesGeneral=[];
     misSolicitudes=[]; notificaciones=[]; notifCargando=null;
@@ -3989,6 +4048,7 @@ async function descargarConstanciaPDF(r, btn){
   async function cargarPerfil(){
     let _hmEpoch=sesionCliente.generation();
     mostrarPerfilVacio();
+    interfaz2fa.load();
     try{
       const resp = await conSesion(() => (apiFetch('/api/me/perfil')), _hmEpoch);
       if(!resp.ok) throw new Error('No se pudo cargar el perfil (código ' + resp.status + ')');
@@ -5009,6 +5069,7 @@ async function descargarConstanciaPDF(r, btn){
     regCorreo.focus();
   }
   function mostrarLogin(){
+    interfaz2fa.clear();
     verifyForm.hidden = true;
     regForm.hidden = true;
     authToLogin.hidden = true;
@@ -5348,6 +5409,10 @@ async function descargarConstanciaPDF(r, btn){
         return;
       }
       const authData = await conSesion(() => (resp.json()), _hmEpoch);
+      if(resp.status===202 && authData?.estado==='segundo_factor'){
+        interfaz2fa.challenge(authData);
+        btnLogin.disabled=false;btnLoginText.textContent='Iniciar Sesión';return;
+      }
       if(!authData || authData.estado !== 'ok'){
         showError('No se pudo iniciar sesión. Inténtalo nuevamente.');
         btnLogin.disabled = false;

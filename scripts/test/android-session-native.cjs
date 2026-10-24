@@ -22,6 +22,9 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  const output=fs.mkdtempSync(path.join(root,'artifacts/android-session-native-'));fs.chmodSync(output,0o700);
  const report={androidNative:true,checks:[],errors:[],applicationId:pkg};
  const ok=label=>{report.checks.push(label);fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2));console.log('OK: '+label);};
+ if(process.argv.includes('--two-factor')){
+  process.env.TOTP_ENCRYPTION_KEY=require('node:crypto').randomBytes(32).toString('base64');process.env.TOTP_ENROLLMENT_ENABLED='1';
+ }
  const ctx=await iniciar({autoDrain:false});let device,page;
  let sessionRequests=0;
  ctx.httpServer.on('request',req=>{if(req.method==='GET'&&req.url==='/api/auth/session')sessionRequests++;});
@@ -86,6 +89,11 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   if(process.argv.includes('--otp')){
    android('shell','am','start','-n',pkg+'/.MainActivity');await attach();
    await require('./android-otp-native.cjs')({ctx,getPage:()=>page,restart,until,ok,screenshot,android,dashboard,logout,noPlainToken});
+   report.result='passed';return;
+  }
+  if(process.argv.includes('--two-factor')){
+   android('shell','am','start','-n',pkg+'/.MainActivity');await attach();
+   await require('./android-two-factor-native.cjs')({ctx,getPage:()=>page,restart,until,ok,screenshot,login,dashboard,logout,android});
    report.result='passed';return;
   }
   if(process.argv.includes('--location')){

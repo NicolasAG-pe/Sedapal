@@ -19,6 +19,8 @@
     "test:android:native": "node scripts/test/android-session-native.cjs",
     "test:email:api": "node Backend/test/email-api.cjs",
     "test:email:auto-session": "node --test Backend/test/otp-auto-session.cjs",
+    "test:2fa": "node --test Backend/test/two-factor.cjs",
+    "test:2fa:native": "node scripts/test/android-session-native.cjs --two-factor",
     "test:email:cleanup": "node Backend/test/email-cleanup.cjs",
     "test:email:cleanup:cli": "node Backend/test/email-cleanup-cli.cjs",
     "maintenance:email": "node Backend/maintenance/email-cleanup.cjs",

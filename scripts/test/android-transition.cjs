@@ -11,11 +11,13 @@ const {cancelarEventos}=require('../../Backend/email-outbox');
 const origin='https://localhost',api='https://api.compat.fixture.test';
 let ctx,browser,runtime,sequence=300,ip=1;
 before(async()=>{
+ process.env.TOTP_ENCRYPTION_KEY=crypto.randomBytes(32).toString('base64');
+ process.env.TOTP_ENROLLMENT_ENABLED='1';
  ctx=await iniciar({autoDrain:false});
  runtime=fs.mkdtempSync(path.join(os.tmpdir(),'hidro-transition-'));buildWeb('android',{API_BASE_URL:api},runtime);
  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 });
-after(async()=>{if(browser)await browser.close();if(ctx)await ctx.close();});
+after(async()=>{if(browser)await browser.close();if(ctx)await ctx.close();delete process.env.TOTP_ENCRYPTION_KEY;});
 async function fixture(t,{legacy=false,legacyVerification=false,device='Pixel 5',viewport}={}){
  const context=await browser.newContext({...devices[device],...(viewport?{viewport}:{}),reducedMotion:'reduce'});
  const page=await context.newPage(),calls=[],errors=[];let offline=false,oldBackend=false,drop='',dropBefore='',mixedBackend=false;
@@ -225,6 +227,52 @@ test('Cliente publicado v1.1.1 acepta respuesta ampliada y conserva verificació
  await f.page.locator('#password').fill(f.account.password);await f.page.locator('#btn-login').click();
  await f.page.waitForFunction(()=>document.getElementById('view-dashboard').classList.contains('active'));
  assert.ok(f.calls.some(c=>c.path==='/api/auth/login'&&c.status===200));
+});
+
+test('2FA: perfil/QR, activación, login con segundo factor, recuperación y desactivación',async t=>{
+ const f=await fixture(t),page=f.page;
+ await page.evaluate(()=>localStorage.setItem('hm_tutorial_seen','1'));
+ await f.register();const p=await waitPending(f);await deliver(p.id);await f.check();
+ await page.waitForFunction(()=>!document.getElementById('btn-verify-email').disabled);
+ await page.locator('#verify-code').fill(ctx.codigo(f.account.correo));await page.locator('#btn-verify-email').click();
+ await page.waitForFunction(()=>document.getElementById('view-dashboard').classList.contains('active'));
+ await page.locator('.mobile-tabs [data-sec="perfil"]').click();
+ await page.waitForFunction(()=>document.getElementById('two-factor-status').textContent.startsWith('Desactivada'));
+ await page.locator('#two-factor-open').click();await page.locator('#two-factor-password').fill(f.account.password);
+ await page.locator('#two-factor-setup').click();await page.locator('#two-factor-qr').waitFor({state:'visible'});
+ const {rows:[row]}=await ctx.db.query('SELECT * FROM usuario_2fa m JOIN usuarios u USING(id_usuario) WHERE correo=$1',[f.account.correo]);
+ const [,iv,text,tag]=row.pendiente_secreto.split('.'),d=crypto.createDecipheriv('aes-256-gcm',Buffer.from(process.env.TOTP_ENCRYPTION_KEY,'base64'),Buffer.from(iv,'base64'));
+ d.setAAD(Buffer.from('hidro-totp-v1:'+row.id_usuario));d.setAuthTag(Buffer.from(tag,'base64'));
+ const secret=Buffer.concat([d.update(Buffer.from(text,'base64')),d.final()]).toString('utf8');
+ const OTPAuth=require('../../Backend/node_modules/otpauth'),codigo=new OTPAuth.TOTP({secret:OTPAuth.Secret.fromBase32(secret)}).generate();
+ await page.locator('#two-factor-confirm-code').fill('12345');
+ await page.locator('#two-factor-confirm-code').fill(codigo);await page.locator('#two-factor-confirm button').click();
+ await page.waitForFunction(()=>!document.getElementById('two-factor-codes').hidden);
+ const codes=(await page.locator('#two-factor-codes-list').textContent()).trim().split('\n');assert.equal(codes.length,10);
+ assert.equal(await page.locator('#two-factor-password').inputValue(),'');assert.equal(await page.locator('#two-factor-qr').getAttribute('src'),null);
+ const storage=await page.evaluate(()=>JSON.stringify({local:{...localStorage},session:{...sessionStorage}}));
+ for(const sensitive of [secret,f.account.password,...codes])assert.equal(storage.includes(sensitive),false);
+ await page.locator('#two-factor-close').click();await page.evaluate(()=>document.getElementById('btn-logout').click());
+ await page.waitForFunction(()=>!document.getElementById('login-form').hidden);
+ assert.equal(await page.locator('#two-factor-codes-list').textContent(),'');
+ await page.locator('#suministro').fill(f.account.numero_suministro);await page.locator('#password').fill(f.account.password);await page.locator('#btn-login').click();
+ await page.locator('#two-factor-login').waitFor({state:'visible'});
+ assert.equal(await page.evaluate(()=>document.getElementById('view-dashboard').classList.contains('active')),false);
+ assert.equal(await page.locator('#password').inputValue(),'');
+ await page.locator('#two-factor-login-code').fill('invalid');await page.locator('#two-factor-login button[type=submit]').click();
+ await page.waitForFunction(()=>document.getElementById('two-factor-login-error').textContent.includes('inválido'));
+ await page.locator('#two-factor-login-code').fill(codes[0]);await page.locator('#two-factor-login button[type=submit]').click();
+ await page.waitForFunction(()=>document.getElementById('view-dashboard').classList.contains('active'));
+ await page.locator('.mobile-tabs [data-sec="perfil"]').click();
+ await page.waitForFunction(()=>document.getElementById('two-factor-status').textContent.startsWith('Activada'));
+ await page.locator('#two-factor-open').click();
+ // Error de reautenticación no cierra la sesión ni modifica el factor.
+ await page.locator('#two-factor-password').fill('wrong-fixture');await page.locator('#two-factor-existing-code').fill(codes[1]);await page.locator('#two-factor-disable').click();
+ await page.waitForFunction(()=>document.getElementById('two-factor-settings-error').textContent.includes('inválido'));
+ assert.equal(await page.evaluate(()=>document.getElementById('view-dashboard').classList.contains('active')),true);
+ await page.locator('#two-factor-password').fill(f.account.password);await page.locator('#two-factor-existing-code').fill(codes[1]);await page.locator('#two-factor-disable').click();
+ await page.waitForFunction(()=>document.getElementById('two-factor-status').textContent.startsWith('Desactivada'));
+ assert.equal((await ctx.db.query('SELECT activo FROM usuario_2fa WHERE id_usuario=$1',[row.id_usuario])).rows[0].activo,false);
 });
 
 test('CORS acepta cabecera de contrato desde https://localhost sin exigirla al login',async()=>{

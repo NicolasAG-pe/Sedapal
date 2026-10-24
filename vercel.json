@@ -1,6 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
+      "feature/seguridad-totp": false,
       "feature/verificacion-correo": false,
       "integration/avance-18": false,
       "main": false,

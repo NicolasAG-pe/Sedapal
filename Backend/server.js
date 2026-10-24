@@ -11,6 +11,7 @@ const { obtenerConfiguracion } = require('./config');
 const { obtenerConfigCorreo } = require('./email-provider');
 const { obtenerClaveOutbox } = require('./outbox-crypto');
 const { crearRegistroCorreo, registrarRutasCorreo } = require('./email-registration');
+const { crearDosFactores, permiteSesion } = require('./two-factor');
 const { crearServicioRecibos, responderErrorRecibo } = require('./receipt-transactions');
 
 const app = express();
@@ -188,10 +189,11 @@ function configurarTiempoReal(httpServer){
                 return next(new Error('Autenticación requerida.'));
             }
             const verif = await pool.query(
-                `SELECT u.id_usuario, u.rol, u.activo,
+                `SELECT u.id_usuario, u.rol, u.activo, COALESCE(m.version,0) AS mfa_version, COALESCE(m.activo,FALSE) AS mfa_activo,
                         s.id_suministro, s.numero_suministro
                  FROM usuarios u
                  LEFT JOIN suministros s ON s.id_usuario = u.id_usuario
+                 LEFT JOIN usuario_2fa m ON m.id_usuario=u.id_usuario
                  WHERE u.id_usuario = $1
                  LIMIT 1;`,
                 [idUsuario]
@@ -200,6 +202,7 @@ function configurarTiempoReal(httpServer){
                 return next(new Error('Acceso denegado.'));
             }
             const fila = verif.rows[0];
+            if (!permiteSesion(datos, fila)) return next(new Error('Autenticación requerida.'));
             socket.user = {
                 id_usuario: fila.id_usuario,
                 id_suministro: fila.id_suministro,
@@ -475,12 +478,23 @@ function generarTokenAcceso(datos){
             id_usuario: datos.id_usuario,
             id_suministro: datos.id_suministro,
             numero_suministro: datos.numero_suministro,
-            rol: datos.rol
+            rol: datos.rol,
+            token_use: 'access',
+            mfa_version: Number(datos.mfa_version || 0),
+            amr: datos.amr || ['pwd']
         },
         obtenerSecretoAuth(),
         { expiresIn: '8h' }
     );
 }
+
+function respuestaSesion(fila) {
+    return { token: generarTokenAcceso(fila),
+        usuario: { id_usuario: fila.id_usuario, correo: fila.correo, rol: fila.rol },
+        suministro: { id_suministro: fila.id_suministro, numero_suministro: fila.numero_suministro } };
+}
+const dosFactores = crearDosFactores({ pool, verificarClave, emitirSesion: respuestaSesion,
+    cerrarSockets: id => { if (ioTiempoReal) ioTiempoReal.in('usuario:' + Number(id)).disconnectSockets(true); } });
 
 // ==========================================
 // AUTENTICACIÓN POR TOKEN (JWT 8h) + verificación en DB
@@ -522,10 +536,11 @@ async function requiereAuth(req, res, next){
     try {
         // Sin clave_hash, sin foto, sin secretos. Solo estado y rol actual.
         const verif = await pool.query(
-            `SELECT u.id_usuario, u.rol, u.activo,
+            `SELECT u.id_usuario, u.rol, u.activo, COALESCE(m.version,0) AS mfa_version, COALESCE(m.activo,FALSE) AS mfa_activo,
                     s.id_suministro, s.numero_suministro
              FROM usuarios u
              LEFT JOIN suministros s ON s.id_usuario = u.id_usuario
+             LEFT JOIN usuario_2fa m ON m.id_usuario=u.id_usuario
              WHERE u.id_usuario = $1
              LIMIT 1;`,
             [idUsuarioToken]
@@ -539,6 +554,7 @@ async function requiereAuth(req, res, next){
         }
 
         const fila = verif.rows[0];
+        if (!permiteSesion(datosToken, fila)) return res.status(401).json({ estado: 'error', mensaje: 'Inicia sesión nuevamente para verificar tu cuenta.' });
 
         if (fila.activo === false) {
             return res.status(403).json({
@@ -584,6 +600,7 @@ function requiereAdmin(req, res, next){
 // ==========================================
 
 app.post("/api/auth/login", limiteLogin, async (req, res) => {
+    res.set('Cache-Control','no-store');
     try {
         const { numero_suministro, password } = req.body || {};
 
@@ -608,10 +625,13 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
               u.clave_hash,
               u.rol,
               u.activo,
+              COALESCE(m.version,0) AS mfa_version,
+              COALESCE(m.activo,FALSE) AS mfa_activo,
               s.id_suministro,
               s.numero_suministro
             FROM suministros s
             JOIN usuarios u ON u.id_usuario = s.id_usuario
+            LEFT JOIN usuario_2fa m ON m.id_usuario=u.id_usuario
             WHERE s.numero_suministro = $1
             LIMIT 1;
         `;
@@ -641,6 +661,12 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
             });
         }
 
+        if (fila.mfa_activo) {
+            const challenge = await dosFactores.challenge(fila);
+            if (challenge.error) return res.status(challenge.error.status).json({ estado: 'error', mensaje: challenge.error.mensaje });
+            return res.set('Cache-Control','no-store').status(202).json(challenge);
+        }
+
         return res.status(200).json({
             estado: "ok",
             token: generarTokenAcceso(fila),
@@ -656,7 +682,7 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        console.error('Fallo interno de inicio de sesión.');
 
         return res.status(500).json({
             estado: "error",
@@ -716,6 +742,30 @@ registrarRutasCorreo(app, registroCorreo, { registro: limiteRegistro,
 
 
 // ==========================================
+// 2FA: desafíos opacos sin acceso a rutas JWT; operaciones de perfil autenticadas.
+for (const [ruta, action, autenticada] of [
+    ['login', 'login', false], ['setup', 'setup', true], ['confirm', 'confirm', true],
+    ['disable', 'disable', true], ['recovery', 'regenerate', true]
+]) {
+    const handlers = [limitadorGenerico(20, 15)];
+    if (autenticada) handlers.push(requiereAuth);
+    app.post('/api/auth/2fa/' + ruta, ...handlers, async (req, res) => {
+        res.set('Cache-Control','no-store');
+        if (autenticada && req.user.rol !== 'usuario') return res.status(403).json({ estado: 'error', mensaje: 'Acceso denegado.' });
+        try {
+            const result = autenticada ? await dosFactores[action](req.user.id_usuario, req.body || {}) : await dosFactores[action](req.body || {});
+            if (result.error) return res.status(result.error.status).json({ estado: 'error', mensaje: result.error.mensaje });
+            return res.json(result);
+        } catch (_) { return res.status(503).json({ estado: 'error', mensaje: 'No se pudo completar la operación de seguridad. Reintenta más tarde.' }); }
+    });
+}
+app.get('/api/auth/2fa', requiereAuth, async (req, res) => {
+    res.set('Cache-Control','no-store');
+    if (req.user.rol !== 'usuario') return res.status(403).json({ estado: 'error', mensaje: 'Acceso denegado.' });
+    try { return res.json(await dosFactores.status(req.user.id_usuario)); }
+    catch (_) { return res.status(503).json({ estado:'error',mensaje:'No se pudo consultar la seguridad de la cuenta.' }); }
+});
+
 // PERFIL DE USUARIO (solo datos no sensibles)
 // LEGACY: candidata a eliminar. Usar GET /api/me/perfil (JWT).
 // Exige token y aislamiento por suministro.
