@@ -701,7 +701,16 @@ const registroCorreo = crearRegistroCorreo({ pool, key: configCorreo && configCo
     proveedor: configCorreo?.provider || 'resend',
     secreto: configCorreo && configCorreo.secreto, generarClaveHash, verificarClave,
     correoPermitido: process.env.EMAIL_REGISTRATION_ALLOWED_EMAIL || null,
-    altasHabilitadas: process.env.EMAIL_REGISTRATION_ENABLED === '1' });
+    altasHabilitadas: process.env.EMAIL_REGISTRATION_ENABLED === '1',
+    emitirSesion: async ({ id_usuario, numero_suministro }) => {
+        const { rows: [fila] } = await pool.query(`SELECT u.id_usuario,u.correo,u.rol,u.activo,s.id_suministro,s.numero_suministro
+            FROM usuarios u JOIN suministros s ON s.id_usuario=u.id_usuario
+            WHERE u.id_usuario=$1 AND s.numero_suministro=$2`, [id_usuario, numero_suministro]);
+        if (!fila || fila.activo !== true || fila.rol !== 'usuario') return null;
+        return { token: generarTokenAcceso(fila),
+            usuario: { id_usuario: fila.id_usuario, correo: fila.correo, rol: fila.rol },
+            suministro: { id_suministro: fila.id_suministro, numero_suministro: fila.numero_suministro } };
+    } });
 registrarRutasCorreo(app, registroCorreo, { registro: limiteRegistro,
     verificacion: limitadorGenerico(30, 15), reenvio: limitadorGenerico(10, 15), consulta: limitadorGenerico(240, 15) });
 
