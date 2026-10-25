@@ -45,11 +45,11 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
   android('shell','am','start','-n',pkg+'/.MainActivity');await pause(800);
  }
  await nativeSave(p().locator('#pay-list button[data-act="const"]').first(),'native-constancia');
- ok('Constancia pendiente: PDF real guardado por SAF y abierto en visor Android, sin permisos generales de almacenamiento');
+ ok((pilot?'Constancia revisada de ensayo:':'Constancia pendiente:')+' PDF real guardado por SAF y abierto en visor Android, sin permisos generales de almacenamiento');
  await p().evaluate(()=>document.querySelector('#sidebar [data-sec="historial"]').click());await p().locator('#cards [data-act="detail"]').first().click();await nativeSave(p().locator('#btn-pdf'),'native-recibo');
  ok('Recibo profesional: PDF A4 guardado y visualizado en Android con importe y estado originales');
  // UI de demostración conserva la deuda, no un cargo financiero.
- await p().locator('#detail-close').click();await p().locator('#cards [data-act="pay"]').first().click();await p().locator('#pay-confirm').click();await until(()=>p().evaluate(()=>!document.getElementById('pay-success').hidden),'demostración nativa');
+ await p().locator('#detail-close').click();await p().locator('#cards [data-act="pay"]').first().click();if(pilot){await until(()=>p().evaluate(()=>document.getElementById('pay-notice').textContent.includes('no hagas otra transferencia')),'piloto no vuelve a mostrar QR para una declaración existente');assert.equal(await p().locator('input[value="yape_manual"]').isDisabled(),true);assert.equal(await p().locator('#pay-yape-qr').getAttribute('src'),null);ok('Piloto revisado: QR oculto y Yape deshabilitado para evitar una segunda transferencia');}await p().locator('#pay-confirm').click();await until(()=>p().evaluate(()=>!document.getElementById('pay-success').hidden),'demostración nativa');
  assert.equal((await ctx.db.query('SELECT 1 FROM pagos WHERE id_recibo=$1',[id])).rowCount,0);ok('Demostración en Android no crea pago financiero ni modifica el recibo');
  await p().locator('#pay-done').click();await logout();await restart();await until(()=>p().evaluate(()=>!document.getElementById('login-form').hidden),'logout conservado');
  assert.equal(await p().locator('#pay-reference').inputValue(),'');assert.equal(await p().locator('#pay-yape-qr').getAttribute('src'),null);ok('Logout/reapertura limpia sesión, referencia y QR; no restaura datos privados');

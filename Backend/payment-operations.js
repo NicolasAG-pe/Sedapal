@@ -154,7 +154,7 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
   async detail(id,user,admin=false){const r=await get(pool,id,user,admin);return{...r,historial:(await pool.query('SELECT estado,actor_id,motivo,fecha FROM operaciones_pago_historial WHERE operacion_id=$1 ORDER BY id',[id])).rows};},
   async proof(id,user,admin=false){await get(pool,id,user,admin);const{rows:[r]}=await pool.query('SELECT comprobante FROM operaciones_pago WHERE id=$1',[id]);if(!r.comprobante)fail(404,'Comprobante no disponible.');return r.comprobante;},
   async qr(user){if(!config(user).yape_manual)fail(503,'QR no disponible.');try{
-   const p=pilot();if(p)await guard(pool,p,user);
+   const p=pilot();if(p){await guard(pool,p,user);const active=await pool.query("SELECT 1 FROM operaciones_pago WHERE id_recibo=$1 AND entorno='piloto_manual' AND metodo='yape_manual' LIMIT 1",[p.receipt_id]);if(active.rowCount)fail(409,'Ya existe una declaración para este piloto. Consulta el historial; no hagas otra transferencia.');}
    const bytes=pngSeguro(privateFile(env.YAPE_QR_FILE,1048576));
    if(p&&fingerprint(bytes)!==p.qr_hash)fail(503,'El QR cambió. El titular debe revisar la configuración del piloto.');return bytes;
   }catch(e){if(e instanceof ErrorPago)throw e;fail(503,'QR privado no disponible.');}}

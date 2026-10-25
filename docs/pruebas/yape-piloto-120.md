@@ -140,3 +140,22 @@ puerto real y la repetición final pasó 9/9 (8 backend + 1 E2E). El launcher ad
 que el contenedor esté activo y que su puerto actual coincida con el estado privado, para
 no contactar otro servicio por un dato obsoleto. No se cambiaron contraseñas ni destinos
 productivos. Estos 9 casos solapan los conjuntos ya informados.
+
+
+## Protección final contra repetición de la transferencia
+
+Se detectó y corrigió un riesgo: el recibo sigue siendo sintético/Pendiente y antes
+podía volver a mostrar el QR después de declarar una operación. Ahora el servidor
+bloquea su nueva visualización desde la primera declaración del piloto (también tras
+rechazo/cancelación); el cliente ofrece consultar historial y oculta el QR si la
+respuesta se pierde. Reintentar conserva UUID/datos, nunca implica repetir el dinero.
+No puede revocar imágenes ya vistas ni impedir transferencias externas voluntarias.
+Una corrección de referencia rechazada requiere revisión asistida; este piloto no
+ofrece un flujo nuevo para corregirla invitando a transferir otra vez.
+
+Regresión afectada backend/cliente: 12/12 aprobadas; comprobación ampliada del QR tras
+rechazo: 8/8 backend. Android completo repetido: `artifacts/android-session-native-F4owRi/result.json`,
+**9 comprobaciones y 0 errores**, incluyendo QR oculto/Yape deshabilitado al volver a
+abrir el recibo revisado. Conserva revisión por Socket.IO, sesión, constancia y recibo
+renderizados. Estos resultados sustituyen como evidencia final a la ejecución nativa
+anterior de 8 comprobaciones, no se suman. Ningún QR receptor real ni dinero utilizados.

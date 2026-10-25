@@ -33,6 +33,7 @@ test('piloto sintético completo: respuesta perdida, comprobación Admin, Socket
   await a.waitForFunction(()=>document.getElementById('admin-operation-list').textContent.includes('Ensayo sintético revisado manualmente'));
   // Sin reload ni nueva navegación del cliente: actualización entregada por Socket.IO real.
   await p.waitForFunction(()=>document.getElementById('pay-list').textContent.includes('Ensayo sintético revisado manualmente'));
+  await p.evaluate(()=>document.querySelector('#sidebar [data-sec="historial"]').click());await p.locator('#cards [data-act="pay"]').first().click();await p.waitForFunction(()=>document.getElementById('pay-notice').textContent.includes('no hagas otra transferencia'));assert.equal(await p.locator('input[value="yape_manual"]').isDisabled(),true);assert.equal(await p.locator('#pay-yape-qr').getAttribute('src'),null);await p.locator('#pay-cancel').click();await p.evaluate(()=>document.querySelector('#sidebar [data-sec="pagos"]').click());
   await p.screenshot({path:path.join(out,'client-verified-synthetic.png'),fullPage:true});await a.screenshot({path:path.join(out,'admin-verified-synthetic.png'),fullPage:true});
   const download=p.waitForEvent('download');await p.locator('#pay-list [data-act="const"]').first().click();const d=await download;await d.saveAs(path.join(out,'constancia-e2e-sintetica.pdf'));
   const text=execFileSync('pdftotext',[path.join(out,'constancia-e2e-sintetica.pdf'),'-'],{encoding:'utf8'});assert.ok(text.includes('Ensayo sintético'));assert.ok(text.includes('Recepción comprobada'));

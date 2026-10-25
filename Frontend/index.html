@@ -3845,11 +3845,11 @@ async function descargarConstanciaPDF(r, btn){
       const pilotReceiptOk=!paymentPilot||(String(config.recibo_piloto)===String(r.id_recibo)&&Number(config.importe_piloto)===Number(r.monto));
       if(!pilotReceiptOk){document.getElementById('pay-notice').textContent='Este recibo no pertenece al piloto autorizado. No transfieras dinero.';}
       if(config.yape_manual&&pilotReceiptOk){
-        const qr=await conSesion(()=>apiFetch('/api/pagos/yape/qr'),epoch);if(!qr.ok)throw Error('QR no disponible.');
+        const qr=await conSesion(()=>apiFetch('/api/pagos/yape/qr'),epoch);if(!qr.ok){const error=await conSesion(()=>qr.json().catch(()=>null),epoch);throw Error(error?.mensaje||'QR no disponible.');}
         const blob=await conSesion(()=>qr.blob(),epoch);if(payTarget!==r||view!==paymentViewVersion)return;
         clearPaymentQr();paymentQrUrl=URL.createObjectURL(blob);document.getElementById('pay-yape-qr').src=paymentQrUrl;document.getElementById('pay-yape-qr').hidden=false;yape.disabled=false;
       }
-    }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation())return;document.getElementById('pay-notice').textContent='Yape no disponible. Puedes consultar tus recibos o registrar una demostración sin dinero.';}
+    }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation())return;document.getElementById('pay-notice').textContent='Yape no disponible. '+e.message+' Consulta el historial antes de declarar o transferir.';}
   }
   document.querySelectorAll('.pay-opt input').forEach(radio=>radio.addEventListener('change',()=>{
     document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
@@ -3883,7 +3883,7 @@ async function descargarConstanciaPDF(r, btn){
       document.getElementById('pay-success-text').textContent=paymentLabel(data.operacion)+(data.operacion.entorno==='piloto_manual'?'. Recibo sintético: no se ha pagado un servicio de agua. Consulta la comprobación en el historial.':'. El recibo mantiene su deuda; no se ha acreditado dinero real.');
       showPayState('success');showSuccess('Operación registrada. Consulta su verificación en el historial.');
       pagos=await conSesion(()=>cargarPagosDesdeAPI(),epoch);payEstado=pagos.length?'ok':'vacio';renderPagos();
-    }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation()||payTarget!==target||view!==paymentViewVersion)return;showPayState('main');error.textContent=(e.message||'Sin conexión.')+' Si la respuesta se perdió, reintenta con los mismos datos o consulta el historial. No hagas otra transferencia.';}
+    }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation()||payTarget!==target||view!==paymentViewVersion)return;clearPaymentQr();showPayState('main');error.textContent=(e.message||'Sin conexión.')+' Si la respuesta se perdió, reintenta con los mismos datos o consulta el historial. No hagas otra transferencia.';}
     finally{if(epoch===sesionCliente.generation()&&view===paymentViewVersion){btn.dataset.busy='0';btn.disabled=false;btn.removeAttribute('aria-busy');}}
   });
   document.getElementById('pay-constancia').addEventListener('click', ev=>{

@@ -95,6 +95,8 @@ NODE_ENV production, DATABASE_URL o DB_HOST remoto, base sin marcador y cuentas 
    redactado de prueba. No registrar PIN, contraseña, códigos de seguridad/OTP de Yape,
    números completos de cuenta ni información personal innecesaria.
 6. Confirmar la declaración voluntaria. El estado debe ser **Pendiente de comprobación**.
+   Desde la primera declaración, el piloto no vuelve a mostrar el QR, incluso si se
+   rechaza/cancela; evita inducir otra transferencia. Esos estados no devuelven dinero.
    Una respuesta perdida se recupera con el mismo UUID; consultar historial antes de
    repetir. **Nunca repetir una transferencia por un error de conexión de Hidro-Mejora.**
 

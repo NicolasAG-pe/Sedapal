@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## Piloto Yape - evitar una transferencia repetida
+
+- Bloquea volver a mostrar el QR desde la primera declaración, incluso rechazada/cancelada; oculta la imagen ante respuesta incierta e indica consultar historial sin repetir dinero.
+- Regresión afectada: 12/12; backend ampliado: 8/8; Android final: 9 comprobaciones, 0 errores. No hubo transferencias reales.
+
 ## Reproducibilidad de pruebas del piloto
 
 - Las pruebas crean su carpeta local de evidencia en un clon nuevo, sin depender de artefactos anteriores ni copiar archivos privados.

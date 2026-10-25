@@ -33,8 +33,8 @@ test('migración 009 aditiva repetible y simulaciones conservadas sin convertirs
  assert.deepEqual((await ctx.db.query('SELECT row_to_json(o) FROM operaciones_pago o')).rows,previous);
 });
 test('declarada pero no recibida: pendiente, sin evidencia acreditada; rechazo auditable',async()=>{
- const{operacion:o}=await service.create(body(),accounts[0]);assert.equal(o.estado,'pendiente_verificacion');assert.equal(o.piloto_ensayo,true);assert.equal(o.recibido_en,null);assert.equal(o.acreditacion_financiera,false);
- const rejected=await service.review(o.id,{accion:'rechazar',motivo:'No existe recepción en el movimiento receptor'},accounts[1]);assert.equal(rejected.estado,'rechazada');assert.equal(rejected.recibido_en,null);
+ const{operacion:o}=await service.create(body(),accounts[0]);assert.equal(o.estado,'pendiente_verificacion');assert.equal(o.piloto_ensayo,true);assert.equal(o.recibido_en,null);assert.equal(o.acreditacion_financiera,false);await assert.rejects(service.qr(accounts[0]),{status:409});
+ const rejected=await service.review(o.id,{accion:'rechazar',motivo:'No existe recepción en el movimiento receptor'},accounts[1]);assert.equal(rejected.estado,'rechazada');assert.equal(rejected.recibido_en,null);await assert.rejects(service.qr(accounts[0]),{status:409});
 });
 test('referencia, importe, receptor y fecha deben cotejarse; otro usuario no puede confirmar',async()=>{
  const{operacion:o}=await service.create(body(),accounts[0]);
