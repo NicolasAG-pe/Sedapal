@@ -25,6 +25,10 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  if(process.argv.includes('--two-factor')){
   process.env.TOTP_ENCRYPTION_KEY=require('node:crypto').randomBytes(32).toString('base64');process.env.TOTP_ENROLLMENT_ENABLED='1';
  }
+ if(process.argv.includes('--payments')){
+  const{PNG}=require('../../Backend/node_modules/pngjs');const qr=new PNG({width:20,height:20});qr.data.fill(255);
+  process.env.YAPE_QR_FILE=path.join(output,'qr-sintetico.png');fs.writeFileSync(process.env.YAPE_QR_FILE,PNG.sync.write(qr),{mode:0o600});process.env.PAYMENTS_MANUAL_ENABLED='1';
+ }
  const ctx=await iniciar({autoDrain:false});let device,page;
  let sessionRequests=0;
  ctx.httpServer.on('request',req=>{if(req.method==='GET'&&req.url==='/api/auth/session')sessionRequests++;});
@@ -86,6 +90,11 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   android('install','-r',path.join(output,'app/outputs/apk/androidTest/debug/app-debug-androidTest.apk'));
   const instrument=android('shell','am','instrument','-w','-e','class','pe.edu.hidromejora.app.SecureStateInstrumentedTest','-e','hidroSecureFixture','1',pkg+'.test/androidx.test.runner.AndroidJUnitRunner');
   fs.writeFileSync(path.join(output,'instrumentation.txt'),instrument);assert.match(instrument,/OK \(1 test\)/);ok('Android Keystore: clave no exportable, GCM/IV distinto, alteración rechazada y borrado confirmado');
+  if(process.argv.includes('--payments')){
+   android('shell','am','start','-n',pkg+'/.MainActivity');await attach();
+   await require('./android-payments-native.cjs')({ctx,getPage:()=>page,restart,until,ok,screenshot,login,logout,android,output});
+   report.result='passed';return;
+  }
   if(process.argv.includes('--otp')){
    android('shell','am','start','-n',pkg+'/.MainActivity');await attach();
    await require('./android-otp-native.cjs')({ctx,getPage:()=>page,restart,until,ok,screenshot,android,dashboard,logout,noPlainToken});

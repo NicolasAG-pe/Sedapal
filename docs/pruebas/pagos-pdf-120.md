@@ -90,3 +90,122 @@ optativo omitido. Se añadió comprobación explícita del rechazo seguro de la 
 sin UUID. Un fallo anterior de permisos se debió a reutilizar un PNG 0600 creado por el
 contenedor root: el fixture ahora utiliza un directorio nuevo por ejecución, sin relajar
 permisos ni modificar recursos de aplicación.
+
+## Documentos y validación conjunta final
+
+Recibo y constancias conservan marca, logotipo, márgenes A4 y fuentes integradas.
+La constancia muestra UUID de operación/verificación, método, referencia declarada,
+estado, importe PEN, recibo/suministro/período, hora del servidor en America/Lima y
+revisión interna cuando existe. El pie distingue generación en el dispositivo de la
+fecha de registro del servidor. No se estiman impuestos, lecturas ni tarifas.
+Históricos sin evidencia no se convierten en pagos bancarios. Una simulación aprobada
+no se presenta como acreditación comercial. No son comprobantes SEDAPAL/SUNAT.
+No hay QR documental público: falta un servicio de validación seguro; el identificador
+solo se consulta en el historial autenticado, no es una firma digital del PDF.
+
+Cinco ejemplos sintéticos locales (sin versionar) en `output/pdf/pagos-pdf-120-final/`:
+recibo-sintetico, constancia-demostrativa, declaracion-pendiente,
+revision-manual-simulada y proveedor-simulado. Todos de 1 página A4, revisados mediante
+PDFInfo, extracción y render Poppler/Cairo. Los textos largos se probaron por separado
+con paginación, cabeceras y numeración, sin recortar datos. No son PDF/UA etiquetados;
+accesibilidad documental completa pendiente. Generador reproducible en
+`scripts/generate-payment-pdf-examples.cjs`; no sobrescribe archivos existentes.
+
+| Ejecución real | Resultado |
+| --- | --- |
+| Node 22.23.4 + PostgreSQL 18, backend conjunto (pagos, recibos/esquema, OTP-auto-session, Android-session, 2FA/Audit/Admin y outbox API) | 72 aprobadas, 0 fallidas, 1 histórico optativo omitido. |
+| Después de endurecer referencias, conjunto afectado pagos/recibos/esquema | 30 aprobadas, 0 fallidas, el mismo histórico optativo omitido. |
+| Última comprobación de referencias privadas y evidencia del simulador | 9 aprobadas; confirmaciones de referencia concurrentes únicas; 0 pagos financieros y 0 recibos acreditados por operaciones nuevas. |
+| Cliente, configuración, documentos, sesiones, registro, HidroBot y 2FA, con Chromium/API/SQL donde corresponde | 70 aprobadas; no todas son pruebas E2E. |
+| UI pagos tras el último cambio de revisión | 3 aprobadas Chromium móvil/escritorio, API/SQL reales de laboratorio; Socket.IO sustituido en este harness. |
+| PDF final ampliado (incluye datos snake_case y consumo ausente) | 13 aprobadas; solapan las de documentos del conjunto anterior, no se suman como pruebas independientes. |
+| WebView Android 15/API 35 real en AVD independiente hm_110_debug_api35 | 7 comprobaciones aprobadas: 1 instrumentada Keystore + 6 de pagos/PDF/ciclo de vida. |
+| Java 21 / Gradle, :app:testDebugUnitTest y :app:lintDebug | BUILD SUCCESSFUL; 4 JUnit, 0 errores lint y 16 advertencias existentes de recursos/configuración. |
+| Docker final API/Web/Admin en red interna y DB nueva | Imágenes construidas. Health, capabilities, Frontend, Admin y proxy Admin 200; session sin token 401; sin puertos públicos. |
+| npm audit Backend --omit=dev | 0 vulnerabilidades conocidas. No sustituye auditoría de lógica. |
+
+Las repeticiones focalizadas no se suman a los conjuntos anteriores. No quedan fallos
+finales en las comprobaciones ejecutadas. Se conservaron los logs de intentos fallidos:
+expectativa de mensaje antiguo, fixture PNG privado creado como root y primeras
+maquetas PDF de dos páginas (reajustadas para los ejemplos finales).
+
+### Android nativo
+
+Evidencia privada `artifacts/android-session-native-BUNfxk/result.json`: passed,
+7 comprobaciones, 0 errores. Compilación debug e instrumentación separadas; ninguna
+APK release creada. Pérdida de respuesta después de COMMIT, reintento con la misma UUID,
+force-stop, restauración cifrada, historial pendiente, demostración sin acreditar,
+logout/reapertura y PDFs completos guardados por SAF y abiertos en el visor Android.
+Un único Socket.IO real al restaurar; no hubo sustitución de sockets en este harness.
+El QR utilizado fue una imagen sintética de laboratorio sin cuenta receptora; no se
+ensayó una transferencia ni un escaneo bancario. Evidencia sintética de estados del
+simulador: `artifacts/pagos-pdf-120/fixture-IHtRn6/simulation-evidence.json`.
+
+El nuevo PDF se guardó y visualizó realmente en Android. La ampliación final que acepta
+consumo snake_case afecta solo entradas directas del generador y pasó prueba Node/Poppler;
+el cliente nativo sigue usando el adaptador consumoM3 previamente probado.
+
+### Reproducción sin secretos
+
+Requiere Node 22, Docker y PostgreSQL 18. Usar un nombre nuevo si ya existe el contenedor;
+no detener/reemplazar servicios originales. Estos datos son fixtures sintéticos:
+
+```sh
+npm ci
+npm ci --prefix Backend
+docker run -d --name hm-pagos120-pg --label hidro.task=pagos-pdf-120 \
+  -e POSTGRES_USER=hm_fixture -e POSTGRES_PASSWORD=fixture-only-not-production \
+  -e POSTGRES_DB=hm_email_test --tmpfs /var/lib/postgresql \
+  -p 127.0.0.1::5432 postgres:18
+export HIDRO_EMAIL_TEST_DB_PORT="$(docker inspect -f '{{(index (index .NetworkSettings.Ports "5432/tcp") 0).HostPort}}' hm-pagos120-pg)"
+npm run test:payments
+```
+
+Los tests crean bases nuevas aleatorias y no leen `.env`. Nunca sustituir la conexión
+por Neon. Para Chromium instalar herramientas de prueba en la carpeta ignorada:
+
+```sh
+npm install --prefix artifacts/vercel-validation/tools --no-save --no-package-lock playwright@1.56.1
+export PLAYWRIGHT_BROWSERS_PATH="$PWD/artifacts/vercel-validation/browsers"
+artifacts/vercel-validation/tools/node_modules/.bin/playwright install chromium
+npm run test:payments:e2e
+npm run test:documents
+npm run pdf:examples
+```
+
+El generador falla si existe un ejemplo con el mismo nombre; usar otra carpeta como
+argumento para conservarlo. `npm run test:payments:native` exige el AVD dedicado y
+Java 21/SDK descritos en ANDROID.md; instala únicamente un debug de prueba. No se
+conectan teléfonos físicos ni servicios productivos. El runtime generado se devolvió
+a HTTPS público al terminar, sin reconstruir una release.
+
+### Pendientes y controles de publicación
+
+- No hay integración con sandbox oficial: faltan credenciales autorizadas, contrato,
+  autenticación del proveedor y conciliación duradera. Comparativa y costes en
+  `../pagos-proveedores-sandbox.md`; no se contrataron servicios.
+- Cobros reales/Yape receptor real bloqueados por código y esquema. Para dinero real
+  se requiere otro avance revisado: recibos conciliados, operación única acreditable,
+  reembolsos y controles de auditoría; nunca activar solo un flag.
+- Límite de 200 operaciones por consulta. Paginación y búsqueda histórica avanzada
+  están pendientes; Admin prioriza pendientes. Sin conciliación automática programada.
+- Prueba física pendiente: QR receptor autorizado (solo tras autorización de cobros),
+  selección de PNG, TalkBack, red móvil, visor/impresión y ciclo de vida; usar antes un
+  backend HTTPS aislado y datos sintéticos, no cuentas bancarias reales automatizadas.
+- Los controles externos contra rollback inseguro de 2FA siguen pendientes del PR #12.
+  No habilitar funcionalidades reales por completar este avance.
+- 007 y 008 siguen pendientes en producción. No se consultó ni escribió Neon. Antes
+  de una futura actualización: revisión, respaldo/restauración autorizados, comprobar
+  007 y 008 en orden, despliegue explícito y validación progresiva sin cobros habilitados.
+- Si se aplicó un borrador anterior de 008 en una base local desechable, usar una nueva
+  base aislada con el SQL final; no improvisar cambios sobre una base compartida.
+
+Producción, main, feature/seguridad-totp, PR #11/#12, Kubernetes, firma permanente y
+APK 1.1.1/1.1.2 no se modificaron. SHA-256 de esas APK conservadas:
+
+- 1.1.1: `541b4c9d70a52396266358d786032db47c85e99aa2ae4d7ae1bcf5eb28c3bb4b`
+- 1.1.2: `a6b81541a210e79ffb6ec8a38c79b8b1260758ab45c246b81fca45ee4439ed93`
+
+Vercel excluye feature/pagos-pdf-120 en las dos raíces; consultas remotas de despliegues
+posteriores al push: ninguna. Render inspeccionado solo en lectura: autoDeploy no,
+previews off. Sin Release, APK 1.2.0, merge ni publicación productiva.

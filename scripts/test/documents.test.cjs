@@ -26,7 +26,7 @@ test('recibo A4 usa total y consumo registrados, advertencia, correo y fechas, s
 test('constancia usa los datos de pago y el código real para el nombre',()=>{
  const payment={id_recibo:42,periodo:'Octubre 2026',monto:123.45,metodo:'Banca móvil',codigo_operacion:'HM-OPERACION-42',fecha_pago:'2026-10-07T17:00:00Z'};
  const result=inspect(api.payment(payment,receipt,context),'payment');
- for(const value of ['CONSTANCIA DE PAGO','HM-OPERACION-42','Banca móvil','123.45','020726159','cargo bancario'])assert.ok(result.text.includes(value),value);
+ for(const value of ['CONSTANCIA DE OPERACIÓN','HM-OPERACION-42','Banca móvil','123.45','020726159','cargo bancario'])assert.ok(result.text.includes(value),value);
  assert.equal(api.paymentFileName(payment),'Constancia_Pago_HidroMejora_HM-OPERACION-42.pdf');
  assert.throws(()=>api.payment({...payment,codigo_operacion:''},receipt,context),/Código/);
  assert.throws(()=>api.payment({...payment,monto:null},receipt,context),/Importe/);
@@ -49,4 +49,25 @@ test('guardado nativo envía PDF al selector Android y distingue cancelación de
    window.Capacitor.nativePromise=async()=>({saved:false});assert.equal(await api.save(doc,name),false);
    window.Capacitor.isPluginAvailable=()=>false;await assert.rejects(()=>api.save(doc,name),/actualizada/);
  }finally{delete window.Capacitor;}
+});
+
+for(const [state,label]of Object.entries({demostrativa:'CONSTANCIA DEMOSTRATIVA',pendiente_verificacion:'Pendiente de verificación',verificada_manual:'Verificada manualmente',acreditada_proveedor:'Aprobada por proveedor simulado',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'})){
+ test('constancia preserva estado real '+state+' y no atribuye acreditación financiera',()=>{
+  const payment={id:'00000000-0000-4000-8000-000000000042',id_recibo:42,monto:123.45,metodo:state==='demostrativa'?'demostrativo':'yape_manual',estado:state,entorno:'simulado',codigo_operacion:'OPERACION-42',fecha_pago:'2026-10-25T15:00:00Z',referencia:'SIM-DECLARADA-42',revisado_por:900,revisado_en:state==='verificada_manual'?'2026-10-25T15:05:00Z':null};
+  const result=inspect(api.payment(payment,receipt,context),'state-'+state);
+  for(const value of [label,'SIN ACREDITACIÓN FINANCIERA','SIM-DECLARADA-42','00000000-0000-4000-8000-000000000042','America/Lima','SEDAPAL','SUNAT'])assert.ok(result.text.includes(value),value);
+  assert.ok(!result.text.includes('Pago exitoso'));assert.match(result.info,/A4/);
+ });
+}
+test('motivos extensos y referencias largas se conservan sin inventar QR',()=>{
+ const payment={id:'op-fixture',id_recibo:42,monto:123.45,metodo:'yape_manual',estado:'verificada_manual',entorno:'simulado',codigo_operacion:'H'.repeat(100),fecha_pago:'2026-10-25T15:00:00Z',motivo:'Revisión sintética con información extensa. '.repeat(80)};
+ const result=inspect(api.payment(payment,receipt,context),'long-payment');
+ assert.ok(result.text.includes('Revisión sintética'));assert.ok(result.text.includes('No se incluye QR público'));
+ assert.ok(result.text.includes('Página 2 de'));assert.ok(!result.text.includes('https://'));
+});
+
+test('recibo acepta consumo de API sin inferir lecturas ni inventar consumo ausente',()=>{
+ const raw={...receipt,consumoM3:undefined,consumo_m3:'23.50'};
+ const result=inspect(api.receipt(raw,context),'api-receipt');assert.ok(result.text.includes('23.5 m³'));
+ const missing=inspect(api.receipt({...raw,consumo_m3:null},context),'missing-consumption');assert.ok(missing.text.includes('No disponible'));assert.ok(!missing.text.includes('0 m³'));
 });

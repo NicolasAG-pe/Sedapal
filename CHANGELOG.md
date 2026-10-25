@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Desarrollo 1.2.0 - PDF profesionales y validación conjunta
+
+- Recibos y constancias A4 con identidad visual, estado real, referencias, hora de servidor y alcance explícito; sin datos tributarios inventados ni QR de validación inexistente.
+- Genera cinco ejemplos sintéticos locales; pruebas de paginación y consumo ausente.
+- Android emulado: 7 comprobaciones, incluidos Keystore, recuperación, SAF y visor PDF; 4 JUnit, lint sin errores.
+- Documenta proveedores/sandbox, bloqueos comerciales y roadmap maestro; producción y APK anteriores intactas.
+
 ## Desarrollo 1.2.0 - integridad de referencias declaradas
 
 - Una declaración sin verificar no reserva referencias ajenas: aviso de coincidencias y unicidad al confirmar, probada bajo concurrencia.

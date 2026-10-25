@@ -18,7 +18,13 @@ before(async()=>{
  }
  provider=crearProveedorSimulado({secret:crypto.randomBytes(32).toString('hex')});service=crearOperacionesPago({pool:ctx.db,env:process.env,proveedor:provider});
 });
-after(async()=>{if(ctx)await ctx.close();delete process.env.YAPE_QR_FILE;delete process.env.PAYMENTS_MANUAL_ENABLED;});
+after(async()=>{if(ctx){try{
+ const states=(await ctx.db.query('SELECT estado,count(*)::int AS cantidad FROM operaciones_pago GROUP BY estado ORDER BY estado')).rows;
+ const paid=(await ctx.db.query("SELECT count(*)::int AS n FROM recibos r WHERE r.estado='Pagado' AND EXISTS(SELECT 1 FROM operaciones_pago o WHERE o.id_recibo=r.id_recibo)")).rows[0].n;
+ const ledger=(await ctx.db.query('SELECT count(*)::int AS n FROM pagos p WHERE EXISTS(SELECT 1 FROM operaciones_pago o WHERE o.id_recibo=p.id_recibo)')).rows[0].n;
+ const evidence={entorno:'simulado',estados:states,recibos_acreditados:paid,pagos_financieros_por_operaciones:ledger};
+ assert.equal(paid,0);assert.equal(ledger,0);const file=path.join(path.dirname(qrPath),'simulation-evidence.json');fs.writeFileSync(file,JSON.stringify(evidence,null,2),{mode:0o600});console.log('Evidencia sintética: '+path.relative(process.cwd(),file));
+ }finally{await ctx.close();}}delete process.env.YAPE_QR_FILE;delete process.env.PAYMENTS_MANUAL_ENABLED;});
 test('008 aditiva y repetible conserva históricos y no atribuye acreditación bancaria',async()=>{
  const id=await receipt();await ctx.db.query("INSERT INTO pagos(id_recibo,monto,metodo,codigo_operacion) VALUES($1,123.45,'prototipo','HISTORICO')",[id]);
  const before=(await ctx.db.query('SELECT row_to_json(p) AS row FROM pagos p')).rows;await ctx.db.query(sql('migrations/008_operaciones_pago.sql'));await ctx.db.query(sql('migrations/008_operaciones_pago.sql'));

@@ -116,3 +116,21 @@ desafíos y códigos de recuperación no se guardan en Android.
 El QR se muestra transitoriamente para vincular el autenticador; ese autenticador
 necesariamente conserva su propia copia del secreto. Hidro-Mejora no la persiste.
 [Pruebas y requisitos de despliegue](pruebas/seguridad-totp.md).
+
+### Pagos y documentos en desarrollo para futura 1.2.0
+
+La rama `feature/pagos-pdf-120` parte de seguridad TOTP (Draft PR #12) y se revisa
+contra esa rama en Draft PR #13. No cambia versionName/versionCode ni crea una
+release. La APK 1.1.1 y la candidata 1.1.2 se conservan sin sobrescribirlas.
+
+El flujo de pruebas separa demostración, declaración Yape y revisión manual; el
+recibo no pasa a Pagado por una simulación. `npm run test:payments:native` utiliza
+el AVD dedicado, PostgreSQL 18 aislado y un QR sintético. Se comprobó recuperación
+tras respuesta perdida/force-stop, sesión Keystore, logout y guardado/visor de recibo
+y constancia mediante SAF. No son pruebas físicas ni transferencias financieras.
+
+Las APK antiguas conservan login y consultas; el POST demostrativo sin UUID devuelve
+409 explicativo para impedir que su UI anuncie una deuda cancelada. No pueden usar
+la nueva declaración Yape hasta una futura actualización. 007/008 pendientes en
+producción; backend productivo no desplegado desde esta rama. Informe y límites:
+[Pagos/PDF 1.2.0](pruebas/pagos-pdf-120.md), [roadmap](ROADMAP-1.2.0.md).
