@@ -29,7 +29,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   const{PNG}=require('../../Backend/node_modules/pngjs');const qr=new PNG({width:20,height:20});qr.data.fill(255);
   process.env.YAPE_QR_FILE=path.join(output,'qr-sintetico.png');fs.writeFileSync(process.env.YAPE_QR_FILE,PNG.sync.write(qr),{mode:0o600});process.env.PAYMENTS_MANUAL_ENABLED='1';
  }
- const ctx=await iniciar({autoDrain:false});let device,page;
+ const ctx=await iniciar({autoDrain:false,databasePrefix:process.argv.includes('--yape-pilot')?'yape_pilot':'api'});let device,page;
  let sessionRequests=0;
  ctx.httpServer.on('request',req=>{if(req.method==='GET'&&req.url==='/api/auth/session')sessionRequests++;});
  const supplyA='900000711',supplyB='900000712',password=ctx.registro(711).password;

@@ -25,7 +25,8 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
  function config(user){
   let p;try{p=pilot();}catch(_){return{entorno:'cerrado',cobros_reales:false,yape_manual:false,mensaje:'Piloto local bloqueado. Consulta al titular.'};}
   const allowed=!p||String(user?.id_usuario)===String(p.user_id);
-  return{entorno:p?'piloto_manual':'simulado',piloto_ensayo:p?.synthetic??null,cobros_reales:false,yape_manual:enabled()&&!!env.YAPE_QR_FILE&&allowed,
+  if(!allowed)return{entorno:'cerrado',cobros_reales:false,yape_manual:false,mensaje:'Piloto no habilitado para esta cuenta.'};
+  return{recibo_piloto:p?.receipt_id||null,importe_piloto:p?.max_amount||null,entorno:p?'piloto_manual':'simulado',piloto_ensayo:p?.synthetic??null,cobros_reales:false,yape_manual:enabled()&&!!env.YAPE_QR_FILE&&allowed,
    mensaje:p?(p.synthetic?'Ensayo sintético del piloto. No envíes dinero real.':'Piloto voluntario: recibo sintético, no es una deuda de agua. Transferencia externa y comprobación manual; Hidro-Mejora no ejecuta cobros.'):'Pruebas de verificación manual. No transfieras dinero real. Una captura no acredita un pago.'};
  }
  async function tx(fn){const c=await pool.connect();try{await c.query("BEGIN; SET LOCAL lock_timeout='2s'; SET LOCAL statement_timeout='5s'");const r=await fn(c);await c.query('COMMIT');return r;}catch(e){await c.query('ROLLBACK').catch(()=>{});if(e.code==='23505')fail(409,'Ya existe una operación o referencia. Consulta el historial antes de reintentar.');if(['55P03','40P01','40001'].includes(e.code))fail(409,'Otra operación está en curso. Actualiza e intenta nuevamente.');throw e;}finally{c.release();}}
@@ -107,12 +108,12 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
    let received=null;
    if(r.entorno==='piloto_manual'){
     const p=pilot();if(!p)fail(503,'El piloto local está desactivado.');await guard(c,p,user,true,{receipt:r.id_recibo});
-    const bound=(await c.query('SELECT piloto_id,receptor_huella FROM operaciones_pago WHERE id=$1',[id])).rows[0];
-    if(bound.piloto_id!==p.id||bound.receptor_huella!==p.qr_hash)fail(409,'El receptor configurado no coincide con la declaración original.');
+    const bound=(await c.query('SELECT piloto_id,piloto_ensayo,receptor_huella FROM operaciones_pago WHERE id=$1',[id])).rows[0];
+    if(bound.piloto_id!==p.id||bound.piloto_ensayo!==p.synthetic||bound.receptor_huella!==p.qr_hash)fail(409,'El receptor configurado no coincide con la declaración original.');
     if(state==='verificada_manual'){
      const amount=String(body.monto_recibido||'');const reference=String(body.referencia_comprobada||'').normalize('NFKC').trim().toUpperCase().replace(/[ -]/g,'');
      if(!/^\d+\.\d{2}$/.test(amount)||amount!==r.monto||reference!==r.referencia.replace(/[ -]/g,'')||body.receptor_comprobado!==true)fail(400,'Contrasta importe exacto, referencia y receptor en el movimiento recibido.');
-     if(typeof body.recibido_en!=='string'||!/(?:Z|[+-]\d{2}:\d{2})$/.test(body.recibido_en)||!Number.isFinite(Date.parse(body.recibido_en))||Date.parse(body.recibido_en)<Date.parse(p.starts_at)||Date.parse(body.recibido_en)>Date.now())fail(400,'La fecha comprobada debe pertenecer a la ventana del piloto y no estar en el futuro.');
+     if(typeof body.recibido_en!=='string'||!/(?:Z|[+-]\d{2}:\d{2})$/.test(body.recibido_en)||!Number.isFinite(Date.parse(body.recibido_en))||Date.parse(body.recibido_en)<Math.floor(Date.parse(p.starts_at)/60000)*60000||Date.parse(body.recibido_en)>Date.now())fail(400,'La fecha comprobada debe pertenecer a la ventana del piloto y no estar en el futuro.');
      received=body.recibido_en;
     }
    }
@@ -160,5 +161,5 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
 
  };
 }
-function responderErrorPago(res,error){if(!(error instanceof ErrorPago))console.error('Fallo interno de operación de pago.');return res.status(error instanceof ErrorPago?error.status:500).json({mensaje:error instanceof ErrorPago?error.message:'No se pudo procesar la operación.'});}
+function responderErrorPago(res,error){if(!(error instanceof ErrorPago))console.error('Fallo interno de operación de pago.');return res.set('Cache-Control','no-store').status(error instanceof ErrorPago?error.status:500).json({mensaje:error instanceof ErrorPago?error.message:'No se pudo procesar la operación.'});}
 module.exports={crearOperacionesPago,responderErrorPago,pngSeguro};

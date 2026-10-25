@@ -35,3 +35,11 @@ Orden recomendado: cerrar revisión de seguridad y pagos; ensayar sandbox autori
 completar mejoras pendientes por incrementos; probar integración/físico; decidir
 alcance y versión final con el propietario. No activar funciones reales por completar
 una casilla del roadmap.
+
+## Continuación: piloto manual Yape
+
+PR #14 depende del #13. Piloto loopback preparado con QR privado, base nueva, ventana,
+recibo/participantes sintéticos y atestación manual detallada. Ensayo de extremo a extremo
+y Android emulado aprobados, sin transferir dinero. Pendiente actuación voluntaria del
+titular con QR auténtico y comprobación de movimientos; no equivale a pasarela ni activa
+pagos productivos. Guía: [yape-piloto-local.md](yape-piloto-local.md).

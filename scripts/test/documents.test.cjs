@@ -71,3 +71,10 @@ test('recibo acepta consumo de API sin inferir lecturas ni inventar consumo ause
  const result=inspect(api.receipt(raw,context),'api-receipt');assert.ok(result.text.includes('23.5 m³'));
  const missing=inspect(api.receipt({...raw,consumo_m3:null},context),'missing-consumption');assert.ok(missing.text.includes('No disponible'));assert.ok(!missing.text.includes('0 m³'));
 });
+
+test('piloto verificado: recepción y revisión separadas, sin receptor privado ni motivo sensible',()=>{
+ const p={id:'00000000-0000-4000-8000-000000000042',codigo_operacion:'PILOTO-42',id_recibo:42,monto:1,metodo:'yape_manual',entorno:'piloto_manual',piloto_ensayo:false,estado:'verificada_manual',referencia:'REF-SINTETICA',fecha_pago:'2026-10-25T15:00:00Z',recibido_en:'2026-10-25T14:59:00Z',revisado_en:'2026-10-25T15:05:00Z',revisado_por:900,receptor_huella:'PRIVADO-NO-COPIAR',motivo:'DETALLE-PRIVADO-NO-COPIAR'};
+ const r=inspect(api.payment(p,receipt,{...context,example:true}),'pilot-real-template');
+ assert.match(r.text.replace(/\s+/g,' '),/Transferencia verificada manualmente/);for(const v of['Recepción comprobada','Revisión del servidor','REF-SINTETICA','EJEMPLO SINTÉTICO','comprobante oficial de servicio de agua'])assert.ok(r.text.replace(/\s+/g,' ').toLowerCase().includes(v.toLowerCase()),v);for(const v of[p.receptor_huella,p.motivo])assert.ok(!r.text.includes(v));
+ const synthetic=inspect(api.payment({...p,piloto_ensayo:true},receipt,context),'pilot-synthetic');assert.ok(synthetic.text.includes('Ensayo sintético'));assert.ok(!synthetic.text.replace(/\s+/g,' ').includes('Transferencia verificada manualmente'));
+});

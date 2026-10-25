@@ -42,7 +42,12 @@
     "test:payments": "node --test Backend/test/payment-operations.cjs Backend/test/receipt-concurrency.cjs Backend/test/receipt-schema.cjs",
     "test:payments:e2e": "node --test scripts/test/payment-flow.cjs",
     "test:payments:native": "node scripts/test/android-session-native.cjs --payments",
-    "pdf:examples": "node scripts/generate-payment-pdf-examples.cjs"
+    "pdf:examples": "node scripts/generate-payment-pdf-examples.cjs",
+    "yape:pilot": "node scripts/yape-pilot.cjs",
+    "test:yape:pilot": "node --test Backend/test/yape-pilot.cjs",
+    "test:yape:pilot:e2e": "node --test scripts/test/yape-pilot-flow.cjs",
+    "test:yape:pilot:native": "node scripts/test/android-session-native.cjs --payments --yape-pilot",
+    "pdf:yape:example": "node scripts/generate-yape-pilot-pdf.cjs"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",

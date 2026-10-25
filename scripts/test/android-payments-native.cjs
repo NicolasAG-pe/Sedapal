@@ -3,9 +3,18 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('node:child_process');
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,logout,android,output}){
+ const pilot=process.argv.includes('--yape-pilot'),amount=pilot?'1.00':'45.50';
  const p=()=>getPage(),supply='900000741',pkg='pe.edu.hidromejora.app';
  const a=ctx.registro(741),pending=(await ctx.request('register',a,202)).data;await ctx.drain();const verified=(await ctx.request('verify-email',ctx.verificar(pending.registro_id,ctx.codigo(a.correo)),201)).data;
- const id=(await ctx.db.query("INSERT INTO recibos(id_suministro,periodo,fecha_emision,fecha_vencimiento,monto,consumo_m3,estado) VALUES($1,'Prueba Android pagos',CURRENT_DATE,CURRENT_DATE+30,45.50,15,'Pendiente') RETURNING id_recibo",[verified.suministro.id_suministro])).rows[0].id_recibo;
+ const id=(await ctx.db.query("INSERT INTO recibos(id_suministro,periodo,fecha_emision,fecha_vencimiento,monto,consumo_m3,estado) VALUES($1,'Prueba Android pagos',CURRENT_DATE,CURRENT_DATE+30,$2,15,'Pendiente') RETURNING id_recibo",[verified.suministro.id_suministro,amount])).rows[0].id_recibo;
+ let adminToken;
+ if(pilot){
+  const a=ctx.registro(742),q=(await ctx.request('register',a,202)).data;await ctx.drain();const u=(await ctx.request('verify-email',ctx.verificar(q.registro_id,ctx.codigo(a.correo)),201)).data;
+  await ctx.db.query("UPDATE usuarios SET rol='admin' WHERE id_usuario=$1",[u.usuario.id_usuario]);adminToken=(await ctx.request('login',{numero_suministro:a.numero_suministro,password:a.password},200)).data.token;
+  const manifest={version:1,id:require('node:crypto').randomUUID(),user_id:verified.usuario.id_usuario,admin_id:u.usuario.id_usuario,receipt_id:id,synthetic:true,max_amount:amount,starts_at:new Date(Date.now()-60000).toISOString(),expires_at:new Date(Date.now()+3600000).toISOString(),qr_hash:require('../../Backend/yape-pilot').fingerprint(require('../../Backend/payment-operations').pngSeguro(fs.readFileSync(process.env.YAPE_QR_FILE)))};
+  process.env.YAPE_PILOT_CONFIG_FILE=path.join(output,'pilot.json');fs.writeFileSync(process.env.YAPE_PILOT_CONFIG_FILE,JSON.stringify(manifest),{mode:0o600});process.env.YAPE_PILOT_ENABLED='1';
+  await ctx.db.query('INSERT INTO control_piloto_yape(piloto_id,habilitado,ensayo_sintetico,id_recibo,id_usuario,id_admin,qr_hash,monto_maximo,inicio_en,vence_en) VALUES($1,true,true,$2,$3,$4,$5,$6,$7,$8)',[manifest.id,id,manifest.user_id,manifest.admin_id,manifest.qr_hash,amount,manifest.starts_at,manifest.expires_at]);
+ }
  await login(supply);await p().evaluate(()=>document.querySelector('#sidebar [data-sec="historial"]').click());await p().locator('#cards [data-act="pay"]').first().click();
  await until(()=>p().evaluate(()=>!document.querySelector('input[value="yape_manual"]').disabled),'configuración de laboratorio y QR protegido');
  await p().locator('input[value="yape_manual"]').check();await p().locator('#pay-reference').fill('NATIVE-SIM-741');
@@ -17,8 +26,12 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
  assert.equal((await ctx.db.query('SELECT estado FROM recibos WHERE id_recibo=$1',[id])).rows[0].estado,'Pendiente');assert.equal((await ctx.db.query('SELECT 1 FROM pagos WHERE id_recibo=$1',[id])).rowCount,0);
  ok('Yape de laboratorio en WebView: QR privado, importe exacto, respuesta perdida recuperada con una UUID y deuda sin cancelar');screenshot('payment-pending');
  await p().locator('#pay-done').click();await restart();await until(()=>p().evaluate(()=>document.getElementById('view-dashboard').classList.contains('active')),'sesión segura tras force-stop');
- await p().evaluate(()=>document.querySelector('#sidebar [data-sec="pagos"]').click());await until(()=>p().evaluate(()=>document.getElementById('pay-list').textContent.includes('Pendiente de verificación')),'operación recuperada desde servidor');
+ await p().evaluate(()=>document.querySelector('#sidebar [data-sec="pagos"]').click());await until(()=>p().evaluate(()=>document.getElementById('pay-list').textContent.includes('Pendiente de')),'operación recuperada desde servidor');
  ok('Force-stop: sesión cifrada restaurada, historial pendiente recuperado y sin otra declaración');
+ if(pilot){
+  const response=await fetch(ctx.base+'/api/admin/operaciones-pago/'+op[0].id+'/revisar',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken},body:JSON.stringify({accion:'confirmar',motivo:'Ensayo sintético en Android sin dinero',movimiento_comprobado:true,receptor_comprobado:true,monto_recibido:amount,referencia_comprobada:op[0].referencia,recibido_en:new Date(Date.now()-1000).toISOString()})});assert.equal(response.status,200);
+  await until(()=>p().evaluate(()=>document.getElementById('pay-list').textContent.includes('Ensayo sintético revisado manualmente')),'Socket.IO entrega revisión al cliente sin recarga');ok('Piloto sintético: comprobación Admin llega por Socket.IO real sin recarga del cliente');
+ }
  async function nativeSave(button,name){
   const before=android('shell','find','/sdcard/Download','-name','*.pdf').trim().split('\n');await button.click();
   let target;await until(()=>{try{android('shell','uiautomator','dump','/sdcard/hm-payments-window.xml');const xml=android('shell','cat','/sdcard/hm-payments-window.xml');const nodes=[...xml.matchAll(/<node\b[^>]*>/g)].map(x=>Object.fromEntries([...x[0].matchAll(/([\w-]+)="([^"]*)"/g)].map(m=>[m[1],m[2]])));target=nodes.find(n=>/action_menu_save|save_button/.test(n['resource-id']||'')||/^(Save|Guardar)$/i.test(n.text||''));return!!target;}catch(_){return false;}},'selector SAF guardar PDF');
@@ -26,8 +39,8 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
   let file;await until(()=>{file=android('shell','find','/sdcard/Download','-name','*.pdf').trim().split('\n').find(f=>f.endsWith('.pdf')&&!before.includes(f));return!!file&&Number(android('shell','stat','-c','%s',file))>1000;},'PDF guardado');
   android('pull',file,path.join(output,name+'.pdf'));const bytes=fs.readFileSync(path.join(output,name+'.pdf'));assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok(bytes.toString('latin1').includes('%%EOF'));
   await until(()=>/(?:topResumedActivity|mResumedActivity)=.*(?:PdfViewerActivity|Pdf)/.test(android('shell','dumpsys','activity','activities')),'visor PDF Android');
-  const content=execFileSync('pdftotext',[path.join(output,name+'.pdf'),'-'],{encoding:'utf8'});
-  for(const value of ['HIDRO-MEJORA','45.50',name==='native-constancia'?'Pendiente de verificación':'RECIBO DE SERVICIO'])assert.ok(content.includes(value),'Contenido PDF '+value);
+  const content=execFileSync('pdftotext',[path.join(output,name+'.pdf'),'-'],{encoding:'utf8'}).replace(/\s+/g,' ');
+  for(const value of ['HIDRO-MEJORA',amount,name==='native-constancia'?(pilot?'Ensayo sintético revisado manualmente':'Pendiente de verificación'):'RECIBO DE SERVICIO'])assert.ok(content.includes(value),'Contenido PDF '+value);
   await require('./android-pdf-viewer.cjs')({android,until,fileName:path.basename(file),capture:()=>{screenshot(name+'-viewer');return fs.readFileSync(path.join(output,name+'-viewer.png'));}});
   android('shell','am','start','-n',pkg+'/.MainActivity');await pause(800);
  }

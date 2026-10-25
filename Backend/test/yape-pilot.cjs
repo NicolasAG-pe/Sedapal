@@ -23,7 +23,7 @@ test('piloto cerrado por defecto, producción/DB remota rechazadas y QR solo par
  assert.equal(loadPilot({}),null);
  for(const patch of [{NODE_ENV:'production'},{DATABASE_URL:'postgresql://fixture.invalid/db'},{DB_HOST:'db.remote.invalid'},{POSTGRES_DB:'neondb'}])assert.throws(()=>loadPilot({...process.env,...patch}),/aislada/);
  assert.equal((await req('GET','/api/pagos/config',accounts[0].token)).data.entorno,'piloto_manual');
- assert.equal((await req('GET','/api/pagos/config',accounts[2].token)).data.yape_manual,false);
+ const other=(await req('GET','/api/pagos/config',accounts[2].token)).data;assert.equal(other.yape_manual,false);assert.equal(Object.hasOwn(other,'recibo_piloto'),false);
  assert.equal((await fetch(ctx.base+'/api/pagos/yape/qr',{headers:{Authorization:'Bearer '+accounts[0].token}})).status,200);
  assert.equal((await fetch(ctx.base+'/api/pagos/yape/qr',{headers:{Authorization:'Bearer '+accounts[2].token}})).status,503);
 });
@@ -42,6 +42,11 @@ test('referencia, importe, receptor y fecha deben cotejarse; otro usuario no pue
  assert.equal((await req('POST','/api/admin/operaciones-pago/'+o.id+'/revisar',accounts[0].token,decision(o))).status,403);
  await cancel(o);
 });
+test('tipo voluntario exige declaración explícita y no confirma dinero en este ensayo',async()=>{
+ const file=process.env.YAPE_PILOT_CONFIG_FILE;const original=fs.readFileSync(file);fs.writeFileSync(file,JSON.stringify({...p,synthetic:false}));await ctx.db.query('UPDATE control_piloto_yape SET ensayo_sintetico=false');
+ try{await assert.rejects(service.create(body(),accounts[0]),{status:400});const r=await service.create({...body(),declaracion_voluntaria:true},accounts[0]);assert.equal(r.operacion.piloto_ensayo,false);assert.equal(r.operacion.estado,'pendiente_verificacion');await cancel(r.operacion);}
+ finally{fs.writeFileSync(file,original);await ctx.db.query('UPDATE control_piloto_yape SET ensayo_sintetico=true');}
+});
 test('respuesta perdida/repetición conserva UUID y dos confirmaciones concurrentes solo registran una',async()=>{
  const b=body(),first=await service.create(b,accounts[0]),again=await service.create(b,accounts[0]);assert.equal(first.operacion.id,again.operacion.id);assert.equal(again.repetida,true);
  const results=await Promise.allSettled([1,2].map(()=>service.review(first.operacion.id,decision(first.operacion),accounts[1])));
@@ -54,4 +59,24 @@ test('otro recibo, QR alterado, ventana cerrada y confirmación modificada queda
  const original=fs.readFileSync(process.env.YAPE_QR_FILE);fs.writeFileSync(process.env.YAPE_QR_FILE,await QRCode.toBuffer('OTRO RECEPTOR SINTETICO'));await assert.rejects(service.qr(accounts[0]),{status:503});fs.writeFileSync(process.env.YAPE_QR_FILE,original);
  await ctx.db.query('UPDATE control_piloto_yape SET habilitado=false');await assert.rejects(service.qr(accounts[0]),{status:403});await assert.rejects(service.create(body(),accounts[0]),{status:403});
  const id=(await ctx.db.query("SELECT id FROM operaciones_pago WHERE estado='verificada_manual'")).rows[0].id;await assert.rejects(ctx.db.query("UPDATE operaciones_pago SET motivo='Reescrito posteriormente' WHERE id=$1",[id]));
+});
+
+test('upgrade 008 a 009 conserva operaciones/pagos previos y no habilita una base ajena',async()=>{
+ const{nuevaBase}=require('./email-schema.cjs'),{pool:db}=await nuevaBase('pilot_upgrade');
+ try{
+  await db.query(sql('init.sql').split('-- Piloto local:')[0]);
+  const u=(await db.query("INSERT INTO usuarios(correo,clave_hash,rol) VALUES('upgrade@example.invalid','fixture-no-login','usuario') RETURNING id_usuario")).rows[0].id_usuario;
+  const s=(await db.query("INSERT INTO suministros(numero_suministro,id_usuario) VALUES('980000099',$1) RETURNING id_suministro",[u])).rows[0].id_suministro;
+  const r=(await db.query("INSERT INTO recibos(id_suministro,periodo,fecha_emision,fecha_vencimiento,monto,consumo_m3,estado) VALUES($1,'Historia',CURRENT_DATE,CURRENT_DATE,1,0,'Pagado') RETURNING id_recibo",[s])).rows[0].id_recibo;
+  await db.query("INSERT INTO pagos(id_recibo,monto,metodo,codigo_operacion) VALUES($1,1,'Histórico','LEGACY-TEST')",[r]);
+  await db.query("INSERT INTO operaciones_pago(id,solicitud_id,id_usuario,id_recibo,monto,entorno,metodo,estado,payload_hash) VALUES($1,$2,$3,$4,1,'simulado','demostrativo','demostrativa',$5)",[crypto.randomUUID(),crypto.randomUUID(),u,r,'a'.repeat(64)]);
+  const before=(await db.query('SELECT row_to_json(o) AS row FROM operaciones_pago o')).rows[0].row,paid=(await db.query('SELECT row_to_json(p) AS row FROM pagos p')).rows;
+  await db.query(sql('migrations/009_yape_piloto_local.sql'));await db.query(sql('migrations/009_yape_piloto_local.sql'));
+  const after=(await db.query('SELECT row_to_json(o) AS row FROM operaciones_pago o')).rows[0].row;
+  for(const[key,value]of Object.entries(before))assert.deepEqual(after[key],value);
+  for(const key of['piloto_id','piloto_ensayo','receptor_huella','recibido_en','monto_recibido','receptor_comprobado'])assert.equal(after[key],null);
+  assert.deepEqual((await db.query('SELECT row_to_json(p) AS row FROM pagos p')).rows,paid);
+  const admin=(await db.query("INSERT INTO usuarios(correo,clave_hash,rol) VALUES('upgrade-admin@example.invalid','fixture-no-login','admin') RETURNING id_usuario")).rows[0].id_usuario;
+  await assert.rejects(db.query('INSERT INTO control_piloto_yape(piloto_id,ensayo_sintetico,id_recibo,id_usuario,id_admin,qr_hash,monto_maximo,inicio_en,vence_en) VALUES($1,true,$2,$3,$4,$5,1,NOW(),NOW()+INTERVAL \'1 hour\')',[crypto.randomUUID(),r,u,admin,'a'.repeat(64)]),{code:'23514'});
+ }finally{await db.end();}
 });

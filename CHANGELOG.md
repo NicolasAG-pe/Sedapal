@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Piloto Yape 1.2.0 - interfaces, launcher privado y constancia
+
+- Cliente/Admin diferencian ensayo de transferencia voluntaria, con cotejo de importe, referencia, fecha y receptor; recibo sintético sin acreditación de servicio.
+- Launcher loopback independiente crea cuentas sintéticas/DB nueva y guarda archivos 0600 fuera de Git; no ejecuta transferencias.
+- Constancia con recepción/revisión separadas y sin datos del receptor; ejemplo sintético marcado.
+- 52 pruebas conjuntas aprobadas, 1 histórico optativo omitido; 8 comprobaciones Android nativas, con Socket.IO y PDF reales de laboratorio.
+- Guía humana de QR privado y prueba voluntaria; recepción real y prueba física pendientes, sin cambios productivos.
+
 ## Piloto Yape 1.2.0 - barrera local y revisión detallada
 
 - Prepara 009 aditiva: entorno piloto local, marcador privado, ventana, participante/Admin/recibo acotados y datos de recepción contrastados.

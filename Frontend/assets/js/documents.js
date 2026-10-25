@@ -33,7 +33,7 @@
       write('HIDRO-MEJORA',brandX,23,{size:14,color:C.navy,bold:true});write('Gestión de servicios de agua',brandX,29,{size:8,color:C.muted});
       write('PROYECTO UNIVERSITARIO',right,23,{size:7,color:C.muted,align:'right'});line(39);
       write(kind,left,51,{size:18,color:payment?C.green:C.navy,bold:true});
-      write('Documento referencial - sin valor oficial',left,59,{size:8,color:C.muted});y=payment?67:74;
+      write(context.example?'EJEMPLO SINTÉTICO - NO HUBO TRANSFERENCIA':'Documento referencial - sin valor oficial',left,59,{size:8,color:C.muted});y=payment?67:74;
     }
     function ensure(height){if(y+height>bottom){doc.addPage();header();}}
     function section(label){ensure(20);write(label.toUpperCase(),left,y,{size:8,color:accent,bold:true});y+=4;line(y);y+=payment?6:10;}
@@ -86,10 +86,11 @@
   function payment(pago,r,context){
     if(!pago.codigo_operacion)throw Error('Código de operación no disponible.');
     const statuses={demostrativa:'Operación demostrativa',declarada:'Transferencia declarada',pendiente_verificacion:'Pendiente de verificación',verificada_manual:'Verificada manualmente',acreditada_proveedor:'Aprobada por proveedor simulado',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'};
-    const status=statuses[pago.estado]||'Histórico sin verificación financiera';
-    const kind=pago.estado==='verificada_manual'?'CONSTANCIA DE REVISIÓN MANUAL':pago.estado==='acreditada_proveedor'?'CONSTANCIA DE OPERACIÓN SIMULADA':pago.estado==='demostrativa'?'CONSTANCIA DEMOSTRATIVA':'CONSTANCIA DE OPERACIÓN';
+    const pilot=pago.entorno==='piloto_manual',realPilot=pilot&&pago.piloto_ensayo===false;
+    const status=pilot&&pago.estado==='pendiente_verificacion'?'Pendiente de comprobación':pilot&&pago.estado==='verificada_manual'?(realPilot?'Transferencia verificada manualmente':'Ensayo sintético revisado manualmente'):(statuses[pago.estado]||'Histórico sin verificación financiera');
+    const kind=pilot?'CONSTANCIA DE TRANSFERENCIA':pago.estado==='verificada_manual'?'CONSTANCIA DE REVISIÓN MANUAL':pago.estado==='acreditada_proveedor'?'CONSTANCIA DE OPERACIÓN SIMULADA':pago.estado==='demostrativa'?'CONSTANCIA DEMOSTRATIVA':'CONSTANCIA DE OPERACIÓN';
     const pdf=createDocument(kind,context,true);
-    pdf.paymentAmount(pago.monto,'IMPORTE REGISTRADO - SIN ACREDITACIÓN FINANCIERA');
+    pdf.paymentAmount(pago.monto,realPilot&&pago.estado==='verificada_manual'?'IMPORTE COMPROBADO MANUALMENTE - PILOTO LOCAL':'IMPORTE REGISTRADO - SIN ACREDITACIÓN FINANCIERA');
     pdf.columns([['Estado de verificación',status],['Moneda','PEN - soles peruanos']]);
     pdf.row('Operación / verificación',pago.id||pago.codigo_operacion);
     pdf.columns([['Fecha y hora del servidor',pago.fecha_pago?global.HMShared.ui.date(pago.fecha_pago,true)+' (America/Lima)':'No disponible'],['Método registrado',({demostrativo:'Demostración',yape_manual:'Yape - revisión manual',proveedor_simulado:'Proveedor simulado'})[pago.metodo]||pago.metodo]]);
@@ -97,13 +98,15 @@
     pdf.row('Periodo registrado',pago.periodo||r.periodo||r.etiqueta);
     pdf.section('Trazabilidad de la operación');
     pdf.row('Referencia declarada',pago.referencia||'No declarada');
-    pdf.row('Referencia del proveedor',pago.proveedor_id||'Sin confirmación comercial');
+    if(!pilot)pdf.row('Referencia del proveedor',pago.proveedor_id||'Sin confirmación comercial');
+    if(pilot)pdf.row('Recepción comprobada',pago.recibido_en?global.HMShared.ui.date(pago.recibido_en,true)+' (America/Lima)':'No comprobada');
     if(pago.revisado_en){
       pdf.columns([['Revisión del servidor',global.HMShared.ui.date(pago.revisado_en,true)+' (America/Lima)'],['Revisor interno',pago.revisado_por?'Administrador #'+pago.revisado_por:'No disponible']]);
     }
-    if(pago.motivo)pdf.row('Motivo registrado',pago.motivo);
+    if(pago.motivo&&!pilot)pdf.row('Motivo registrado',pago.motivo);
     pdf.section('Alcance de la constancia');
-    pdf.paragraph(pago.estado==='verificada_manual'?'Se registró una revisión manual en un entorno de pruebas. Requiere comprobar por separado el movimiento receptor; una captura no constituye validación automática.':pago.estado==='acreditada_proveedor'?'El proveedor simulado informó una aprobación de prueba. No existe un cargo real ni una acreditación bancaria.':'Esta constancia acredita únicamente el registro de una operación. No demuestra un cargo bancario ni cancela por sí sola la deuda.');
+    pdf.paragraph(pilot?(realPilot&&pago.estado==='verificada_manual'?'El administrador declaró haber comprobado personalmente la recepción de una transferencia externa por Yape. No es una confirmación automática del proveedor ni un pago de servicio de agua.':'Ensayo de piloto o recepción aún no comprobada. No acredita una transferencia real ni el pago de un servicio de agua.'):pago.estado==='verificada_manual'?'Se registró una revisión manual en un entorno de pruebas. Requiere comprobar por separado el movimiento receptor; una captura no constituye validación automática.':pago.estado==='acreditada_proveedor'?'El proveedor simulado informó una aprobación de prueba. No existe un cargo real ni una acreditación bancaria.':'Esta constancia acredita únicamente el registro de una operación. No demuestra un cargo bancario ni cancela por sí sola la deuda.');
+    if(pilot)pdf.paragraph('Recibo y suministro sintéticos del piloto. Sin datos de la cuenta receptora. No constituye un comprobante oficial de servicio de agua.');
     pdf.paragraph('Entorno: '+(pago.entorno||'histórico, origen financiero no verificado')+'. Sin valor tributario. No es un comprobante oficial de SEDAPAL ni de SUNAT.');
     pdf.paragraph('Consulta el historial autenticado en Hidro-Mejora. No se incluye QR público: todavía no existe un servicio de validación documental público y seguro.');
     return pdf.finish();

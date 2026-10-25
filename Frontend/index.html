@@ -721,11 +721,12 @@
         <p id="pay-notice" class="pay-note" role="status">No se realizan cobros financieros. La confirmación de Yape no es automática.</p>
         <div id="pay-yape-fields" hidden>
           <img id="pay-yape-qr" alt="QR receptor de pruebas autorizado" width="200" height="200" hidden />
-          <p>No transfieras dinero real. Un administrador debe comprobar la recepción por separado; una captura no confirma un pago.</p>
+          <p id="pay-yape-guidance">No transfieras dinero real. Un administrador debe comprobar la recepción por separado; una captura no confirma un pago.</p>
           <label for="pay-reference">Referencia declarada</label>
           <input id="pay-reference" maxlength="100" autocomplete="off" aria-describedby="pay-feedback" placeholder="Referencia de la operación de prueba" />
           <label for="pay-proof">Comprobante opcional (PNG, máximo 1 MB)</label>
           <input id="pay-proof" type="file" accept="image/png" aria-describedby="pay-feedback" />
+          <label id="pay-voluntary-label" hidden><input id="pay-voluntary" type="checkbox" /> Declaro voluntariamente una transferencia externa entre cuentas autorizadas para este piloto; no estoy pagando una deuda oficial de agua.</label>
         </div>
         <p id="pay-feedback" role="alert" aria-live="polite"></p>
         <div class="dialog-actions">
@@ -1112,7 +1113,7 @@
   }
   function limpiarDatosCliente(){
     interfaz2fa.clear();
-    paymentRequests.clear();clearPaymentQr();paymentViewVersion++;
+    paymentRequests.clear();clearPaymentQr();paymentViewVersion++;paymentPilot=false;paymentPilotSynthetic=true;
     window.HMClientHome.clear();
     recibos=[]; incidencias=[]; pagos=[]; cortes=[]; cortesGeneral=[];
     misSolicitudes=[]; notificaciones=[]; notifCargando=null;
@@ -3814,8 +3815,9 @@ async function descargarConstanciaPDF(r, btn){
   const paymentRequests = new Map();
   let paymentQrUrl = null;
   let paymentViewVersion=0;
+  let paymentPilot=false,paymentPilotSynthetic=true;
   function clearPaymentQr(){if(paymentQrUrl)URL.revokeObjectURL(paymentQrUrl);paymentQrUrl=null;const img=document.getElementById('pay-yape-qr');img.hidden=true;img.removeAttribute('src');}
-  function paymentLabel(p){return ({demostrativa:'Demostrativa',declarada:'Transferencia declarada',pendiente_verificacion:'Pendiente de verificación',verificada_manual:'Revisada manualmente (prueba)',acreditada_proveedor:'Aprobada por simulador',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'})[p.estado] || 'Histórico sin verificación financiera';}
+  function paymentLabel(p){if(p.entorno==='piloto_manual'){if(p.estado==='pendiente_verificacion')return 'Pendiente de comprobación';if(p.estado==='verificada_manual')return p.piloto_ensayo?'Ensayo sintético revisado manualmente':'Transferencia verificada manualmente';}return ({demostrativa:'Demostrativa',declarada:'Transferencia declarada',pendiente_verificacion:'Pendiente de verificación',verificada_manual:'Revisada manualmente (prueba)',acreditada_proveedor:'Aprobada por simulador',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'})[p.estado] || 'Histórico sin verificación financiera';}
   function showPayState(s){
     document.getElementById('pay-main').hidden=s!=='main';
     document.getElementById('pay-processing').hidden=s!=='processing';
@@ -3823,7 +3825,7 @@ async function descargarConstanciaPDF(r, btn){
   }
   async function abrirPago(r,opener){
     if(!r||!reciboPagable(r)){showToast('Este recibo no admite otra operación.');return;}
-    const epoch=sesionCliente.generation(),view=++paymentViewVersion;payTarget=r;clearPaymentQr();
+    const epoch=sesionCliente.generation(),view=++paymentViewVersion;payTarget=r;clearPaymentQr();paymentPilot=false;paymentPilotSynthetic=true;document.getElementById('pay-voluntary').checked=false;document.getElementById('pay-voluntary-label').hidden=true;
     document.getElementById('pay-reference').value='';document.getElementById('pay-proof').value='';
     document.querySelector('input[name="pay-method"][value="demostrativo"]').checked=true;
     document.getElementById('pay-yape-fields').hidden=true;document.getElementById('pay-feedback').textContent='';
@@ -3836,8 +3838,13 @@ async function descargarConstanciaPDF(r, btn){
       const res=await conSesion(()=>apiFetch('/api/pagos/config'),epoch);
       if(!res.ok)throw Error('Configuración no disponible.');const config=await conSesion(()=>res.json(),epoch);
       if(payTarget!==r||view!==paymentViewVersion)return;
+      paymentPilot=config.entorno==='piloto_manual';paymentPilotSynthetic=config.piloto_ensayo!==false;
       document.getElementById('pay-notice').textContent=config.mensaje;
-      if(config.yape_manual){
+      document.getElementById('pay-title').textContent=paymentPilot?'Piloto Yape: declarar transferencia':'Registrar operación';document.querySelector('#pay-modal .pay-amount span').textContent=paymentPilot?'Importe voluntario del piloto, sin deuda oficial':'Importe del recibo';
+      document.getElementById('pay-yape-guidance').textContent=paymentPilot&&!paymentPilotSynthetic?'La transferencia la realizas voluntariamente fuera de Hidro-Mejora. Revisa el destinatario en Yape antes de enviar. Un administrador debe comprobar la recepción; una captura no acredita dinero.':'No transfieras dinero real. Un administrador debe comprobar por separado el movimiento de prueba; una captura no confirma un pago.';
+      const pilotReceiptOk=!paymentPilot||(String(config.recibo_piloto)===String(r.id_recibo)&&Number(config.importe_piloto)===Number(r.monto));
+      if(!pilotReceiptOk){document.getElementById('pay-notice').textContent='Este recibo no pertenece al piloto autorizado. No transfieras dinero.';}
+      if(config.yape_manual&&pilotReceiptOk){
         const qr=await conSesion(()=>apiFetch('/api/pagos/yape/qr'),epoch);if(!qr.ok)throw Error('QR no disponible.');
         const blob=await conSesion(()=>qr.blob(),epoch);if(payTarget!==r||view!==paymentViewVersion)return;
         clearPaymentQr();paymentQrUrl=URL.createObjectURL(blob);document.getElementById('pay-yape-qr').src=paymentQrUrl;document.getElementById('pay-yape-qr').hidden=false;yape.disabled=false;
@@ -3847,6 +3854,7 @@ async function descargarConstanciaPDF(r, btn){
   document.querySelectorAll('.pay-opt input').forEach(radio=>radio.addEventListener('change',()=>{
     document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
     const manual=document.querySelector('input[name="pay-method"]:checked').value==='yape_manual';
+    document.getElementById('pay-voluntary-label').hidden=!(manual&&paymentPilot&&!paymentPilotSynthetic);
     document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual?'Enviar a verificación':'Registrar demostración';
   }));
   document.getElementById('pay-confirm').addEventListener('click',async ev=>{
@@ -3854,6 +3862,7 @@ async function descargarConstanciaPDF(r, btn){
     if(!target||btn.dataset.busy==='1')return;
     const method=document.querySelector('input[name="pay-method"]:checked').value,reference=document.getElementById('pay-reference').value.trim();
     const error=document.getElementById('pay-feedback');error.textContent='';
+    if(method==='yape_manual'&&paymentPilot&&!paymentPilotSynthetic&&!document.getElementById('pay-voluntary').checked){error.textContent='Confirma que declaras voluntariamente una transferencia externa de este piloto.';return;}
     if(method==='yape_manual'&&!/^[A-Za-z0-9 -]{4,100}$/.test(reference)){error.textContent='Escribe una referencia de 4 a 100 caracteres.';document.getElementById('pay-reference').focus();return;}
     const file=document.getElementById('pay-proof').files[0];
     if(method==='yape_manual'&&file&&(file.type!=='image/png'||file.size>1048576)){error.textContent='El comprobante debe ser PNG y pesar como máximo 1 MB.';return;}
@@ -3865,13 +3874,13 @@ async function descargarConstanciaPDF(r, btn){
       if(pending&&pending.fingerprint!==fingerprint)throw Error('Hay una solicitud sin confirmar. Consulta el historial antes de cambiar los datos.');
       if(!pending){pending={fingerprint,id:crypto.randomUUID()};paymentRequests.set(String(target.id_recibo),pending);}
       showPayState('processing');
-      const res=await conSesion(()=>apiFetch('/api/me/operaciones-pago',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id_recibo:Number(target.id_recibo),metodo:method,solicitud_id:pending.id,referencia:reference,...(proof?{comprobante:proof}:{})})}),epoch);
+      const res=await conSesion(()=>apiFetch('/api/me/operaciones-pago',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id_recibo:Number(target.id_recibo),metodo:method,solicitud_id:pending.id,referencia:reference,declaracion_voluntaria:document.getElementById('pay-voluntary').checked,...(proof?{comprobante:proof}:{})})}),epoch);
       const data=await conSesion(()=>res.json(),epoch);
       if(!res.ok){if(res.status>=400&&res.status<500)paymentRequests.delete(String(target.id_recibo));throw Error(data.mensaje||'No se pudo registrar.');}
       paymentRequests.delete(String(target.id_recibo));if(payTarget!==target||view!==paymentViewVersion)return;target.operacion_id=data.operacion.id;
       document.getElementById('pay-reference').value='';document.getElementById('pay-proof').value='';clearPaymentQr();
       document.getElementById('pay-code').textContent=data.operacion.codigo_operacion;
-      document.getElementById('pay-success-text').textContent=paymentLabel(data.operacion)+'. El recibo mantiene su deuda; no se ha acreditado dinero real.';
+      document.getElementById('pay-success-text').textContent=paymentLabel(data.operacion)+(data.operacion.entorno==='piloto_manual'?'. Recibo sintético: no se ha pagado un servicio de agua. Consulta la comprobación en el historial.':'. El recibo mantiene su deuda; no se ha acreditado dinero real.');
       showPayState('success');showSuccess('Operación registrada. Consulta su verificación en el historial.');
       pagos=await conSesion(()=>cargarPagosDesdeAPI(),epoch);payEstado=pagos.length?'ok':'vacio';renderPagos();
     }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation()||payTarget!==target||view!==paymentViewVersion)return;showPayState('main');error.textContent=(e.message||'Sin conexión.')+' Si la respuesta se perdió, reintenta con los mismos datos o consulta el historial. No hagas otra transferencia.';}
@@ -5018,7 +5027,7 @@ async function descargarConstanciaPDF(r, btn){
   }
   function mostrarLogin(){
     interfaz2fa.clear();
-    paymentRequests.clear();clearPaymentQr();paymentViewVersion++;
+    paymentRequests.clear();clearPaymentQr();paymentViewVersion++;paymentPilot=false;paymentPilotSynthetic=true;
     verifyForm.hidden = true;
     regForm.hidden = true;
     authToLogin.hidden = true;

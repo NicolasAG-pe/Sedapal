@@ -15,8 +15,10 @@ function loadPilot(env=process.env){
  return p;
 }
 async function guardPilot(c,p,user,admin=false,{active=true,receipt}={}){
- const{rows:[r]}=await c.query(`SELECT current_database() AS db,p.* FROM control_piloto_yape p WHERE singleton=true AND piloto_id=$1 FOR SHARE`,[p.id]);
+ const{rows:[r]}=await c.query(`SELECT current_database() AS db,p.*,r.monto AS recibo_monto,r.estado AS recibo_estado,s.id_usuario AS propietario FROM control_piloto_yape p JOIN recibos r ON r.id_recibo=p.id_recibo JOIN suministros s ON s.id_suministro=r.id_suministro WHERE singleton=true AND piloto_id=$1 FOR SHARE OF p`,[p.id]);
  if(!r||!databasePattern.test(r.db)||String(r.id_usuario)!==String(p.user_id)||String(r.id_admin)!==String(p.admin_id)||String(r.id_recibo)!==String(p.receipt_id)||r.qr_hash!==p.qr_hash||r.ensayo_sintetico!==p.synthetic||r.monto_maximo!==p.max_amount||r.inicio_en.toISOString()!==p.starts_at||r.vence_en.toISOString()!==p.expires_at||String(user.id_usuario)!==String(admin?p.admin_id:p.user_id)||(receipt&&String(receipt)!==String(p.receipt_id)))throw Error('El piloto no corresponde a esta cuenta o recibo.');
+ if(r.recibo_monto!==p.max_amount||String(r.propietario)!==String(p.user_id)||['Anulado','Pagado'].includes(r.recibo_estado))throw Error('Recibo del piloto cambiado.');
+ const{rows:[actor]}=await c.query('SELECT rol,activo FROM usuarios WHERE id_usuario=$1',[user.id_usuario]);if(!actor?.activo||actor.rol!==(admin?'admin':'usuario'))throw Error('Cuenta de piloto no habilitada para ese rol.');
  if(active&&(!r.habilitado||Date.now()<Date.parse(p.starts_at)||Date.now()>=Date.parse(p.expires_at)))throw Error('Ventana de piloto cerrada.');
  return r;
 }
