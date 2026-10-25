@@ -15,6 +15,7 @@ const publicColumns=`o.id,o.id AS codigo_operacion,o.id_recibo,o.monto,o.moneda,
  o.creado_en AS fecha_pago,o.actualizado_en,o.revisado_por,o.revisado_en,o.motivo,o.proveedor_id,
  (o.comprobante IS NOT NULL) AS tiene_comprobante,r.periodo,s.numero_suministro,
  false AS acreditacion_financiera`;
+const duplicateColumn=admin=>admin?`EXISTS(SELECT 1 FROM operaciones_pago otra WHERE otra.referencia_hash=o.referencia_hash AND otra.id<>o.id) AS referencia_repetida`:'false AS referencia_repetida';
 function crearOperacionesPago({pool,env=process.env,proveedor=null}){
  const enabled=()=>env.PAYMENTS_MANUAL_ENABLED==='1'&&env.NODE_ENV!=='production';
  const config=()=>({entorno:'simulado',cobros_reales:false,yape_manual:enabled()&&!!env.YAPE_QR_FILE,
@@ -23,7 +24,7 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
  async function audit(c,id,estado,actor,motivo){await c.query('INSERT INTO operaciones_pago_historial(operacion_id,estado,actor_id,motivo) VALUES($1,$2,$3,$4)',[id,estado,actor,motivo]);}
  async function get(c,id,user,admin=false){
   if(!uuid(id))fail(404,'Operación no encontrada.');
-  const{rows:[r]}=await c.query(`SELECT ${publicColumns} FROM operaciones_pago o JOIN recibos r USING(id_recibo)
+  const{rows:[r]}=await c.query(`SELECT ${publicColumns},${duplicateColumn(admin)} FROM operaciones_pago o JOIN recibos r USING(id_recibo)
    JOIN suministros s USING(id_suministro) WHERE o.id=$1 AND ($2::boolean OR (s.id_usuario=$3 AND s.id_suministro=$4))`,[id,admin,user.id_usuario,user.id_suministro||null]);
   if(!r)fail(404,'Operación no encontrada.');return r;
  }
@@ -44,7 +45,7 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
   let reference=null,proof=null;
   if(method==='yape_manual'){
    reference=String(body.referencia||'').normalize('NFKC').trim().toUpperCase();
-   if(!/^[A-Z0-9 -]{4,100}$/.test(reference))fail(400,'Referencia: entre 4 y 100 letras, números, espacios o guiones.');
+   if(!/^[A-Z0-9 -]{4,100}$/.test(reference)||reference.replace(/[ -]/g,'').length<4)fail(400,'Referencia: entre 4 y 100 letras, números, espacios o guiones.');
    if(body.comprobante!==undefined&&body.comprobante!==null&&body.comprobante!==''){
     if(typeof body.comprobante!=='string'||!/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/.test(body.comprobante)||body.comprobante.length>1400000)fail(400,'Adjunta un PNG de hasta 1 MB.');
     proof=pngSeguro(Buffer.from(body.comprobante.split(',')[1],'base64'));
@@ -60,10 +61,11 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
    const{rows:[previous]}=await c.query('SELECT id,payload_hash FROM operaciones_pago WHERE id_usuario=$1 AND solicitud_id=$2',[user.id_usuario,key]);
    if(previous){if(previous.payload_hash!==payloadHash)fail(409,'La solicitud ya se utilizó con otros datos.');return{operacion:await get(c,previous.id,user),repetida:true};}
    if(['Anulado','Pagado'].includes(r.estado)||(await c.query('SELECT 1 FROM pagos WHERE id_recibo=$1',[id])).rowCount)fail(409,'El recibo no admite otra operación.');
+   if((await c.query('SELECT 1 FROM recibos WHERE id_suministro=$1 AND periodo=$2 AND id_recibo<>$3 LIMIT 1',[r.id_suministro,r.periodo,id])).rowCount)fail(409,'El histórico requiere conciliación antes de registrar otra operación.');
    if(Number(r.monto)<=0)fail(409,'Importe no válido para esta operación.');
    const state=method==='demostrativo'?'demostrativa':'declarada';
    await c.query(`INSERT INTO operaciones_pago(id,solicitud_id,id_usuario,id_recibo,monto,entorno,metodo,estado,referencia,referencia_hash,payload_hash,comprobante,comprobante_hash)
-    VALUES($1,$2,$3,$4,$5,'simulado',$6,$7,$8,$9,$10,$11,$12)`,[opid,key,user.id_usuario,id,r.monto,method,state,reference,reference?digest('simulado:yape:'+reference):null,payloadHash,proof,proof?digest(proof):null]);
+    VALUES($1,$2,$3,$4,$5,'simulado',$6,$7,$8,$9,$10,$11,$12)`,[opid,key,user.id_usuario,id,r.monto,method,state,reference,reference?digest('simulado:yape:'+reference.replace(/[ -]/g,'')):null,payloadHash,proof,proof?digest(proof):null]);
    await audit(c,opid,state,user.id_usuario,method==='demostrativo'?'Operación demostrativa sin acreditación financiera':'Transferencia declarada; recepción sin comprobar');
    if(state==='declarada'){
     await c.query("UPDATE operaciones_pago SET estado='pendiente_verificacion',actualizado_en=clock_timestamp() WHERE id=$1",[opid]);
@@ -78,8 +80,8 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
   });
  }
  async function list(user,admin=false){
-  const{rows}=await pool.query(`SELECT ${publicColumns} FROM operaciones_pago o JOIN recibos r USING(id_recibo) JOIN suministros s USING(id_suministro)
-   WHERE ($1::boolean OR (s.id_usuario=$2 AND s.id_suministro=$3)) ORDER BY o.creado_en DESC,o.id DESC LIMIT 200`,[admin,user.id_usuario,user.id_suministro||null]);return rows;
+  const{rows}=await pool.query(`SELECT ${publicColumns},${duplicateColumn(admin)} FROM operaciones_pago o JOIN recibos r USING(id_recibo) JOIN suministros s USING(id_suministro)
+   WHERE ($1::boolean OR (s.id_usuario=$2 AND s.id_suministro=$3)) ORDER BY CASE WHEN $1 AND o.estado='pendiente_verificacion' THEN 0 ELSE 1 END,o.creado_en DESC,o.id DESC LIMIT 200`,[admin,user.id_usuario,user.id_suministro||null]);return rows;
  }
  async function review(id,body,user){
   if(!enabled())fail(503,'Revisión de pruebas deshabilitada.');

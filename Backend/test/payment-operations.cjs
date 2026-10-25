@@ -8,7 +8,7 @@ async function receipt(n=++seq){return(await ctx.db.query("INSERT INTO recibos(i
 const body=(id,more={})=>({id_recibo:id,metodo:'yape_manual',solicitud_id:crypto.randomUUID(),referencia:'SIM-'+crypto.randomUUID(),...more});
 before(async()=>{
  process.env.PAYMENTS_MANUAL_ENABLED='1';ctx=await iniciar();
- qrPath=path.resolve('artifacts/pagos-pdf-120/qr-fixture.png');fs.mkdirSync(path.dirname(qrPath),{recursive:true});
+ fs.mkdirSync(path.resolve('artifacts/pagos-pdf-120'),{recursive:true});qrPath=path.join(fs.mkdtempSync(path.resolve('artifacts/pagos-pdf-120/fixture-')),'qr-fixture.png');
  const png=new PNG({width:2,height:2});png.data.fill(255);fs.writeFileSync(qrPath,PNG.sync.write(png),{mode:0o600});process.env.YAPE_QR_FILE=qrPath;
  for(let n=0;n<3;n++){
   const a=ctx.registro(7000+n),pending=(await ctx.request('register',a,202)).data,u=(await ctx.request('verify-email',ctx.verificar(pending.registro_id,ctx.codigo(a.correo)),201)).data;
@@ -26,7 +26,7 @@ test('008 aditiva y repetible conserva históricos y no atribuye acreditación b
  await assert.rejects(service.create(body(id),users[0]),{status:409});
 });
 test('demostración no inserta pagos ni marca recibo Pagado; UUID recupera una respuesta perdida',async()=>{
- const id=await receipt(),b=body(id,{metodo:'demostrativo'});const first=await req('POST','/api/me/operaciones-pago',users[0].token,b);assert.equal(first.status,201);assert.equal(first.data.operacion.estado,'demostrativa');assert.equal(first.data.operacion.acreditacion_financiera,false);
+ const id=await receipt(),b=body(id,{metodo:'demostrativo'});assert.equal((await req('POST','/api/pagos',users[0].token,{id_recibo:id,metodo:'Tarjeta'})).status,409);const first=await req('POST','/api/me/operaciones-pago',users[0].token,b);assert.equal(first.status,201);assert.equal(first.data.operacion.estado,'demostrativa');assert.equal(first.data.operacion.acreditacion_financiera,false);
  const again=await req('POST','/api/me/operaciones-pago',users[0].token,b);assert.equal(again.status,200);assert.equal(again.data.operacion.id,first.data.operacion.id);
  assert.equal((await ctx.db.query('SELECT estado FROM recibos WHERE id_recibo=$1',[id])).rows[0].estado,'Pendiente');assert.equal((await ctx.db.query('SELECT * FROM pagos WHERE id_recibo=$1',[id])).rowCount,0);
  assert.equal((await req('POST','/api/me/operaciones-pago',users[0].token,{...b,metodo:'yape_manual'})).status,409);
@@ -57,7 +57,10 @@ test('revisión exige movimiento independiente y motivo; decisiones concurrentes
 test('idempotencia, doble declaración y referencias repetidas bajo concurrencia',async()=>{
  const id=await receipt(),b=body(id);const results=await Promise.all([service.create(b,users[0]),service.create(b,users[0])]);assert.equal(results[0].operacion.id,results[1].operacion.id);
  await assert.rejects(service.create(body(id),users[0]),{status:409});
- await assert.rejects(service.create(body(await receipt(),{referencia:b.referencia.toLowerCase()}),users[0]),{status:409});
+ const other=await service.create(body(await receipt(),{referencia:b.referencia.toLowerCase()}),users[0]);assert.equal(other.operacion.referencia_repetida,false);assert.equal((await service.detail(other.operacion.id,users[2],true)).referencia_repetida,true);
+ const separated=await service.create(body(await receipt(),{referencia:b.referencia.replace(/-/g,' ')}),users[0]);assert.equal((await service.detail(separated.operacion.id,users[2],true)).referencia_repetida,true);
+ const decision={accion:'confirmar',motivo:'Movimiento sintético conciliado por referencia',movimiento_comprobado:true};
+ const reviews=await Promise.allSettled([service.review(other.operacion.id,decision,users[2]),service.review(separated.operacion.id,decision,users[2])]);assert.equal(reviews.filter(r=>r.status==='fulfilled').length,1);assert.equal(reviews.find(r=>r.status==='rejected').reason.status,409);
  await service.cancel(results[0].operacion.id,users[0]);assert.equal((await service.get(results[0].operacion.id,users[0])).estado,'cancelada');
  await service.create(body(id),users[0]);
 });
@@ -69,6 +72,7 @@ test('configuración cerrada en producción, QR privado, imágenes y sin acredit
  const id=await receipt(),closed=crearOperacionesPago({pool:ctx.db,env:{NODE_ENV:'production',PAYMENTS_MANUAL_ENABLED:'1',YAPE_QR_FILE:qrPath}});assert.equal(closed.config().yape_manual,false);assert.equal(closed.config().cobros_reales,false);
  await assert.rejects(closed.create(body(id),users[0]),{status:503});
  await assert.rejects(service.create(body(id,{comprobante:'data:image/svg+xml;base64,AAAA'}),users[0]),{status:400});
+ await assert.rejects(service.create(body(id,{referencia:'----'}),users[0]),{status:400});
  assert.throws(()=>pngSeguro(Buffer.from('invalid')),/PNG/);
  const r=await service.create(body(id,{estado:'acreditada_proveedor',monto:0.01,revisado_por:users[2].id_usuario}),users[0]);assert.equal(r.operacion.estado,'pendiente_verificacion');assert.equal(r.operacion.monto,'123.45');
  assert.ok(!JSON.stringify(r).includes('comprobante_hash'));

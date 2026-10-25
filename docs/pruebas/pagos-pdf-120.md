@@ -29,7 +29,7 @@ importe, actor ni fecha desde el cliente. Motivo, administrador y fecha se audit
 
 - UUID por usuario y hash del contenido: repetir recupera el mismo resultado; cambiar
   contenido devuelve conflicto. Una sola operación activa por recibo y referencia
-  normalizada única. Locks suministro -> recibo -> operación, transacción y timeouts.
+  normalizada única al verificarla. Las declaraciones duplicadas se advierten: una persona no puede reservar una referencia ajena sin prueba. Locks suministro -> recibo -> operación, transacción y timeouts.
 - Verificación manual exige motivo y declaración explícita de revisión del movimiento
   independiente. El comprobante nunca aprueba automáticamente; no autorrevisión.
 - PNG opcional hasta 1 MB / 2048 px, límites antes de decodificar, CRC y recodificación
@@ -74,3 +74,19 @@ Los eventos Socket.IO existentes actualizan propietario y Admin; no se emiten im
 3 pruebas Chromium/API/PostgreSQL aprobadas en Node 22.23.4: pérdida de respuesta y
 recuperación de la misma UUID, revisión Admin y logout sin imágenes ni referencias.
 Chromium móvil no equivale a Android nativo; este se informa por separado.
+
+## Revisión adicional de referencias
+
+Se corrigió un riesgo del primer diseño: hacer única globalmente una referencia
+meramente declarada permitiría reservar una referencia ajena sin demostrar titularidad.
+Ahora se normalizan espacios/guiones, se avisa al revisor de las coincidencias y la
+unicidad se exige al confirmar manualmente. Dos confirmaciones concurrentes de la misma
+referencia no pueden aprobarse; una declaración falsa no bloquea el registro de la legítima.
+El motivo/revisión independiente sigue siendo obligatorio. Los pendientes se priorizan
+en la lista Admin. Referencias vacías compuestas por separadores se rechazan.
+
+La repetición SQL final de pagos/recibos pasó 30 pruebas, 0 fallidas y 1 histórico
+optativo omitido. Se añadió comprobación explícita del rechazo seguro de la APK antigua
+sin UUID. Un fallo anterior de permisos se debió a reutilizar un PNG 0600 creado por el
+contenedor root: el fixture ahora utiliza un directorio nuevo por ejecución, sin relajar
+permisos ni modificar recursos de aplicación.

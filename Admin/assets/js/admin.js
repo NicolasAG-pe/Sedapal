@@ -1166,6 +1166,7 @@
       operations.forEach(o=>{
         const card=opElement('article','', 'inc-item');card.dataset.operation=o.id;card.setAttribute('role','listitem');
         card.append(opElement('h4',opLabel(o)),opElement('p',fmt(o.monto)+' · Suministro '+o.numero_suministro+' · Recibo R-'+o.id_recibo+' · '+o.periodo),opElement('p','Referencia: '+(o.referencia||'No declarada')),opElement('p','Declarada: '+window.HMShared.ui.date(o.fecha_pago,true)),opElement('small','Identificador: '+o.id));
+        if(o.referencia_repetida)card.append(opElement('p','Referencia repetida: coteja las otras declaraciones y el movimiento real. No se pueden confirmar dos operaciones con la misma referencia.'));
         const message=opElement('p','');message.setAttribute('role','alert');card.append(message);
         const history=opElement('button','Ver historial','btn-sm detail');history.type='button';
         const historyBox=opElement('div','');

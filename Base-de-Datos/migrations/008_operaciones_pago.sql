@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS public.operaciones_pago (
  metodo TEXT NOT NULL CHECK(metodo IN ('demostrativo','yape_manual','proveedor_simulado')),
  estado TEXT NOT NULL CHECK(estado IN ('demostrativa','declarada','pendiente_verificacion','verificada_manual','acreditada_proveedor','rechazada','cancelada','reembolsada')),
  referencia TEXT CHECK(length(referencia) BETWEEN 4 AND 100),
- referencia_hash TEXT UNIQUE CHECK(referencia_hash ~ '^[a-f0-9]{64}$'),
+ referencia_hash TEXT CHECK(referencia_hash ~ '^[a-f0-9]{64}$'),
  payload_hash TEXT NOT NULL CHECK(payload_hash ~ '^[a-f0-9]{64}$'),
  comprobante BYTEA CHECK(octet_length(comprobante)<=1048576),
  comprobante_hash TEXT CHECK(comprobante_hash ~ '^[a-f0-9]{64}$'),
@@ -34,6 +34,10 @@ CREATE TABLE IF NOT EXISTS public.operaciones_pago (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS uq_operacion_activa_recibo ON public.operaciones_pago(id_recibo)
  WHERE estado IN ('declarada','pendiente_verificacion','verificada_manual','acreditada_proveedor');
+-- Una declaración no demuestra propiedad de la referencia: no debe reservarla globalmente.
+CREATE INDEX IF NOT EXISTS idx_referencia_declarada ON public.operaciones_pago(referencia_hash) WHERE referencia_hash IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_referencia_verificada ON public.operaciones_pago(referencia_hash)
+ WHERE estado='verificada_manual';
 CREATE INDEX IF NOT EXISTS idx_operaciones_revision ON public.operaciones_pago(creado_en,id) WHERE estado='pendiente_verificacion';
 CREATE TABLE IF NOT EXISTS public.operaciones_pago_historial (
  id BIGSERIAL PRIMARY KEY,

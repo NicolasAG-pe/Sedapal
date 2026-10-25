@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## Desarrollo 1.2.0 - integridad de referencias declaradas
+
+- Una declaración sin verificar no reserva referencias ajenas: aviso de coincidencias y unicidad al confirmar, probada bajo concurrencia.
+- Normaliza separadores y prioriza pendientes; conserva rechazo seguro del pago demostrativo antiguo.
+- Regresión PostgreSQL 18: 30 aprobadas, 1 histórico optativo omitido; sin cambios productivos.
+
 ## Desarrollo 1.2.0 - declaración Yape e historial transparente
 
 - Cliente móvil: importe y suministro, QR privado, referencia/comprobante PNG y recuperación por UUID tras respuesta perdida.
