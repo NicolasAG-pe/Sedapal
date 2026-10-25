@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Desarrollo 1.2.0 - operaciones de pago sin acreditación ficticia
+
+- Separa demostraciones, declaraciones y verificación de los pagos históricos.
+- Prepara migración aditiva 008, revisión Yape solo de laboratorio, evidencia protegida e historial.
+- Añade contrato/simulador de proveedor con idempotencia y conciliación; cobros reales bloqueados.
+- Conserva 2FA y sesión automática OTP; sin publicación, migraciones ni despliegues productivos.
+
 Este archivo registra cambios publicados y comprobados. Para futuras versiones, añadir una entrada nueva arriba con su fecha y cambios relevantes, sin repetir los manuales.
 
 ## En desarrollo — auditoría y endurecimiento 2FA (sin lanzamiento)
