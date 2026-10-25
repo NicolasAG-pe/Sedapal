@@ -52,3 +52,6 @@ dist-admin/
 
 # Herramientas, kubeconfig y credenciales del clúster local.
 .local/
+
+# Documentos PDF generados para revisión local; conservar solo generador y fixtures.
+/output/pdf/

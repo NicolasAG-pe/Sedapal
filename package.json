@@ -38,7 +38,11 @@
     "test:android:otp": "node --test scripts/test/registration-state.test.cjs scripts/test/android-transition.cjs",
     "test:android:otp:native": "node scripts/test/android-session-native.cjs --otp",
     "test:android:location:native": "node scripts/test/android-session-native.cjs --location",
-    "test:k8s": "node --test scripts/test/k8s-integration.test.cjs"
+    "test:k8s": "node --test scripts/test/k8s-integration.test.cjs",
+    "test:payments": "node --test Backend/test/payment-operations.cjs Backend/test/receipt-concurrency.cjs Backend/test/receipt-schema.cjs",
+    "test:payments:e2e": "node --test scripts/test/payment-flow.cjs",
+    "test:payments:native": "node scripts/test/android-session-native.cjs --payments",
+    "pdf:examples": "node scripts/generate-payment-pdf-examples.cjs"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",

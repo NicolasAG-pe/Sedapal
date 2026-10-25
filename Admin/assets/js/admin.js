@@ -1152,6 +1152,57 @@
     renderAdminRecibos();
   });
 
+  const operationUrls=new Set();
+  let operationLoad=0;
+  const opLabel=o=>({demostrativa:'Demostrativa',declarada:'Transferencia declarada',pendiente_verificacion:'Pendiente de verificación',verificada_manual:'Revisada manualmente (prueba)',acreditada_proveedor:'Aprobada por simulador',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'})[o.estado]||'Sin verificación financiera';
+  const opElement=(tag,text,className)=>{const e=document.createElement(tag);e.textContent=text;if(className)e.className=className;return e;};
+  async function cargarOperacionesPago(){
+    const list=document.getElementById('admin-operation-list'),status=document.getElementById('admin-operation-status'),generation=++operationLoad;
+    operationUrls.forEach(url=>URL.revokeObjectURL(url));operationUrls.clear();list.replaceChildren();status.textContent='Consultando operaciones…';
+    try{
+      const res=await apiFetch('/api/admin/operaciones-pago');if(!res.ok)throw Error('No se pudieron consultar las operaciones.');const data=await res.json();
+      if(!esAdmin()||generation!==operationLoad)return;
+      const operations=data.operaciones||[];status.textContent=operations.length?'Todas las operaciones son de prueba. Ninguna acredita dinero real.':'No hay operaciones pendientes ni registradas.';
+      operations.forEach(o=>{
+        const card=opElement('article','', 'inc-item');card.dataset.operation=o.id;card.setAttribute('role','listitem');
+        card.append(opElement('h4',opLabel(o)),opElement('p',fmt(o.monto)+' · Suministro '+o.numero_suministro+' · Recibo R-'+o.id_recibo+' · '+o.periodo),opElement('p','Referencia: '+(o.referencia||'No declarada')),opElement('p','Declarada: '+window.HMShared.ui.date(o.fecha_pago,true)),opElement('small','Identificador: '+o.id));
+        if(o.referencia_repetida)card.append(opElement('p','Referencia repetida: coteja las otras declaraciones y el movimiento real. No se pueden confirmar dos operaciones con la misma referencia.'));
+        const message=opElement('p','');message.setAttribute('role','alert');card.append(message);
+        const history=opElement('button','Ver historial','btn-sm detail');history.type='button';
+        const historyBox=opElement('div','');
+        history.addEventListener('click',async()=>{if(history.disabled)return;history.disabled=true;try{
+          const r=await apiFetch('/api/admin/operaciones-pago/'+encodeURIComponent(o.id));if(!r.ok)throw Error('No se pudo cargar el historial.');const d=await r.json();if(!esAdmin()||generation!==operationLoad)return;
+          historyBox.replaceChildren();d.historial.forEach(h=>historyBox.append(opElement('p',window.HMShared.ui.date(h.fecha,true)+' · '+opLabel(h)+' · '+h.motivo+' · Actor '+(h.actor_id||'proveedor'))));
+        }catch(e){if(esAdmin()&&!esAbortado(e))message.textContent=e.message;}finally{history.disabled=false;}});card.append(history,historyBox);
+        if(o.tiene_comprobante){
+          const proof=opElement('button','Ver comprobante protegido','btn-sm detail');proof.type='button';
+          proof.addEventListener('click',async()=>{if(proof.disabled)return;proof.disabled=true;try{
+            const r=await apiFetch('/api/admin/operaciones-pago/'+encodeURIComponent(o.id)+'/comprobante');if(!r.ok)throw Error('No se pudo abrir el comprobante.');const blob=await r.blob();if(!esAdmin()||generation!==operationLoad)return;
+            const url=URL.createObjectURL(blob);operationUrls.add(url);const img=document.createElement('img');img.alt='Comprobante declarado; requiere verificación independiente';img.src=url;img.style.maxWidth='100%';img.width=280;card.append(img);proof.hidden=true;
+          }catch(e){if(esAdmin()&&!esAbortado(e))message.textContent=e.message;}finally{proof.disabled=false;}});card.append(proof);
+        }
+        if(o.estado==='pendiente_verificacion'&&o.metodo==='yape_manual'){
+          const form=document.createElement('form'),label=opElement('label','Motivo de revisión (8 a 500 caracteres)'),reason=document.createElement('textarea');reason.id='op-reason-'+o.id;label.htmlFor=reason.id;reason.required=true;reason.minLength=8;reason.maxLength=500;
+          const checkLabel=document.createElement('label'),check=document.createElement('input');check.type='checkbox';checkLabel.append(check,document.createTextNode(' He comprobado por separado el movimiento de la cuenta receptora. La captura no es prueba suficiente.'));
+          const approve=opElement('button','Confirmar revisión manual','btn btn-primary'),reject=opElement('button','Rechazar con motivo','btn btn-ghost');approve.type='submit';approve.value='confirmar';reject.type='submit';reject.value='rechazar';
+          form.append(label,reason,checkLabel,approve,reject);form.addEventListener('submit',async event=>{
+            event.preventDefault();if(form.dataset.busy==='1')return;const action=event.submitter?.value;
+            if(action==='confirmar'&&!check.checked){message.textContent='Comprueba el movimiento por separado antes de confirmar.';check.focus();return;}
+            if(!['confirmar','rechazar'].includes(action))return;
+            form.dataset.busy='1';form.setAttribute('aria-busy','true');approve.disabled=reject.disabled=true;message.textContent='Guardando revisión…';
+            try{
+              const r=await apiFetch('/api/admin/operaciones-pago/'+encodeURIComponent(o.id)+'/revisar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:action,motivo:reason.value,movimiento_comprobado:check.checked})});
+              const d=await r.json();if(!esAdmin()||generation!==operationLoad)return;if(!r.ok)throw Error(d.mensaje||'No se pudo guardar la revisión.');
+              showSuccess('Revisión registrada en el historial. No se ha acreditado dinero real.');await cargarOperacionesPago();
+            }catch(e){if(esAdmin()&&!esAbortado(e)){message.textContent=(e.message||'Sin conexión.')+' Consulta el historial antes de repetir la decisión.';}}
+            finally{form.dataset.busy='0';form.removeAttribute('aria-busy');approve.disabled=reject.disabled=false;}
+          });card.append(form);
+        }
+        list.append(card);
+      });
+    }catch(e){if(esAdmin()&&generation===operationLoad&&!esAbortado(e))status.textContent=e.message;}
+  }
+
   /* ---------- Panel administrativo: pagos (solo consulta) ---------- */
   let adminPagos = [];
   let admPaySum = '';
@@ -1159,6 +1210,7 @@
   let admPayMet = 'Todos';
   async function cargarAdminPagos(){
     if(!esAdmin()) return;
+    await cargarOperacionesPago();if(!esAdmin())return;
     const list = document.getElementById('admin-pay-list');
     const emptyEl = document.getElementById('admin-pay-empty');
     if(ctrlPagosAdmin) try{ ctrlPagosAdmin.abort(); }catch(e){}
@@ -1406,7 +1458,7 @@
       },
       closeDialogs,
       dispose() {
-        disposed = true;
+        disposed = true;operationLoad++;operationUrls.forEach(url=>URL.revokeObjectURL(url));operationUrls.clear();
         cargarAdminPagosDebounced.cancel(); cargarAdminAtencionDebounced.cancel();
         if (ctrlPagosAdmin) ctrlPagosAdmin.abort();
         if (ctrlAtencionAdmin) ctrlAtencionAdmin.abort();

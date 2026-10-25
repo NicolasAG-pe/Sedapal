@@ -1,5 +1,37 @@
 # Historial de versiones
 
+## Verificación visual Android de PDF
+
+- El harness espera archivo/página y píxeles del documento renderizado, además de comprobar el PDF guardado; evita aprobar una captura de arranque negra.
+- Distingue extracción accesible diferida de Google Viewer de un defecto del documento. Repetición completa: 7 comprobaciones nativas aprobadas, sin cambios productivos ni nuevas releases.
+
+## Desarrollo 1.2.0 - PDF profesionales y validación conjunta
+
+- Recibos y constancias A4 con identidad visual, estado real, referencias, hora de servidor y alcance explícito; sin datos tributarios inventados ni QR de validación inexistente.
+- Genera cinco ejemplos sintéticos locales; pruebas de paginación y consumo ausente.
+- Android emulado: 7 comprobaciones, incluidos Keystore, recuperación, SAF y visor PDF; 4 JUnit, lint sin errores.
+- Documenta proveedores/sandbox, bloqueos comerciales y roadmap maestro; producción y APK anteriores intactas.
+
+## Desarrollo 1.2.0 - integridad de referencias declaradas
+
+- Una declaración sin verificar no reserva referencias ajenas: aviso de coincidencias y unicidad al confirmar, probada bajo concurrencia.
+- Normaliza separadores y prioriza pendientes; conserva rechazo seguro del pago demostrativo antiguo.
+- Regresión PostgreSQL 18: 30 aprobadas, 1 histórico optativo omitido; sin cambios productivos.
+
+## Desarrollo 1.2.0 - declaración Yape e historial transparente
+
+- Cliente móvil: importe y suministro, QR privado, referencia/comprobante PNG y recuperación por UUID tras respuesta perdida.
+- Admin: historial, evidencia protegida, motivo y confirmación de revisión independiente, con prevención de dobles envíos.
+- Las pantallas mantienen la deuda y distinguen registros históricos de operaciones simuladas.
+- Flujo Chromium/API/SQL validado con Node 22: 3 pruebas, sin correos ni movimientos reales.
+
+## Desarrollo 1.2.0 - operaciones de pago sin acreditación ficticia
+
+- Separa demostraciones, declaraciones y verificación de los pagos históricos.
+- Prepara migración aditiva 008, revisión Yape solo de laboratorio, evidencia protegida e historial.
+- Añade contrato/simulador de proveedor con idempotencia y conciliación; cobros reales bloqueados.
+- Conserva 2FA y sesión automática OTP; sin publicación, migraciones ni despliegues productivos.
+
 Este archivo registra cambios publicados y comprobados. Para futuras versiones, añadir una entrada nueva arriba con su fecha y cambios relevantes, sin repetir los manuales.
 
 ## En desarrollo — auditoría y endurecimiento 2FA (sin lanzamiento)

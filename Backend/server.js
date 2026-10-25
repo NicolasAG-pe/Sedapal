@@ -1088,24 +1088,40 @@ app.post("/api/incidencias", limiteOperacionesSensibles, requiereAuth, async (re
 });
 
 
-// ==========================================
-// REGISTRAR PAGO REAL EN POSTGRESQL
-// Movimiento bancario SIMULADO con fines académicos.
-// Todo lo demás es real: monto desde DB, código en
-// backend, fecha, método, cambio a Pagado, historial.
-// ==========================================
-
-app.post("/api/pagos", limiteOperacionesSensibles, requiereAuth, async (req, res) => {
-    try {
-        const result = await servicioRecibos.pagar(Number((req.body || {}).id_recibo),
-            (req.body || {}).metodo, req.user.id_suministro, req.user.id_usuario);
-        // El servicio confirma y libera la conexión antes de notificar.
-        emitirASuministro(req.user.id_suministro, 'pago:registrado', { id_pago: result.pago.id_pago, id_recibo: result.recibo.id_recibo });
-        emitirAAdmins('pago:nuevo', { id_pago: result.pago.id_pago, id_recibo: result.recibo.id_recibo });
-        return res.status(201).json({ estado: 'ok', ...result });
-    } catch (error) { return responderErrorRecibo(res, error); }
-});
-
+// Operaciones de pago: ninguna declaración ni simulación acredita un cargo real.
+const { crearOperacionesPago, responderErrorPago } = require('./payment-operations');
+const operacionesPago = crearOperacionesPago({pool});
+function emitirOperacion(req, op) {
+    emitirASuministro(req.user.id_suministro, 'pago:registrado', {id_operacion:op.id,id_recibo:op.id_recibo});
+    emitirAAdmins('pago:nuevo', {id_operacion:op.id,id_recibo:op.id_recibo});
+}
+app.get('/api/pagos/config', requiereAuth, (req,res)=>res.set('Cache-Control','no-store').json(operacionesPago.config()));
+app.get('/api/pagos/yape/qr', requiereAuth, (req,res)=>{try{res.set({'Cache-Control':'no-store','Content-Type':'image/png'}).send(operacionesPago.qr());}catch(e){responderErrorPago(res,e);}});
+// APK anteriores conservan la ruta y la estructura, pero nunca reciben estado Pagado ficticio.
+app.post('/api/pagos', limiteOperacionesSensibles, requiereAuth, async(req,res)=>{try{
+    if(!req.body?.solicitud_id)return res.status(409).json({estado:'error',mensaje:'Actualiza la aplicación. Este método demostrativo no acredita pagos; el recibo permanece pendiente.'});
+    const result=await operacionesPago.create({...req.body,solicitud_id:req.body?.solicitud_id||crypto.randomUUID()},req.user,true);
+    emitirOperacion(req,result.operacion);
+    res.status(result.repetida?200:201).json({estado:'ok',pago:result.operacion,recibo:{id_recibo:result.operacion.id_recibo,estado:'Pendiente'},mensaje:'Operación demostrativa. No acredita un pago ni cancela la deuda.'});
+}catch(e){responderErrorPago(res,e);}});
+app.post('/api/me/operaciones-pago', limiteOperacionesSensibles, requiereAuth, async(req,res)=>{try{
+    const result=await operacionesPago.create(req.body||{},req.user);emitirOperacion(req,result.operacion);
+    res.status(result.repetida?200:201).json(result);
+}catch(e){responderErrorPago(res,e);}});
+app.get('/api/me/operaciones-pago', requiereAuth, async(req,res)=>{try{res.set('Cache-Control','no-store').json({operaciones:await operacionesPago.list(req.user)});}catch(e){responderErrorPago(res,e);}});
+app.get('/api/admin/operaciones-pago', requiereAdmin, async(req,res)=>{try{res.set('Cache-Control','no-store').json({operaciones:await operacionesPago.list(req.user,true)});}catch(e){responderErrorPago(res,e);}});
+for (const [prefix,auth,admin] of [['/api/me',requiereAuth,false],['/api/admin',requiereAdmin,true]]) {
+    app.get(prefix+'/operaciones-pago/:id',auth,async(req,res)=>{try{res.set('Cache-Control','no-store').json(await operacionesPago.detail(req.params.id,req.user,admin));}catch(e){responderErrorPago(res,e);}});
+    app.get(prefix+'/operaciones-pago/:id/comprobante',auth,async(req,res)=>{try{res.set({'Cache-Control':'no-store','Content-Type':'image/png'}).send(await operacionesPago.proof(req.params.id,req.user,admin));}catch(e){responderErrorPago(res,e);}});
+}
+app.post('/api/me/operaciones-pago/:id/cancelar',limiteOperacionesSensibles,requiereAuth,async(req,res)=>{try{const op=await operacionesPago.cancel(req.params.id,req.user);emitirOperacion(req,op);res.json({operacion:op});}catch(e){responderErrorPago(res,e);}});
+app.post('/api/admin/operaciones-pago/:id/revisar',limiteOperacionesSensibles,requiereAdmin,async(req,res)=>{try{
+    const op=await operacionesPago.review(req.params.id,req.body||{},req.user);
+    emitirAAdmins('pago:nuevo',{id_operacion:op.id,id_recibo:op.id_recibo});
+    const own=await pool.query('SELECT id_suministro FROM suministros WHERE numero_suministro=$1',[op.numero_suministro]);
+    if(own.rows[0])emitirASuministro(own.rows[0].id_suministro,'pago:registrado',{id_operacion:op.id,id_recibo:op.id_recibo});
+    res.json({operacion:op});
+}catch(e){responderErrorPago(res,e);}});
 
 // ==========================================
 // CONSULTAR PAGOS POR SUMINISTRO
