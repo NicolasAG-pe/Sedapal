@@ -14,6 +14,12 @@
       el('login').reset();el('login').hidden=true;el('login-error').textContent='';hidePrivate();
       el('status').textContent='Consulta el estado de protección de tu cuenta.';el('open').disabled=true;render();
       for(const b of document.querySelectorAll('#two-factor-login button,#two-factor-controls button'))b.disabled=false;
+      el('login').removeAttribute('aria-busy');el('controls').removeAttribute('aria-busy');
+    }
+    const uncertain=path=>['/2fa/login','/confirm','/disable','/recovery'].some(s=>path.endsWith(s));
+    function recoverUnknown(path){
+      clear();showLogin(path.endsWith('/2fa/login')?'No pudimos confirmar el inicio de sesión. Vuelve a iniciarlo; el código puede haberse consumido.':'No pudimos confirmar el resultado de la operación. Vuelve a iniciar sesión; no repitas el cambio. Si regeneraste códigos, usa tu autenticador.');
+      return new DOMException('Resultado pendiente de verificar.','AbortError');
     }
     async function request(path,body,privateRoute){
       const epoch=generation;
@@ -24,23 +30,22 @@
       let res,data;
       try{res=await session.authFetch(path,options);data=await res.json();}
       catch(error){
-        if(epoch!==generation || error.name==='AbortError')throw error;
-        if(privateRoute && ['/confirm','/disable','/recovery'].some(s=>path.endsWith(s))){
-          clear();showLogin('No pudimos confirmar el resultado de la operación. Vuelve a iniciar sesión; no repitas el cambio. Si regeneraste códigos, usa tu autenticador.');
-          throw new DOMException('Resultado pendiente de verificar.','AbortError');
-        }
+        if(epoch!==generation)throw error;
+        if(uncertain(path))throw recoverUnknown(path);
         throw new Error('No se pudo conectar. Revisa tu conexión e inténtalo nuevamente.');
       }
       if(epoch!==generation)throw new DOMException('Operación cancelada.','AbortError');
+      if(res.status>=500 && uncertain(path))throw recoverUnknown(path);
       if(data?.codigo==='SESSION_REAUTH_REQUIRED'){clear();showLogin('Tu sesión cambió. Inicia sesión nuevamente.');throw new DOMException('Sesión cambiada.','AbortError');}
       if(!res.ok)throw new Error(data.mensaje || 'No se pudo verificar el código.');
       return data;
     }
     async function run(errorId,task){
       if(busy)return;busy=true;const epoch=generation;el(errorId).textContent='';
+      const region=el(errorId==='login-error'?'login':'controls');region.setAttribute('aria-busy','true');
       for(const b of document.querySelectorAll('#two-factor-login button,#two-factor-controls button'))b.disabled=true;
       try{await task();}catch(error){if(error.name!=='AbortError'&&epoch===generation)el(errorId).textContent=error.message;}
-      finally{if(epoch===generation){busy=false;for(const b of document.querySelectorAll('#two-factor-login button,#two-factor-controls button'))b.disabled=false;}}
+      finally{if(epoch===generation){busy=false;region.removeAttribute('aria-busy');for(const b of document.querySelectorAll('#two-factor-login button,#two-factor-controls button'))b.disabled=false;}}
     }
     function render(){
       el('existing').hidden=!active;el('setup').hidden=active;el('recovery').hidden=!active;el('disable').hidden=!active;

@@ -56,7 +56,7 @@ function buildWeb(target, env = process.env, outputDirectory) {
         fs.copyFileSync(path.join(root, 'Frontend/assets/vendor/socket.io.min.js'), path.join(output, 'assets/vendor/socket.io.min.js'));
     } else {
         fs.mkdirSync(path.join(output, 'shared'), { recursive: true });
-        for (const name of ['api.js', 'ui.js', 'styles.css', 'icons.js']) {
+        for (const name of ['api.js', 'ui.js', 'styles.css', 'icons.js', 'two-factor-ui.js']) {
             fs.copyFileSync(path.join(root, 'Shared', name), path.join(output, 'shared', name));
         }
         fs.cpSync(path.join(root, 'Shared/assets'), path.join(output, 'shared/assets'), { recursive: true });

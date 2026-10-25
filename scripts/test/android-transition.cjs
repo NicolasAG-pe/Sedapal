@@ -9,16 +9,18 @@ const {chromium,devices}=require(process.env.HIDRO_PLAYWRIGHT_MODULE || path.joi
 const {iniciar}=require('../../Backend/test/email-api.cjs');
 const {cancelarEventos}=require('../../Backend/email-outbox');
 const origin='https://localhost',api='https://api.compat.fixture.test';
-let ctx,browser,runtime,sequence=300,ip=1;
+let ctx,browser,runtime,adminRuntime,sequence=300,ip=1;
 before(async()=>{
  process.env.TOTP_ENCRYPTION_KEY=crypto.randomBytes(32).toString('base64');
  process.env.TOTP_ENROLLMENT_ENABLED='1';
+ process.env.TOTP_ADMIN_ENROLLMENT_ENABLED='1';
  ctx=await iniciar({autoDrain:false});
  runtime=fs.mkdtempSync(path.join(os.tmpdir(),'hidro-transition-'));buildWeb('android',{API_BASE_URL:api},runtime);
+ adminRuntime=fs.mkdtempSync(path.join(os.tmpdir(),'hidro-admin-2fa-'));buildWeb('admin',{API_BASE_URL:api},adminRuntime);
  browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 });
 after(async()=>{if(browser)await browser.close();if(ctx)await ctx.close();delete process.env.TOTP_ENCRYPTION_KEY;});
-async function fixture(t,{legacy=false,legacyVerification=false,device='Pixel 5',viewport}={}){
+async function fixture(t,{legacy=false,legacyVerification=false,admin=false,device='Pixel 5',viewport}={}){
  const context=await browser.newContext({...devices[device],...(viewport?{viewport}:{}),reducedMotion:'reduce'});
  const page=await context.newPage(),calls=[],errors=[];let offline=false,oldBackend=false,drop='',dropBefore='',mixedBackend=false;
  page.setDefaultTimeout(7000);page.on('pageerror',e=>errors.push(e.message));
@@ -31,7 +33,7 @@ async function fixture(t,{legacy=false,legacyVerification=false,device='Pixel 5'
   if(legacy){
    const file=name.startsWith('/shared/')?'Shared/'+name.slice(8):'Frontend/'+(name==='/'?'index.html':name.slice(1));
    try{body=execFileSync('git',['show',(legacy===true?'v1.0.0':legacy)+':'+file],{cwd:root,stdio:['ignore','pipe','ignore']});}catch(_){return route.fulfill({status:404});}
-  }else{const file=path.resolve(runtime,'.'+(name==='/'?'/index.html':name));assert.ok(file.startsWith(runtime+path.sep));body=fs.existsSync(file)?fs.readFileSync(file):'';}
+  }else{const directory=admin?adminRuntime:runtime,file=path.resolve(directory,'.'+(name==='/'?'/index.html':name));assert.ok(file.startsWith(directory+path.sep));body=fs.existsSync(file)?fs.readFileSync(file):'';}
   const mime={'.html':'text/html','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg'};
   return route.fulfill({contentType:mime[path.extname(name)]||'text/html',body});
  });
@@ -271,6 +273,34 @@ test('2FA: perfil/QR, activación, login con segundo factor, recuperación y des
  await page.locator('#two-factor-password').fill(f.account.password);await page.locator('#two-factor-existing-code').fill(codes[1]);await page.locator('#two-factor-disable').click();
  await page.waitForFunction(()=>document.getElementById('two-factor-status').textContent.startsWith('Desactivada'));
  assert.equal((await ctx.db.query('SELECT activo FROM usuario_2fa WHERE id_usuario=$1',[row.id_usuario])).rows[0].activo,false);
+});
+
+test('Admin 2FA: cuenta propia, segundo factor antes de permisos y logout sin secretos',async t=>{
+ const f=await fixture(t,{admin:true,device:'Desktop Chrome',viewport:{width:1280,height:900}}),page=f.page;
+ const p=(await ctx.request('register',f.account,202)).data;await ctx.drain();await ctx.request('verify-email',ctx.verificar(p.registro_id,ctx.codigo(f.account.correo)),201);
+ await ctx.db.query("UPDATE usuarios SET rol='admin' WHERE correo=$1",[f.account.correo]);
+ async function login(){await page.locator('#admin-supply').fill(f.account.numero_suministro);await page.locator('#admin-password').fill(f.account.password);await page.locator('#admin-login-submit').click();}
+ await login();await page.locator('#admin-panel').waitFor({state:'visible'});
+ await page.locator('#admin-nav [data-sec="admin-cuenta"]').click();await page.waitForFunction(()=>document.getElementById('two-factor-status').textContent.startsWith('Desactivada'));
+ await page.locator('#two-factor-open').click();await page.locator('#two-factor-password').fill(f.account.password);await page.locator('#two-factor-setup').click();await page.locator('#two-factor-qr').waitFor({state:'visible'});
+ const m=(await ctx.db.query('SELECT m.* FROM usuario_2fa m JOIN usuarios u USING(id_usuario) WHERE correo=$1',[f.account.correo])).rows[0];
+ const secret=require('../../Backend/totp-crypto').crearCifradoTotp(process.env).decrypt(m.pendiente_secreto,m.id_usuario),OTPAuth=require('../../Backend/node_modules/otpauth');
+ await page.locator('#two-factor-confirm-code').fill(new OTPAuth.TOTP({secret:OTPAuth.Secret.fromBase32(secret)}).generate());await page.locator('#two-factor-confirm button').click();
+ await page.locator('#two-factor-codes').waitFor({state:'visible'});const codes=(await page.locator('#two-factor-codes-list').textContent()).trim().split('\n');assert.equal(codes.length,10);
+ const storage=await page.evaluate(()=>JSON.stringify({local:{...localStorage},session:{...sessionStorage}}));for(const s of [secret,f.account.password,...codes])assert.ok(!storage.includes(s));
+ await page.locator('#two-factor-close').click();await page.locator('#admin-logout').click();assert.equal(await page.locator('#two-factor-codes-list').textContent(),'');
+ const adminCalls=f.calls.filter(c=>c.path.startsWith('/api/admin/')).length;
+ await login();await page.locator('#two-factor-login').waitFor({state:'visible'});
+ assert.equal(await page.evaluate(()=>document.getElementById('admin-panel').hidden),true);
+ assert.equal(f.calls.filter(c=>c.path.startsWith('/api/admin/')).length,adminCalls);
+ await page.locator('#two-factor-login-code').fill('00000');await page.locator('#two-factor-login button[type=submit]').click();
+ await page.waitForFunction(()=>document.getElementById('two-factor-login-error').textContent.includes('inválido'));
+ await page.locator('#two-factor-login-code').fill(codes[0]);await page.locator('#two-factor-login button[type=submit]').click();await page.locator('#admin-panel').waitFor({state:'visible'});
+ await page.locator('#admin-nav [data-sec="admin-cuenta"]').click();await page.waitForFunction(()=>document.getElementById('two-factor-status').textContent.startsWith('Activada'));
+ await page.locator('#two-factor-open').click();await page.locator('#two-factor-password').fill(f.account.password);await page.locator('#two-factor-existing-code').fill(codes[1]);await page.locator('#two-factor-disable').click();
+ await page.waitForFunction(()=>document.getElementById('two-factor-status').textContent.startsWith('Desactivada'));
+ await page.locator('#two-factor-close').click();if(process.env.HIDRO_2FA_SCREENSHOT)await page.screenshot({path:process.env.HIDRO_2FA_SCREENSHOT,fullPage:true});
+ await page.locator('#admin-logout').click();assert.equal(await page.locator('#two-factor-password').inputValue(),'');
 });
 
 test('CORS acepta cabecera de contrato desde https://localhost sin exigirla al login',async()=>{

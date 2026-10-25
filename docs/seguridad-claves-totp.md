@@ -11,7 +11,7 @@ sin duplicados, exclusivamente en el almacén privado del servidor. Nunca poner
 valores en argumentos de CLI, frontend, APK, Git, logs ni ejemplos públicos.
 
 El lector acepta ciphertext histórico v1 y nuevo v2. v2 identifica la clave con
-un fingerprint de 128 bits y autentica formato, identificador y usuario como AAD.
+un fingerprint no secreto de 64 bits y autentica formato, identificador y usuario como AAD.
 AES-256-GCM conserva IV aleatorio de 96 bits y tag de 128 bits. Un cambio de usuario,
 clave, header, IV, tag, encoding o contenido se rechaza. No se cambia el secreto
 TOTP del usuario al recifrar; su autenticador sigue siendo válido.

@@ -11,10 +11,15 @@
   const loginError = document.getElementById('admin-login-error');
   const loginButton = document.getElementById('admin-login-submit');
   let modules = null, loginController = null, toastTimer = null;
+  const authControllers=new Set();
   let page = 'admin', attempt = 0;
   const allowedPages = ['admin', 'admin-usuarios', 'admin-recibos', 'admin-cortes',
     'admin-incidencias', 'admin-pagos', 'admin-atencion', 'admin-cuenta'];
   const api = shared.createApi(session, () => logout('Sesión terminada o acceso denegado. Inicia sesión nuevamente.'));
+  const security=window.createHMTwoFactorUI({session:{token:session.token,authFetch:authRequest},apiFetch:api.fetch,
+    showLogin:message=>logout(message || ''),
+    showChallenge:()=>{loginForm.hidden=true;document.getElementById('admin-password').value='';},
+    authenticated:async data=>{const epoch=attempt;try{await completeAdminLogin(data,epoch);}catch(error){if(epoch===attempt&&!shared.ui.isAborted(error))logout('No se pudo confirmar la sesión. Inicia sesión nuevamente.');throw error;}},showProfile:()=>navigate('admin-cuenta')});
   const realtime = shared.createRealtime(session, {
     events: ['incidencia:nueva', 'incidencia:actualizada', 'atencion:nueva',
       'atencion:actualizada', 'recibo:nuevo', 'recibo:actualizado', 'pago:nuevo', 'corte:actualizado'],
@@ -41,7 +46,9 @@
   }
   function logout(message = '') {
     attempt++;
+    security.clear();
     if (loginController) loginController.abort();
+    authControllers.forEach(c=>c.abort());authControllers.clear();
     loginController = null;
     shared.ui.clearFormLocks(document);
     session.clear();
@@ -61,6 +68,7 @@
     document.body.classList.remove('modal-open');
     history.replaceState(null, '', location.pathname + location.search);
     loginForm.reset();
+    loginForm.hidden=false;
     loginButton.disabled = false;
     delete loginButton.dataset.loading;
     loginForm.removeAttribute('aria-busy');
@@ -76,6 +84,8 @@
       return;
     }
     page = allowedPages.includes(next) ? next : 'admin';
+    document.getElementById('admin-security').hidden=page!=='admin-cuenta';
+    if(page==='admin-cuenta')security.load();
     document.getElementById('admin-current-page').textContent = document.querySelector('#admin-nav [data-sec="'+page+'"]')?.textContent || 'Administración';
     main.querySelectorAll('.dash-sec').forEach(section => section.classList.toggle('active', section.id === 'sec-' + page));
     document.querySelectorAll('[data-sec]').forEach(item => {
@@ -134,25 +144,12 @@
       });
       const data = await response.json();
       if (currentAttempt !== attempt) return;
+      if(response.status===202 && data.estado==='segundo_factor'){
+        if(data.rol!=='admin')throw new Error('Este panel es exclusivo para administradores.');
+        security.challenge(data);return;
+      }
       if (!response.ok || data.estado !== 'ok' || !data.token) throw new Error(data.mensaje || 'No se pudo iniciar sesión.');
-      // Un usuario normal no provoca ni una consulta /api/admin/*.
-      if (!data.usuario || data.usuario.rol !== 'admin') throw new Error('Este panel es exclusivo para administradores.');
-      // Confirmación del permiso vigente en PostgreSQL antes de renderizar.
-      const permission = await fetch(shared.apiUrl('/api/admin/resumen'), {
-        signal: loginController.signal, headers: { Authorization: 'Bearer ' + data.token }
-      });
-      if (!permission.ok) throw new Error('No tienes acceso administrativo o tu sesión ya no está habilitada.');
-      await permission.json();
-      if (currentAttempt !== attempt) return;
-      session.set(data.token, 'admin');
-      main.replaceChildren(document.getElementById('admin-pages').content.cloneNode(true));
-      shared.icons.decorate(main);
-      modules = createAdminModules();
-      document.getElementById('admin-identity').textContent = data.usuario.correo || 'Administrador';
-      document.getElementById('admin-password').value = '';
-      login.hidden = true; panel.hidden = false;
-      navigate(location.hash.slice(1));
-      realtime.start();
+      await completeAdminLogin(data,currentAttempt,loginController.signal);
     } catch (error) {
       if (currentAttempt !== attempt || shared.ui.isAborted(error)) return;
       logout(error.message || 'No se pudo conectar con el servidor.');
@@ -165,6 +162,28 @@
       }
     }
   });
+  async function authRequest(path,options={}){
+    const epoch=attempt,controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+    authControllers.add(controller);
+    const finish=()=>{clearTimeout(timer);authControllers.delete(controller);};
+    const current=()=>{if(epoch!==attempt)throw new DOMException('Sesión cambiada.','AbortError');};
+    try{
+      const res=await fetch(shared.apiUrl(path),{...options,signal:controller.signal});current();
+      return{ok:res.ok,status:res.status,json:async()=>{try{const data=await res.json();current();return data;}finally{finish();}}};
+    }catch(error){finish();if(epoch!==attempt)throw new DOMException('Sesión cambiada.','AbortError');throw error;}
+  }
+  async function completeAdminLogin(data,currentAttempt,signal){
+    if(!data.token||data.usuario?.rol!=='admin')throw new Error('Este panel es exclusivo para administradores.');
+    const permission=await fetch(shared.apiUrl('/api/admin/resumen'),{signal:signal || AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+data.token}});
+    if(!permission.ok)throw new Error('No tienes acceso administrativo o tu sesión ya no está habilitada.');
+    await permission.json();
+    if(currentAttempt!==attempt)throw new DOMException('Sesión cambiada.','AbortError');
+    api.cancel();realtime.stop();if(modules)modules.dispose();
+    session.set(data.token,'admin');main.replaceChildren(document.getElementById('admin-pages').content.cloneNode(true));
+    shared.icons.decorate(main);modules=createAdminModules();document.getElementById('admin-identity').textContent=data.usuario.correo || 'Administrador';
+    document.getElementById('admin-password').value='';login.hidden=true;panel.hidden=false;
+    navigate(location.hash.slice(1));realtime.start();
+  }
   // No se recuperan sesiones anteriores sin una autenticación nueva.
   logout();
 

@@ -106,7 +106,7 @@
     <form id="two-factor-login" hidden>
       <p>Ingresa el código de tu aplicación autenticadora o un código de recuperación de un solo uso.</p>
       <div class="field"><label for="two-factor-login-code">Código de verificación</label>
-        <input id="two-factor-login-code" type="text" autocomplete="one-time-code" maxlength="35" required /></div>
+        <input id="two-factor-login-code" aria-describedby="two-factor-login-error" type="text" autocomplete="one-time-code" maxlength="35" required /></div>
       <p id="two-factor-login-error" role="alert"></p>
       <button class="btn btn-primary" type="submit">Verificar e ingresar</button>
       <button class="btn btn-ghost" type="button" id="two-factor-cancel">Volver al inicio de sesión</button>
@@ -505,7 +505,7 @@
                 <div class="field"><label for="two-factor-password">Confirma tu contraseña actual</label>
                   <input id="two-factor-password" type="password" autocomplete="current-password" maxlength="128" required /></div>
                 <div class="field" id="two-factor-existing" hidden><label for="two-factor-existing-code">Código del factor actual o de recuperación</label>
-                  <input id="two-factor-existing-code" type="text" autocomplete="one-time-code" maxlength="35" /></div>
+                  <input id="two-factor-existing-code" aria-describedby="two-factor-settings-error" type="text" autocomplete="one-time-code" maxlength="35" /></div>
                 <button class="btn btn-sky" id="two-factor-setup" type="submit">Preparar activación</button>
                 <button class="btn btn-ghost" id="two-factor-recovery" type="button" hidden>Generar nuevos códigos de recuperación</button>
                 <button class="btn btn-ghost" id="two-factor-disable" type="button" hidden>Desactivar verificación en dos pasos</button>
@@ -514,13 +514,14 @@
                 <p>Escanea este QR con una aplicación autenticadora. Si estás usando el mismo teléfono, abre esta sección en otro dispositivo para escanearlo. Confirma antes de cinco minutos.</p>
                 <img id="two-factor-qr" width="300" height="300" alt="QR privado para vincular tu autenticador" />
                 <div class="field"><label for="two-factor-confirm-code">Código de seis dígitos</label>
-                  <input id="two-factor-confirm-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required /></div>
+                  <input id="two-factor-confirm-code" aria-describedby="two-factor-settings-error" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required /></div>
                 <button class="btn btn-sky" type="submit">Activar y guardar códigos</button>
               </form>
               <div id="two-factor-codes" hidden>
                 <p>Guarda estos códigos en un lugar privado fuera de Hidro-Mejora. Solo se muestran ahora y cada uno sirve una vez.</p>
                 <pre id="two-factor-codes-list" tabindex="0" aria-label="Códigos de recuperación"></pre>
               </div>
+              <p>Si perdiste tu autenticador, usa contraseña y recuperación para desactivar y volver a configurarlo. Para generar códigos nuevos necesitas tu autenticador.</p>
               <p id="two-factor-settings-error" role="alert"></p>
               <button class="btn btn-ghost" type="button" id="two-factor-close">Cerrar y ocultar datos privados</button>
             </div>
@@ -929,7 +930,7 @@
 <script src="assets/js/native-state.js"></script>
 <script src="assets/js/registration-state.js"></script>
 <script src="assets/js/client-session.js"></script>
-<script src="assets/js/two-factor-ui.js"></script>
+<script src="shared/two-factor-ui.js"></script>
 <script src="assets/js/sedapal-knowledge.js"></script>
 <!-- Socket.IO cliente vendorizado (v4.8.4, igual que el backend): el script
      absoluto /socket.io/socket.io.js no resuelve en el WebView Android
@@ -5411,6 +5412,7 @@ async function descargarConstanciaPDF(r, btn){
       }
       const authData = await conSesion(() => (resp.json()), _hmEpoch);
       if(resp.status===202 && authData?.estado==='segundo_factor'){
+        if(authData.rol!=='usuario'){showError('Esta aplicación es exclusiva para clientes. Usa el panel administrativo.');btnLogin.disabled=false;btnLoginText.textContent='Iniciar Sesión';return;}
         interfaz2fa.challenge(authData);
         btnLogin.disabled=false;btnLoginText.textContent='Iniciar Sesión';return;
       }

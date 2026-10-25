@@ -104,6 +104,10 @@ y su actualización desde 1.0.0 requieren nueva validación antes de distribuir.
 No se modifican main, la rama del PR ni servicios productivos.
 ## Próxima funcionalidad en revisión: 2FA opcional
 
+La [auditoría posterior](pruebas/auditoria-2fa-seguridad.md) comprueba carreras,
+revocación, rotación de claves y compatibilidad con el panel Admin. No se publicó
+1.2.0 ni se reemplazaron las candidatas anteriores; faltan pruebas físicas.
+
 La rama `feature/seguridad-totp` prepara TOTP y recuperación de un solo uso.
 Propuesta de publicación: **1.2.0 / versionCode 6**, todavía sin aplicar al
 versionado ni compilar una release nueva. La APK firmada 1.1.2/5 no se modifica.

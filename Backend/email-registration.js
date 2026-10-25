@@ -1,5 +1,6 @@
 'use strict';
 const crypto = require('node:crypto');
+const { AUTH_CONTRACT } = require('./auth-contract');
 const { encolarCorreo, cancelarEventos } = require('./email-outbox');
 const { crearCodigo, coincideCodigo, OTP_MAX_ATTEMPTS,
     OTP_RESEND_SECONDS, OTP_MAX_SENDS_HOUR, REGISTRATION_TTL_SECONDS } = require('./email-otp');
@@ -210,7 +211,7 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verif
 
 function registrarRutasCorreo(app, servicio, { registro, verificacion, reenvio, consulta }) {
     app.get('/api/auth/capabilities', consulta, (req,res)=>res.set('Cache-Control','no-store').json({
-        estado:'ok',contratos_registro:[CONTRATO_CORREO],verificacion_correo_obligatoria:true
+        estado:'ok',contratos_registro:[CONTRATO_CORREO],verificacion_correo_obligatoria:true,auth_contract:AUTH_CONTRACT
     }));
     for (const [ruta, accion, limite, status] of [
         ['register', 'registrar', registro, 202], ['verify-email', 'verificar', verificacion, 201],

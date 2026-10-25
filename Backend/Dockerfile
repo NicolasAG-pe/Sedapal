@@ -6,7 +6,7 @@ COPY package.json package-lock.json ./
 
 RUN npm ci --omit=dev
 
-COPY start.cjs server.js config.js two-factor.js totp-crypto.js email-otp.js resend-mail.js gmail-mail.js email-provider.js mail-envelope.js email-registration.js receipt-transactions.js outbox-crypto.js email-outbox.js ./
+COPY start.cjs server.js config.js auth-contract.js two-factor.js totp-crypto.js email-otp.js resend-mail.js gmail-mail.js email-provider.js mail-envelope.js email-registration.js receipt-transactions.js outbox-crypto.js email-outbox.js ./
 COPY workers/ ./workers/
 
 EXPOSE 3000

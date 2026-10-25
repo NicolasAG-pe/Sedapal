@@ -12,6 +12,7 @@ const { obtenerConfigCorreo } = require('./email-provider');
 const { obtenerClaveOutbox } = require('./outbox-crypto');
 const { crearRegistroCorreo, registrarRutasCorreo } = require('./email-registration');
 const { crearDosFactores, permiteSesion } = require('./two-factor');
+const { AUTH_CONTRACT } = require('./auth-contract');
 const { crearServicioRecibos, responderErrorRecibo } = require('./receipt-transactions');
 
 const app = express();
@@ -262,6 +263,7 @@ app.get("/api/health", async (req, res) => {
         res.json({
             estado: "ok",
             mensaje: "Servicio de Hidro Mejora operativo",
+            auth_contract: AUTH_CONTRACT,
             fecha: resultado.rows[0].fecha_servidor
         });
 
@@ -517,7 +519,7 @@ async function requiereAuth(req, res, next){
 
     if (partes.length !== 2 || partes[0] !== 'Bearer' || !partes[1]) {
         return res.status(401).json({
-            estado: "error",
+            estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
             mensaje: "Autenticación requerida."
         });
     }
@@ -527,7 +529,7 @@ async function requiereAuth(req, res, next){
         datosToken = jwt.verify(partes[1], obtenerSecretoAuth());
     } catch (e) {
         return res.status(401).json({
-            estado: "error",
+            estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
             mensaje: "Autenticación requerida."
         });
     }
@@ -535,7 +537,7 @@ async function requiereAuth(req, res, next){
     const idUsuarioToken = Number(datosToken.id_usuario);
     if (!Number.isInteger(idUsuarioToken) || idUsuarioToken <= 0) {
         return res.status(401).json({
-            estado: "error",
+            estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
             mensaje: "Autenticación requerida."
         });
     }
@@ -555,7 +557,7 @@ async function requiereAuth(req, res, next){
 
         if (verif.rowCount === 0) {
             return res.status(403).json({
-                estado: "error",
+                estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
                 mensaje: "Acceso denegado."
             });
         }
@@ -563,7 +565,7 @@ async function requiereAuth(req, res, next){
         const fila = verif.rows[0];
         if (fila.activo === false) {
             return res.status(403).json({
-                estado: "error",
+                estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
                 mensaje: "Acceso denegado."
             });
         }
@@ -759,7 +761,7 @@ for (const [ruta, action, autenticada] of [
     if (autenticada) handlers.push(requiereAuth);
     app.post('/api/auth/2fa/' + ruta, ...handlers, async (req, res) => {
         res.set('Cache-Control','no-store');
-        if (autenticada && req.user.rol !== 'usuario') return res.status(403).json({ estado: 'error', mensaje: 'Acceso denegado.' });
+        if (autenticada && !['usuario','admin'].includes(req.user.rol)) return res.status(403).json({ estado: 'error', mensaje: 'Acceso denegado.' });
         try {
             const result = autenticada ? await dosFactores[action](req.user.id_usuario, req.body || {},req.user) : await dosFactores[action](req.body || {});
             if (result.error) return res.status(result.error.status).json({ estado: 'error', mensaje: result.error.mensaje, ...(result.error.codigo?{codigo:result.error.codigo}:{}) });
@@ -769,7 +771,7 @@ for (const [ruta, action, autenticada] of [
 }
 app.get('/api/auth/2fa', requiereAuth, async (req, res) => {
     res.set('Cache-Control','no-store');
-    if (req.user.rol !== 'usuario') return res.status(403).json({ estado: 'error', mensaje: 'Acceso denegado.' });
+    if (!['usuario','admin'].includes(req.user.rol)) return res.status(403).json({ estado: 'error', mensaje: 'Acceso denegado.' });
     try { return res.json(await dosFactores.status(req.user.id_usuario)); }
     catch (_) { return res.status(503).json({ estado:'error',mensaje:'No se pudo consultar la seguridad de la cuenta.' }); }
 });

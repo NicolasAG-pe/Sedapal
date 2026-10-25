@@ -4,6 +4,15 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
 
 ## En desarrollo — auditoría y endurecimiento 2FA (sin lanzamiento)
 
+- Admin: segundo factor antes de cargar permisos, QR y gestión de su propia cuenta,
+  UI compartida accesible, sesión web solo en memoria y alta administrativa cerrada
+  por defecto. Promocionar un usuario conserva su factor y exige login nuevo.
+- Downgrade reproducido en Docker aislado; comprobación de candidato rechaza el
+  backend antiguo. La imposición externa en todos los despliegues/rollbacks sigue
+  pendiente y bloquea una activación productiva segura.
+- Cierre verificado: 80 pruebas backend aprobadas y 1 histórica omitida; 45 cliente,
+  6 UX y 8 runtime, más 4 focalizadas Admin. WebView nativa: 6 comprobaciones 2FA y
+  12 OTP; Java 21/Gradle y lint sin errores. Ninguna release nueva.
 - Custodia: cifrado v2 con identificador de clave, lectura v1/anillo anterior,
   respaldo cifrado independiente, restauración 0600 y recifrado SQL transaccional.
   25 pruebas focalizadas aprobadas; dump/restauración aislada conserva 16 tablas,

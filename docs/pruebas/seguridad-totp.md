@@ -1,5 +1,9 @@
 # 2FA opcional mediante TOTP — preparación y pruebas
 
+Este informe conserva la validación inicial de `0fc2af4`. El desarrollo posterior,
+incluidos Admin, custodia de claves y correcciones, está en la
+[auditoría actual](auditoria-2fa-seguridad.md). No representa una versión publicada.
+
 24 de octubre de 2026. Rama `feature/seguridad-totp`, creada desde el último
 `origin/main`, `d6a6b83057f179168d54d3691e5738ff2d060740`. Como main todavía no
 incluía el PR #11, se reutilizó su incremento probado por cherry-pick (`afac774`)

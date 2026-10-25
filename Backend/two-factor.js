@@ -34,7 +34,7 @@ function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = 
         const { rows: [u] } = await c.query(`SELECT u.id_usuario,u.correo,u.clave_hash,u.rol,u.activo,
             s.id_suministro,s.numero_suministro FROM usuarios u JOIN suministros s USING(id_usuario)
             WHERE u.id_usuario=$1 FOR UPDATE OF u`, [id]);
-        if (!u || u.activo !== true || u.rol !== 'usuario') return null;
+        if (!u || u.activo !== true || !['usuario','admin'].includes(u.rol)) return null;
         await c.query('INSERT INTO usuario_2fa(id_usuario) VALUES ($1) ON CONFLICT DO NOTHING', [id]);
         const { rows: [m] } = await c.query(`SELECT *,clock_timestamp() AS ahora FROM usuario_2fa WHERE id_usuario=$1 FOR UPDATE`, [id]);
         return { u, m, now: new Date(m.ahora).getTime() };
@@ -71,6 +71,7 @@ function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = 
     function currentActor(a, actor) {
         return actor && String(actor.id_usuario)===String(a.u.id_usuario) && actor.rol===a.u.rol && actor.mfa_version===a.m.version;
     }
+    const canEnroll = role => role==='admin' ? env.TOTP_ADMIN_ENROLLMENT_ENABLED==='1' : env.TOTP_ENROLLMENT_ENABLED==='1';
     async function manage(id, body, action, actor, { active, totpOnly = false } = {}) {
         if (!key()) return fail(503, 'La verificación en dos pasos no está disponible.');
         return tx(async c => {
@@ -103,15 +104,15 @@ function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = 
     }
     return {
         async status(id) {
-            const { rows: [m] } = await pool.query(`SELECT activo,
+            const { rows: [m] } = await pool.query(`SELECT m.activo,u.rol,
                 (SELECT count(*)::int FROM usuario_2fa_recuperacion r WHERE r.id_usuario=m.id_usuario AND usado_en IS NULL) AS recuperacion
-                FROM usuario_2fa m WHERE id_usuario=$1`, [id]);
+                FROM usuarios u LEFT JOIN usuario_2fa m USING(id_usuario) WHERE u.id_usuario=$1`, [id]);
             return { estado: 'ok', activo: m?.activo || false, recuperacion: m?.recuperacion || 0,
-                disponible: !!key() && (m?.activo || env.TOTP_ENROLLMENT_ENABLED === '1') };
+                disponible: !!key() && (m?.activo || canEnroll(m?.rol)) };
         },
         async setup(id, body, actor) {
-            if (env.TOTP_ENROLLMENT_ENABLED !== '1') return fail(503, 'La activación de dos factores no está disponible temporalmente.');
             return manage(id, body, async (c, a) => {
+                if(!canEnroll(a.u.rol))return fail(503, 'La activación de dos factores no está disponible temporalmente.');
                 if (a.m.activo) return fail(409, 'Desactiva el factor existente antes de configurar otro.');
                 const secret = new OTPAuth.Secret({ size: 20 }).base32;
                 const qr = await QRCode.toDataURL(totp(secret, a.u.correo).toString(), { errorCorrectionLevel: 'M', margin: 4, width: 300 });
@@ -121,12 +122,12 @@ function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = 
             },actor,{active:false});
         },
         async confirm(id, body, actor) {
-            if (env.TOTP_ENROLLMENT_ENABLED !== '1') return fail(503, 'La activación de dos factores no está disponible temporalmente.');
             if (!key()) return fail(503, 'La verificación en dos pasos no está disponible.');
             const result = await tx(async c => {
                 const a = await account(c, id);
                 if (!a) return fail(403, 'Acceso denegado.');
                 if (!currentActor(a,actor)) return sessionEnded();
+                if(!canEnroll(a.u.rol))return fail(503, 'La activación de dos factores no está disponible temporalmente.');
                 if (locked(a)) return fail(429, 'Demasiados intentos. Espera quince minutos.');
                 if (a.m.activo || !a.m.pendiente_secreto) return invalid();
                 if (new Date(a.m.pendiente_hasta).getTime() <= a.now || a.now - new Date(a.m.reautenticado_en).getTime() >= 300000) {
@@ -171,7 +172,7 @@ function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = 
                 if (count.n >= 10) return fail(429, 'Demasiados desafíos. Espera cinco minutos antes de reintentar.');
                 await c.query(`INSERT INTO desafios_2fa(id_hash,id_usuario,version,clave_huella,vence_en)
                     VALUES ($1,$2,$3,$4,clock_timestamp()+INTERVAL '5 minutes')`, [sha(opaque), u.id_usuario, u.mfa_version, sha(u.clave_hash)]);
-                return { estado: 'segundo_factor', desafio: opaque, vence_en: new Date(a.now + 300000).toISOString(),
+                return { estado: 'segundo_factor', rol:a.u.rol, desafio: opaque, vence_en: new Date(a.now + 300000).toISOString(),
                     mensaje: 'Ingresa tu código de autenticador o recuperación. Si tu aplicación no lo permite, actualízala.' };
             });
         },

@@ -27,6 +27,14 @@
           <input id="admin-password" name="password" type="password" autocomplete="current-password" minlength="4" maxlength="128" required></div>
         <button id="admin-login-submit" class="btn btn-primary" type="submit">Ingresar al panel</button>
       </form>
+    <form id="two-factor-login" hidden>
+      <p>Ingresa el código de tu aplicación autenticadora o un código de recuperación de un solo uso.</p>
+      <div class="field"><label for="two-factor-login-code">Código de verificación</label>
+        <input id="two-factor-login-code" aria-describedby="two-factor-login-error" type="text" autocomplete="one-time-code" maxlength="35" required /></div>
+      <p id="two-factor-login-error" role="alert"></p>
+      <button class="btn btn-primary" type="submit">Verificar e ingresar</button>
+      <button class="btn btn-ghost" type="button" id="two-factor-cancel">Volver al inicio de sesión</button>
+    </form>
     </div>
   </section>
   <div id="admin-panel" hidden>
@@ -50,7 +58,37 @@
         <button type="button" data-sec="admin-cuenta" data-icon="user">Mi cuenta</button>
         <div class="nav-foot"><span>Hidro-Mejora</span>Proyecto universitario · Acceso por rol</div>
       </nav>
-      <div class="admin-workspace"><div id="admin-load-status" class="load-status" role="status" aria-live="polite"></div><main tabindex="-1" id="admin-content" class="dashboard" aria-label="Contenido administrativo"></main></div>
+      <div class="admin-workspace"><div id="admin-load-status" class="load-status" role="status" aria-live="polite"></div><main tabindex="-1" id="admin-content" class="dashboard" aria-label="Contenido administrativo"></main><div id="admin-security" class="dashboard" hidden>          <section class="two-factor-settings support-card" aria-labelledby="two-factor-title">
+            <h3 id="two-factor-title">Verificación en dos pasos</h3>
+            <p>Necesitarás un cliente compatible en todos tus dispositivos y tu aplicación autenticadora para volver a iniciar sesión.</p>
+            <p id="two-factor-status" role="status">Consulta el estado de protección de tu cuenta.</p>
+            <button class="btn btn-ghost" type="button" id="two-factor-open">Configurar verificación en dos pasos</button>
+            <div id="two-factor-controls" hidden>
+              <form id="two-factor-manage">
+                <div class="field"><label for="two-factor-password">Confirma tu contraseña actual</label>
+                  <input id="two-factor-password" type="password" autocomplete="current-password" maxlength="128" required /></div>
+                <div class="field" id="two-factor-existing" hidden><label for="two-factor-existing-code">Código del factor actual o de recuperación</label>
+                  <input id="two-factor-existing-code" aria-describedby="two-factor-settings-error" type="text" autocomplete="one-time-code" maxlength="35" /></div>
+                <button class="btn btn-sky" id="two-factor-setup" type="submit">Preparar activación</button>
+                <button class="btn btn-ghost" id="two-factor-recovery" type="button" hidden>Generar nuevos códigos de recuperación</button>
+                <button class="btn btn-ghost" id="two-factor-disable" type="button" hidden>Desactivar verificación en dos pasos</button>
+              </form>
+              <form id="two-factor-confirm" hidden>
+                <p>Escanea este QR con una aplicación autenticadora. Si estás usando el mismo teléfono, abre esta sección en otro dispositivo para escanearlo. Confirma antes de cinco minutos.</p>
+                <img id="two-factor-qr" width="300" height="300" alt="QR privado para vincular tu autenticador" />
+                <div class="field"><label for="two-factor-confirm-code">Código de seis dígitos</label>
+                  <input id="two-factor-confirm-code" aria-describedby="two-factor-settings-error" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required /></div>
+                <button class="btn btn-sky" type="submit">Activar y guardar códigos</button>
+              </form>
+              <div id="two-factor-codes" hidden>
+                <p>Guarda estos códigos en un lugar privado fuera de Hidro-Mejora. Solo se muestran ahora y cada uno sirve una vez.</p>
+                <pre id="two-factor-codes-list" tabindex="0" aria-label="Códigos de recuperación"></pre>
+              </div>
+              <p>Si perdiste tu autenticador, usa contraseña y recuperación para desactivar y volver a configurarlo. Para generar códigos nuevos necesitas tu autenticador.</p>
+              <p id="two-factor-settings-error" role="alert"></p>
+              <button class="btn btn-ghost" type="button" id="two-factor-close">Cerrar y ocultar datos privados</button>
+            </div>
+          </section></div></div>
     </div>
   </div>
   <div id="admin-toast" class="toast" role="status" aria-live="polite" hidden></div>
@@ -473,6 +511,7 @@
   <script src="shared/ui.js"></script>
   <script src="shared/icons.js"></script>
   <script src="shared/realtime.js"></script>
+  <script src="shared/two-factor-ui.js"></script>
   <script src="assets/js/admin-table.js"></script>
   <script src="assets/js/admin.js"></script>
 </body>

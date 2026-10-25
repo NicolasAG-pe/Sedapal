@@ -37,3 +37,7 @@
  .hm-table tbody,.hm-table tr{display:block}.hm-table td{display:block;padding:10px 14px;border:0}.hm-table td::before{content:attr(data-label);display:block;color:var(--muted);font-size:.72rem;font-weight:650;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
  .hm-table tr{padding:12px 0!important;border-bottom:1px solid var(--border)!important}.hm-table td:last-child{padding-bottom:16px}.page-title{font-size:1.4rem}
 }
+.two-factor-settings{padding:24px;max-width:620px}
+.two-factor-settings img{display:block;max-width:100%;height:auto;background:#fff;margin:12px 0}
+.two-factor-settings pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.82rem;user-select:text}
+#two-factor-settings-error,#two-factor-login-error{color:var(--danger,#a32929)}
