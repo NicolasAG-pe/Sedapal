@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## Piloto Yape 1.2.0 - barrera local y revisión detallada
+
+- Prepara 009 aditiva: entorno piloto local, marcador privado, ventana, participante/Admin/recibo acotados y datos de recepción contrastados.
+- Conserva bloqueo de producción, historial, deuda sintética e idempotencia previa; no conecta con Yape ni mueve dinero.
+- QR externo 0600 vinculado por huella; ninguna credencial bancaria ni dato receptor en PDF/API de operaciones.
+
 ## Verificación visual Android de PDF
 
 - El harness espera archivo/página y píxeles del documento renderizado, además de comprobar el PDF guardado; evita aprobar una captura de arranque negra.

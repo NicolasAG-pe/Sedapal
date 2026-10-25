@@ -1095,8 +1095,8 @@ function emitirOperacion(req, op) {
     emitirASuministro(req.user.id_suministro, 'pago:registrado', {id_operacion:op.id,id_recibo:op.id_recibo});
     emitirAAdmins('pago:nuevo', {id_operacion:op.id,id_recibo:op.id_recibo});
 }
-app.get('/api/pagos/config', requiereAuth, (req,res)=>res.set('Cache-Control','no-store').json(operacionesPago.config()));
-app.get('/api/pagos/yape/qr', requiereAuth, (req,res)=>{try{res.set({'Cache-Control':'no-store','Content-Type':'image/png'}).send(operacionesPago.qr());}catch(e){responderErrorPago(res,e);}});
+app.get('/api/pagos/config', requiereAuth, (req,res)=>res.set('Cache-Control','no-store').json(operacionesPago.config(req.user)));
+app.get('/api/pagos/yape/qr', requiereAuth, async(req,res)=>{try{res.set({'Cache-Control':'no-store','Content-Type':'image/png'}).send(await operacionesPago.qr(req.user));}catch(e){responderErrorPago(res,e);}});
 // APK anteriores conservan la ruta y la estructura, pero nunca reciben estado Pagado ficticio.
 app.post('/api/pagos', limiteOperacionesSensibles, requiereAuth, async(req,res)=>{try{
     if(!req.body?.solicitud_id)return res.status(409).json({estado:'error',mensaje:'Actualiza la aplicación. Este método demostrativo no acredita pagos; el recibo permanece pendiente.'});
