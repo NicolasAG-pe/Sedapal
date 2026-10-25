@@ -460,7 +460,7 @@
         </div>
         <div class="mod-stats" aria-label="Resumen de pagos" style="grid-template-columns:repeat(3,1fr)">
           <div class="mod-stat"><small>Pagos registrados</small><strong id="pay-total-count">0</strong></div>
-          <div class="mod-stat"><small>Total pagado</small><strong id="pay-total-monto">S/ 0.00</strong></div>
+          <div class="mod-stat"><small>Importe registrado</small><strong id="pay-total-monto">S/ 0.00</strong></div>
           <div class="mod-stat"><small>Último pago</small><strong id="pay-last-fecha">—</strong></div>
         </div>
         <div class="section-head">
@@ -714,12 +714,20 @@
     <div class="dialog-body">
       <div id="pay-main">
         <div class="pay-amount"><span>Monto a pagar</span><strong id="pay-monto">S/ 0.00</strong></div>
-        <div class="pay-methods" role="radiogroup" aria-label="Método de pago">
-          <label class="pay-opt sel"><input type="radio" name="pay-method" value="Tarjeta" checked /><span><b>Tarjeta</b><small>Débito o crédito</small></span></label>
-          <label class="pay-opt"><input type="radio" name="pay-method" value="Banca móvil" /><span><b>Banca móvil</b><small>Transferencia desde tu banco</small></span></label>
-          <label class="pay-opt"><input type="radio" name="pay-method" value="Billetera digital" /><span><b>Billetera digital</b><small>Yape / Plin</small></span></label>
+        <div class="pay-methods" role="radiogroup" aria-label="Tipo de operación">
+          <label class="pay-opt sel"><input type="radio" name="pay-method" value="demostrativo" checked /><span><b>Probar sin dinero</b><small>Operación demostrativa; no cancela deuda</small></span></label>
+          <label class="pay-opt"><input type="radio" name="pay-method" value="yape_manual" disabled /><span><b>Pagar con Yape - verificación manual</b><small>Disponible únicamente en laboratorio autorizado</small></span></label>
         </div>
-        <div class="pay-note">Esta versión registra la operación en Hidro Mejora y no realiza cargos bancarios.</div>
+        <p id="pay-notice" class="pay-note" role="status">No se realizan cobros financieros. La confirmación de Yape no es automática.</p>
+        <div id="pay-yape-fields" hidden>
+          <img id="pay-yape-qr" alt="QR receptor de pruebas autorizado" width="200" height="200" hidden />
+          <p>No transfieras dinero real. Un administrador debe comprobar la recepción por separado; una captura no confirma un pago.</p>
+          <label for="pay-reference">Referencia declarada</label>
+          <input id="pay-reference" maxlength="100" autocomplete="off" aria-describedby="pay-feedback" placeholder="Referencia de la operación de prueba" />
+          <label for="pay-proof">Comprobante opcional (PNG, máximo 1 MB)</label>
+          <input id="pay-proof" type="file" accept="image/png" aria-describedby="pay-feedback" />
+        </div>
+        <p id="pay-feedback" role="alert" aria-live="polite"></p>
         <div class="dialog-actions">
           <button class="btn btn-ghost" id="pay-cancel" type="button">Cancelar</button>
           <button class="btn btn-primary" id="pay-confirm" type="button">Confirmar pago</button>
@@ -732,8 +740,8 @@
       <div id="pay-success" hidden>
         <div class="pay-ok">
           <span class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg></span>
-          <h4>Pago exitoso</h4>
-          <p id="pay-success-text">Tu recibo fue cancelado.</p>
+          <h4>Operación registrada</h4>
+          <p id="pay-success-text">Consulta el estado de verificación en tu historial.</p>
           <div class="pay-code-row"><span class="pay-code" id="pay-code">—</span><button class="btn-sm detail" id="pay-copy" type="button">Copiar código</button></div>
         </div>
         <div class="dialog-actions">
@@ -1104,6 +1112,7 @@
   }
   function limpiarDatosCliente(){
     interfaz2fa.clear();
+    paymentRequests.clear();clearPaymentQr();paymentViewVersion++;
     window.HMClientHome.clear();
     recibos=[]; incidencias=[]; pagos=[]; cortes=[]; cortesGeneral=[];
     misSolicitudes=[]; notificaciones=[]; notifCargando=null;
@@ -3235,7 +3244,7 @@
       if(id === 'payments_count'){
         const totalPagado = pagos.reduce((a,x)=>a + (Number.isFinite(x.monto) ? x.monto : 0), 0);
         const uno = pagos.length === 1 ? 'pago registrado' : 'pagos registrados';
-        return {text:'Tienes ' + pagos.length + ' ' + uno + ' por un total de ' + fmt(totalPagado) + '.',
+        return {text:'Tienes ' + pagos.length + ' ' + uno + ' por un importe registrado de ' + fmt(totalPagado) + '. El registro no implica acreditación financiera.',
           actions:[createBotAction('Ver historial de pagos', ()=>hbGo('pagos'))]};
       }
       if(id === 'payment_code'){
@@ -3755,11 +3764,14 @@ async function descargarConstanciaPDF(r, btn){
         showToast('Número de suministro inválido.');
         return;
       }
-      const resp = await conSesion(() => (apiFetch('/api/me/pagos')), _hmEpoch);
-      if(!resp.ok) throw new Error('No se pudieron cargar los pagos (código ' + resp.status + ')');
-      const data = await conSesion(() => (resp.json()), _hmEpoch);
-      const lista = Array.isArray(data.pagos) ? data.pagos : [];
-      const pago = lista.find(x=>String(x.id_recibo) === String(r.id_recibo));
+      let pago;
+      if(r.operacion_id){
+        const response=await conSesion(()=>apiFetch('/api/me/operaciones-pago/'+encodeURIComponent(r.operacion_id)),_hmEpoch);
+        if(!response.ok)throw Error('No se pudo consultar la operación.');pago=await conSesion(()=>response.json(),_hmEpoch);
+      }else{
+        const resp=await conSesion(()=>apiFetch('/api/me/pagos'),_hmEpoch);if(!resp.ok)throw Error('No se pudo consultar el registro histórico.');
+        const data=await conSesion(()=>resp.json(),_hmEpoch);pago=(data.pagos||[]).find(x=>String(x.id_recibo)===String(r.id_recibo));
+      }
       if(!pago){
         showToast('No se encontró un pago registrado para este recibo.');
         return;
@@ -3798,147 +3810,72 @@ async function descargarConstanciaPDF(r, btn){
     if(selected && reciboPagable(selected)) abrirPago(selected);
   });
 
-  /* ---------- Pago en línea real contra PostgreSQL ---------- */
+  /* ---------- Declaraciones de pago: nunca acreditar deuda desde el cliente ---------- */
+  const paymentRequests = new Map();
+  let paymentQrUrl = null;
+  let paymentViewVersion=0;
+  function clearPaymentQr(){if(paymentQrUrl)URL.revokeObjectURL(paymentQrUrl);paymentQrUrl=null;const img=document.getElementById('pay-yape-qr');img.hidden=true;img.removeAttribute('src');}
+  function paymentLabel(p){return ({demostrativa:'Demostrativa',declarada:'Transferencia declarada',pendiente_verificacion:'Pendiente de verificación',verificada_manual:'Revisada manualmente (prueba)',acreditada_proveedor:'Aprobada por simulador',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'})[p.estado] || 'Histórico sin verificación financiera';}
   function showPayState(s){
-    document.getElementById('pay-main').hidden = s!=='main';
-    document.getElementById('pay-processing').hidden = s!=='processing';
-    document.getElementById('pay-success').hidden = s!=='success';
+    document.getElementById('pay-main').hidden=s!=='main';
+    document.getElementById('pay-processing').hidden=s!=='processing';
+    document.getElementById('pay-success').hidden=s!=='success';
   }
-  function abrirPago(r, opener){
-    if(!r || r.estado==='Pagado'){ showToast('Este recibo ya está pagado.'); return; }
-    if(!reciboPagable(r)){ showToast('Este recibo no se puede pagar.'); return; }
-    payTarget = r;
-    document.getElementById('pay-sub').textContent = r.etiqueta + ' · Suministro ' + supplyLabel.textContent;
-    document.getElementById('pay-monto').textContent = fmt(r.monto);
-    showPayState('main');
-    const cf = document.getElementById('pay-confirm');
-    cf.dataset.busy = '0';
-    cf.disabled = false;
-    cf.textContent = 'Confirmar pago · ' + fmt(r.monto);
-    openModal(payModal, opener);
-  }
-  document.querySelectorAll('.pay-opt input').forEach(radio=>{
-    radio.addEventListener('change', ()=>{
-      document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel', o.querySelector('input').checked));
-    });
-  });
-  document.getElementById('pay-confirm').addEventListener('click', async ev=>{
-    let _hmEpoch=sesionCliente.generation();
-    const btn = ev.currentTarget;
-    if(!payTarget || !reciboPagable(payTarget)) return;
-    if(btn.dataset.busy === '1') return;
-    const target = payTarget;
-    const supply = String(supplyLabel.textContent || '').trim();
-    const metodoEl = document.querySelector('input[name="pay-method"]:checked');
-    const metodo = metodoEl ? String(metodoEl.value || '').trim() : '';
-    if(!/^\d{9}$/.test(supply)){
-      showToast('Número de suministro inválido.');
-      return;
-    }
-    if(!metodo){
-      showToast('Selecciona un método de pago.');
-      return;
-    }
-    const idRecibo = Number(target.id_recibo);
-    if(!Number.isInteger(idRecibo) || idRecibo <= 0){
-      showToast('Recibo inválido.');
-      return;
-    }
-    btn.dataset.busy = '1';
-    btn.disabled = true;
-    btn.textContent = 'Procesando...';
-    showPayState('processing');
+  async function abrirPago(r,opener){
+    if(!r||!reciboPagable(r)){showToast('Este recibo no admite otra operación.');return;}
+    const epoch=sesionCliente.generation(),view=++paymentViewVersion;payTarget=r;clearPaymentQr();
+    document.getElementById('pay-reference').value='';document.getElementById('pay-proof').value='';
+    document.querySelector('input[name="pay-method"][value="demostrativo"]').checked=true;
+    document.getElementById('pay-yape-fields').hidden=true;document.getElementById('pay-feedback').textContent='';
+    document.getElementById('pay-sub').textContent='Suministro '+supplyLabel.textContent.trim()+' · '+(r.periodo||r.etiqueta);
+    document.getElementById('pay-monto').textContent=fmt(r.monto);
+    const btn=document.getElementById('pay-confirm');btn.textContent='Registrar demostración';btn.disabled=false;delete btn.dataset.busy;
+    showPayState('main');openModal(payModal,opener);
+    const yape=document.querySelector('input[name="pay-method"][value="yape_manual"]');yape.disabled=true;
     try{
-      const resp = await conSesion(() => (apiFetch('/api/pagos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          id_recibo: idRecibo,
-          metodo: metodo
-        })
-      })), _hmEpoch);
-      const data = await conSesion(() => (resp.json().catch(()=>null)), _hmEpoch);
-      if(resp.status === 409){
-        showPayState('main');
-        btn.dataset.busy = '0';
-        btn.disabled = false;
-        btn.textContent = 'Confirmar pago · ' + fmt(target.monto);
-        showToast((data && data.mensaje) || 'El recibo ya se encuentra pagado.');
-        try{
-          const datos = await conSesion(() => (cargarRecibosDesdeAPI()), _hmEpoch);
-          recibos = datos;
-          recibosEstado = datos.length ? 'ok' : 'vacio';
-          renderCards();
-          if(copiesModal.classList.contains('open')) renderCopies(false);
-        }catch(e){
-      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
-        return;
+      const res=await conSesion(()=>apiFetch('/api/pagos/config'),epoch);
+      if(!res.ok)throw Error('Configuración no disponible.');const config=await conSesion(()=>res.json(),epoch);
+      if(payTarget!==r||view!==paymentViewVersion)return;
+      document.getElementById('pay-notice').textContent=config.mensaje;
+      if(config.yape_manual){
+        const qr=await conSesion(()=>apiFetch('/api/pagos/yape/qr'),epoch);if(!qr.ok)throw Error('QR no disponible.');
+        const blob=await conSesion(()=>qr.blob(),epoch);if(payTarget!==r||view!==paymentViewVersion)return;
+        clearPaymentQr();paymentQrUrl=URL.createObjectURL(blob);document.getElementById('pay-yape-qr').src=paymentQrUrl;document.getElementById('pay-yape-qr').hidden=false;yape.disabled=false;
       }
-      if(!resp.ok || !data || data.estado !== 'ok' || !data.pago){
-        showPayState('main');
-        btn.dataset.busy = '0';
-        btn.disabled = false;
-        btn.textContent = 'Confirmar pago · ' + fmt(target.monto);
-        showToast((data && data.mensaje) || 'No se pudo registrar el pago. Inténtalo nuevamente.');
-        return;
-      }
-      // Éxito: PostgreSQL es la fuente de verdad. Nunca generar código en frontend.
-      const codigoReal = data.pago.codigo_operacion;
-      const montoReal = Number(data.pago.monto);
-      target.paymentCode = codigoReal;
-      target.estado = 'Pagado';
-      if(Number.isFinite(montoReal)) target.monto = montoReal;
-      document.getElementById('pay-success-text').textContent =
-        'Recibo ' + target.etiqueta + ' cancelado por ' + fmt(target.monto) + '. Deuda actual: ' + fmt(0) + '.';
-      document.getElementById('pay-code').textContent = codigoReal;
-      showPayState('success');
-      showSuccess('Pago registrado. El recibo ahora figura como Pagado.');
-      btn.dataset.busy = '0';
-      btn.disabled = false;
-      btn.textContent = 'Confirmar pago · ' + fmt(target.monto);
-      // Recargar lista real desde PostgreSQL y conservar el código para el PDF.
-      try{
-        const datos = await conSesion(() => (cargarRecibosDesdeAPI(supply)), _hmEpoch);
-        recibos = datos;
-        recibosEstado = datos.length ? 'ok' : 'vacio';
-        const actualizado = recibos.find(r=>String(r.id_recibo) === String(idRecibo));
-        if(actualizado) actualizado.paymentCode = codigoReal;
-        // Mantener payTarget apuntando al objeto actualizado para la constancia PDF.
-        const nuevoTarget = recibos.find(r=>String(r.id_recibo) === String(idRecibo));
-        if(nuevoTarget) payTarget = nuevoTarget;
-        renderCards();
-        if(copiesModal.classList.contains('open')) renderCopies(false);
-        if(selected && String(selected.id_recibo) === String(idRecibo)){
-          selected.estado = 'Pagado';
-          selected.paymentCode = codigoReal;
-        }
-        try{
-          pagos = await conSesion(() => (cargarPagosDesdeAPI()), _hmEpoch);
-          payEstado = pagos.length ? 'ok' : 'vacio';
-        }catch(payErr){
-      if(esAbortado(payErr) || _hmEpoch!==sesionCliente.generation())return;
-          console.error('No se pudieron recargar pagos tras el pago.', payErr);
-          pagos = [];
-          payEstado = 'error';
-        }
-        renderPagos();
-      }catch(err){
-      if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
-        console.error('No se pudo recargar recibos tras el pago.', err);
-        renderCards();
-        if(copiesModal.classList.contains('open')) renderCopies(false);
-      }
-    }catch(err){
-      if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
-      console.error('No se pudo registrar el pago.', err);
-      showPayState('main');
-      btn.dataset.busy = '0';
-      btn.disabled = false;
-      if(payTarget) btn.textContent = 'Confirmar pago · ' + fmt(payTarget.monto);
-      showToast('No se pudo registrar el pago. Inténtalo nuevamente.');
-    }
+    }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation())return;document.getElementById('pay-notice').textContent='Yape no disponible. Puedes consultar tus recibos o registrar una demostración sin dinero.';}
+  }
+  document.querySelectorAll('.pay-opt input').forEach(radio=>radio.addEventListener('change',()=>{
+    document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
+    const manual=document.querySelector('input[name="pay-method"]:checked').value==='yape_manual';
+    document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual?'Enviar a verificación':'Registrar demostración';
+  }));
+  document.getElementById('pay-confirm').addEventListener('click',async ev=>{
+    const btn=ev.currentTarget,epoch=sesionCliente.generation(),target=payTarget,view=paymentViewVersion;
+    if(!target||btn.dataset.busy==='1')return;
+    const method=document.querySelector('input[name="pay-method"]:checked').value,reference=document.getElementById('pay-reference').value.trim();
+    const error=document.getElementById('pay-feedback');error.textContent='';
+    if(method==='yape_manual'&&!/^[A-Za-z0-9 -]{4,100}$/.test(reference)){error.textContent='Escribe una referencia de 4 a 100 caracteres.';document.getElementById('pay-reference').focus();return;}
+    const file=document.getElementById('pay-proof').files[0];
+    if(method==='yape_manual'&&file&&(file.type!=='image/png'||file.size>1048576)){error.textContent='El comprobante debe ser PNG y pesar como máximo 1 MB.';return;}
+    btn.dataset.busy='1';btn.disabled=true;btn.setAttribute('aria-busy','true');
+    try{
+      let proof=null;if(method==='yape_manual'&&file)proof=await conSesion(()=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('No se pudo leer el comprobante.'));reader.readAsDataURL(file);}),epoch);
+      const fingerprint=JSON.stringify([target.id_recibo,method,reference,proof]);
+      let pending=paymentRequests.get(String(target.id_recibo));
+      if(pending&&pending.fingerprint!==fingerprint)throw Error('Hay una solicitud sin confirmar. Consulta el historial antes de cambiar los datos.');
+      if(!pending){pending={fingerprint,id:crypto.randomUUID()};paymentRequests.set(String(target.id_recibo),pending);}
+      showPayState('processing');
+      const res=await conSesion(()=>apiFetch('/api/me/operaciones-pago',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id_recibo:Number(target.id_recibo),metodo:method,solicitud_id:pending.id,referencia:reference,...(proof?{comprobante:proof}:{})})}),epoch);
+      const data=await conSesion(()=>res.json(),epoch);
+      if(!res.ok){if(res.status>=400&&res.status<500)paymentRequests.delete(String(target.id_recibo));throw Error(data.mensaje||'No se pudo registrar.');}
+      paymentRequests.delete(String(target.id_recibo));if(payTarget!==target||view!==paymentViewVersion)return;target.operacion_id=data.operacion.id;
+      document.getElementById('pay-reference').value='';document.getElementById('pay-proof').value='';clearPaymentQr();
+      document.getElementById('pay-code').textContent=data.operacion.codigo_operacion;
+      document.getElementById('pay-success-text').textContent=paymentLabel(data.operacion)+'. El recibo mantiene su deuda; no se ha acreditado dinero real.';
+      showPayState('success');showSuccess('Operación registrada. Consulta su verificación en el historial.');
+      pagos=await conSesion(()=>cargarPagosDesdeAPI(),epoch);payEstado=pagos.length?'ok':'vacio';renderPagos();
+    }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation()||payTarget!==target||view!==paymentViewVersion)return;showPayState('main');error.textContent=(e.message||'Sin conexión.')+' Si la respuesta se perdió, reintenta con los mismos datos o consulta el historial. No hagas otra transferencia.';}
+    finally{if(epoch===sesionCliente.generation()&&view===paymentViewVersion){btn.dataset.busy='0';btn.disabled=false;btn.removeAttribute('aria-busy');}}
   });
   document.getElementById('pay-constancia').addEventListener('click', ev=>{
     if(payTarget) descargarConstanciaPDF(payTarget, ev.currentTarget);
@@ -3951,9 +3888,9 @@ async function descargarConstanciaPDF(r, btn){
     const r = payTarget;
     closeModal(payModal);
     if(wasDetail && r) despuesEnSesion(()=>abrirDetalle(r), isReduced() ? 0 : 210);
-    payTarget = null;
+    clearPaymentQr();payTarget = null;
   });
-  ['pay-cancel','pay-close'].forEach(id=>document.getElementById(id).addEventListener('click', ()=>{ closeModal(payModal); payTarget = null; }));
+  ['pay-cancel','pay-close'].forEach(id=>document.getElementById(id).addEventListener('click', ()=>{ closeModal(payModal); clearPaymentQr(); document.getElementById('pay-reference').value='';document.getElementById('pay-proof').value=''; payTarget = null; }));
 
   /* ---------- Obtener copias / Pagar (mismo componente, contexto distinto) ---------- */
   function abrirCopias(soloPendientes, opener){
@@ -4009,7 +3946,7 @@ async function descargarConstanciaPDF(r, btn){
   document.getElementById('copies-close').addEventListener('click', ()=>closeModal(copiesModal));
   document.getElementById('copies-done').addEventListener('click', ()=>closeModal(copiesModal));
   detModal.addEventListener('click', e=>{ if(e.target===detModal) closeModal(detModal); });
-  payModal.addEventListener('click', e=>{ if(e.target===payModal){ closeModal(payModal); payTarget = null; } });
+  payModal.addEventListener('click', e=>{ if(e.target===payModal){ closeModal(payModal); clearPaymentQr(); document.getElementById('pay-reference').value='';document.getElementById('pay-proof').value=''; payTarget = null; } });
   copiesModal.addEventListener('click', e=>{ if(e.target===copiesModal) closeModal(copiesModal); });
   incModal.addEventListener('click', e=>{ if(e.target===incModal) closeModal(incModal); });
   let fotoObjectUrl=null, fotoController=null, fotoVersion=0;
@@ -4903,6 +4840,7 @@ async function descargarConstanciaPDF(r, btn){
     const idx = MESES.findIndex(m=>low.indexOf(m.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')) > -1);
     if(idx >= 0) mes = idx;
     return {
+      raw:api, operacion_id:api.id||null, verificacion:paymentLabel(api),
       id_pago: api.id_pago,
       id_recibo: String(api.id_recibo != null ? api.id_recibo : ''),
       monto: monto,
@@ -4921,10 +4859,14 @@ async function descargarConstanciaPDF(r, btn){
     if(!resp.ok) throw new Error('No se pudieron cargar los pagos (código ' + resp.status + ')');
     const data = await conSesion(() => (resp.json()), _hmEpoch);
     const lista = Array.isArray(data.pagos) ? data.pagos : [];
-    return lista.map(adaptarPagoAPI);
+    const operations=await conSesion(()=>apiFetch('/api/me/operaciones-pago'),_hmEpoch);
+    if(!operations.ok&&operations.status!==404)throw Error('No se pudo consultar la verificación de operaciones.');
+    const extra=operations.ok?await conSesion(()=>operations.json(),_hmEpoch):{operaciones:[]};
+    return [...(extra.operaciones||[]),...lista].map(adaptarPagoAPI).sort((a,b)=>String(b.fechaISO).localeCompare(String(a.fechaISO)));
   }
   function reciboLiteDesdePago(pg){
     return {
+      operacion_id:pg.operacion_id,
       id: pg.id_recibo,
       id_recibo: pg.id_recibo,
       etiqueta: pg.periodo,
@@ -4974,17 +4916,17 @@ async function descargarConstanciaPDF(r, btn){
     filtrados.forEach(pg=>{
       const art = document.createElement('article');
       art.className = 'card';
-      art.dataset.estado = 'Pagado';
+      art.dataset.estado = pg.raw.estado || 'Historico';
       art.setAttribute('role','listitem');
       const pgTop = document.createElement('div'); pgTop.className = 'card-top';
       const pgIzq = document.createElement('span');
       pgIzq.appendChild(nodo('span', 'card-month', pg.periodo));
       pgTop.appendChild(pgIzq);
-      pgTop.appendChild(nodo('span', 'badge Pagado', 'PAGADO'));
+      pgTop.appendChild(nodo('span', 'badge Pendiente', pg.verificacion));
       art.appendChild(pgTop);
       const pgMonto = document.createElement('div'); pgMonto.className = 'card-amount';
       pgMonto.appendChild(document.createTextNode(fmt(pg.monto) + ' '));
-      pgMonto.appendChild(nodo('small', null, '/ pago'));
+      pgMonto.appendChild(nodo('small', null, '/ operación registrada'));
       art.appendChild(pgMonto);
       const pgMeta = document.createElement('div'); pgMeta.className = 'card-meta';
       pgMeta.appendChild(nodo('span', null, pg.metodo + ' · ' + pg.fecha));
@@ -5004,6 +4946,10 @@ async function descargarConstanciaPDF(r, btn){
       pgCopy.type = 'button'; pgCopy.className = 'btn-sm detail'; pgCopy.dataset.act = 'copy';
       pgCopy.textContent = 'Copiar código';
       pgAcc.appendChild(pgCopy);
+      if(pg.raw.estado==='pendiente_verificacion'&&pg.raw.metodo==='yape_manual'){
+        const cancel=document.createElement('button');cancel.type='button';cancel.className='btn-sm detail';cancel.textContent='Cancelar declaración';
+        cancel.addEventListener('click',async()=>{const epoch=sesionCliente.generation();if(cancel.disabled)return;cancel.disabled=true;try{const res=await conSesion(()=>apiFetch('/api/me/operaciones-pago/'+encodeURIComponent(pg.operacion_id)+'/cancelar',{method:'POST'}),epoch);if(!res.ok)throw Error('No se pudo cancelar. Actualiza el historial.');pagos=await conSesion(()=>cargarPagosDesdeAPI(),epoch);renderPagos();}catch(e){if(epoch===sesionCliente.generation()&&!esAbortado(e))showToast(e.message);}finally{cancel.disabled=false;}});pgAcc.appendChild(cancel);
+      }
       art.appendChild(pgAcc);
       pgConst.addEventListener('click', ev=>descargarConstanciaPDF(reciboLiteDesdePago(pg), ev.currentTarget));
       pgCopy.addEventListener('click', ev=>copiarReferencia(pg.codigo, 'Código de operación copiado.', ev.currentTarget));
@@ -5072,6 +5018,7 @@ async function descargarConstanciaPDF(r, btn){
   }
   function mostrarLogin(){
     interfaz2fa.clear();
+    paymentRequests.clear();clearPaymentQr();paymentViewVersion++;
     verifyForm.hidden = true;
     regForm.hidden = true;
     authToLogin.hidden = true;

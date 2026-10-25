@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Desarrollo 1.2.0 - declaración Yape e historial transparente
+
+- Cliente móvil: importe y suministro, QR privado, referencia/comprobante PNG y recuperación por UUID tras respuesta perdida.
+- Admin: historial, evidencia protegida, motivo y confirmación de revisión independiente, con prevención de dobles envíos.
+- Las pantallas mantienen la deuda y distinguen registros históricos de operaciones simuladas.
+- Flujo Chromium/API/SQL validado con Node 22: 3 pruebas, sin correos ni movimientos reales.
+
 ## Desarrollo 1.2.0 - operaciones de pago sin acreditación ficticia
 
 - Separa demostraciones, declaraciones y verificación de los pagos históricos.

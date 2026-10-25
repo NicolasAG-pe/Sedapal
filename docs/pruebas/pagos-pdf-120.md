@@ -53,3 +53,24 @@ receipt-concurrency y receipt-schema, en Node 22 / PostgreSQL 18 aislado.
 La primera regresión falló por esperar el mensaje antiguo de error del servicio;
 se actualizó la expectativa al error público genérico de operaciones y se repitió
 el conjunto. No se ocultaron errores de SQL ni se imprimieron datos privados.
+
+## Interfaces y recuperación
+
+Cliente: importe exacto, suministro y período; QR por petición autenticada; referencia
+y PNG opcional; estado pendiente explícito. Un UUID se conserva en memoria durante
+un resultado incierto y permite repetir el mismo contenido sin duplicar; una solicitud
+con otro contenido no se reenvía a ciegas. El historial consulta la operación por su
+ID exacto, incluso si fue rechazada/cancelada, y permite cancelar una declaración pendiente.
+No se marca Pagado en el cliente. Logout borra formulario, referencias, imágenes/blob,
+solicitudes en memoria y credencial mediante el mecanismo de sesión existente.
+Después de terminar el proceso, consultar el historial recupera la operación del servidor;
+la restricción única impide otra declaración activa aunque se pierda la UUID local.
+
+Admin: sección de revisión con estados de prueba, motivo obligatorio y confirmación
+de comprobación independiente; historial con actor y hora, evidencia autenticada,
+prevención de solicitudes duplicadas y aviso de consultar historial si se pierde respuesta.
+Los eventos Socket.IO existentes actualizan propietario y Admin; no se emiten imágenes.
+
+3 pruebas Chromium/API/PostgreSQL aprobadas en Node 22.23.4: pérdida de respuesta y
+recuperación de la misma UUID, revisión Admin y logout sin imágenes ni referencias.
+Chromium móvil no equivale a Android nativo; este se informa por separado.
