@@ -43,7 +43,7 @@ test('propiedad, roles y desafíos no acceden a pagos privados ni comprobantes',
  assert.equal((await req('GET','/api/me/operaciones-pago/'+op,users[1].token)).status,404);
  assert.equal((await req('POST','/api/me/operaciones-pago',users[1].token,body(id))).status,404);
  assert.equal((await req('GET','/api/admin/operaciones-pago',users[0].token)).status,403);
- assert.equal((await req('POST','/api/admin/operaciones-pago/'+op+'/revisar',users[0].token,{accion:'confirmar',motivo:'Movimiento comprobado',movimiento_comprobado:true})).status,403);
+ assert.equal((await req('POST','/api/admin/operaciones-pago/'+op+'/revisar',users[0].token,{accion:'confirmar',motivo:'Movimiento comprobado',ensayo_confirmado:true})).status,403);
  const own=await fetch(ctx.base+'/api/me/operaciones-pago/'+op+'/comprobante',{headers:headers(users[0].token)});assert.equal(own.status,200);assert.equal(own.headers.get('cache-control'),'no-store');assert.equal(own.headers.get('content-type'),'image/png');
  assert.equal((await fetch(ctx.base+'/api/me/operaciones-pago/'+op+'/comprobante',{headers:headers(users[1].token)})).status,404);
  const detail=await service.detail(op,users[2],true);assert.deepEqual(detail.historial.map(x=>x.estado),['declarada','pendiente_verificacion']);
@@ -52,8 +52,8 @@ test('revisión exige movimiento independiente y motivo; decisiones concurrentes
  const id=await receipt(),{operacion:o}=await service.create(body(id),users[0]);
  const route='/api/admin/operaciones-pago/'+o.id+'/revisar';
  assert.equal((await req('POST',route,users[2].token,{accion:'confirmar',motivo:'Captura presentada'})).status,400);
- assert.equal((await req('POST',route,users[2].token,{accion:'confirmar',movimiento_comprobado:true,motivo:'ok'})).status,400);
- const results=await Promise.all(['confirmar','rechazar'].map(accion=>req('POST',route,users[2].token,{accion,motivo:'Movimiento sintético revisado',movimiento_comprobado:true})));
+ assert.equal((await req('POST',route,users[2].token,{accion:'confirmar',ensayo_confirmado:true,motivo:'ok'})).status,400);
+ const results=await Promise.all(['confirmar','rechazar'].map(accion=>req('POST',route,users[2].token,{accion,motivo:'Movimiento sintético revisado',ensayo_confirmado:true})));
  assert.deepEqual(results.map(r=>r.status).sort(),[200,409]);
  const final=await service.detail(o.id,users[0]);assert.ok(final.revisado_por);assert.ok(final.revisado_en);assert.equal(final.historial.length,3);
  assert.equal((await ctx.db.query('SELECT estado FROM recibos WHERE id_recibo=$1',[id])).rows[0].estado,'Pendiente');
@@ -65,7 +65,7 @@ test('idempotencia, doble declaración y referencias repetidas bajo concurrencia
  await assert.rejects(service.create(body(id),users[0]),{status:409});
  const other=await service.create(body(await receipt(),{referencia:b.referencia.toLowerCase()}),users[0]);assert.equal(other.operacion.referencia_repetida,false);assert.equal((await service.detail(other.operacion.id,users[2],true)).referencia_repetida,true);
  const separated=await service.create(body(await receipt(),{referencia:b.referencia.replace(/-/g,' ')}),users[0]);assert.equal((await service.detail(separated.operacion.id,users[2],true)).referencia_repetida,true);
- const decision={accion:'confirmar',motivo:'Movimiento sintético conciliado por referencia',movimiento_comprobado:true};
+ const decision={accion:'confirmar',motivo:'Movimiento sintético conciliado por referencia',ensayo_confirmado:true};
  const reviews=await Promise.allSettled([service.review(other.operacion.id,decision,users[2]),service.review(separated.operacion.id,decision,users[2])]);assert.equal(reviews.filter(r=>r.status==='fulfilled').length,1);assert.equal(reviews.find(r=>r.status==='rejected').reason.status,409);
  await service.cancel(results[0].operacion.id,users[0]);assert.equal((await service.get(results[0].operacion.id,users[0])).estado,'cancelada');
  await service.create(body(id),users[0]);

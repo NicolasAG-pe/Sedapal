@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Auditoría de pagos — integridad de la revisión
+
+- Separa la confirmación de ensayos de la recepción bancaria; fecha de revisión generada por PostgreSQL y fecha bancaria opcional sin inventarla.
+- Prepara migración local 010 sin reescribir el historial; bloquea otra declaración del mismo piloto tras rechazo/cancelación.
+- Consulta paginada, búsqueda parametrizada, contadores y recuperación de operación existente.
+- Backend focalizado: 9/9. Regresiones Node 22/PostgreSQL 18: 94 aprobadas, 1 histórico optativo omitido. Producción intacta.
+
 ## Piloto Yape - evitar una transferencia repetida
 
 - Bloquea volver a mostrar el QR desde la primera declaración, incluso rechazada/cancelada; oculta la imagen ante respuesta incierta e indica consultar historial sin repetir dinero.

@@ -1,9 +1,9 @@
 'use strict';
-const{test,before,after}=require('node:test'),assert=require('node:assert/strict'),crypto=require('node:crypto'),fs=require('node:fs'),path=require('node:path'),QRCode=require('qrcode');
+const{test,before,beforeEach,after}=require('node:test'),assert=require('node:assert/strict'),crypto=require('node:crypto'),fs=require('node:fs'),path=require('node:path'),QRCode=require('qrcode');
 const{iniciar}=require('./email-api.cjs'),{crearOperacionesPago,pngSeguro}=require('../payment-operations'),{fingerprint,loadPilot}=require('../yape-pilot'),{sql}=require('./email-schema.cjs');
 let ctx,p,dir,service,accounts=[],n=1;
 const body=(reference='PILOT-'+crypto.randomUUID())=>({id_recibo:p.receipt_id,solicitud_id:crypto.randomUUID(),metodo:'yape_manual',referencia:reference});
-const decision=(r,more={})=>({accion:'confirmar',motivo:'Comprobación sintética, sin transferencia externa',movimiento_comprobado:true,receptor_comprobado:true,monto_recibido:'1.00',referencia_comprobada:r.referencia,recibido_en:new Date(Date.now()-1000).toISOString(),...more});
+const decision=(r,more={})=>({accion:'confirmar',motivo:'Comprobación sintética, sin transferencia externa',ensayo_confirmado:true,...more});
 async function req(method,url,token,data){const r=await fetch(ctx.base+url,{method,headers:{'Content-Type':'application/json','X-Forwarded-For':'192.0.2.'+(n++%230+1),...(token?{Authorization:'Bearer '+token}:{})},...(data?{body:JSON.stringify(data)}:{})});return{status:r.status,data:await r.json()};}
 before(async()=>{
  ctx=await iniciar({databasePrefix:'yape_pilot'});fs.mkdirSync(path.resolve('artifacts/yape-piloto-120'),{recursive:true,mode:0o700});dir=fs.mkdtempSync(path.resolve('artifacts/yape-piloto-120/fixture-'));fs.chmodSync(dir,0o700);
@@ -16,6 +16,12 @@ before(async()=>{
  fs.writeFileSync(path.join(dir,'pilot.json'),JSON.stringify(p),{mode:0o600});
  await ctx.db.query('INSERT INTO control_piloto_yape(piloto_id,habilitado,ensayo_sintetico,id_recibo,id_usuario,id_admin,qr_hash,monto_maximo,inicio_en,vence_en) VALUES($1,true,$2,$3,$4,$5,$6,$7,$8,$9)',[p.id,p.synthetic,p.receipt_id,p.user_id,p.admin_id,p.qr_hash,p.max_amount,p.starts_at,p.expires_at]);
  Object.assign(process.env,{YAPE_PILOT_ENABLED:'1',YAPE_PILOT_CONFIG_FILE:path.join(dir,'pilot.json'),YAPE_QR_FILE:qrFile,PAYMENTS_MANUAL_ENABLED:'1'});service=crearOperacionesPago({pool:ctx.db});
+});
+beforeEach(async()=>{
+ // Cada escenario usa un recibo sintético independiente: nunca desbloquea una declaración anterior.
+ if(!p||(await ctx.db.query("SELECT 1 FROM operaciones_pago WHERE id_recibo=$1 AND metodo='yape_manual'",[p.receipt_id])).rowCount===0)return;
+ p.receipt_id=(await ctx.db.query("INSERT INTO recibos(id_suministro,periodo,fecha_emision,fecha_vencimiento,monto,consumo_m3,estado) VALUES($1,$2,CURRENT_DATE,CURRENT_DATE+7,1,0,'Pendiente') RETURNING id_recibo",[accounts[0].id_suministro,'Ensayo '+crypto.randomBytes(4).toString('hex')])).rows[0].id_recibo;
+ fs.writeFileSync(process.env.YAPE_PILOT_CONFIG_FILE,JSON.stringify(p));await ctx.db.query('UPDATE control_piloto_yape SET id_recibo=$1',[p.receipt_id]);
 });
 after(async()=>{if(ctx)await ctx.close();for(const k of ['YAPE_PILOT_ENABLED','YAPE_PILOT_CONFIG_FILE','YAPE_QR_FILE','PAYMENTS_MANUAL_ENABLED'])delete process.env[k];});
 async function cancel(o){await service.cancel(o.id,accounts[0]);}
@@ -34,13 +40,16 @@ test('migración 009 aditiva repetible y simulaciones conservadas sin convertirs
 });
 test('declarada pero no recibida: pendiente, sin evidencia acreditada; rechazo auditable',async()=>{
  const{operacion:o}=await service.create(body(),accounts[0]);assert.equal(o.estado,'pendiente_verificacion');assert.equal(o.piloto_ensayo,true);assert.equal(o.recibido_en,null);assert.equal(o.acreditacion_financiera,false);await assert.rejects(service.qr(accounts[0]),{status:409});
- const rejected=await service.review(o.id,{accion:'rechazar',motivo:'No existe recepción en el movimiento receptor'},accounts[1]);assert.equal(rejected.estado,'rechazada');assert.equal(rejected.recibido_en,null);await assert.rejects(service.qr(accounts[0]),{status:409});
+ const rejected=await service.review(o.id,{accion:'rechazar',motivo:'No existe recepción en el movimiento receptor'},accounts[1]);assert.equal(rejected.estado,'rechazada');assert.equal(rejected.recibido_en,null);await assert.rejects(service.qr(accounts[0]),{status:409});await assert.rejects(service.create(body(),accounts[0]),{status:409});
 });
-test('referencia, importe, receptor y fecha deben cotejarse; otro usuario no puede confirmar',async()=>{
- const{operacion:o}=await service.create(body(),accounts[0]);
- for(const patch of [{referencia_comprobada:'INCORRECTA'},{monto_recibido:'0.01'},{receptor_comprobado:false},{recibido_en:'2030-01-01T00:00:00Z'},{recibido_en:'2020-01-01T00:00:00Z'}])await assert.rejects(service.review(o.id,decision(o,patch),accounts[1]),{status:400});
- assert.equal((await req('POST','/api/admin/operaciones-pago/'+o.id+'/revisar',accounts[0].token,decision(o))).status,403);
- await cancel(o);
+test('piloto real exige referencia, importe y receptor; fecha bancaria opcional, rol usuario rechazado',async()=>{
+ const file=process.env.YAPE_PILOT_CONFIG_FILE;fs.writeFileSync(file,JSON.stringify({...p,synthetic:false}));await ctx.db.query('UPDATE control_piloto_yape SET ensayo_sintetico=false');
+ try{const{operacion:o}=await service.create({...body(),declaracion_voluntaria:true},accounts[0]);
+ const valid={accion:'confirmar',motivo:'Contrato manual sin transferencia real en esta prueba',movimiento_comprobado:true,receptor_comprobado:true,monto_recibido:'1.00',referencia_comprobada:o.referencia};
+ for(const patch of [{referencia_comprobada:'INCORRECTA'},{monto_recibido:'0.01'},{receptor_comprobado:false},{movimiento_comprobado:false},{recibido_en:'2030-01-01T00:00:00Z'},{recibido_en:'2020-01-01T00:00:00Z'}])await assert.rejects(service.review(o.id,{...valid,...patch},accounts[1]),{status:400});
+ assert.equal((await req('POST','/api/admin/operaciones-pago/'+o.id+'/revisar',accounts[0].token,valid)).status,403);
+ const confirmed=await service.review(o.id,valid,accounts[1]);assert.equal(confirmed.recibido_en,null);assert.equal(confirmed.monto_recibido,'1.00');assert.ok(confirmed.revisado_en);
+ }finally{fs.writeFileSync(file,JSON.stringify(p));await ctx.db.query('UPDATE control_piloto_yape SET ensayo_sintetico=true');}
 });
 test('tipo voluntario exige declaración explícita y no confirma dinero en este ensayo',async()=>{
  const file=process.env.YAPE_PILOT_CONFIG_FILE;const original=fs.readFileSync(file);fs.writeFileSync(file,JSON.stringify({...p,synthetic:false}));await ctx.db.query('UPDATE control_piloto_yape SET ensayo_sintetico=false');
@@ -49,10 +58,16 @@ test('tipo voluntario exige declaración explícita y no confirma dinero en este
 });
 test('respuesta perdida/repetición conserva UUID y dos confirmaciones concurrentes solo registran una',async()=>{
  const b=body(),first=await service.create(b,accounts[0]),again=await service.create(b,accounts[0]);assert.equal(first.operacion.id,again.operacion.id);assert.equal(again.repetida,true);
+ await assert.rejects(service.review(first.operacion.id,{accion:'confirmar',motivo:'Falta confirmar ensayo'},accounts[1]),{status:400});
+ const overview=await service.overview(accounts[0]);assert.equal(overview.yape_manual,false);assert.equal(overview.operacion_existente.id,first.operacion.id);
  const results=await Promise.allSettled([1,2].map(()=>service.review(first.operacion.id,decision(first.operacion),accounts[1])));
  assert.equal(results.filter(x=>x.status==='fulfilled').length,1);assert.equal(results.find(x=>x.status==='rejected').reason.status,409);
- const final=await service.detail(first.operacion.id,accounts[0]);assert.ok(final.recibido_en);assert.equal(final.monto_recibido,'1.00');assert.equal(final.historial.filter(x=>x.estado==='verificada_manual').length,1);assert.ok(!JSON.stringify(final).includes(p.qr_hash));
+ const final=await service.detail(first.operacion.id,accounts[0]);assert.equal(final.recibido_en,null);assert.equal(final.monto_recibido,null);assert.ok(final.revisado_en);assert.equal(final.historial.filter(x=>x.estado==='verificada_manual').length,1);assert.ok(!JSON.stringify(final).includes(p.qr_hash));
  assert.equal((await ctx.db.query('SELECT estado FROM recibos WHERE id_recibo=$1',[p.receipt_id])).rows[0].estado,'Pendiente');assert.equal((await ctx.db.query('SELECT 1 FROM pagos')).rowCount,0);
+});
+test('paginación, búsqueda parametrizada y contadores conservan auditoría',async()=>{
+ const data=await service.page(accounts[1],{page:'1',tab:'historial',q:accounts[0].numero_suministro});assert.ok(data.total>=4);assert.ok(data.contadores.confirmadas>=2);assert.ok(data.operaciones.length<=10);assert.equal((await service.page(accounts[1],{q:"' OR true --"})).total,0);
+ const before=(await ctx.db.query('SELECT row_to_json(o) FROM operaciones_pago o')).rows;await ctx.db.query(sql('migrations/010_revision_piloto_sintetico.sql'));assert.deepEqual((await ctx.db.query('SELECT row_to_json(o) FROM operaciones_pago o')).rows,before);
 });
 test('otro recibo, QR alterado, ventana cerrada y confirmación modificada quedan bloqueados',async()=>{
  await assert.rejects(service.create({...body(),id_recibo:9999},accounts[0]),{status:403});

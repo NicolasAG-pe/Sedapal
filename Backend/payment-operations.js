@@ -29,6 +29,30 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
   return{recibo_piloto:p?.receipt_id||null,importe_piloto:p?.max_amount||null,entorno:p?'piloto_manual':'simulado',piloto_ensayo:p?.synthetic??null,cobros_reales:false,yape_manual:enabled()&&!!env.YAPE_QR_FILE&&allowed,
    mensaje:p?(p.synthetic?'Ensayo sintético del piloto. No envíes dinero real.':'Piloto voluntario: recibo sintético, no es una deuda de agua. Transferencia externa y comprobación manual; Hidro-Mejora no ejecuta cobros.'):'Pruebas de verificación manual. No transfieras dinero real. Una captura no acredita un pago.'};
  }
+ async function overview(user){
+  const result=config(user);
+  if(result.recibo_piloto){
+   const {rows}=await pool.query(`SELECT ${publicColumns},false AS referencia_repetida FROM operaciones_pago o JOIN recibos r USING(id_recibo) JOIN suministros s USING(id_suministro) WHERE o.id_recibo=$1 AND s.id_usuario=$2 AND s.id_suministro=$3 AND o.metodo='yape_manual' ORDER BY o.creado_en DESC LIMIT 1`,[result.recibo_piloto,user.id_usuario,user.id_suministro]);
+   if(rows.length){result.operacion_existente=rows[0];result.yape_manual=false;result.mensaje='Ya existe una declaración. Consulta el estado e historial; no hagas otra transferencia.';}
+  }
+  return result;
+ }
+ async function page(user,query){
+  const number=Math.max(1,Math.min(100000,Number.parseInt(query.page,10)||1)),size=10;
+  const categories={pendientes:"o.estado='pendiente_verificacion'",confirmadas:"o.estado IN ('verificada_manual','acreditada_proveedor')",rechazadas:"o.estado='rechazada'",simulaciones:"(o.entorno='simulado' OR o.piloto_ensayo IS TRUE)",historial:'true'};
+  const tab=Object.hasOwn(categories,query.tab)?query.tab:'pendientes';
+  const q=String(query.q||'').trim().slice(0,100),method=['yape_manual','demostrativo','proveedor_simulado'].includes(query.metodo)?query.metodo:'';
+  const from='FROM operaciones_pago o JOIN recibos r USING(id_recibo) JOIN suministros s USING(id_suministro)';
+  const search="($1='' OR position(lower($1) in lower(concat_ws(' ',o.referencia,s.numero_suministro,r.periodo,o.id_recibo::text,o.id::text)))>0) AND ($2='' OR o.metodo=$2)";
+  return tx(async c=>{
+   // Una sola instantánea para contadores, total y página ante revisiones concurrentes.
+   await c.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+   const counts=(await c.query(`SELECT ${Object.entries(categories).map(([k,v])=>`count(*) FILTER (WHERE ${v})::int AS ${k}`).join(',')} ${from} WHERE ${search}`,[q,method])).rows[0];
+   const total=counts[tab],pages=Math.max(1,Math.ceil(total/size)),current=Math.min(number,pages);
+   const {rows}=await c.query(`SELECT ${publicColumns},${duplicateColumn(true)} ${from} WHERE ${search} AND ${categories[tab]} ORDER BY o.creado_en DESC,o.id DESC LIMIT $3 OFFSET $4`,[q,method,size,(current-1)*size]);
+   return{operaciones:rows,contadores:counts,total,pagina:current,paginas:pages};
+  });
+ }
  async function tx(fn){const c=await pool.connect();try{await c.query("BEGIN; SET LOCAL lock_timeout='2s'; SET LOCAL statement_timeout='5s'");const r=await fn(c);await c.query('COMMIT');return r;}catch(e){await c.query('ROLLBACK').catch(()=>{});if(e.code==='23505')fail(409,'Ya existe una operación o referencia. Consulta el historial antes de reintentar.');if(['55P03','40P01','40001'].includes(e.code))fail(409,'Otra operación está en curso. Actualiza e intenta nuevamente.');throw e;}finally{c.release();}}
  async function audit(c,id,estado,actor,motivo){await c.query('INSERT INTO operaciones_pago_historial(operacion_id,estado,actor_id,motivo) VALUES($1,$2,$3,$4)',[id,estado,actor,motivo]);}
  async function get(c,id,user,admin=false){
@@ -72,6 +96,7 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
    if(!r)fail(404,'Recibo no encontrado.');
    const{rows:[previous]}=await c.query('SELECT id,payload_hash FROM operaciones_pago WHERE id_usuario=$1 AND solicitud_id=$2',[user.id_usuario,key]);
    if(previous){if(previous.payload_hash!==payloadHash)fail(409,'La solicitud ya se utilizó con otros datos.');return{operacion:await get(c,previous.id,user),repetida:true};}
+   if(p&&(await c.query("SELECT 1 FROM operaciones_pago WHERE piloto_id=$1 AND id_recibo=$2 AND metodo='yape_manual' LIMIT 1",[p.id,id])).rowCount)fail(409,'Ya existe una declaración para este piloto. Consulta el estado e historial; no hagas otra transferencia.');
    if(['Anulado','Pagado'].includes(r.estado)||(await c.query('SELECT 1 FROM pagos WHERE id_recibo=$1',[id])).rowCount)fail(409,'El recibo no admite otra operación.');
    if((await c.query('SELECT 1 FROM recibos WHERE id_suministro=$1 AND periodo=$2 AND id_recibo<>$3 LIMIT 1',[r.id_suministro,r.periodo,id])).rowCount)fail(409,'El histórico requiere conciliación antes de registrar otra operación.');
    if(Number(r.monto)<=0)fail(409,'Importe no válido para esta operación.');
@@ -101,26 +126,27 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
   const state=body.accion==='confirmar'?'verificada_manual':body.accion==='rechazar'?'rechazada':null;
   const reason=typeof body.motivo==='string'?body.motivo.trim():'';
   if(!state||reason.length<8||reason.length>500)fail(400,'Indica una decisión y un motivo de 8 a 500 caracteres.');
-  if(state==='verificada_manual'&&body.movimiento_comprobado!==true)fail(400,'Comprueba el movimiento por separado. La captura no demuestra la recepción.');
   return tx(async c=>{
    const r=await locked(c,id,user,true);
    if(r.metodo!=='yape_manual'||r.estado!=='pendiente_verificacion')fail(409,'La operación ya fue revisada o no admite revisión manual.');
-   let received=null;
+   const synthetic=r.entorno==='simulado'||r.piloto_ensayo===true;
+   if(state==='verificada_manual'&&(synthetic?body.ensayo_confirmado!==true:body.movimiento_comprobado!==true))fail(400,synthetic?'Confirma que revisas un ensayo sintético sin dinero.':'Comprueba el movimiento por separado. La captura no demuestra la recepción.');
+   let received=null,verifiedAmount=null;
    if(r.entorno==='piloto_manual'){
     const p=pilot();if(!p)fail(503,'El piloto local está desactivado.');await guard(c,p,user,true,{receipt:r.id_recibo});
     const bound=(await c.query('SELECT piloto_id,piloto_ensayo,receptor_huella FROM operaciones_pago WHERE id=$1',[id])).rows[0];
     if(bound.piloto_id!==p.id||bound.piloto_ensayo!==p.synthetic||bound.receptor_huella!==p.qr_hash)fail(409,'El receptor configurado no coincide con la declaración original.');
-    if(state==='verificada_manual'){
+    if(state==='verificada_manual'&&!synthetic){
      const amount=String(body.monto_recibido||'');const reference=String(body.referencia_comprobada||'').normalize('NFKC').trim().toUpperCase().replace(/[ -]/g,'');
      if(!/^\d+\.\d{2}$/.test(amount)||amount!==r.monto||reference!==r.referencia.replace(/[ -]/g,'')||body.receptor_comprobado!==true)fail(400,'Contrasta importe exacto, referencia y receptor en el movimiento recibido.');
-     if(typeof body.recibido_en!=='string'||!/(?:Z|[+-]\d{2}:\d{2})$/.test(body.recibido_en)||!Number.isFinite(Date.parse(body.recibido_en))||Date.parse(body.recibido_en)<Math.floor(Date.parse(p.starts_at)/60000)*60000||Date.parse(body.recibido_en)>Date.now())fail(400,'La fecha comprobada debe pertenecer a la ventana del piloto y no estar en el futuro.');
-     received=body.recibido_en;
+     if(body.recibido_en!=null&&body.recibido_en!==''&&(typeof body.recibido_en!=='string'||!/(?:Z|[+-]\d{2}:\d{2})$/.test(body.recibido_en)||!Number.isFinite(Date.parse(body.recibido_en))||Date.parse(body.recibido_en)<Math.floor(Date.parse(p.starts_at)/60000)*60000||Date.parse(body.recibido_en)>Date.now()))fail(400,'La fecha comprobada debe pertenecer a la ventana del piloto y no estar en el futuro.');
+     received=body.recibido_en||null;verifiedAmount=r.monto;
     }
    }
    if((await c.query('SELECT 1 FROM operaciones_pago WHERE id=$1 AND id_usuario=$2',[id,user.id_usuario])).rowCount)fail(403,'Otra persona administradora debe revisar su propia operación.');
    const{rows:[receipt]}=await c.query('SELECT monto,estado FROM recibos WHERE id_recibo=$1',[r.id_recibo]);
    if(receipt.monto!==r.monto||['Pagado','Anulado'].includes(receipt.estado))fail(409,'El recibo cambió. Se requiere conciliación.');
-   await c.query('UPDATE operaciones_pago SET estado=$2,motivo=$3,revisado_por=$4,revisado_en=clock_timestamp(),actualizado_en=clock_timestamp(),recibido_en=$5,monto_recibido=$6,receptor_comprobado=$7 WHERE id=$1',[id,state,reason,user.id_usuario,received,received?r.monto:null,received?true:null]);
+   await c.query('UPDATE operaciones_pago SET estado=$2,motivo=$3,revisado_por=$4,revisado_en=clock_timestamp(),actualizado_en=clock_timestamp(),recibido_en=$5,monto_recibido=$6,receptor_comprobado=$7 WHERE id=$1',[id,state,reason,user.id_usuario,received,verifiedAmount,verifiedAmount?true:null]);
    await audit(c,id,state,user.id_usuario,reason);return get(c,id,user,true);
   });
  }
@@ -150,7 +176,7 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
    await c.query('INSERT INTO eventos_pago_proveedor(evento_id,operacion_id,payload_hash) VALUES($1,$2,$3)',[String(e.id),r.id,e.hash]);return get(c,r.id,{},true);
   });
  }
- return{config,create,list,get:(id,u,a=false)=>get(pool,id,u,a),review,cancel,event,
+ return{config,overview,page,create,list,get:(id,u,a=false)=>get(pool,id,u,a),review,cancel,event,
   async detail(id,user,admin=false){const r=await get(pool,id,user,admin);return{...r,historial:(await pool.query('SELECT estado,actor_id,motivo,fecha FROM operaciones_pago_historial WHERE operacion_id=$1 ORDER BY id',[id])).rows};},
   async proof(id,user,admin=false){await get(pool,id,user,admin);const{rows:[r]}=await pool.query('SELECT comprobante FROM operaciones_pago WHERE id=$1',[id]);if(!r.comprobante)fail(404,'Comprobante no disponible.');return r.comprobante;},
   async qr(user){if(!config(user).yape_manual)fail(503,'QR no disponible.');try{
