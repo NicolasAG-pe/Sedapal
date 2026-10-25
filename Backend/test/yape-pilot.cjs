@@ -6,7 +6,7 @@ const body=(reference='PILOT-'+crypto.randomUUID())=>({id_recibo:p.receipt_id,so
 const decision=(r,more={})=>({accion:'confirmar',motivo:'Comprobación sintética, sin transferencia externa',movimiento_comprobado:true,receptor_comprobado:true,monto_recibido:'1.00',referencia_comprobada:r.referencia,recibido_en:new Date(Date.now()-1000).toISOString(),...more});
 async function req(method,url,token,data){const r=await fetch(ctx.base+url,{method,headers:{'Content-Type':'application/json','X-Forwarded-For':'192.0.2.'+(n++%230+1),...(token?{Authorization:'Bearer '+token}:{})},...(data?{body:JSON.stringify(data)}:{})});return{status:r.status,data:await r.json()};}
 before(async()=>{
- ctx=await iniciar({databasePrefix:'yape_pilot'});dir=fs.mkdtempSync(path.resolve('artifacts/yape-piloto-120/fixture-'));fs.chmodSync(dir,0o700);
+ ctx=await iniciar({databasePrefix:'yape_pilot'});fs.mkdirSync(path.resolve('artifacts/yape-piloto-120'),{recursive:true,mode:0o700});dir=fs.mkdtempSync(path.resolve('artifacts/yape-piloto-120/fixture-'));fs.chmodSync(dir,0o700);
  for(let i=0;i<3;i++){const a=ctx.registro(8800+i),q=(await ctx.request('register',a,202)).data,u=(await ctx.request('verify-email',ctx.verificar(q.registro_id,ctx.codigo(a.correo)),201)).data;
  if(i===1)await ctx.db.query("UPDATE usuarios SET rol='admin' WHERE id_usuario=$1",[u.usuario.id_usuario]);
  accounts.push({...u.suministro,id_usuario:u.usuario.id_usuario,token:(await ctx.request('login',{numero_suministro:a.numero_suministro,password:a.password},200)).data.token});}

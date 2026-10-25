@@ -132,3 +132,11 @@ repositorio también se rechaza. Solo el titular podrá aportar un PNG externo a
 
 Java21/Gradle: BUILD SUCCESSFUL, 4 JUnit y lint sin errores (16 advertencias previas).
 Runtime final local devuelto a API pública HTTPS, sin generar ni publicar una release.
+
+Cierre de reproducibilidad: las suites crean su carpeta de evidencia aunque no existan
+artefactos previos. Al reiniciar el PostgreSQL tmpfs de tests, Docker reasignó su puerto
+loopback: una repetición falló por conservar el puerto anterior; se obtuvo nuevamente el
+puerto real y la repetición final pasó 9/9 (8 backend + 1 E2E). El launcher además comprueba
+que el contenedor esté activo y que su puerto actual coincida con el estado privado, para
+no contactar otro servicio por un dato obsoleto. No se cambiaron contraseñas ni destinos
+productivos. Estos 9 casos solapan los conjuntos ya informados.

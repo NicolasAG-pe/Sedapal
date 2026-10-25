@@ -6,6 +6,7 @@ const root=path.resolve(__dirname,'../..'),out=path.join(root,'artifacts/yape-pi
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 async function until(fn,message){const end=Date.now()+20000;while(!await fn()){assert.ok(Date.now()<end,message);await pause(100);}}
 test('piloto sintético completo: respuesta perdida, comprobación Admin, Socket.IO, PDF y recuperación', {timeout:120000},async()=>{
+ fs.mkdirSync(out,{recursive:true,mode:0o700});
  const output=execFileSync(process.execPath,['scripts/yape-pilot.cjs','prepare','--synthetic'],{cwd:root,encoding:'utf8'});const statePath=output.trim().split('Estado privado: ')[1];assert.ok(statePath);
  fs.writeFileSync(path.join(out,'e2e-state-path'),statePath,{mode:0o600});
  const state=JSON.parse(fs.readFileSync(statePath)),credentials=JSON.parse(fs.readFileSync(path.join(path.dirname(statePath),'credentials.json'))).accounts;

@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## Reproducibilidad de pruebas del piloto
+
+- Las pruebas crean su carpeta local de evidencia en un clon nuevo, sin depender de artefactos anteriores ni copiar archivos privados.
+- El launcher rechaza un contenedor detenido o cuyo puerto cambió; repetición backend/E2E: 9/9 aprobadas.
+
 ## Piloto Yape 1.2.0 - interfaces, launcher privado y constancia
 
 - Cliente/Admin diferencian ensayo de transferencia voluntaria, con cotejo de importe, referencia, fecha y receptor; recibo sintético sin acreditación de servicio.
