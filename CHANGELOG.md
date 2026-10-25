@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## Verificación visual Android de PDF
+
+- El harness espera archivo/página y píxeles del documento renderizado, además de comprobar el PDF guardado; evita aprobar una captura de arranque negra.
+- Distingue extracción accesible diferida de Google Viewer de un defecto del documento. Repetición completa: 7 comprobaciones nativas aprobadas, sin cambios productivos ni nuevas releases.
+
 ## Desarrollo 1.2.0 - PDF profesionales y validación conjunta
 
 - Recibos y constancias A4 con identidad visual, estado real, referencias, hora de servidor y alcance explícito; sin datos tributarios inventados ni QR de validación inexistente.

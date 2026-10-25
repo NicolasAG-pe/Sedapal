@@ -1,6 +1,6 @@
 'use strict';
 // WebView real + API/PG nuevos. No proveedor externo, no dinero ni cuenta personal.
-const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),{execFileSync}=require('node:child_process');
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,logout,android,output}){
  const p=()=>getPage(),supply='900000741',pkg='pe.edu.hidromejora.app';
@@ -25,7 +25,10 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
   const b=target.bounds.match(/\[(\d+),(\d+)\]\[(\d+),(\d+)\]/).slice(1).map(Number);android('shell','input','tap',String((b[0]+b[2])>>1),String((b[1]+b[3])>>1));
   let file;await until(()=>{file=android('shell','find','/sdcard/Download','-name','*.pdf').trim().split('\n').find(f=>f.endsWith('.pdf')&&!before.includes(f));return!!file&&Number(android('shell','stat','-c','%s',file))>1000;},'PDF guardado');
   android('pull',file,path.join(output,name+'.pdf'));const bytes=fs.readFileSync(path.join(output,name+'.pdf'));assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok(bytes.toString('latin1').includes('%%EOF'));
-  await until(()=>/(?:topResumedActivity|mResumedActivity)=.*(?:PdfViewerActivity|Pdf)/.test(android('shell','dumpsys','activity','activities')),'visor PDF Android');screenshot(name+'-viewer');
+  await until(()=>/(?:topResumedActivity|mResumedActivity)=.*(?:PdfViewerActivity|Pdf)/.test(android('shell','dumpsys','activity','activities')),'visor PDF Android');
+  const content=execFileSync('pdftotext',[path.join(output,name+'.pdf'),'-'],{encoding:'utf8'});
+  for(const value of ['HIDRO-MEJORA','45.50',name==='native-constancia'?'Pendiente de verificación':'RECIBO DE SERVICIO'])assert.ok(content.includes(value),'Contenido PDF '+value);
+  await require('./android-pdf-viewer.cjs')({android,until,fileName:path.basename(file),capture:()=>{screenshot(name+'-viewer');return fs.readFileSync(path.join(output,name+'-viewer.png'));}});
   android('shell','am','start','-n',pkg+'/.MainActivity');await pause(800);
  }
  await nativeSave(p().locator('#pay-list button[data-act="const"]').first(),'native-constancia');

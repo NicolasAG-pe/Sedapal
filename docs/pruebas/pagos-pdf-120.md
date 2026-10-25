@@ -131,19 +131,31 @@ maquetas PDF de dos páginas (reajustadas para los ejemplos finales).
 
 ### Android nativo
 
-Evidencia privada `artifacts/android-session-native-BUNfxk/result.json`: passed,
+Evidencia privada `artifacts/android-session-native-VJ3OZ3/result.json`: passed,
 7 comprobaciones, 0 errores. Compilación debug e instrumentación separadas; ninguna
 APK release creada. Pérdida de respuesta después de COMMIT, reintento con la misma UUID,
 force-stop, restauración cifrada, historial pendiente, demostración sin acreditar,
 logout/reapertura y PDFs completos guardados por SAF y abiertos en el visor Android.
-Un único Socket.IO real al restaurar; no hubo sustitución de sockets en este harness.
+Socket.IO real en este harness y unicidad comprobada durante el login; no hubo sustitución de sockets.
 El QR utilizado fue una imagen sintética de laboratorio sin cuenta receptora; no se
 ensayó una transferencia ni un escaneo bancario. Evidencia sintética de estados del
 simulador: `artifacts/pagos-pdf-120/fixture-IHtRn6/simulation-evidence.json`.
 
-El nuevo PDF se guardó y visualizó realmente en Android. La ampliación final que acepta
-consumo snake_case afecta solo entradas directas del generador y pasó prueba Node/Poppler;
-el cliente nativo sigue usando el adaptador consumoM3 previamente probado.
+El nuevo PDF se guardó y visualizó realmente en Android. La repetición nativa final
+incluye el código final del generador y espera página/archivo del visor más píxeles
+renderizados de la marca sobre el papel, comprobando además el texto extraído del PDF
+real guardado. No se considera suficiente una actividad abierta o una captura negra.
+Se inspeccionaron las capturas finales de ambos documentos. El recibo repetido se
+conservó en Downloads con sufijo (1), sin sobrescribir el documento anterior.
+
+La revisión detectó una captura inicial tomada antes de dibujar la página. Un primer
+endurecimiento del test falló porque Google Viewer no siempre expone todo el texto
+accesible en la primera apertura (solo anuncia "page 1"), aunque el PDF ya se ve.
+Se corrigió el criterio del harness para comprobar archivo, página y render, en lugar
+de exigir un detalle asíncrono del visor. Se repitió el flujo completo: 7 comprobaciones
+aprobadas y 0 errores en VJ3OZ3. El intento fallido se conserva en
+`artifacts/android-session-native-vLT5ps/`. No se cambió el plugin ni se debilitaron
+permisos Android; PDF/UA sigue sin certificarse.
 
 ### Reproducción sin secretos
 
