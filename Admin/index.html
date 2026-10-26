@@ -27,6 +27,8 @@
           <input id="admin-password" name="password" type="password" autocomplete="current-password" minlength="4" maxlength="128" required></div>
         <button id="admin-login-submit" class="btn btn-primary" type="submit">Ingresar al panel</button>
       </form>
+    <p id="admin-forgot-wrap"><button id="admin-forgot" class="btn btn-ghost" type="button">¿Olvidaste tu contraseña?</button></p>
+    <div id="password-recovery" hidden></div>
     <form id="two-factor-login" hidden>
       <p>Ingresa el código de tu aplicación autenticadora o un código de recuperación de un solo uso.</p>
       <div class="field"><label for="two-factor-login-code">Código de verificación</label>
@@ -519,6 +521,7 @@
   <script src="shared/icons.js"></script>
   <script src="shared/realtime.js"></script>
   <script src="shared/two-factor-ui.js"></script>
+  <script src="shared/password-recovery-ui.js"></script>
   <script src="assets/js/admin-table.js"></script>
   <script src="assets/js/payment-management.js"></script>
   <script src="assets/js/admin.js"></script>

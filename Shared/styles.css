@@ -105,3 +105,16 @@ input[aria-invalid=true],select[aria-invalid=true],textarea[aria-invalid=true]{b
 .two-factor-settings{background:var(--surface);border:1px solid var(--border);border-top:4px solid var(--secondary);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
 #two-factor-login{background:var(--sky-mist);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
 #two-factor-status{color:var(--text)}
+
+/* Flujo público compartido: conserva la identidad acuática de ambos clientes. */
+.password-recovery{border-top:3px solid var(--primary,#0F4C81);padding-top:1rem;text-align:left}
+.password-recovery h2{color:#0F4C81;font-size:1.35rem;margin:0 0 .75rem}
+.password-recovery form{display:grid;gap:1rem}
+.password-recovery form[hidden]{display:none}
+.password-recovery .field{display:grid;gap:.4rem;min-width:0}
+.password-recovery input{box-sizing:border-box;width:100%;min-width:0}
+.password-recovery .hint,.password-recovery small{font-size:.85rem;line-height:1.5;color:#435d70}
+.password-recovery button{white-space:normal;min-height:44px}
+#recovery-message:not(:empty){padding:.75rem;background:#EAF4FB;border-radius:8px;color:#243746}
+#recovery-error:not(:empty){padding:.75rem;border-left:4px solid #C94C4C;background:#fff2f2;color:#9b2727}
+.form-error[data-result="success"],.login-error[data-result="success"]{background:var(--green-bg);color:var(--green-ink);border-color:#9FCAB0}

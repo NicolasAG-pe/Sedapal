@@ -50,7 +50,11 @@
     "pdf:yape:example": "node scripts/generate-yape-pilot-pdf.cjs",
     "test:payments:audit": "node --test scripts/test/payment-audit-flow.cjs",
     "pdf:payments:audit": "node scripts/generate-payment-audit-examples.cjs",
-    "test:payments:realtime": "node --test scripts/test/payment-realtime-flow.cjs scripts/test/realtime.test.cjs"
+    "test:payments:realtime": "node --test scripts/test/payment-realtime-flow.cjs scripts/test/realtime.test.cjs",
+    "test:password-recovery": "node --test Backend/test/password-recovery.cjs Backend/test/password-recovery-schema.cjs",
+    "test:password-recovery:e2e": "node --test scripts/test/password-recovery-flow.cjs",
+    "test:password-recovery:native": "node scripts/test/android-session-native.cjs --password-recovery",
+    "worker:password-recovery": "node Backend/workers/password-recovery.cjs"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",

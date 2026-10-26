@@ -12,7 +12,7 @@ const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function android(...args){
  // adb shell vuelve a interpretar los argumentos: proteger también nombres con espacios/paréntesis.
  const command=args[0]==='shell'?['shell',...args.slice(1).map(v=>"'"+String(v).replace(/'/g,"'\\''")+"'")]:args;
- return execFileSync(adb,['-s',serial,...command],{encoding:'utf8',timeout:30000});
+ return execFileSync(adb,['-s',serial,...command],{encoding:'utf8',timeout:30000,maxBuffer:32*1024*1024});
 }
 async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(!await fn()){assert.ok(Date.now()<end,'Timeout: '+label);await pause(100);}}
 
@@ -22,6 +22,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  const output=fs.mkdtempSync(path.join(root,'artifacts/android-session-native-'));fs.chmodSync(output,0o700);
  const report={androidNative:true,checks:[],errors:[],applicationId:pkg};
  const ok=label=>{report.checks.push(label);fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2));console.log('OK: '+label);};
+ if(process.argv.includes('--password-recovery'))require('../../Backend/test/password-recovery-fixture.cjs').configure();
  if(process.argv.includes('--two-factor')){
   process.env.TOTP_ENCRYPTION_KEY=require('node:crypto').randomBytes(32).toString('base64');process.env.TOTP_ENROLLMENT_ENABLED='1';
  }
@@ -83,7 +84,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  try{
   report.database=ctx.connection.database;
   const env={...process.env,API_BASE_URL:ctx.base.replace('127.0.0.1','10.0.2.2')};
-  for(const [command,args,name]of [[process.execPath,['scripts/sync-android.cjs'],'sync.log'],['bash',['scripts/android-gradle.sh','--no-daemon','--console=plain','-PhidroBuildDir='+path.join(output,'app'),':app:assembleDebug',':app:assembleDebugAndroidTest'],'build.log']]){
+  for(const [command,args,name]of [[process.execPath,['scripts/sync-android.cjs'],'sync.log'],['bash',['scripts/android-gradle.sh','--no-daemon','--console=plain','-PhidroBuildDir='+path.join(output,'app'),':app:assembleDebug',':app:assembleDebugAndroidTest',...(process.argv.includes('--password-recovery')?[':app:testDebugUnitTest',':app:lintDebug']:[])],'build.log']]){
    const r=spawnSync(command,args,{cwd:root,env,encoding:'utf8',maxBuffer:32*1024*1024});fs.writeFileSync(path.join(output,name),(r.stdout||'')+(r.stderr||''),{mode:0o600});assert.equal(r.status,0,'Compilación '+name);
   }
   android('install','-r',path.join(output,'app/outputs/apk/debug/app-debug.apk'));
@@ -91,6 +92,12 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   const instrument=android('shell','am','instrument','-w','-e','class','pe.edu.hidromejora.app.SecureStateInstrumentedTest','-e','hidroSecureFixture','1',pkg+'.test/androidx.test.runner.AndroidJUnitRunner');
   android('shell','am','force-stop',pkg);
   fs.writeFileSync(path.join(output,'instrumentation.txt'),instrument);assert.match(instrument,/OK \(1 test\)/);ok('Android Keystore: clave no exportable, GCM/IV distinto, alteración rechazada y borrado confirmado');
+  if(process.argv.includes('--password-recovery')){
+   const recovery=await require('../../Backend/test/password-recovery-fixture.cjs').attach(ctx);
+   android('shell','am','start','-n',pkg+'/.MainActivity');await attach();
+   await require('./android-password-recovery-native.cjs')({ctx,recovery,getPage:()=>page,restart,until,ok,screenshot,login,dashboard,logout,android,saved,noPlainToken,loginScreen,output});
+   report.result='passed';return;
+  }
   if(process.argv.includes('--payments')){
    android('shell','am','start','-n',pkg+'/.MainActivity');await attach();
    await require('./android-payments-native.cjs')({ctx,getPage:()=>page,restart,until,ok,screenshot,login,logout,android,output});

@@ -9,7 +9,7 @@ La versión 1.2.0 reunirá varias mejoras futuras; este roadmap no autoriza acti
 | --- | --- | --- |
 | 2FA TOTP | Usuario y Admin, secreto cifrado, recuperación de un uso, sesiones revocadas, pruebas aisladas/nativas del PR #12. | Control externo obligatorio contra despliegue/rollback de backend antiguo; recuperación de identidad y revocación distribuida antes de activar factores reales. 007 pendiente en producción. |
 | Sesión tras OTP | Auto-login y persistencia Keystore incorporados del PR #11. | Ensayo físico de APK compatible y pérdidas de red; no fusionar PR #11 por separado sin revisar dependencias. |
-| Recuperación de contraseña | No implementada en esta etapa. | Diseño de tokens limitados de un uso, límites, entrega verificada y conservación del segundo factor; nunca recuperación por suministro/correo público. |
+| Recuperación de contraseña | Cliente/Android y Admin con correo verificado, código y permiso de un uso, límites, 2FA conservado, sesiones revocadas y worker cifrado separado; validado solo en laboratorio. | Revisar PR dependiente, autorizar 011/configuración/entrega, retención y control de rollback; revocación interinstancia y prueba física. Cerrado por defecto, sin Neon ni correos reales. |
 | Validación de pagos | Demostraciones separadas, declaración/revisión manual de laboratorio y simulador con auditoría. | Receptor autorizado, sandbox comercial, conciliación financiera, privacidad, contrato y autorización; 008 pendiente en producción y cobros bloqueados. |
 | Recibos y constancias | A4 con datos registrados, estados explícitos, trazabilidad y ejemplos sintéticos. | Revisión institucional/legal, accesibilidad PDF y prueba física de impresión/visualización. No comprobantes oficiales SEDAPAL/SUNAT. |
 | Push | Pendiente; no contratado ningún proveedor. | Evaluar opciones gratuitas, permisos voluntarios, privacidad, entrega/reintentos y consumo Android; no prometer disponibilidad gratuita permanente. |
@@ -50,6 +50,6 @@ pagos productivos. Guía: [yape-piloto-local.md](yape-piloto-local.md).
 Rama `feature/identidad-acuatica-pdf-120`, dependiente de PR #14. Paleta común,
 interfaz cliente/Admin y composición nueva de recibos/constancias. Ver
 `IDENTIDAD-VISUAL-120.md` y el informe de pruebas. No publica 1.2.0 ni habilita
-funciones financieras. Recuperación de contraseña, push, línea de tiempo de
+funciones financieras. La recuperación de contraseña se prepara en laboratorio; push, línea de tiempo de
 incidencias, reportes, seguridad adicional y pruebas físicas siguen pendientes
 en sus etapas; no se implementan como parte del rediseño.

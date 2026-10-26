@@ -1,5 +1,18 @@
 # Historial de versiones
 
+## Recuperación de contraseña — cliente, Admin y Android
+
+- Acceso «¿Olvidaste tu contraseña?» y formularios compartidos con diseño acuático, validaciones, bloqueo de duplicados, recuperación de respuesta perdida por UUID y mensajes accesibles. Código/permiso solo en memoria; éxito vuelve al login sin iniciar sesión.
+- Android espera la restauración pendiente antes de abrir recuperación; conserva el borrado seguro de Keystore ante revocación y la sesión cifrada después del nuevo login.
+- Chromium responsive, WebView Android real, scrypt/2FA/JWT/Socket.IO, regresiones, Gradle/unitarias y lint comprobados; evidencia y límites en docs/pruebas/recuperacion-clave-120.md. PDF y APK oficiales conservados; sin cambios productivos.
+
+## Recuperación segura de contraseña — backend de laboratorio
+
+- Código de correo y permiso de cambio de un uso, límites por IP/identidad y outbox cifrada independiente del registro OTP; Gmail ambiguo no se reenvía automáticamente.
+- Conserva 2FA y exige el factor existente a usuarios protegidos y Admin; cuentas administrativas sin factor requieren revisión de identidad independiente.
+- Migración aditiva 011 revoca JWT al cambiar credenciales también sin 2FA, invalida solicitudes anteriores y conserva los datos históricos; aplicación únicamente en PostgreSQL aislado.
+- Worker y función cerrados por defecto; 17 pruebas específicas aprobadas y regresiones documentadas en docs/pruebas/recuperacion-clave-120.md. Sin producción ni correo real.
+
 ## Identidad acuática — segunda composición visual
 
 - Encabezados y navegación inferior azules, deuda con degradado efectivo y superficies blancas/celestes alternadas; login y cabeceras de recibos/pagos con bloques de marca.
