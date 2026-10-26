@@ -47,7 +47,9 @@
     "test:yape:pilot": "node --test Backend/test/yape-pilot.cjs",
     "test:yape:pilot:e2e": "node --test scripts/test/yape-pilot-flow.cjs",
     "test:yape:pilot:native": "node scripts/test/android-session-native.cjs --payments --yape-pilot",
-    "pdf:yape:example": "node scripts/generate-yape-pilot-pdf.cjs"
+    "pdf:yape:example": "node scripts/generate-yape-pilot-pdf.cjs",
+    "test:payments:audit": "node --test scripts/test/payment-audit-flow.cjs",
+    "pdf:payments:audit": "node scripts/generate-payment-audit-examples.cjs"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",

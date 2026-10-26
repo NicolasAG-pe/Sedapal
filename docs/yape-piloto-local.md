@@ -2,7 +2,7 @@
 
 Estado: preparado para ensayo; **todavía no se realizó ni certificó una transferencia
 real en esta etapa**. PR #14 depende de PR #13, que depende de #12 (incluye #11).
-No publicar 1.2.0, aplicar 007/008/009 a Neon, desplegar ni cambiar cuentas productivas.
+No publicar 1.2.0, aplicar 007/008/009/010 a Neon, desplegar ni cambiar cuentas productivas.
 
 ## Qué significa cada resultado
 
@@ -49,7 +49,9 @@ El perfil web no persiste JWT tras recargar: volver a iniciar sesión es intenci
 
 Declarar una referencia sintética, revisar desde Admin y comprobar la actualización
 en el cliente. Un ensayo verificado debe decir **Ensayo sintético revisado manualmente**.
-Su constancia debe conservar esa distinción. No escanearlo intentando hacer una transferencia.
+En Admin: Pendientes de revisión → Revisar → marcar la aceptación del ensayo → Confirmar ensayo. No se solicitan importe bancario, recepción ni fecha ficticios. La revisión y el administrador se registran automáticamente. Su constancia conserva esa distinción. No escanearlo intentando hacer una transferencia.
+
+Cada repetición debe ejecutar de nuevo `prepare --synthetic`: crea otra base, cuentas, UUID y recibo, sin borrar ni desbloquear los anteriores. Después de declarar, usar **Ver estado e historial**; un rechazo/cancelación tampoco permite otra transferencia con ese piloto.
 
 ## 2. Configurar un QR auténtico privadamente (titular)
 
@@ -119,13 +121,8 @@ BCP recomienda verificar la recepción en los movimientos de la aplicación.
    receptor autorizado**. No autorrevisión desde la cuenta del declarante.
 4. Si no llegó, hay discrepancia o no puede comprobarse, **rechazar con motivo**; no
    completar campos con datos inventados. Se conserva el historial y no se elimina nada.
-5. Solo si coincide: ingresar importe con dos decimales, referencia comprobada y fecha/hora
-   del movimiento. El formulario utiliza America/Lima (UTC-05:00), independientemente de la zona
-   del navegador, y el servidor almacena un instante con zona horaria. Se admite precisión de minuto del movimiento: el comienzo
-   se redondea al minuto, hasta 59 segundos antes del inicio exacto; nunca fechas futuras.
-6. Marcar ambas confirmaciones de cotejo y guardar un motivo sin datos bancarios sensibles.
-   El backend comprueba coincidencias, rol/estado, ventana, identidad de revisor y referencia
-   única. Dos confirmaciones simultáneas solo pueden registrar una revisión.
+5. Solo si coincide: abrir **Revisar**, ingresar el importe con dos decimales y la referencia comprobada. El formulario compara ambos con la declaración y enfoca cualquier discrepancia. No existe un input editable de fecha de revisión.
+6. Marcar ambas comprobaciones de recepción independiente y receptor autorizado. El motivo de rechazo es obligatorio; el de confirmación es opcional y tiene un texto seguro predeterminado. PostgreSQL registra la fecha y el administrador. La fecha real del movimiento bancario es distinta: si no se informó, permanece NULL y el PDF dice «Fecha bancaria no registrada»; no se sustituye por la hora de revisión. La API conserva el campo opcional con validación de ventana/zona para integraciones autorizadas.
 7. Comprobar **Transferencia verificada manualmente** en Admin y Cliente, con actualización
    por Socket.IO. Si se pierde la respuesta, consultar el historial; no repetir el dinero.
 8. Descargar constancia: UUID interno, recibo/suministro sintéticos, importe, referencia,

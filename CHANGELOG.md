@@ -1,5 +1,15 @@
 # Historial de versiones
 
+## Auditoría de pagos — gestión compacta y recuperación segura
+
+- Admin sustituye formularios dentro de tarjetas por tabla adaptable, cinco secciones, búsqueda/filtros, contadores/paginación real y diálogo de revisión accesible.
+- Ensayos se confirman sin declarar dinero ficticio; revisión con hora/actor del servidor y cotejo independiente para Yape auténtico.
+- Cliente recupera estado/historial tras respuesta perdida, impide otro QR/declaración y limpia el resumen privado al cerrar sesión.
+- Constancia de ensayo explícita, ejemplos A4 sintéticos y sin sobrescribir documentos o APK anteriores.
+- HidroBot espera los datos antes de habilitar su botón: corregida la carrera reproducida en Android, con prueba de carga retenida.
+- Piloto Android final: 9 comprobaciones sin errores, PDF reales guardados/abiertos y retorno con Atrás; Gradle/JUnit/lint conservados aprobados.
+- Playwright integral: cinco resoluciones, 16 comprobaciones y Socket.IO real. Regresión de pagos/HidroBot: 8/8; sesión nativa general: 13 comprobaciones sin errores. Evidencia detallada en docs/pruebas/auditoria-pagos-admin-120.md.
+
 ## Auditoría de pagos — integridad de la revisión
 
 - Separa la confirmación de ensayos de la recepción bancaria; fecha de revisión generada por PostgreSQL y fecha bancaria opcional sin inventarla.

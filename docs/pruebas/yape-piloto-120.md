@@ -23,8 +23,7 @@ El QR jamás forma parte del frontend, APK, Git ni del PDF. Se entrega por API a
 solo al participante. Cambiar QR/manifiesto impide continuar hasta revisión del titular.
 
 Estados previos conservados; entorno piloto_manual y marca piloto_ensayo distinguen
-ensayo sintético de declaración humana. Confirmar exige cotejo de referencia/importe,
-receptor y fecha real dentro de la ventana, motivo, rol Admin y cuenta autorizada.
+ensayo sintético de declaración humana. La revisión sintética exige aceptación explícita del ensayo y no registra recepción bancaria. La revisión auténtica exige cotejo de referencia/importe y receptor, rol Admin y cuenta autorizada; la fecha bancaria es opcional, validada si se informa y nunca sustituida por la fecha de revisión. Véase la auditoría posterior y migración local 010 en `auditoria-pagos-admin-120.md`.
 Nunca se confirma por captura. No se crean pagos comerciales ni se marca Pagado el
 recibo sintético. No existe una conexión con Yape que compruebe la verdad del testimonio:
 la recepción la comprueba personalmente el titular en sus movimientos.
