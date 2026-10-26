@@ -18,15 +18,21 @@
   const api = shared.createApi(session, () => logout('Sesión terminada o acceso denegado. Inicia sesión nuevamente.'));
   const security=window.createHMTwoFactorUI({session:{token:session.token,authFetch:authRequest},apiFetch:api.fetch,
     showLogin:message=>logout(message || ''),
-    showChallenge:()=>{loginForm.hidden=true;document.getElementById('admin-password').value='';},
+    showChallenge:()=>{document.getElementById('admin-forgot-wrap').hidden=true;loginForm.hidden=true;document.getElementById('admin-password').value='';},
     authenticated:async data=>{const epoch=attempt;try{await completeAdminLogin(data,epoch);}catch(error){if(epoch===attempt&&!shared.ui.isAborted(error))logout('No se pudo confirmar la sesión. Inicia sesión nuevamente.');throw error;}},showProfile:()=>navigate('admin-cuenta')});
   const realtime = shared.createRealtime(session, {
     events: ['incidencia:nueva', 'incidencia:actualizada', 'atencion:nueva',
       'atencion:actualizada', 'recibo:nuevo', 'recibo:actualizado', 'pago:nuevo', 'corte:actualizado'],
     onChange: () => { if (session.isAdmin() && modules) modules.load(page); },
     onStatus: updateConnection,
-    onInvalidated: () => logout('La cuenta fue desactivada. Inicia sesión nuevamente.')
+    onInvalidated: () => logout('Tu sesión cambió o terminó. Inicia sesión nuevamente.')
   });
+
+  const passwordRecovery=window.createHMPasswordRecovery({container:document.getElementById('password-recovery'),
+    onOpen:()=>{security.clear();loginForm.reset();loginForm.hidden=true;document.getElementById('admin-forgot-wrap').hidden=true;},
+    onClose:(message,success)=>logout(message,success)
+  });
+  document.getElementById('admin-forgot').addEventListener('click',()=>passwordRecovery.open());
 
   function updateConnection(state){
     const element=document.getElementById('admin-connection');
@@ -44,8 +50,9 @@
     element.hidden = false;
     toastTimer = setTimeout(() => { element.textContent = ''; element.hidden = true; }, 4500);
   }
-  function logout(message = '') {
+  function logout(message = '', success = false) {
     attempt++;
+    passwordRecovery.clear();document.getElementById('admin-forgot-wrap').hidden=false;
     security.clear();
     if (loginController) loginController.abort();
     authControllers.forEach(c=>c.abort());authControllers.clear();
@@ -73,6 +80,7 @@
     delete loginButton.dataset.loading;
     loginForm.removeAttribute('aria-busy');
     loginButton.textContent = 'Ingresar al panel';
+    loginError.dataset.result=success?'success':'error';loginError.setAttribute('role',success?'status':'alert');
     loginError.textContent = message;
     loginError.hidden = !message;
     login.hidden = false;
@@ -125,6 +133,7 @@
   loginForm.addEventListener('submit', async event => {
     event.preventDefault();
     if (loginButton.disabled) return;
+    loginError.dataset.result='error';loginError.setAttribute('role','alert');
     const supply = document.getElementById('admin-supply').value.trim();
     const password = document.getElementById('admin-password').value;
     if (!/^\d{9}$/.test(supply) || password.length < 4) {

@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## Recuperación de contraseña — cliente, Admin y Android
+
+- Acceso «¿Olvidaste tu contraseña?» y formularios compartidos con diseño acuático, validaciones, bloqueo de duplicados, recuperación de respuesta perdida por UUID y mensajes accesibles. Código/permiso solo en memoria; éxito vuelve al login sin iniciar sesión.
+- Android espera la restauración pendiente antes de abrir recuperación; conserva el borrado seguro de Keystore ante revocación y la sesión cifrada después del nuevo login.
+- Chromium responsive, WebView Android real, scrypt/2FA/JWT/Socket.IO, regresiones, Gradle/unitarias y lint comprobados; evidencia y límites en docs/pruebas/recuperacion-clave-120.md. PDF y APK oficiales conservados; sin cambios productivos.
+
 ## Recuperación segura de contraseña — backend de laboratorio
 
 - Código de correo y permiso de cambio de un uso, límites por IP/identidad y outbox cifrada independiente del registro OTP; Gmail ambiguo no se reenvía automáticamente.

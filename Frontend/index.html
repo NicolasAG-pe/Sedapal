@@ -113,7 +113,8 @@
     </form>
     <div class="auth-switch" id="auth-to-login" hidden>¿Ya tienes una cuenta? <a href="#" id="show-login">Iniciar sesión</a></div>
 
-    <div class="login-foot">¿Olvidaste tu clave? <a href="#" id="forgot-link">Recupérala aquí</a> · <a href="#" id="help-link">Ayuda</a></div>
+    <div id="password-recovery" hidden></div>
+    <div class="login-foot"><a href="#" id="forgot-link">¿Olvidaste tu contraseña?</a> · <a href="#" id="help-link">Ayuda</a></div>
   </div>
   <div class="login-foot-brand">Hidro-Mejora · Proyecto universitario</div>
   </div>
@@ -944,6 +945,7 @@
 <script src="assets/js/registration-state.js"></script>
 <script src="assets/js/client-session.js"></script>
 <script src="shared/two-factor-ui.js"></script>
+<script src="shared/password-recovery-ui.js"></script>
 <script src="assets/js/sedapal-knowledge.js"></script>
 <!-- Socket.IO cliente vendorizado (v4.8.4, igual que el backend): el script
      absoluto /socket.io/socket.io.js no resuelve en el WebView Android
@@ -1382,7 +1384,7 @@
     s.on('notificacion:nueva', ()=>{ sincronizarUsuarioPorEvento('notificacion'); });
     s.on('perfil:actualizado', ()=>{ sincronizarUsuarioPorEvento('perfil'); });
     s.on('sesion:invalidada', ()=>{
-      try{ showToast('Tu sesión fue desactivada por un administrador.'); }catch(e){}
+      try{ showToast('Tu sesión cambió o terminó. Inicia sesión nuevamente.'); }catch(e){}
       try{ detenerTiempoReal(); }catch(e){}
       try{ cerrarSesionCompleta('Sesión terminada. Inicia sesión nuevamente.'); }catch(e){}
     });
@@ -4106,7 +4108,7 @@ async function descargarConstanciaPDF(r, btn){
         return;
       }
       closeModal(passModal);
-      showSuccess('Contraseña actualizada correctamente.');
+      await cerrarSesionCompleta('Contraseña actualizada. Inicia sesión nuevamente.');
     }catch(err){
       if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
       console.error('No se pudo actualizar la contraseña.', err);
@@ -5039,6 +5041,7 @@ async function descargarConstanciaPDF(r, btn){
 
   /* ---------- Login / Logout con skeleton + API real de recibos ---------- */
   function showError(msg){
+    delete formError.dataset.result;formError.setAttribute('role','alert');
     formError.textContent = msg;
     formError.classList.add('show');
   }
@@ -5074,6 +5077,7 @@ async function descargarConstanciaPDF(r, btn){
     regCorreo.focus();
   }
   function mostrarLogin(){
+    recuperacionClave.clear();
     interfaz2fa.clear();
     paymentRequests.clear();clearPaymentQr();paymentViewVersion++;paymentPilot=false;paymentPilotSynthetic=true;paymentExisting=false;document.getElementById('pay-existing-state').textContent='';document.getElementById('pay-existing-state').hidden=true;document.getElementById('pay-existing-history').hidden=true;
     verifyForm.hidden = true;
@@ -5578,7 +5582,16 @@ async function descargarConstanciaPDF(r, btn){
   })();
 
   document.getElementById('btn-replay-tutorial').addEventListener('click', startTutorial);
-  document.getElementById('forgot-link').addEventListener('click', e=>{e.preventDefault();showToast('La recuperación automática aún no está disponible. Solicita ayuda por los canales de atención.');});
+  const recuperacionClave=window.createHMPasswordRecovery({container:document.getElementById('password-recovery'),
+    onOpen:()=>{interfaz2fa.clear();form.reset();form.hidden=true;regForm.hidden=true;verifyForm.hidden=true;authToLogin.hidden=true;authToRegister.hidden=true;if(demoBox)demoBox.hidden=true;if(loginFoot)loginFoot.hidden=true;loginTitle.textContent='Seguridad de la cuenta';},
+    onClose:(mensaje,correcto)=>{mostrarLogin();if(mensaje){showError(mensaje);if(correcto){formError.dataset.result='success';formError.setAttribute('role','status');}}}
+  });
+  document.getElementById('forgot-link').addEventListener('click', async e=>{
+    e.preventDefault();
+    // No competir con la lectura asíncrona de Keystore/registro al reabrir Android.
+    if(tareaRestauracion){try{await tareaRestauracion;}catch(_){return;}}
+    if(!sesionCliente.isUser()&&!restauracionBloqueada)recuperacionClave.open();
+  });
   document.getElementById('help-link').addEventListener('click', e=>{e.preventDefault();showToast('Ayuda SEDAPAL: (01) 317-8000.');});
   document.querySelectorAll('[data-call]').forEach(b=>b.addEventListener('click', ()=>showToast('Conectando con (01) 317-8000…')));
   document.querySelectorAll('[data-claim]').forEach(b=>b.addEventListener('click', ()=>openIncidentModal('Facturación')));
@@ -5646,7 +5659,7 @@ async function descargarConstanciaPDF(r, btn){
         clienteCorreo=result.data.usuario.correo || '';
         await entrarDashboard(result.data.suministro.numero_suministro,sesionCliente.generation());
       }else{
-        mostrarLogin();await restaurarRegistroDePagina();
+        await restaurarRegistroDePagina();
         if(result.state==='ended')showError('Tu sesión terminó o la cuenta no está habilitada. Inicia sesión nuevamente.');
       }
     })();

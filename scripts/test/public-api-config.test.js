@@ -18,7 +18,7 @@ test('Android se genera limpio y rechaza una salida con recursos anteriores', ()
         assert.equal(fs.existsSync(path.join(output,'assets',name)),false,'Original histórico fuera del paquete: '+name);
         assert.equal(fs.existsSync(path.join(root,'Frontend/assets',name)),true,'Original conservado: '+name);
     }
-    assert.deepEqual(fs.readdirSync(path.join(output, 'shared')).sort(), ['api.js', 'assets', 'icons.js', 'styles.css', 'two-factor-ui.js', 'ui.js']);
+    assert.deepEqual(fs.readdirSync(path.join(output, 'shared')).sort(), ['api.js', 'assets', 'icons.js', 'password-recovery-ui.js', 'styles.css', 'two-factor-ui.js', 'ui.js']);
     const stale = path.join(output, 'admin.js');
     fs.writeFileSync(stale, '// Recurso antiguo: debe conservarse y bloquear el empaquetado.');
     assert.throws(() => buildWeb('android', { API_BASE_URL: 'http://10.0.2.2:8080' }, output), /debe estar vacía/);

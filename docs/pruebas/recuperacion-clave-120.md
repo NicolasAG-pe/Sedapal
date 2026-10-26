@@ -48,14 +48,47 @@ Primer incremento backend: 15/15 casos de recuperación; 2/2 preservación/idemp
 
 Logs privados ignorados: `artifacts/recuperacion-clave-120/`. Pantallas Chromium: `web/`, cinco resoluciones 360×800, 390×844, 768×1024, 1366×768 y 1920×1080. Se verifican cliente y Admin con 2FA, respuesta HTTP perdida, idempotencia, código erróneo/correcto, contraseña y regreso al login sin auto-sesión. Primera ejecución falló por una consulta SQL inválida del fixture; la segunda por contar solo payloads pendientes en lugar de solicitudes. Corregidas ambas aserciones, sin relajar controles.
 
-La integración UI y Android continúa en un incremento separado; no declarar prueba física ni entrega de correo real aprobadas.
+### Incremento de interfaz y validación final
+
+Cliente y Admin comparten `Shared/password-recovery-ui.js`: pasos de correo, código/factor y contraseña/confirmación, etiquetas accesibles, foco, error visible, bloqueo de botones y cancelación. El resultado positivo utiliza el color verde de la identidad existente y `role=status`; los errores conservan `role=alert`. No se cambió la plantilla PDF, la lógica de pagos ni la identidad acuática. `build-web.js` incluye explícitamente este módulo público en Android, manteniendo fuera el código administrativo.
+
+La recuperación espera una restauración nativa pendiente antes de mostrar su formulario y se elimina una exposición intermedia innecesaria del login. El harness espera las animaciones finitas de entrada antes del primer toque: la traza comprobó que los toques de las primeras ejecuciones no llegaban al DOM durante la composición inicial del AVD. No se ocultó ese fallo con un clic JavaScript. Un fallo posterior `adb ENOBUFS` correspondía al búfer de logcat (1 MB), ampliado a 32 MB; el flujo ya había cambiado la contraseña correctamente. Quedan los logs de intentos fallidos para reproducir el diagnóstico.
+
+| Grupo | Resultado real |
+| --- | --- |
+| Recuperación backend, PostgreSQL 18 | 15/15; código inválido/vencido/reutilizado, concesión, carreras, UUID/reenvíos, activo/verificado, roles, MFA, JWT legacy, sockets, cambio de correo/contraseña y worker Gmail/Resend simulado. |
+| Migración y configuración de claves/worker | 2/2: 011 dos veces preserva usuarios, suministros, recibos, pagos, bytes de fotografía y secuencias; rollback sin efectos; claves en codificaciones equivalentes rechazadas. |
+| Regresión backend/PDF/HidroBot/sesiones | 97 aprobadas, 0 fallidas, 1 variante histórica omitida por la configuración normal. Ejecución adicional legacy: 12 aprobadas y 1 variante inversa omitida; ambas alternativas de esquema cubiertas entre ejecuciones. |
+| Chromium, transición Android y estado seguro | 32/32. Incluye recuperación cliente/Admin con segundo factor, pérdida de respuesta y sin almacenamiento web del permiso; diez pantallas de correo en cinco resoluciones, capturas de contraseña/resultado. |
+| Revisión final UI y transición, tras mensaje de éxito | 19/19; cliente/Admin regresan al login y el resultado de recuperación se presenta como éxito. |
+| Configuración/build runtime | 11/11. Se actualizó la expectativa exacta del archivo público añadido; no se amplió la lista de secretos/archivos administrativos permitidos. |
+| Pagos realtime E2E | 1/1, cinco comprobaciones de pantallas cliente/Admin, carreras REST, reconexión, contadores y recibo pendiente. Socket.IO real, base nueva y datos sintéticos. |
+| Android Keystore instrumentado | 1/1: no exportación, GCM/IV nuevo, alteración rechazada y borrado. |
+| Android WebView nativa | 6 comprobaciones de recuperación más Keystore: login cifrado inicial; reset remoto desconecta y retira la credencial; force-stop no la restaura; código incorrecto/correcto y reset desde UI sin login automático; contraseña anterior rechazada y nueva sesión restaurada; logout/reapertura y logcat sin los JWT/contraseñas del flujo. |
+| Gradle Java 21 | assembleDebug, assembleDebugAndroidTest, testDebugUnitTest y lintDebug exitosos. 4 pruebas JUnit (3 DocumentPayload, 1 existente de ejemplo); lint sin errores, 16 advertencias de recursos, iconos y manifest (consultables en XML). Advertencia de SDK XML v3/v4 de herramientas, sin error de compilación. |
+
+No sumar estas cifras como pruebas únicas: algunas suites incluyen los mismos casos. No quedan pruebas críticas fallidas en la ejecución final; intentos previos se conservan por transparencia. Admin se comprobó en Chromium; Android corresponde al cliente compartido, no a una APK de administración.
+
+Evidencia local ignorada: `artifacts/recuperacion-clave-120/web/` (cliente/Admin), `web-regression.log`, `ui-final.log`, `regression.log`, `schema.log`, `legacy-receipt.log`, `config-final.log`, `payments-e2e.log` y logs nativos. Última ejecución Android aprobada: `artifacts/android-session-native-S1ij7L/`; log `artifacts/recuperacion-clave-120/native-delivery.log`. Contiene pantallas capturadas con adb, build.log, instrumentation.txt, XML de JUnit/lint y result.json. Ninguna evidencia privada se sube a Git.
+
+APK oficiales 1.1.1 y 1.1.2 sin cambios, confirmadas por SHA-256. Solo debug local para el AVD dedicado; no release ni publicación. Faltan teléfono físico, entrega de correo real/renovación OAuth en servidor, prueba multiinstancia y tecnología asistiva; no se declaran aprobadas.
 
 ## Comandos reproducibles sin credenciales reales
 
-Crear un PostgreSQL 18 **nuevo**, con usuario/base ficticios del helper `Backend/test/email-schema.cjs`, publicado solo en loopback. No reutilizar volúmenes ni bases existentes. El fixture crea bases nuevas y no las borra. Usar Node 22 instalado localmente:
+Crear un PostgreSQL 18 **nuevo**, con usuario/base ficticios del helper `Backend/test/email-schema.cjs`, publicado solo en loopback. No reutilizar volúmenes ni bases existentes. El fixture crea bases nuevas y no las borra. Ejemplo enteramente sintético:
 
 ```sh
-export HIDRO_EMAIL_TEST_DB_PORT=32842
+lab_name="hm-reset-lab-$(date +%s)"
+docker run -d --name "$lab_name" --label hidro.task=recuperacion-clave-120 \
+  -e POSTGRES_USER=hm_fixture -e POSTGRES_PASSWORD=fixture-only-not-production \
+  -e POSTGRES_DB=hm_email_test -p 127.0.0.1::5432 postgres:18
+export HIDRO_EMAIL_TEST_DB_PORT="$(docker port "$lab_name" 5432/tcp | awk -F: '{print $NF}')"
+docker exec "$lab_name" pg_isready -U hm_fixture -d hm_email_test
+```
+
+Esperar readiness antes de ejecutar; parar al terminar con `docker stop "$lab_name"` sin borrar sus datos. Usar Node 22 instalado localmente:
+
+```sh
 export PLAYWRIGHT_BROWSERS_PATH="$PWD/artifacts/vercel-validation/browsers"
 artifacts/pagos-pdf-120/tools/node --test Backend/test/password-recovery.cjs Backend/test/password-recovery-schema.cjs
 artifacts/pagos-pdf-120/tools/node --test scripts/test/password-recovery-flow.cjs
@@ -71,3 +104,9 @@ artifacts/pagos-pdf-120/tools/node scripts/test/android-session-native.cjs --pas
 - Bloquear despliegue/rollback a un backend antiguo que ignore `mfa_version`: el esquema solo no puede obligar a un binario antiguo a comprobar JWT. No usar ese rollback automático.
 - Revocación distribuida de sockets si se aumenta a múltiples instancias: el emisor probado es de una sola API; antes de escalar requiere un adaptador compartido y pruebas interinstancia.
 - Validación física Android y accesibilidad con tecnología asistiva. Las capturas Chromium no constituyen evidencia nativa.
+
+## Publicación de desarrollo y conservación
+
+Draft PR #16: https://github.com/NicolasAG-pe/Sedapal/pull/16, base `feature/identidad-acuatica-pdf-120`. Primer incremento backend `69403f45ea7338f28c90c419c70dc4c3b924e94a`, publicado y SHA remoto confirmado. El segundo incremento incorpora interfaz, harness y evidencia documental. Ambos archivos vercel.json excluyen esta rama, conservando las exclusiones anteriores. GitHub sin workflows/hooks activos; Render en main con autodespliegue y previews apagados, consultado solo en lectura. Verificación Vercel posterior al push sin despliegues para la rama.
+
+APKs preservadas: 1.1.1 SHA-256 `541b4c9d70a52396266358d786032db47c85e99aa2ae4d7ae1bcf5eb28c3bb4b`; 1.1.2 `a6b81541a210e79ffb6ec8a38c79b8b1260758ab45c246b81fca45ee4439ed93`. Sin cambios Java/Keystore, firmas, plantillas PDF ni migraciones productivas. La base de laboratorio se conserva al detener su contenedor; no eliminar datos para repetir pruebas.
