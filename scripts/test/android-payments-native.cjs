@@ -15,9 +15,12 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
   process.env.YAPE_PILOT_CONFIG_FILE=path.join(output,'pilot.json');fs.writeFileSync(process.env.YAPE_PILOT_CONFIG_FILE,JSON.stringify(manifest),{mode:0o600});process.env.YAPE_PILOT_ENABLED='1';
   await ctx.db.query('INSERT INTO control_piloto_yape(piloto_id,habilitado,ensayo_sintetico,id_recibo,id_usuario,id_admin,qr_hash,monto_maximo,inicio_en,vence_en) VALUES($1,true,true,$2,$3,$4,$5,$6,$7,$8)',[manifest.id,id,manifest.user_id,manifest.admin_id,manifest.qr_hash,amount,manifest.starts_at,manifest.expires_at]);
  }
- await login(supply);await p().evaluate(()=>document.querySelector('#sidebar [data-sec="historial"]').click());await p().locator('#cards [data-act="pay"]').first().click();
+ if(process.argv.includes('--visual-screens')){await p().waitForFunction(()=>!document.getElementById('login-form').hidden&&document.getElementById('session-restore').hidden);await pause(500);screenshot('visual-login');}
+ await login(supply);
+ if(process.argv.includes('--visual-screens')){for(const section of ['inicio','historial','pagos']){await p().evaluate(s=>document.querySelector('#sidebar [data-sec="'+s+'"]').click(),section);await p().waitForFunction(s=>document.getElementById('sec-'+s).classList.contains('active'),section);await pause(400);await p().evaluate(()=>scrollTo(0,0));screenshot('visual-'+section);}}
+ await p().evaluate(()=>document.querySelector('#sidebar [data-sec="historial"]').click());await p().locator('#cards [data-act="pay"]').first().click();
  await until(()=>p().evaluate(()=>!document.querySelector('input[value="yape_manual"]').disabled),'configuración de laboratorio y QR protegido');
- await p().locator('input[value="yape_manual"]').check();await p().locator('#pay-reference').fill('NATIVE-SIM-741');
+ await p().locator('input[value="yape_manual"]').check();await p().locator('#pay-reference').fill('NATIVE-SIM-741');assert.equal(await p().locator('#pay-confirm').innerText(),'Registrar pago');assert.equal(await p().locator('#pay-title').innerText(),'Pago con Yape');assert.equal(await p().locator('#pay-reference-label').innerText(),'Código de operación');assert.equal(await p().locator('#pay-environment').isVisible(),true);screenshot('payment-register');
  // Petición llega a PG; descartar exclusivamente la primera respuesta en la WebView.
  await p().evaluate(()=>{const original=fetch;window.fetch=async function(input,options){const r=await original(input,options);if(String(input).endsWith('/api/me/operaciones-pago')&&options?.method==='POST'){window.fetch=original;await r.arrayBuffer();throw new TypeError('Respuesta descartada por fixture');}return r;};});
  await p().locator('#pay-confirm').click();await until(()=>p().evaluate(()=>document.getElementById('pay-feedback').textContent.includes('historial')),'respuesta perdida visible');
@@ -30,7 +33,7 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
  ok('Force-stop: sesión cifrada restaurada, historial pendiente recuperado y sin otra declaración');
  if(pilot){
   const response=await fetch(ctx.base+'/api/admin/operaciones-pago/'+op[0].id+'/revisar',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken},body:JSON.stringify({accion:'confirmar',motivo:'Ensayo sintético en Android sin dinero',ensayo_confirmado:true})});assert.equal(response.status,200);
-  await until(()=>p().evaluate(()=>document.getElementById('pay-list').textContent.includes('Ensayo confirmado')),'Socket.IO entrega revisión al cliente sin recarga');ok('Piloto sintético: comprobación Admin llega por Socket.IO real sin recarga del cliente');
+  await until(()=>p().evaluate(()=>document.getElementById('pay-list').textContent.includes('Operación confirmada')),'Socket.IO entrega revisión al cliente sin recarga');screenshot('payment-confirmed');ok('Piloto sintético: comprobación Admin llega por Socket.IO real sin recarga del cliente');
  }
  if(pilot){
   await p().evaluate(()=>document.querySelector('#sidebar [data-sec="historial"]').click());
@@ -41,7 +44,7 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
   await until(()=>p().evaluate(()=>document.getElementById('client-connection').dataset.state==='online'),'reconexión Socket.IO y consultas');
   await until(()=>p().evaluate(()=>document.getElementById('pay-list').children.length===2),'historial actualizado aunque Recibos esté visible');
   await p().evaluate(()=>document.querySelector('#sidebar [data-sec="pagos"]').click());
-  await p().locator('#pay-list').getByText('Operación de prueba registrada',{exact:true}).waitFor();
+  await p().locator('#pay-list').getByText('Operación registrada',{exact:true}).waitFor();
   assert.equal((await ctx.db.query("SELECT 1 FROM operaciones_pago WHERE id_recibo=$1 AND metodo='yape_manual'",[id])).rowCount,1);
   ok('Red Android interrumpida: aviso visible, historial recuperado desde Recibos y ninguna declaración Yape duplicada');screenshot('payment-reconnected');
  }
@@ -53,7 +56,8 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
   android('pull',file,path.join(output,name+'.pdf'));const bytes=fs.readFileSync(path.join(output,name+'.pdf'));assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok(bytes.toString('latin1').includes('%%EOF'));
   await until(()=>/(?:topResumedActivity|mResumedActivity)=.*(?:PdfViewerActivity|Pdf)/.test(android('shell','dumpsys','activity','activities')),'visor PDF Android');
   const content=execFileSync('pdftotext',[path.join(output,name+'.pdf'),'-'],{encoding:'utf8'}).replace(/\s+/g,' ');
-  for(const value of ['HIDRO-MEJORA',amount,name==='native-constancia'?(pilot?'Ensayo confirmado':'Pendiente de revisión'):'RECIBO DE SERVICIO'])assert.ok(content.includes(value),'Contenido PDF '+value);
+  assert.doesNotMatch(content,/Código de prueba|Número de operación de Yape/);
+  for(const value of ['HIDRO-MEJORA','Entorno de pruebas · Sin cobros reales',amount,name==='native-constancia'?(pilot?'Operación confirmada':'Pendiente de revisión'):'RECIBO DE SERVICIO'])assert.ok(content.includes(value),'Contenido PDF '+value);
   await require('./android-pdf-viewer.cjs')({android,until,fileName:path.basename(file),capture:()=>{screenshot(name+'-viewer');return fs.readFileSync(path.join(output,name+'-viewer.png'));}});
   android('shell','input','keyevent','4');await until(()=>new RegExp('(?:topResumedActivity|mResumedActivity)=.*'+pkg.replaceAll('.','\\.')).test(android('shell','dumpsys','activity','activities')),'botón Atrás vuelve del visor PDF a Hidro-Mejora');
  }

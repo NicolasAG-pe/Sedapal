@@ -1,0 +1,7 @@
+'use strict';
+const{test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs');
+const css=fs.readFileSync('Shared/styles.css','utf8');const value=name=>css.match(new RegExp('--'+name+':\\s*#([a-f0-9]{6})','i'))?.[1].toUpperCase();
+const luminance=h=>[0,2,4].map(i=>parseInt(h.slice(i,i+2),16)/255).map(n=>n<=.04045?n/12.92:((n+.055)/1.055)**2.4).reduce((s,n,i)=>s+n*[.2126,.7152,.0722][i],0);
+test('paleta acordada centralizada en tokens existentes',()=>{for(const[k,h]of Object.entries({primary:'0F4C81',secondary:'1E6BA8',sky:'4DA8DA',bg:'EAF4FB',green:'2E8B57',orange:'D9A441',red:'C94C4C',text:'243746',border:'D9E2EC',white:'FFFFFF'}))assert.equal(value(k),h,k);});
+test('contraste de texto y estados semánticos al menos 4.5:1',()=>{for(const[a,b]of[['primary','white'],['secondary','white'],['text','bg'],['muted','white'],['green-ink','green-bg'],['orange-ink','orange-bg'],['red-ink','red-bg']]){const x=luminance(value(a)),y=luminance(value(b));assert.ok((Math.max(x,y)+.05)/(Math.min(x,y)+.05)>=4.5,a+'/'+b);}});
+test('no fuentes remotas, cambios de logo ni tokens cromáticos inválidos',()=>{for(const p of['Shared/styles.css','Frontend/assets/css/client.css','Frontend/assets/css/app-layout.css','Admin/assets/css/admin.css','Admin/assets/css/workspace.css']){const s=fs.readFileSync(p,'utf8');assert.ok(!/var\(--[^)]+\)[0-9a-f]{2}/i.test(s),p);assert.ok(!/fonts\.(?:googleapis|gstatic)\.com/.test(s));}});

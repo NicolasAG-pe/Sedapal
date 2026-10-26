@@ -1,5 +1,40 @@
 # Historial de versiones
 
+## Identidad acuática — segunda composición visual
+
+- Encabezados y navegación inferior azules, deuda con degradado efectivo y superficies blancas/celestes alternadas; login y cabeceras de recibos/pagos con bloques de marca.
+- Admin conserva menú oscuro y gestión compacta, con encabezado azul, indicadores diferenciados, filtros celestes y formularios con mejor jerarquía.
+- Corrige reglas de cascada que anulaban el degradado y devolvían los encabezados al blanco; foco y contraste adaptados a fondos oscuros.
+- 39 comparativas reales, contraste comprobado y regresiones/PDF/Android documentados en docs/pruebas/identidad-acuatica-v2-120.md.
+- El harness nativo libera conexiones HTTP remanentes del proxy del emulador al terminar; dos regresiones de cierre local. Sin cambios de negocio, publicación ni producción.
+
+## PDF Android — código de operación
+
+- Etiquetas «Código de operación» en cliente, Admin y constancias; número Yape solo para referencias del flujo externo correspondiente.
+- Identidad acuática, contratos, auditoría y controles financieros conservados; los documentos de laboratorio no acreditan dinero ni cancelan deuda.
+- Presentación/PDF 23/23, dos E2E web y diez comprobaciones Android nativas aprobadas; guardado/visor de ambos PDF reales de laboratorio. Guía USB sin instalar APK en docs/pruebas/pdf-android-codigo-operacion-120.md.
+
+## Textos de pagos — presentación breve y alcance explícito
+
+- Cliente Android/web, Admin y PDF usan «Pago con Yape», «Registrar pago», «Confirmar operación», «Operación confirmada» y «Constancia de operación».
+- Aviso «Entorno de pruebas · Sin cobros reales» y confirmación obligatoria de que no se recibió dinero; no se acredita dinero ni se cancela deuda.
+- La presentación de mensajes automáticos de auditoría conserva sus literales originales en la API/base; los motivos humanos no se reescriben.
+- Pruebas de documentos/UI/paleta 23/23, backend 18/18, flujos web y responsive aprobados; Android nativo final 10 comprobaciones sin errores. Evidencia y fallos de entorno resueltos en docs/pruebas/textos-pagos-120.md.
+
+## Documentos acuáticos — nueva composición y validación
+
+- Recibo con encabezado azul, identificación, total/estado destacado y tabla de consumo; constancia con importe, banda de estado y trazabilidad propia.
+- Logo proporcional, pie referencial, A4, tipografía y márgenes coherentes con la identidad compartida; no se inventan datos ni acreditaciones.
+- Ocho ejemplos sintéticos, once páginas renderizadas; textos largos conservados y corregida paginación innecesaria con correo largo.
+- 17 pruebas PDF y 3 de paleta; descargas web y Android verificadas. Informe: docs/pruebas/identidad-acuatica-pdf-120.md. Sin publicación 1.2.0 ni cambios productivos.
+
+## Identidad acuática 1.2.0 — cliente y administración
+
+- Paleta compartida azul/celeste, superficies suaves, tarjetas, formularios y navegación consistentes; logo e iconos originales conservados.
+- Cliente Android/web y Admin mantienen funciones, tablas compactas y diálogo de pagos, con tintas semánticas accesibles.
+- Capturas antes/después en cinco resoluciones y navegación real sin errores JavaScript; contratos OTP/2FA y Android de laboratorio comprobados.
+- Exclusión de despliegues para la rama visual en ambos proyectos Vercel. Sin publicación, migraciones ni cambios productivos.
+
 ## Pagos Yape — sincronización visible y estados por entorno
 
 - Corrige ventanas en la primera conexión y suscripción Socket.IO; recupera pagos al reconectar aunque otra pantalla esté visible.

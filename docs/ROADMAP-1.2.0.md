@@ -43,3 +43,13 @@ recibo/participantes sintéticos y atestación manual detallada. Ensayo de extre
 y Android emulado aprobados, sin transferir dinero. Pendiente actuación voluntaria del
 titular con QR auténtico y comprobación de movimientos; no equivale a pasarela ni activa
 pagos productivos. Guía: [yape-piloto-local.md](yape-piloto-local.md).
+
+
+## Identidad acuática y documentos — etapa visual
+
+Rama `feature/identidad-acuatica-pdf-120`, dependiente de PR #14. Paleta común,
+interfaz cliente/Admin y composición nueva de recibos/constancias. Ver
+`IDENTIDAD-VISUAL-120.md` y el informe de pruebas. No publica 1.2.0 ni habilita
+funciones financieras. Recuperación de contraseña, push, línea de tiempo de
+incidencias, reportes, seguridad adicional y pruebas físicas siguen pendientes
+en sus etapas; no se implementan como parte del rediseño.

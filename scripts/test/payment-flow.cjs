@@ -61,16 +61,16 @@ test('Admin: motivo, revisión separada, historial y resultado visibles para el 
  const f=await fixture(t,true);await f.page.locator('#admin-nav [data-sec="admin-pagos"]').click();
  const card=f.page.locator('[data-operation]').filter({hasText:'UI-TEST-1234'});await card.waitFor();
  await card.getByRole('button',{name:'Revisar',exact:true}).click();await f.page.locator('#operation-history details').waitFor();await f.page.locator('#operation-history summary').click();
- await f.page.locator('#operation-review textarea').fill('Ensayo sintético revisado en laboratorio');await f.page.getByRole('button',{name:'Confirmar ensayo',exact:true}).click();
+ await f.page.locator('#operation-review textarea').fill('Ensayo sintético revisado en laboratorio');await f.page.getByRole('button',{name:'Confirmar operación',exact:true}).click();
  await f.page.locator('#operation-error').getByText(/Confirma la comprobación/).waitFor();
- await f.page.locator('#operation-review input[type="checkbox"]').check();await f.page.getByRole('button',{name:'Confirmar ensayo',exact:true}).click();await f.page.locator('.payment-dialog').waitFor({state:'hidden'});
- await f.page.locator('[data-tab="confirmadas"]').click();await f.page.locator('[data-operation]').getByText('Ensayo confirmado',{exact:true}).waitFor();
+ await f.page.locator('#operation-review input[type="checkbox"]').check();await f.page.getByRole('button',{name:'Confirmar operación',exact:true}).click();await f.page.locator('.payment-dialog').waitFor({state:'hidden'});
+ await f.page.locator('[data-tab="confirmadas"]').click();await f.page.locator('[data-operation]').getByText('Operación confirmada',{exact:true}).waitFor();
  await f.page.screenshot({path:path.join(out,'admin-revision.png'),fullPage:true});
  assert.equal((await ctx.db.query("SELECT count(*)::int AS n FROM operaciones_pago WHERE referencia='UI-TEST-1234' AND revisado_por IS NOT NULL AND estado='verificada_manual'")).rows[0].n,1);
 });
 test('Demostración y logout: no factura deuda, no quedan referencia, imagen ni sesión',async t=>{
  await seed('Demostración 2026');const f=await fixture(t);await openPayment(f.page);await f.page.locator('#pay-confirm').click();await f.page.waitForFunction(()=>!document.getElementById('pay-success').hidden);
- assert.match(await f.page.locator('#pay-success-text').textContent(),/Operación de prueba registrada/);
+ assert.match(await f.page.locator('#pay-success-text').textContent(),/Operación registrada/);
  await f.page.locator('#pay-done').click();await f.page.evaluate(()=>document.getElementById('btn-logout').click());
  await f.page.waitForFunction(()=>!document.getElementById('login-form').hidden);
  assert.equal(await f.page.locator('#pay-reference').inputValue(),'');assert.equal(await f.page.locator('#pay-yape-qr').getAttribute('src'),null);
