@@ -103,8 +103,17 @@
     root.addEventListener('change',event=>{if(event.target.hasAttribute('aria-invalid'))validate(event.target);});
     root.addEventListener('reset',event=>event.target.querySelectorAll('[aria-invalid]').forEach(field=>field.removeAttribute('aria-invalid')));
   }
+  // Presentación de mensajes automáticos conocidos; la API y la auditoría conservan su literal.
+  function paymentAuditMessage(value){
+    const labels={
+      'Ensayo sintético revisado sin movimiento de dinero':'Operación confirmada. No se recibió dinero.',
+      'Operación demostrativa sin acreditación financiera':'Operación registrada sin acreditación financiera.',
+      'Estado consultado al proveedor simulado; sin movimiento financiero':'Estado actualizado por el proveedor de pruebas; sin movimiento financiero.'
+    };
+    return Object.hasOwn(labels,value)?labels[value]:String(value??'');
+  }
   global.HMShared.ui = {
-    node, date, debounce, beginForm, clearFormLocks, installFormUX, copyText,
+    node, date, debounce, paymentAuditMessage, beginForm, clearFormLocks, installFormUX, copyText,
     money: value => {
       const amount = Number(value);
       return 'S/ ' + (Number.isFinite(amount) ? amount : 0)

@@ -27,7 +27,7 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
   const allowed=!p||String(user?.id_usuario)===String(p.user_id);
   if(!allowed)return{entorno:'cerrado',cobros_reales:false,yape_manual:false,mensaje:'Piloto no habilitado para esta cuenta.'};
   return{recibo_piloto:p?.receipt_id||null,importe_piloto:p?.max_amount||null,entorno:p?'piloto_manual':'simulado',piloto_ensayo:p?.synthetic??null,cobros_reales:false,yape_manual:enabled()&&!!env.YAPE_QR_FILE&&allowed,
-   mensaje:p?(p.synthetic?'Ensayo sintético del piloto. No envíes dinero real.':'Piloto voluntario: recibo sintético, no es una deuda de agua. Transferencia externa y comprobación manual; Hidro-Mejora no ejecuta cobros.'):'Pruebas de verificación manual. No transfieras dinero real. Una captura no acredita un pago.'};
+   mensaje:p?(p.synthetic?'La operación requiere revisión. No se recibió dinero.':'Pago con Yape: transferencia externa y comprobación manual; Hidro-Mejora no ejecuta cobros.'):'Pruebas de verificación manual. No transfieras dinero real. Una captura no acredita un pago.'};
  }
  async function overview(user){
   const result=config(user);
@@ -130,7 +130,7 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
    const r=await locked(c,id,user,true);
    if(r.metodo!=='yape_manual'||r.estado!=='pendiente_verificacion')fail(409,'La operación ya fue revisada o no admite revisión manual.');
    const synthetic=r.entorno==='simulado'||r.piloto_ensayo===true;
-   if(state==='verificada_manual'&&(synthetic?body.ensayo_confirmado!==true:body.movimiento_comprobado!==true))fail(400,synthetic?'Confirma que revisas un ensayo sintético sin dinero.':'Comprueba el movimiento por separado. La captura no demuestra la recepción.');
+   if(state==='verificada_manual'&&(synthetic?body.ensayo_confirmado!==true:body.movimiento_comprobado!==true))fail(400,synthetic?'Confirma que no se recibió dinero. Esta revisión no acredita fondos.':'Comprueba el movimiento por separado. La captura no demuestra la recepción.');
    let received=null,verifiedAmount=null;
    if(r.entorno==='piloto_manual'){
     const p=pilot();if(!p)fail(503,'El piloto local está desactivado.');await guard(c,p,user,true,{receipt:r.id_recibo});

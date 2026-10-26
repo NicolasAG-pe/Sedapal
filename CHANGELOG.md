@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Textos de pagos — presentación breve y alcance explícito
+
+- Cliente Android/web, Admin y PDF usan «Pago con Yape», «Registrar pago», «Confirmar operación», «Operación confirmada» y «Constancia de operación».
+- Aviso «Entorno de pruebas · Sin cobros reales» y confirmación obligatoria de que no se recibió dinero; no se acredita dinero ni se cancela deuda.
+- La presentación de mensajes automáticos de auditoría conserva sus literales originales en la API/base; los motivos humanos no se reescriben.
+- Pruebas de documentos/UI/paleta 23/23, backend 18/18, flujos web y responsive aprobados; Android nativo final 10 comprobaciones sin errores. Evidencia y fallos de entorno resueltos en docs/pruebas/textos-pagos-120.md.
+
 ## Documentos acuáticos — nueva composición y validación
 
 - Recibo con encabezado azul, identificación, total/estado destacado y tabla de consumo; constancia con importe, banda de estado y trazabilidad propia.

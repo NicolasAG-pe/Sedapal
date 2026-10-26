@@ -66,3 +66,15 @@ con encabezado/pie, sin eliminar datos ni generar páginas vacías.
 Ver `docs/pruebas/identidad-acuatica-pdf-120.md`. Capturas, PDF y renderizados sintéticos
 se conservan localmente en artefactos ignorados. El roadmap mantiene pendientes las
 funciones de negocio y la publicación, sujetas a revisión/autorización independientes.
+
+## Textos de operaciones
+
+Usar «Pago con Yape», «Registrar pago», «Confirmar operación», «Operación confirmada»
+y «Constancia de operación». Presentar el aviso «Entorno de pruebas · Sin cobros reales»
+en las pantallas de pagos y los PDF, sin repetir la naturaleza de prueba en cada etiqueta.
+La confirmación obligatoria indica explícitamente que no se recibió dinero; confirmar una
+operación de pruebas no acredita fondos ni cancela deuda. La comprobación de una
+transferencia auténtica mantiene sus controles y su estado distinto.
+Los nombres técnicos, contratos, estados y motivos de auditoría permanecen intactos.
+Solo se adaptan para presentación los mensajes automáticos conocidos mediante
+`HMShared.ui.paymentAuditMessage`; los motivos escritos por personas se conservan.

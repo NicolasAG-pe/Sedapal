@@ -51,12 +51,12 @@ test('guardado nativo envía PDF al selector Android y distingue cancelación de
  }finally{delete window.Capacitor;}
 });
 
-for(const [state,label]of Object.entries({demostrativa:'CONSTANCIA DEMOSTRATIVA',pendiente_verificacion:'Pendiente de revisión',verificada_manual:'Ensayo confirmado',acreditada_proveedor:'Aprobada por proveedor simulado',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'})){
+for(const [state,label]of Object.entries({demostrativa:'CONSTANCIA DE OPERACIÓN',pendiente_verificacion:'Pendiente de revisión',verificada_manual:'Operación confirmada',acreditada_proveedor:'Aprobación registrada',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso registrado'})){
  test('constancia preserva estado real '+state+' y no atribuye acreditación financiera',()=>{
   const payment={id:'00000000-0000-4000-8000-000000000042',id_recibo:42,monto:123.45,metodo:state==='demostrativa'?'demostrativo':'yape_manual',estado:state,entorno:'simulado',codigo_operacion:'OPERACION-42',fecha_pago:'2026-10-25T15:00:00Z',referencia:'SIM-DECLARADA-42',revisado_por:900,revisado_en:state==='verificada_manual'?'2026-10-25T15:05:00Z':null};
   const result=inspect(api.payment(payment,receipt,context),'state-'+state);
   for(const value of [label,'SIN ACREDITACIÓN FINANCIERA','SIM-DECLARADA-42','00000000-0000-4000-8000-000000000042','America/Lima','SEDAPAL','SUNAT'])assert.ok(result.text.includes(value),value);
-  assert.ok(!result.text.includes('Pago exitoso'));assert.match(result.info,/A4/);
+  assert.ok(!result.text.includes('Pago exitoso'));assert.match(result.info,/A4/);assert.match(result.text,/Entorno de pruebas · Sin cobros reales/);assert.match(result.text,/No se recibió dinero/);assert.doesNotMatch(result.text,/ensayo|sintétic|simulación/iu);
  });
 }
 test('motivos extensos y referencias largas se conservan sin inventar QR',()=>{
@@ -75,8 +75,8 @@ test('recibo acepta consumo de API sin inferir lecturas ni inventar consumo ause
 test('piloto verificado: recepción y revisión separadas, sin receptor privado ni motivo sensible',()=>{
  const p={id:'00000000-0000-4000-8000-000000000042',codigo_operacion:'PILOTO-42',id_recibo:42,monto:1,metodo:'yape_manual',entorno:'piloto_manual',piloto_ensayo:false,estado:'verificada_manual',referencia:'REF-SINTETICA',fecha_pago:'2026-10-25T15:00:00Z',recibido_en:'2026-10-25T14:59:00Z',revisado_en:'2026-10-25T15:05:00Z',revisado_por:900,receptor_huella:'PRIVADO-NO-COPIAR',motivo:'DETALLE-PRIVADO-NO-COPIAR'};
  const r=inspect(api.payment(p,receipt,{...context,example:true}),'pilot-real-template');
- assert.match(r.text.replace(/\s+/g,' '),/Transferencia auténtica verificada manualmente/);for(const v of['Recepción comprobada','Revisión del servidor','REF-SINTETICA','EJEMPLO SINTÉTICO','comprobante oficial de servicio de agua'])assert.ok(r.text.replace(/\s+/g,' ').toLowerCase().includes(v.toLowerCase()),v);for(const v of[p.receptor_huella,p.motivo])assert.ok(!r.text.includes(v));
- const synthetic=inspect(api.payment({...p,piloto_ensayo:true},receipt,context),'pilot-synthetic');assert.ok(synthetic.text.includes('Ensayo confirmado'));assert.ok(!synthetic.text.replace(/\s+/g,' ').includes('Transferencia auténtica verificada manualmente'));
+ assert.match(r.text.replace(/\s+/g,' '),/Transferencia auténtica verificada manualmente/);for(const v of['Recepción comprobada','Revisión del servidor','REF-SINTETICA','Entorno de pruebas · Sin cobros reales','comprobante oficial de servicio de agua'])assert.ok(r.text.replace(/\s+/g,' ').toLowerCase().includes(v.toLowerCase()),v);for(const v of[p.receptor_huella,p.motivo])assert.ok(!r.text.includes(v));
+ const synthetic=inspect(api.payment({...p,piloto_ensayo:true},receipt,context),'pilot-synthetic');assert.ok(synthetic.text.includes('Operación confirmada'));assert.ok(!synthetic.text.replace(/\s+/g,' ').includes('Transferencia auténtica verificada manualmente'));
 });
 
 test('paleta PDF corresponde a los tokens compartidos, sin una identidad independiente',()=>{

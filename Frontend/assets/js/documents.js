@@ -44,7 +44,7 @@
       const title=doc.splitTextToSize(text(kind),width);
       title.forEach((t,i)=>write(t,left,(continued?49:61)+i*(continued?6:8),{size:titleSize,color:C.navy,bold:true}));
       y=(continued?56:68)+(title.length-1)*8;
-      if(!continued){write(context.example?'EJEMPLO SINTÉTICO - NO HUBO TRANSFERENCIA':'Documento de consulta de tu suministro',left,y,{size:8,color:C.muted});y+=13;}
+      if(!continued){write('Entorno de pruebas · Sin cobros reales',left,y,{size:8,color:C.muted});y+=13;}
     }
     function ensure(height){if(y+height>bottom){doc.addPage();header(true);}}
     function section(label){ensure(19);doc.setFillColor(...C.blue);doc.rect(left,y-3,2,6,'F');write(label.toUpperCase(),left+5,y+1,{size:8.5,color:C.navy,bold:true});y+=payment?8:10;}
@@ -109,26 +109,26 @@
   }
   function payment(pago,r,context){
     if(!pago.codigo_operacion)throw Error('Código de operación no disponible.');
-    const statuses={demostrativa:'Operación demostrativa',declarada:'Transferencia declarada',pendiente_verificacion:'Pendiente de verificación',verificada_manual:'Verificada manualmente',acreditada_proveedor:'Aprobada por proveedor simulado',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'};
+    const statuses={demostrativa:'Operación registrada',declarada:'Transferencia declarada',pendiente_verificacion:'Pendiente de verificación',verificada_manual:'Verificada manualmente',acreditada_proveedor:'Aprobación registrada',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso registrado'};
     const pilot=pago.entorno==='piloto_manual',realPilot=pilot&&pago.piloto_ensayo===false;
     const synthetic=pago.entorno==='simulado'||pago.piloto_ensayo===true;
-    const status=pago.metodo==='yape_manual'&&pago.estado==='pendiente_verificacion'?(synthetic?'Pendiente de revisión':'Pendiente de verificación'):pago.metodo==='yape_manual'&&pago.estado==='verificada_manual'?(synthetic?'Ensayo confirmado':'Transferencia auténtica verificada manualmente'):(statuses[pago.estado]||'Histórico sin verificación financiera');
-    const kind=pilot?(realPilot?'CONSTANCIA DE TRANSFERENCIA':'CONSTANCIA DE ENSAYO SINTÉTICO'):pago.estado==='verificada_manual'?'CONSTANCIA DE REVISIÓN MANUAL':pago.estado==='acreditada_proveedor'?'CONSTANCIA DE OPERACIÓN SIMULADA':pago.estado==='demostrativa'?'CONSTANCIA DEMOSTRATIVA':'CONSTANCIA DE OPERACIÓN';
+    const status=pago.metodo==='yape_manual'&&pago.estado==='pendiente_verificacion'?(synthetic?'Pendiente de revisión':'Pendiente de verificación'):pago.metodo==='yape_manual'&&pago.estado==='verificada_manual'?(synthetic?'Operación confirmada':'Transferencia auténtica verificada manualmente'):(statuses[pago.estado]||'Histórico sin verificación financiera');
+    const kind='CONSTANCIA DE OPERACIÓN';
     const pdf=createDocument(kind,context,true);
     pdf.paymentAmount(pago.monto,realPilot&&pago.estado==='verificada_manual'?'IMPORTE COMPROBADO MANUALMENTE':'IMPORTE REGISTRADO - SIN ACREDITACIÓN FINANCIERA');
     pdf.statusBand(status,pago.estado);
     pdf.columns([['Número de recibo','R-'+pago.id_recibo],['Número de suministro',context.supply]]);
-    pdf.columns([['Periodo registrado',pago.periodo||r.periodo||r.etiqueta],['Método registrado',({demostrativo:'Demostración',yape_manual:'Yape - revisión manual',proveedor_simulado:'Proveedor simulado'})[pago.metodo]||pago.metodo]]);
+    pdf.columns([['Periodo registrado',pago.periodo||r.periodo||r.etiqueta],['Método registrado',({demostrativo:'Registro directo',yape_manual:'Pago con Yape',proveedor_simulado:'Proveedor de pruebas'})[pago.metodo]||pago.metodo]]);
     pdf.section('Trazabilidad de la operación');
     pdf.row('Código de operación',pago.id||pago.codigo_operacion);
     pdf.columns([[synthetic?'Código de prueba':'Número de operación de Yape',pago.referencia||'No declarada'],['Fecha registrada',pago.fecha_pago?global.HMShared.ui.date(pago.fecha_pago,true)+' (America/Lima)':'No disponible']]);
     if(pago.revisado_en)pdf.columns([['Revisión del servidor',global.HMShared.ui.date(pago.revisado_en,true)+' (America/Lima)'],['Revisor interno',pago.revisado_por?'Administrador #'+pago.revisado_por:'No disponible']]);
     if(realPilot)pdf.row('Recepción comprobada',pago.recibido_en?global.HMShared.ui.date(pago.recibido_en,true)+' (America/Lima)':'Fecha bancaria no registrada');
     if(!pilot&&pago.proveedor_id)pdf.row('Referencia del proveedor',pago.proveedor_id);
-    if(pago.motivo&&!pilot)pdf.row('Motivo registrado',pago.motivo);
+    if(pago.motivo&&!pilot)pdf.row('Motivo registrado',global.HMShared.ui.paymentAuditMessage(pago.motivo));
     pdf.section('Alcance del documento');
-    pdf.paragraph(synthetic?'Ensayo sin dinero. La revisión no declara recepción bancaria ni cancela una deuda.':realPilot&&pago.estado==='verificada_manual'?'Recepción comprobada personalmente según la revisión administrativa. No es una confirmación automática de Yape.':'Registro de una operación. No demuestra un cargo bancario ni recepción de fondos, ni cancela la deuda.');
-    if(pilot)pdf.paragraph('Recibo y suministro sintéticos. No constituye un comprobante oficial de servicio de agua.');
+    pdf.paragraph(synthetic?'No se recibió dinero. La confirmación no acredita fondos ni cancela la deuda.':realPilot&&pago.estado==='verificada_manual'?'Recepción comprobada personalmente según la revisión administrativa. No es una confirmación automática de Yape.':'Registro de una operación. No demuestra un cargo bancario ni recepción de fondos, ni cancela la deuda.');
+    if(pilot)pdf.paragraph('No constituye un comprobante oficial de servicio de agua.');
     if(!pilot)pdf.paragraph('Consulta el historial autenticado. No se incluye QR público de validación.');
     return pdf.finish();
   }
