@@ -87,7 +87,8 @@
     if(!pago.codigo_operacion)throw Error('Código de operación no disponible.');
     const statuses={demostrativa:'Operación demostrativa',declarada:'Transferencia declarada',pendiente_verificacion:'Pendiente de verificación',verificada_manual:'Verificada manualmente',acreditada_proveedor:'Aprobada por proveedor simulado',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'};
     const pilot=pago.entorno==='piloto_manual',realPilot=pilot&&pago.piloto_ensayo===false;
-    const status=pilot&&pago.estado==='pendiente_verificacion'?'Pendiente de comprobación':pilot&&pago.estado==='verificada_manual'?(realPilot?'Transferencia verificada manualmente':'Ensayo sintético revisado manualmente'):(statuses[pago.estado]||'Histórico sin verificación financiera');
+    const synthetic=pago.entorno==='simulado'||pago.piloto_ensayo===true;
+    const status=pago.metodo==='yape_manual'&&pago.estado==='pendiente_verificacion'?(synthetic?'Pendiente de revisión':'Pendiente de verificación'):pago.metodo==='yape_manual'&&pago.estado==='verificada_manual'?(synthetic?'Ensayo confirmado':'Transferencia auténtica verificada manualmente'):(statuses[pago.estado]||'Histórico sin verificación financiera');
     const kind=pilot?(realPilot?'CONSTANCIA DE TRANSFERENCIA':'CONSTANCIA DE ENSAYO SINTÉTICO'):pago.estado==='verificada_manual'?'CONSTANCIA DE REVISIÓN MANUAL':pago.estado==='acreditada_proveedor'?'CONSTANCIA DE OPERACIÓN SIMULADA':pago.estado==='demostrativa'?'CONSTANCIA DEMOSTRATIVA':'CONSTANCIA DE OPERACIÓN';
     const pdf=createDocument(kind,context,true);
     pdf.paymentAmount(pago.monto,realPilot&&pago.estado==='verificada_manual'?'IMPORTE COMPROBADO MANUALMENTE - PILOTO LOCAL':'IMPORTE REGISTRADO - SIN ACREDITACIÓN FINANCIERA');
@@ -97,7 +98,7 @@
     pdf.columns([['Número de suministro',context.supply],['Referencia interna','R-'+pago.id_recibo]]);
     pdf.row('Periodo registrado',pago.periodo||r.periodo||r.etiqueta);
     pdf.section('Trazabilidad de la operación');
-    pdf.row('Referencia declarada',pago.referencia||'No declarada');
+    pdf.row(synthetic?'Código de prueba':'Número de operación de Yape',pago.referencia||'No declarada');
     if(!pilot)pdf.row('Referencia del proveedor',pago.proveedor_id||'Sin confirmación comercial');
     if(pilot)pdf.row('Recepción comprobada',!realPilot?'No aplica: ensayo sin dinero':pago.recibido_en?global.HMShared.ui.date(pago.recibido_en,true)+' (America/Lima)':'Fecha bancaria no registrada');
     if(pago.revisado_en){

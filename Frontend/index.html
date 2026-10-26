@@ -724,8 +724,8 @@
         <div id="pay-yape-fields" hidden>
           <img id="pay-yape-qr" alt="QR receptor de pruebas autorizado" width="200" height="200" hidden />
           <p id="pay-yape-guidance">No transfieras dinero real. Un administrador debe comprobar la recepción por separado; una captura no confirma un pago.</p>
-          <label for="pay-reference">Referencia declarada</label>
-          <input id="pay-reference" maxlength="100" autocomplete="off" aria-describedby="pay-feedback" placeholder="Referencia de la operación de prueba" />
+          <label id="pay-reference-label" for="pay-reference">Código de prueba</label>
+          <input id="pay-reference" maxlength="100" autocomplete="off" aria-describedby="pay-feedback" placeholder="PRUEBA20261026" />
           <label for="pay-proof">Comprobante opcional (PNG, máximo 1 MB)</label>
           <input id="pay-proof" type="file" accept="image/png" aria-describedby="pay-feedback" />
           <label id="pay-voluntary-label" hidden><input id="pay-voluntary" type="checkbox" /> Declaro voluntariamente una transferencia externa entre cuentas autorizadas para este piloto; no estoy pagando una deuda oficial de agua.</label>
@@ -1239,7 +1239,6 @@
      Máximo 1 socket por pestaña; sin listeners duplicados.
      ============================================================ */
   let socketTiempoReal = null;
-  let rtConectadoAntes = false;
   const rtTimers = {};
   // Misma regla que apiUrl(): mismo origen en web local, host
   // configurado en Android futuro. Sin hardcodear dominios.
@@ -1295,11 +1294,9 @@
     let _hmEpoch=sesionCliente.generation();
     if(!obtenerToken() || !sesionCliente.isUser()) return;
     try{
-      pagos = await conSesion(() => (cargarPagosDesdeAPI()), _hmEpoch);
-      payEstado = pagos.length ? 'ok' : 'vacio';
-      if(typeof renderPagos === 'function') renderPagos();
+      await refrescarPagos();
     }catch(e){
-      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
+      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;actualizarConexionCliente('stale');}
   }
   function rtRecargarNotif(){
     if(!sesionCliente.isUser()) return;
@@ -1342,11 +1339,11 @@
   function sincronizarTrasReconexion(){
     if(!rtSoloSesionActiva()) return;
     rtRecargarNotif();
+    rtRecargarPagos(); // Recupera también historial/Inicio/modal aunque otra sección esté visible.
     if(moduloVisible('sec-incidencias')) rtRecargarIncidencias();
     else if(moduloVisible('sec-ayuda')) rtRecargarAtencion();
     else if(moduloVisible('sec-cortes')) refrescarCortes();
     else if(moduloVisible('sec-historial') || moduloVisible('sec-inicio')) rtRecargarRecibosInicio();
-    else if(moduloVisible('sec-pagos')) rtRecargarPagos();
     else if(moduloVisible('sec-perfil')) cargarPerfil();
   }
   function actualizarConexionCliente(state){
@@ -1364,8 +1361,7 @@
     // Sin bucles: estos handlers solo hacen GET. Los POST/PATCH son los
     // únicos que emiten en el backend, y nunca desde un handler de aquí.
     s.on('connect', ()=>{
-      if(rtConectadoAntes) sincronizarTrasReconexion();
-      rtConectadoAntes = true;
+      sincronizarTrasReconexion();
       actualizarConexionCliente('online');
     });
     s.on('disconnect',()=>actualizarConexionCliente(navigator.onLine?'connecting':'offline'));
@@ -1391,7 +1387,6 @@
   }
   function iniciarTiempoReal(){
     try{ detenerTiempoReal(true); }catch(e){}
-    rtConectadoAntes = false;
     let token = '';
     try{ token = obtenerToken(); }catch(e){}
     if(!token) return;
@@ -1422,7 +1417,6 @@
     try{
       Object.keys(rtTimers).forEach(k=>{ clearTimeout(rtTimers[k]); delete rtTimers[k]; });
     }catch(e){}
-    rtConectadoAntes = false;
     if(socketTiempoReal){
       try{ socketTiempoReal.removeAllListeners(); }catch(e){}
       try{ socketTiempoReal.disconnect(); }catch(e){}
@@ -3825,7 +3819,15 @@ async function descargarConstanciaPDF(r, btn){
   let paymentViewVersion=0;
   let paymentPilot=false,paymentPilotSynthetic=true,paymentExisting=false;
   function clearPaymentQr(){if(paymentQrUrl)URL.revokeObjectURL(paymentQrUrl);paymentQrUrl=null;const img=document.getElementById('pay-yape-qr');img.hidden=true;img.removeAttribute('src');}
-  function paymentLabel(p){if(p.entorno==='piloto_manual'){if(p.estado==='pendiente_verificacion')return 'Pendiente de comprobación';if(p.estado==='verificada_manual')return p.piloto_ensayo?'Ensayo sintético revisado manualmente':'Transferencia verificada manualmente';}return ({demostrativa:'Demostrativa',declarada:'Transferencia declarada',pendiente_verificacion:'Pendiente de verificación',verificada_manual:'Revisada manualmente (prueba)',acreditada_proveedor:'Aprobada por simulador',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'})[p.estado] || 'Histórico sin verificación financiera';}
+  function paymentLabel(p){
+    const synthetic=p.entorno==='simulado'||p.piloto_ensayo===true;
+    if(p.metodo==='yape_manual'){
+      if(p.estado==='pendiente_verificacion')return synthetic?'Pendiente de revisión':'Pendiente de verificación';
+      if(p.estado==='verificada_manual')return synthetic?'Ensayo confirmado':'Transferencia auténtica verificada manualmente';
+    }
+    return ({demostrativa:'Operación de prueba registrada',declarada:'Operación declarada',pendiente_verificacion:'Pendiente de verificación',acreditada_proveedor:'Aprobada por simulador (sin dinero)',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'})[p.estado]||'Histórico sin verificación financiera';
+  }
+
   function showPayState(s){
     document.getElementById('pay-main').hidden=s!=='main';
     document.getElementById('pay-processing').hidden=s!=='processing';
@@ -3838,7 +3840,7 @@ async function descargarConstanciaPDF(r, btn){
     document.getElementById('pay-confirm').disabled=true;
     document.getElementById('pay-existing-history').hidden=false;
     const state=document.getElementById('pay-existing-state');state.hidden=false;
-    state.textContent=(o.estado==='pendiente_verificacion'?'Operación pendiente de revisión':paymentLabel(o))+'. '+(o.estado==='rechazada'?'Motivo: '+(o.motivo||'Consulta la revisión')+'. ':'')+'No hagas otra transferencia. Para otro ensayo se necesita un piloto sintético nuevo e independiente.';
+    state.textContent=paymentLabel(o)+'. '+(o.estado==='rechazada'?'Motivo: '+(o.motivo||'Consulta la revisión')+'. ':'')+'No hagas otra transferencia. Para otro ensayo se necesita un piloto sintético nuevo e independiente.';
   }
   document.getElementById('pay-existing-history').addEventListener('click',()=>{closeModal(payModal);clearPaymentQr();payTarget=null;document.querySelector('#sidebar [data-sec="pagos"]').click();});
   async function abrirPago(r,opener){
@@ -3857,8 +3859,10 @@ async function descargarConstanciaPDF(r, btn){
       if(!res.ok)throw Error('Configuración no disponible.');const config=await conSesion(()=>res.json(),epoch);
       if(payTarget!==r||view!==paymentViewVersion)return;
       paymentPilot=config.entorno==='piloto_manual';paymentPilotSynthetic=config.piloto_ensayo!==false;
+      document.getElementById('pay-reference-label').textContent=paymentPilotSynthetic?'Código de prueba':'Número de operación de Yape';
+      document.getElementById('pay-reference').placeholder=paymentPilotSynthetic?'PRUEBA20261026':'Número del movimiento en Yape';
       document.getElementById('pay-notice').textContent=config.mensaje;
-      document.getElementById('pay-title').textContent=paymentPilot?'Piloto Yape: declarar transferencia':'Registrar operación';document.querySelector('#pay-modal .pay-amount span').textContent=paymentPilot?'Importe voluntario del piloto, sin deuda oficial':'Importe del recibo';
+      document.getElementById('pay-title').textContent=paymentPilot?(paymentPilotSynthetic?'Ensayo Yape sin dinero':'Yape: verificación manual'):'Registrar operación';document.querySelector('#pay-modal .pay-amount span').textContent=paymentPilot?'Importe voluntario del piloto, sin deuda oficial':'Importe del recibo';
       document.getElementById('pay-yape-guidance').textContent=paymentPilot&&!paymentPilotSynthetic?'La transferencia la realizas voluntariamente fuera de Hidro-Mejora. Revisa el destinatario en Yape antes de enviar. Un administrador debe comprobar la recepción; una captura no acredita dinero.':'No transfieras dinero real. Un administrador revisará el ensayo sintético; no declarará una recepción bancaria.';
       const pilotReceiptOk=!paymentPilot||(String(config.recibo_piloto)===String(r.id_recibo)&&Number(config.importe_piloto)===Number(r.monto));
       if(!pilotReceiptOk){document.getElementById('pay-notice').textContent='Este recibo no pertenece al piloto autorizado. No transfieras dinero.';}
@@ -3874,7 +3878,7 @@ async function descargarConstanciaPDF(r, btn){
     document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
     const manual=document.querySelector('input[name="pay-method"]:checked').value==='yape_manual';
     document.getElementById('pay-voluntary-label').hidden=!(manual&&paymentPilot&&!paymentPilotSynthetic);
-    document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual?'Enviar a verificación':'Registrar demostración';
+    document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual?(paymentPilotSynthetic?'Registrar ensayo':'Enviar a verificación manual'):'Registrar demostración';
   }));
   document.getElementById('pay-confirm').addEventListener('click',async ev=>{
     const btn=ev.currentTarget,epoch=sesionCliente.generation(),target=payTarget,view=paymentViewVersion;
@@ -3901,7 +3905,7 @@ async function descargarConstanciaPDF(r, btn){
       document.getElementById('pay-code').textContent=data.operacion.codigo_operacion;
       document.getElementById('pay-success-text').textContent=paymentLabel(data.operacion)+(data.operacion.entorno==='piloto_manual'?'. Recibo sintético: no se ha pagado un servicio de agua. Consulta la comprobación en el historial.':'. El recibo mantiene su deuda; no se ha acreditado dinero real.');
       showPayState('success');showSuccess('Operación registrada. Consulta su verificación en el historial.');
-      pagos=await conSesion(()=>cargarPagosDesdeAPI(),epoch);payEstado=pagos.length?'ok':'vacio';renderPagos();
+      await refrescarPagos();
     }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation()||payTarget!==target||view!==paymentViewVersion)return;clearPaymentQr();showPayState('main');error.textContent=(e.message||'Sin conexión.')+' Consultando el historial antes de reintentar. No hagas otra transferencia.';
       try{const recovered=await conSesion(()=>apiFetch('/api/pagos/config'),epoch);if(recovered.ok){const config=await conSesion(()=>recovered.json(),epoch);if(view===paymentViewVersion&&payTarget===target&&config.operacion_existente){paymentRequests.delete(String(target.id_recibo));showExistingPayment(config.operacion_existente);error.textContent='La respuesta se perdió; recuperamos la operación existente desde el historial. No se creó otra.';}}}catch(_){}}
     finally{if(epoch===sesionCliente.generation()&&view===paymentViewVersion){btn.dataset.busy='0';btn.disabled=paymentExisting;btn.removeAttribute('aria-busy');}}
@@ -4882,6 +4886,22 @@ async function descargarConstanciaPDF(r, btn){
       mes: mes
     };
   }
+  let paymentSync=null;
+  function refrescarPagos(){
+    const epoch=sesionCliente.generation();
+    if(paymentSync?.epoch===epoch){paymentSync.again=true;return paymentSync.task;}
+    const state={epoch,again:false,task:null};paymentSync=state;
+    state.task=(async()=>{do{
+      state.again=false;let data;try{data=await conSesion(()=>cargarPagosDesdeAPI(),epoch);}catch(error){if(state.again&&epoch===sesionCliente.generation())continue;throw error;}
+      // Un evento recibido durante el GET exige otra lectura; no publicar la instantánea antigua.
+      if(state.again)continue;
+      pagos=data;payEstado=pagos.length?'ok':'vacio';renderPagos();actualizarInicio();actualizarConexionCliente(socketTiempoReal?.connected?'online':navigator.onLine?'connecting':'offline');
+      if(payTarget&&payModal.classList.contains('open')){
+        const operation=pagos.find(p=>p.raw.metodo==='yape_manual'&&String(p.id_recibo)===String(payTarget.id_recibo));
+        if(operation){showExistingPayment(operation.raw);if(!document.getElementById('pay-success').hidden)document.getElementById('pay-success-text').textContent=paymentLabel(operation.raw)+'. Consulta el estado e historial. El recibo mantiene su estado; un ensayo no acredita dinero.';}
+      }
+    }while(state.again);})().finally(()=>{if(paymentSync===state)paymentSync=null;});return state.task;
+  }
   async function cargarPagosDesdeAPI(){
     let _hmEpoch=sesionCliente.generation();
     const resp = await conSesion(() => (apiFetch('/api/me/pagos')), _hmEpoch);
@@ -4951,7 +4971,8 @@ async function descargarConstanciaPDF(r, btn){
       const pgIzq = document.createElement('span');
       pgIzq.appendChild(nodo('span', 'card-month', pg.periodo));
       pgTop.appendChild(pgIzq);
-      pgTop.appendChild(nodo('span', 'badge Pendiente', pg.verificacion));
+      const stateClass=pg.raw.estado==='verificada_manual'?(pg.raw.piloto_ensayo||pg.raw.entorno==='simulado'?'op-synthetic':'op-manual'):pg.raw.estado==='demostrativa'?'op-demo':'op-pending';
+      pgTop.appendChild(nodo('span', 'badge '+stateClass, pg.verificacion));
       art.appendChild(pgTop);
       const pgMonto = document.createElement('div'); pgMonto.className = 'card-amount';
       pgMonto.appendChild(document.createTextNode(fmt(pg.monto) + ' '));
@@ -4960,9 +4981,10 @@ async function descargarConstanciaPDF(r, btn){
       const pgMeta = document.createElement('div'); pgMeta.className = 'card-meta';
       pgMeta.appendChild(nodo('span', null, pg.metodo + ' · ' + pg.fecha));
       art.appendChild(pgMeta);
-      const pgMeta2 = document.createElement('div'); pgMeta2.className = 'card-meta';
+      const pgMeta2 = document.createElement('div'); pgMeta2.className = 'card-meta payment-identifiers';
       const pgCod = document.createElement('span');
-      pgCod.appendChild(document.createTextNode('Código: '));
+      pgCod.appendChild(document.createTextNode('Operación interna: '));
+      if(pg.raw.referencia)pgMeta2.appendChild(nodo('span',null,(pg.raw.piloto_ensayo||pg.raw.entorno==='simulado'?'Código de prueba: ':'Número de operación de Yape: ')+pg.raw.referencia));
       pgCod.appendChild(nodo('b', null, pg.codigo));
       pgMeta2.appendChild(pgCod);
       art.appendChild(pgMeta2);
@@ -4977,7 +4999,7 @@ async function descargarConstanciaPDF(r, btn){
       pgAcc.appendChild(pgCopy);
       if(pg.raw.estado==='pendiente_verificacion'&&pg.raw.metodo==='yape_manual'){
         const cancel=document.createElement('button');cancel.type='button';cancel.className='btn-sm detail';cancel.textContent='Cancelar declaración';
-        cancel.addEventListener('click',async()=>{const epoch=sesionCliente.generation();if(cancel.disabled)return;cancel.disabled=true;try{const res=await conSesion(()=>apiFetch('/api/me/operaciones-pago/'+encodeURIComponent(pg.operacion_id)+'/cancelar',{method:'POST'}),epoch);if(!res.ok)throw Error('No se pudo cancelar. Actualiza el historial.');pagos=await conSesion(()=>cargarPagosDesdeAPI(),epoch);renderPagos();}catch(e){if(epoch===sesionCliente.generation()&&!esAbortado(e))showToast(e.message);}finally{cancel.disabled=false;}});pgAcc.appendChild(cancel);
+        cancel.addEventListener('click',async()=>{const epoch=sesionCliente.generation();if(cancel.disabled)return;cancel.disabled=true;try{const res=await conSesion(()=>apiFetch('/api/me/operaciones-pago/'+encodeURIComponent(pg.operacion_id)+'/cancelar',{method:'POST'}),epoch);if(!res.ok)throw Error('No se pudo cancelar. Actualiza el historial.');await refrescarPagos();}catch(e){if(epoch===sesionCliente.generation()&&!esAbortado(e))showToast(e.message);}finally{cancel.disabled=false;}});pgAcc.appendChild(cancel);
       }
       if(pg.operacion_id){
         const history=document.createElement('button');history.type='button';history.className='btn-sm detail';history.textContent='Ver estado e historial';const box=document.createElement('div');box.setAttribute('role','status');
@@ -5509,8 +5531,7 @@ async function descargarConstanciaPDF(r, btn){
     }
     payEstado = 'cargando';
     try{
-      pagos = await conSesion(() => (cargarPagosDesdeAPI()), _hmEpoch);
-      payEstado = pagos.length ? 'ok' : 'vacio';
+      await refrescarPagos();
     }catch(err){
       if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
       console.error('No se pudieron cargar los pagos.', err);

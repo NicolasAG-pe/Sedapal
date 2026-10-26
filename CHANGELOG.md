@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Pagos Yape — sincronización visible y estados por entorno
+
+- Corrige ventanas en la primera conexión y suscripción Socket.IO; recupera pagos al reconectar aunque otra pantalla esté visible.
+- Agrupa lecturas, evita que respuestas antiguas sustituyan estados recientes y conserva filas/foco, filtros y contadores de Admin.
+- Código de prueba / Registrar ensayo / Pendiente de revisión / Ensayo confirmado para simulaciones; número de operación y comprobación manual explícitos para Yape auténtico.
+- Aviso de desconexión visible en móvil, identificadores sin superposición y constancias coherentes; no se modifica el contrato API ni el estado financiero del recibo.
+- Regresión focalizada 21/21, cliente/Admin/PDF 18/18, flujos reales y responsive aprobados; Android final: 10 comprobaciones sin errores, incluidos corte de red y aviso visible. Evidencia y límites en docs/pruebas/pagos-tiempo-real-120.md.
+
 ## Auditoría de pagos — gestión compacta y recuperación segura
 
 - Admin sustituye formularios dentro de tarjetas por tabla adaptable, cinco secciones, búsqueda/filtros, contadores/paginación real y diálogo de revisión accesible.

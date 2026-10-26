@@ -111,3 +111,9 @@ body:not(.login-seen) #view-login.active .brand-logo,body:not(.login-seen) #view
  #sec-pagos .mod-stat:last-child strong{font-size:.94rem;margin:0}
  #sec-pagos .section-head{align-items:flex-start;flex-direction:column}#sec-pagos .toolbar,#pay-search{width:100%}
 }
+/* Estado de la operación separado del estado financiero del recibo. */
+#pay-list .op-synthetic{background:#e2f1ff;color:#135b88}#pay-list .op-manual{background:#e0f3e9;color:#185a3b}#pay-list .op-demo{background:#edf0f5;color:#43556b}#pay-list .op-pending{background:#fff2d3;color:#765000}.connection-status[data-state=stale]{color:#765000;background:#fff2d3}
+#pay-list .payment-identifiers{display:grid;grid-template-columns:minmax(0,1fr);gap:8px;align-items:start;overflow-wrap:anywhere}#pay-list .payment-identifiers>*{min-width:0}
+/* El estado de red nunca queda oculto en móvil cuando requiere atención. */
+#client-connection:not([data-state=online]){color:#765000;background:#fff2d3;padding:8px 10px;border-radius:8px}
+@media(max-width:900px){.topbar-inner{flex-wrap:wrap}#view-dashboard .topbar #client-connection:not([data-state=online]){display:flex!important;flex-basis:100%;order:10;white-space:normal}}

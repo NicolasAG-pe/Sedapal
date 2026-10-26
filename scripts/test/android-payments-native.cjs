@@ -30,7 +30,20 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
  ok('Force-stop: sesión cifrada restaurada, historial pendiente recuperado y sin otra declaración');
  if(pilot){
   const response=await fetch(ctx.base+'/api/admin/operaciones-pago/'+op[0].id+'/revisar',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+adminToken},body:JSON.stringify({accion:'confirmar',motivo:'Ensayo sintético en Android sin dinero',ensayo_confirmado:true})});assert.equal(response.status,200);
-  await until(()=>p().evaluate(()=>document.getElementById('pay-list').textContent.includes('Ensayo sintético revisado manualmente')),'Socket.IO entrega revisión al cliente sin recarga');ok('Piloto sintético: comprobación Admin llega por Socket.IO real sin recarga del cliente');
+  await until(()=>p().evaluate(()=>document.getElementById('pay-list').textContent.includes('Ensayo confirmado')),'Socket.IO entrega revisión al cliente sin recarga');ok('Piloto sintético: comprobación Admin llega por Socket.IO real sin recarga del cliente');
+ }
+ if(pilot){
+  await p().evaluate(()=>document.querySelector('#sidebar [data-sec="historial"]').click());
+  android('shell','svc','wifi','disable');android('shell','svc','data','disable');
+  await until(()=>p().evaluate(()=>document.getElementById('client-connection').dataset.state!=='online'),'aviso de sincronización sin red (heartbeat Socket.IO)',60000);assert.equal(await p().locator('#client-connection').isVisible(),true);screenshot('payment-offline');
+  const demo=await fetch(ctx.base+'/api/me/operaciones-pago',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+verified.token},body:JSON.stringify({id_recibo:id,metodo:'demostrativo',solicitud_id:require('node:crypto').randomUUID()})});assert.equal(demo.status,201);
+  android('shell','svc','wifi','enable');
+  await until(()=>p().evaluate(()=>document.getElementById('client-connection').dataset.state==='online'),'reconexión Socket.IO y consultas');
+  await until(()=>p().evaluate(()=>document.getElementById('pay-list').children.length===2),'historial actualizado aunque Recibos esté visible');
+  await p().evaluate(()=>document.querySelector('#sidebar [data-sec="pagos"]').click());
+  await p().locator('#pay-list').getByText('Operación de prueba registrada',{exact:true}).waitFor();
+  assert.equal((await ctx.db.query("SELECT 1 FROM operaciones_pago WHERE id_recibo=$1 AND metodo='yape_manual'",[id])).rowCount,1);
+  ok('Red Android interrumpida: aviso visible, historial recuperado desde Recibos y ninguna declaración Yape duplicada');screenshot('payment-reconnected');
  }
  async function nativeSave(button,name){
   const before=android('shell','find','/sdcard/Download','-name','*.pdf').trim().split('\n');await button.click();
@@ -40,11 +53,11 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
   android('pull',file,path.join(output,name+'.pdf'));const bytes=fs.readFileSync(path.join(output,name+'.pdf'));assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok(bytes.toString('latin1').includes('%%EOF'));
   await until(()=>/(?:topResumedActivity|mResumedActivity)=.*(?:PdfViewerActivity|Pdf)/.test(android('shell','dumpsys','activity','activities')),'visor PDF Android');
   const content=execFileSync('pdftotext',[path.join(output,name+'.pdf'),'-'],{encoding:'utf8'}).replace(/\s+/g,' ');
-  for(const value of ['HIDRO-MEJORA',amount,name==='native-constancia'?(pilot?'Ensayo sintético revisado manualmente':'Pendiente de verificación'):'RECIBO DE SERVICIO'])assert.ok(content.includes(value),'Contenido PDF '+value);
+  for(const value of ['HIDRO-MEJORA',amount,name==='native-constancia'?(pilot?'Ensayo confirmado':'Pendiente de revisión'):'RECIBO DE SERVICIO'])assert.ok(content.includes(value),'Contenido PDF '+value);
   await require('./android-pdf-viewer.cjs')({android,until,fileName:path.basename(file),capture:()=>{screenshot(name+'-viewer');return fs.readFileSync(path.join(output,name+'-viewer.png'));}});
   android('shell','input','keyevent','4');await until(()=>new RegExp('(?:topResumedActivity|mResumedActivity)=.*'+pkg.replaceAll('.','\\.')).test(android('shell','dumpsys','activity','activities')),'botón Atrás vuelve del visor PDF a Hidro-Mejora');
  }
- await nativeSave(p().locator('#pay-list button[data-act="const"]').first(),'native-constancia');
+ await nativeSave(p().locator(pilot?'#pay-list [data-estado="verificada_manual"] button[data-act="const"]':'#pay-list button[data-act="const"]').first(),'native-constancia');
  ok((pilot?'Constancia revisada de ensayo:':'Constancia pendiente:')+' PDF real guardado por SAF y abierto en visor Android, sin permisos generales de almacenamiento');
  await p().evaluate(()=>document.querySelector('#sidebar [data-sec="historial"]').click());await p().locator('#cards [data-act="detail"]').first().click();await nativeSave(p().locator('#btn-pdf'),'native-recibo');
  ok('Recibo profesional: PDF A4 guardado y visualizado en Android con importe y estado originales');

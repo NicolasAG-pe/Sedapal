@@ -49,12 +49,12 @@ test('Android Chromium: declaración Yape, respuesta perdida, mismo UUID y deuda
  await f.page.locator('#pay-proof').setInputFiles(process.env.YAPE_QR_FILE);f.lose();await f.page.locator('#pay-confirm').click();
  await f.page.waitForFunction(()=>document.getElementById('pay-feedback').textContent.includes('historial'));
  await f.page.locator('#pay-confirm').click();await f.page.waitForFunction(()=>!document.getElementById('pay-success').hidden);
- assert.match(await f.page.locator('#pay-success-text').textContent(),/Pendiente de verificación/);
+ assert.match(await f.page.locator('#pay-success-text').textContent(),/Pendiente de revisión/);
  assert.equal((await ctx.db.query('SELECT count(*)::int AS n FROM operaciones_pago WHERE id_recibo=$1',[id])).rows[0].n,1);
  assert.equal((await ctx.db.query('SELECT estado FROM recibos WHERE id_recibo=$1',[id])).rows[0].estado,'Pendiente');
  await f.page.screenshot({path:path.join(out,'android-yape-pendiente.png'),fullPage:true});
  await f.page.locator('#pay-done').click();await f.page.evaluate(()=>document.querySelector('[data-sec="pagos"]').click());
- await f.page.waitForFunction(()=>document.getElementById('pay-list').textContent.includes('Pendiente de verificación'));
+ await f.page.waitForFunction(()=>document.getElementById('pay-list').textContent.includes('Pendiente de revisión'));
  assert.equal(await f.page.locator('#pay-list').getByText('PAGADO',{exact:true}).count(),0);
 });
 test('Admin: motivo, revisión separada, historial y resultado visibles para el propietario',async t=>{
@@ -70,7 +70,7 @@ test('Admin: motivo, revisión separada, historial y resultado visibles para el 
 });
 test('Demostración y logout: no factura deuda, no quedan referencia, imagen ni sesión',async t=>{
  await seed('Demostración 2026');const f=await fixture(t);await openPayment(f.page);await f.page.locator('#pay-confirm').click();await f.page.waitForFunction(()=>!document.getElementById('pay-success').hidden);
- assert.match(await f.page.locator('#pay-success-text').textContent(),/Demostrativa/);
+ assert.match(await f.page.locator('#pay-success-text').textContent(),/Operación de prueba registrada/);
  await f.page.locator('#pay-done').click();await f.page.evaluate(()=>document.getElementById('btn-logout').click());
  await f.page.waitForFunction(()=>!document.getElementById('login-form').hidden);
  assert.equal(await f.page.locator('#pay-reference').inputValue(),'');assert.equal(await f.page.locator('#pay-yape-qr').getAttribute('src'),null);
