@@ -121,7 +121,7 @@
     pdf.columns([['Periodo registrado',pago.periodo||r.periodo||r.etiqueta],['Método registrado',({demostrativo:'Registro directo',yape_manual:'Pago con Yape',proveedor_simulado:'Proveedor de pruebas'})[pago.metodo]||pago.metodo]]);
     pdf.section('Trazabilidad de la operación');
     pdf.row('Código de operación',pago.id||pago.codigo_operacion);
-    pdf.columns([[synthetic?'Código de prueba':'Número de operación de Yape',pago.referencia||'No declarada'],['Fecha registrada',pago.fecha_pago?global.HMShared.ui.date(pago.fecha_pago,true)+' (America/Lima)':'No disponible']]);
+    pdf.columns([[realPilot&&pago.metodo==='yape_manual'?'Número de operación de Yape':'Código de operación',pago.referencia||'No declarada'],['Fecha registrada',pago.fecha_pago?global.HMShared.ui.date(pago.fecha_pago,true)+' (America/Lima)':'No disponible']]);
     if(pago.revisado_en)pdf.columns([['Revisión del servidor',global.HMShared.ui.date(pago.revisado_en,true)+' (America/Lima)'],['Revisor interno',pago.revisado_por?'Administrador #'+pago.revisado_por:'No disponible']]);
     if(realPilot)pdf.row('Recepción comprobada',pago.recibido_en?global.HMShared.ui.date(pago.recibido_en,true)+' (America/Lima)':'Fecha bancaria no registrada');
     if(!pilot&&pago.proveedor_id)pdf.row('Referencia del proveedor',pago.proveedor_id);

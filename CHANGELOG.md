@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## PDF Android — código de operación
+
+- Etiquetas «Código de operación» en cliente, Admin y constancias; número Yape solo para referencias del flujo externo correspondiente.
+- Identidad acuática, contratos, auditoría y controles financieros conservados; los documentos de laboratorio no acreditan dinero ni cancelan deuda.
+- Presentación/PDF 23/23, dos E2E web y diez comprobaciones Android nativas aprobadas; guardado/visor de ambos PDF reales de laboratorio. Guía USB sin instalar APK en docs/pruebas/pdf-android-codigo-operacion-120.md.
+
 ## Textos de pagos — presentación breve y alcance explícito
 
 - Cliente Android/web, Admin y PDF usan «Pago con Yape», «Registrar pago», «Confirmar operación», «Operación confirmada» y «Constancia de operación».

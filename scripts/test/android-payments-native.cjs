@@ -17,7 +17,7 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
  }
  await login(supply);await p().evaluate(()=>document.querySelector('#sidebar [data-sec="historial"]').click());await p().locator('#cards [data-act="pay"]').first().click();
  await until(()=>p().evaluate(()=>!document.querySelector('input[value="yape_manual"]').disabled),'configuración de laboratorio y QR protegido');
- await p().locator('input[value="yape_manual"]').check();await p().locator('#pay-reference').fill('NATIVE-SIM-741');assert.equal(await p().locator('#pay-confirm').innerText(),'Registrar pago');assert.equal(await p().locator('#pay-title').innerText(),'Pago con Yape');assert.equal(await p().locator('#pay-environment').isVisible(),true);screenshot('payment-register');
+ await p().locator('input[value="yape_manual"]').check();await p().locator('#pay-reference').fill('NATIVE-SIM-741');assert.equal(await p().locator('#pay-confirm').innerText(),'Registrar pago');assert.equal(await p().locator('#pay-title').innerText(),'Pago con Yape');assert.equal(await p().locator('#pay-reference-label').innerText(),'Código de operación');assert.equal(await p().locator('#pay-environment').isVisible(),true);screenshot('payment-register');
  // Petición llega a PG; descartar exclusivamente la primera respuesta en la WebView.
  await p().evaluate(()=>{const original=fetch;window.fetch=async function(input,options){const r=await original(input,options);if(String(input).endsWith('/api/me/operaciones-pago')&&options?.method==='POST'){window.fetch=original;await r.arrayBuffer();throw new TypeError('Respuesta descartada por fixture');}return r;};});
  await p().locator('#pay-confirm').click();await until(()=>p().evaluate(()=>document.getElementById('pay-feedback').textContent.includes('historial')),'respuesta perdida visible');
@@ -53,6 +53,7 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
   android('pull',file,path.join(output,name+'.pdf'));const bytes=fs.readFileSync(path.join(output,name+'.pdf'));assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok(bytes.toString('latin1').includes('%%EOF'));
   await until(()=>/(?:topResumedActivity|mResumedActivity)=.*(?:PdfViewerActivity|Pdf)/.test(android('shell','dumpsys','activity','activities')),'visor PDF Android');
   const content=execFileSync('pdftotext',[path.join(output,name+'.pdf'),'-'],{encoding:'utf8'}).replace(/\s+/g,' ');
+  assert.doesNotMatch(content,/Código de prueba|Número de operación de Yape/);
   for(const value of ['HIDRO-MEJORA','Entorno de pruebas · Sin cobros reales',amount,name==='native-constancia'?(pilot?'Operación confirmada':'Pendiente de revisión'):'RECIBO DE SERVICIO'])assert.ok(content.includes(value),'Contenido PDF '+value);
   await require('./android-pdf-viewer.cjs')({android,until,fileName:path.basename(file),capture:()=>{screenshot(name+'-viewer');return fs.readFileSync(path.join(output,name+'-viewer.png'));}});
   android('shell','input','keyevent','4');await until(()=>new RegExp('(?:topResumedActivity|mResumedActivity)=.*'+pkg.replaceAll('.','\\.')).test(android('shell','dumpsys','activity','activities')),'botón Atrás vuelve del visor PDF a Hidro-Mejora');

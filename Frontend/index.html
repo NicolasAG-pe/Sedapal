@@ -726,7 +726,7 @@
         <div id="pay-yape-fields" hidden>
           <img id="pay-yape-qr" alt="QR receptor de pruebas autorizado" width="200" height="200" hidden />
           <p id="pay-yape-guidance">No transfieras dinero real. Un administrador debe comprobar la recepción por separado; una captura no confirma un pago.</p>
-          <label id="pay-reference-label" for="pay-reference">Código de prueba</label>
+          <label id="pay-reference-label" for="pay-reference">Código de operación</label>
           <input id="pay-reference" maxlength="100" autocomplete="off" aria-describedby="pay-feedback" placeholder="PRUEBA20261026" />
           <label for="pay-proof">Comprobante opcional (PNG, máximo 1 MB)</label>
           <input id="pay-proof" type="file" accept="image/png" aria-describedby="pay-feedback" />
@@ -3861,7 +3861,7 @@ async function descargarConstanciaPDF(r, btn){
       if(!res.ok)throw Error('Configuración no disponible.');const config=await conSesion(()=>res.json(),epoch);
       if(payTarget!==r||view!==paymentViewVersion)return;
       paymentPilot=config.entorno==='piloto_manual';paymentPilotSynthetic=config.piloto_ensayo!==false;
-      document.getElementById('pay-reference-label').textContent=paymentPilotSynthetic?'Código de prueba':'Número de operación de Yape';
+      document.getElementById('pay-reference-label').textContent=paymentPilotSynthetic?'Código de operación':'Número de operación de Yape';
       document.getElementById('pay-reference').placeholder=paymentPilotSynthetic?'PRUEBA20261026':'Número del movimiento en Yape';
       document.getElementById('pay-notice').textContent=config.mensaje;
       document.getElementById('pay-title').textContent=paymentPilot?'Pago con Yape':'Registrar operación';document.querySelector('#pay-modal .pay-amount span').textContent=paymentPilot?'Importe voluntario del piloto, sin deuda oficial':'Importe del recibo';
@@ -4986,7 +4986,7 @@ async function descargarConstanciaPDF(r, btn){
       const pgMeta2 = document.createElement('div'); pgMeta2.className = 'card-meta payment-identifiers';
       const pgCod = document.createElement('span');
       pgCod.appendChild(document.createTextNode('Operación interna: '));
-      if(pg.raw.referencia)pgMeta2.appendChild(nodo('span',null,(pg.raw.piloto_ensayo||pg.raw.entorno==='simulado'?'Código de prueba: ':'Número de operación de Yape: ')+pg.raw.referencia));
+      if(pg.raw.referencia)pgMeta2.appendChild(nodo('span',null,(pg.raw.metodo==='yape_manual'&&pg.raw.entorno==='piloto_manual'&&pg.raw.piloto_ensayo===false?'Número de operación de Yape: ':'Código de operación: ')+pg.raw.referencia));
       pgCod.appendChild(nodo('b', null, pg.codigo));
       pgMeta2.appendChild(pgCod);
       art.appendChild(pgMeta2);
