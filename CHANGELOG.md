@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Push Android — backend de laboratorio
+
+- Migración aditiva 012 con dispositivos cifrados, consentimiento, asociación a suministro/versión de seguridad y cola idempotente separada del centro leído/no leído.
+- Adaptadores mock y FCM HTTP v1, OAuth de scope mínimo, backoff, retiro de tokens inválidos y resultado ambiguo sin reenvío automático. Todo cerrado por defecto.
+- Vencimientos programables con fechas reales y exclusión de recibos pagados; cortes localizados sin difusión general y repetición de estado de incidencia sin avisos duplicados.
+- 14 pruebas específicas Node 22/PostgreSQL 18 aprobadas. Arquitectura y límites en docs/pruebas/notificaciones-push-120.md; configuración futura en docs/android-push-firebase.md. Sin Firebase, migraciones o envíos productivos.
+
 ## Recuperación de contraseña — cliente, Admin y Android
 
 - Acceso «¿Olvidaste tu contraseña?» y formularios compartidos con diseño acuático, validaciones, bloqueo de duplicados, recuperación de respuesta perdida por UUID y mensajes accesibles. Código/permiso solo en memoria; éxito vuelve al login sin iniciar sesión.

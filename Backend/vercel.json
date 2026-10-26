@@ -9,7 +9,8 @@
       "feature/pagos-pdf-120": false,
       "feature/yape-piloto-120": false,
       "feature/identidad-acuatica-pdf-120": false,
-      "feature/recuperacion-clave-120": false
+      "feature/recuperacion-clave-120": false,
+      "feature/notificaciones-push-120": false
     }
   }
 }

@@ -12,6 +12,7 @@ const { obtenerConfigCorreo } = require('./email-provider');
 const { obtenerClaveOutbox } = require('./outbox-crypto');
 const { crearRegistroCorreo, registrarRutasCorreo } = require('./email-registration');
 const { crearDosFactores, permiteSesion } = require('./two-factor');
+const { createPush,registerPush } = require('./push');
 const { AUTH_CONTRACT } = require('./auth-contract');
 const { createPasswordRecovery, registerPasswordRecovery, transaction: passwordTransaction } = require('./password-recovery');
 const { crearServicioRecibos, responderErrorRecibo } = require('./receipt-transactions');
@@ -593,6 +594,10 @@ async function requiereAuth(req, res, next){
         });
     }
 }
+
+registerPush(app,{service:createPush({pool}),auth:requiereAuth,limit:limitadorGenerico(60,15),
+    // El middleware ya verificó este JWT; aquí solo se limita la vigencia push.
+    expiry:req=>Number(jwt.decode(req.headers.authorization.split(' ')[1])?.exp)*1000});
 
 function requiereAdmin(req, res, next){
     requiereAuth(req, res, () => {
@@ -1690,7 +1695,7 @@ app.patch("/api/admin/incidencias/:id/estado", requiereAdmin, async (req, res) =
         const resultado = await pool.query(
             `UPDATE incidencias
              SET estado = $1
-             WHERE id_incidencia = $2
+             WHERE id_incidencia = $2 AND estado IS DISTINCT FROM $1
              RETURNING
                id_incidencia,
                id_suministro,
@@ -1706,10 +1711,9 @@ app.patch("/api/admin/incidencias/:id/estado", requiereAdmin, async (req, res) =
         );
 
         if (resultado.rowCount === 0) {
-            return res.status(404).json({
-                estado: "error",
-                mensaje: "Incidencia no encontrada."
-            });
+            const actual=await pool.query(`SELECT id_incidencia,id_suministro,tipo,descripcion,referencia,latitud,longitud,fecha_registro,estado,(foto IS NOT NULL) AS tiene_foto FROM incidencias WHERE id_incidencia=$1`,[idIncidencia]);
+            if(actual.rowCount)return res.json({estado:'ok',incidencia:actual.rows[0]});
+            return res.status(404).json({estado:'error',mensaje:'Incidencia no encontrada.'});
         }
 
         // FASE 19: cambio de estado de incidencia => notificación al suministro.
