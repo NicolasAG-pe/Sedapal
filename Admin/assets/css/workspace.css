@@ -1,5 +1,5 @@
 /* Administración: escritorio de gestión y densidad propia. */
-.login-screen{min-height:100dvh;display:grid;grid-template-columns:1fr 1fr;padding:0;background:#f5f7fa}
+.login-screen{min-height:100dvh;display:grid;grid-template-columns:1fr 1fr;padding:0;background:var(--bg)}
 .admin-login-story{height:100%;background:var(--navy);color:white;padding:72px clamp(32px,5vw,90px);display:flex;flex-direction:column;justify-content:center;gap:24px}
 .admin-login-story img{width:56px;height:56px}.admin-login-story h2{font-size:clamp(2rem,3.2vw,3rem);max-width:14ch;line-height:1.16;letter-spacing:-.035em}.admin-login-story p{color:#c1dce6;max-width:36ch;font-size:.95rem}
 .admin-login-story ul{list-style:none;display:grid;gap:16px;margin-top:20px}.admin-login-story li{display:flex;align-items:center;gap:12px;color:#d0e5ec;font-size:.85rem}
@@ -36,3 +36,20 @@
 }
 .hm-table th:first-child,.hm-table td:first-child{min-width:130px}.hm-table .badge{white-space:nowrap}.hm-table th.number-cell{text-align:right}
 @media(max-width:1100px),(pointer:coarse){.hm-table .tbl-actions button,.hm-table .tbl-actions select{min-height:44px}#admin-nav button{min-height:46px}}
+
+/* Identidad acuática administrativa: densidad de escritorio y controles compartidos. */
+body{background:var(--bg)}.login-screen{background:radial-gradient(ellipse at 80% 15%,var(--water-foam),transparent 60%),var(--sky-mist)}
+.admin-login-story{background:linear-gradient(150deg,var(--navy),var(--secondary));position:relative;overflow:hidden;isolation:isolate}
+.admin-login-story::after{content:'';position:absolute;width:500px;height:500px;border:65px solid var(--water-ring);border-radius:50%;bottom:-310px;left:-190px;z-index:-1;pointer-events:none}
+.login-screen .login-card{background:var(--surface);border:1px solid var(--border);border-radius:24px;box-shadow:var(--shadow-md);padding:34px;max-width:440px}
+.admin-header{border-top:4px solid var(--primary);background:var(--surface)}#admin-nav{background:linear-gradient(170deg,var(--navy),var(--navy-dark))}
+#admin-nav [aria-current=page]{background:#ffffff1f;border-left-color:var(--secondary);color:var(--white)}
+.page-header{padding-bottom:18px;border-bottom:1px solid var(--border)}.page-title{color:var(--navy)}
+.mod-stat{background:linear-gradient(130deg,var(--surface),var(--sky-mist));border:1px solid var(--border);border-top:3px solid var(--sky);border-radius:16px;box-shadow:var(--shadow-sm)}
+.mod-stat strong{color:var(--navy)}.admin-analysis>*,.quick-card,.support-card{border-color:var(--border);box-shadow:var(--shadow-sm);border-radius:16px}
+.hm-table thead,.hm-table th,.payment-table th{background:var(--sky-soft);color:var(--navy)}.hm-table tbody tr:nth-child(even){background:var(--sky-mist)}
+.toolbar,.payment-filters{background:var(--sky-mist);border:1px solid var(--border);border-radius:14px;padding:14px}
+.payment-tabs [aria-pressed=true]{background:var(--primary);border-color:var(--primary)}.payment-table{border-radius:14px;overflow:hidden;border:1px solid var(--border)}
+.payment-dialog{border-color:var(--border);border-radius:20px}.payment-dialog header,.dialog-head{background:var(--sky-soft);border-bottom:1px solid var(--border)}
+.field label{font-size:.82rem}.field input,.field select,.field textarea{min-height:44px;font-size:.92rem}
+@media(max-width:650px){.login-screen .login-card{padding:24px;margin:20px auto;width:calc(100% - 24px)}.payment-table{border:0;background:transparent;overflow:visible}.payment-filters{padding:12px}.admin-header .connection-status:not([data-state=online]){display:inline-flex!important;color:var(--orange-ink)}}

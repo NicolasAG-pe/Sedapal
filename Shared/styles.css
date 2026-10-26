@@ -1,21 +1,24 @@
 /* Identidad Hidro-Mejora: controles comunes, sin dependencias ni fuentes remotas. */
 :root {
-  --navy:#103e60; --navy-dark:#082a45; --navy-soft:#235779;
-  --primary:#075d91; --sky:#087e9e; --sky-dark:#065e78;
-  --sky-soft:#e9f5f8; --sky-mist:#f5fafb; --bg:#f4f7fa;
-  --white:#fff; --surface:#fff; --text:#243b4b; --muted:#526879;
-  --green:#146c48; --green-bg:#e9f5ee; --red:#ad3037; --red-bg:#fff0f0;
-  --orange:#885000; --orange-bg:#fff4df; --border:#d9e3eb;
+  --navy:#0F4C81; --navy-dark:#103B61; --navy-soft:#1E6BA8;
+  --primary:#0F4C81; --secondary:#1E6BA8; --sky:#4DA8DA; --sky-dark:#1E6BA8;
+  --sky-soft:#EAF4FB; --sky-mist:#F5FAFE; --bg:#EAF4FB;
+  --white:#FFFFFF; --surface:#FFFFFF; --text:#243746; --muted:#4C6275;
+  --green:#2E8B57; --green-ink:#21663F; --green-bg:#EAF6EF;
+  --red:#C94C4C; --red-ink:#983535; --red-bg:#FFF1F1;
+  --orange:#D9A441; --orange-ink:#76531B; --orange-bg:#FFF5DF; --border:#D9E2EC;
   --font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
   --text-xs:.78rem; --text-sm:.875rem; --text-base:1rem; --text-lg:1.25rem;
   --space-1:.25rem; --space-2:.5rem; --space-3:.75rem; --space-4:1rem;
   --space-5:1.25rem; --space-6:1.5rem; --space-8:2rem;
-  --radius-sm:8px; --radius:12px; --radius-lg:16px;
-  --shadow-xs:0 1px 2px #103e6008; --shadow-sm:0 3px 12px #103e600a;
-  --shadow:0 8px 24px #103e6010; --shadow-md:0 16px 40px #103e601c;
+  --radius-sm:8px; --radius:16px; --radius-lg:22px;
+  --shadow-xs:0 1px 2px #0f4c8108; --shadow-sm:0 3px 12px #0f4c810a;
+  --shadow:0 8px 24px #0f4c8110; --shadow-md:0 16px 40px #0f4c811c;
   --ease-standard:cubic-bezier(.4,0,.2,1); --ease-out:cubic-bezier(.22,1,.36,1);
   --ease-in:cubic-bezier(.55,0,1,.45); --duration-fast:140ms;
   --duration-normal:220ms; --duration-slow:300ms; --transition:160ms ease;
+  --water-foam:#D7ECFA; --water-ring:#4DA8DA25;
+  --shadow-modal:0 24px 75px #0F4C8133;
   --glass:#ffffff; --glass-border:var(--border);
   --touch-target:44px; --touch-primary:48px;
   --z-header:40; --z-navigation:45; --z-assistant:60; --z-scrim:70;
@@ -37,10 +40,10 @@ button,input,select,textarea,a {touch-action:manipulation}
 .btn-sm {padding:.6rem .8rem;font-size:var(--text-sm)}
 .btn-primary {background:var(--primary);color:#fff;border-color:var(--primary)}
 .btn-primary:hover,.btn-primary:focus-visible {background:var(--navy-dark);transform:none;box-shadow:var(--shadow-sm)}
-.btn-sky {background:var(--sky);color:white;border-color:var(--sky)}
+.btn-sky {background:var(--secondary);color:white;border-color:var(--secondary)}
 .btn-sky:hover {background:var(--sky-dark)}
 .btn-ghost {background:#eef3f7;color:var(--navy);border-color:var(--border)}
-.btn-danger,.dangerb {color:var(--red);background:var(--red-bg);border-color:#edc9cc}
+.btn-danger,.dangerb {color:var(--red-ink);background:var(--red-bg);border-color:#edc9cc}
 button:disabled {opacity:.65;cursor:wait;transform:none!important}
 .dialog-actions .btn-primary {width:auto}
 .icon-btn {min-width:44px;display:inline-grid;place-items:center;flex-shrink:0}
@@ -55,10 +58,10 @@ textarea {resize:vertical;min-height:100px}
 .hint,.page-desc {color:var(--muted);line-height:1.6}
 .page-title {color:var(--navy);letter-spacing:-.025em;font-weight:700}
 .badge {display:inline-flex;align-items:center;min-height:26px;padding:4px 9px;border-radius:6px;font-size:.73rem;font-weight:700;line-height:1.3;letter-spacing:.015em}
-.badge.Pagado {color:var(--green);background:var(--green-bg)}
+.badge.Pagado {color:var(--green-ink);background:var(--green-bg)}
 .badge.Emitido,.badge.info {color:var(--primary);background:#e8f2fa}
-.badge.Pendiente {color:var(--orange);background:var(--orange-bg)}
-.badge.Vencido {color:var(--red);background:var(--red-bg)}
+.badge.Pendiente {color:var(--orange-ink);background:var(--orange-bg)}
+.badge.Vencido {color:var(--red-ink);background:var(--red-bg)}
 .badge.Anulado {color:var(--muted);background:#edf1f5}
 .empty {border:1px dashed #b7c8d5;border-radius:var(--radius);padding:var(--space-8);background:var(--surface);color:var(--muted);line-height:1.6}
 .form-error,.login-error {border:1px solid #edc9cc;background:var(--red-bg);color:#8f222b;border-radius:var(--radius-sm);line-height:1.55}
@@ -96,3 +99,12 @@ input[aria-invalid=true],select[aria-invalid=true],textarea[aria-invalid=true]{b
 @keyframes hm-reveal{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .overlay{z-index:var(--z-modal)}.toast,.toast-success{z-index:var(--z-notice)}
 .dialog-head{color:var(--text)}.dialog-head p{color:var(--muted);font-size:.8rem}.dialog-head .icon-btn{color:var(--navy);background:var(--surface);border:1px solid var(--border)}
+
+/* Sistema acuático 1.2.0: acento de marca y superficies con contraste semántico. */
+.btn,.btn-sm,.icon-btn{border-radius:11px}.btn-primary{box-shadow:0 3px 7px #0f4c811c}.btn-primary:hover{background:var(--secondary)}
+.field input,.field select,.field textarea,.search-input,.year-select{border-color:var(--border);background:var(--white)}
+.field input:focus,.field textarea:focus,.field select:focus{outline:2px solid var(--primary);outline-offset:2px}
+.page-crumb,.auth-eyebrow,.eyebrow{color:var(--secondary)}
+.two-factor-settings{background:var(--surface);border:1px solid var(--border);border-top:4px solid var(--secondary);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
+#two-factor-login{background:var(--sky-mist);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+#two-factor-status{color:var(--text)}

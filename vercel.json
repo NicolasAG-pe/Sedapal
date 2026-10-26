@@ -7,7 +7,8 @@
       "main": false,
       "preparation/backend-avance-23": false,
       "feature/pagos-pdf-120": false,
-      "feature/yape-piloto-120": false
+      "feature/yape-piloto-120": false,
+      "feature/identidad-acuatica-pdf-120": false
     }
   },
   "framework": null,

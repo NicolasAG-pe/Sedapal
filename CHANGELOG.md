@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Identidad acuática 1.2.0 — cliente y administración
+
+- Paleta compartida azul/celeste, superficies suaves, tarjetas, formularios y navegación consistentes; logo e iconos originales conservados.
+- Cliente Android/web y Admin mantienen funciones, tablas compactas y diálogo de pagos, con tintas semánticas accesibles.
+- Capturas antes/después en cinco resoluciones y navegación real sin errores JavaScript; contratos OTP/2FA y Android de laboratorio comprobados.
+- Exclusión de despliegues para la rama visual en ambos proyectos Vercel. Sin publicación, migraciones ni cambios productivos.
+
 ## Pagos Yape — sincronización visible y estados por entorno
 
 - Corrige ventanas en la primera conexión y suscripción Socket.IO; recupera pagos al reconectar aunque otra pantalla esté visible.
