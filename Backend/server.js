@@ -13,6 +13,7 @@ const { obtenerClaveOutbox } = require('./outbox-crypto');
 const { crearRegistroCorreo, registrarRutasCorreo } = require('./email-registration');
 const { crearDosFactores, permiteSesion } = require('./two-factor');
 const { AUTH_CONTRACT } = require('./auth-contract');
+const { createPasswordRecovery, registerPasswordRecovery, transaction: passwordTransaction } = require('./password-recovery');
 const { crearServicioRecibos, responderErrorRecibo } = require('./receipt-transactions');
 
 const app = express();
@@ -151,12 +152,12 @@ async function desconectarSocketsDeSuministro(idSuministro){
     }catch(e){}
 }
 
-async function desconectarSocketsDeUsuario(idUsuario){
+async function desconectarSocketsDeUsuario(idUsuario,motivo='desactivada'){
     try{
         if (!ioTiempoReal || !idUsuario) return;
-        const sala = 'usuario:' + Number(idUsuario);
-        ioTiempoReal.to(sala).emit('sesion:invalidada', { motivo: 'desactivada' });
-        await ioTiempoReal.in(sala).disconnectSockets(true);
+        const salas = ['usuario:' + Number(idUsuario),'auth-revocacion:' + Number(idUsuario)];
+        ioTiempoReal.to(salas).emit('sesion:invalidada', { motivo });
+        await ioTiempoReal.in(salas).disconnectSockets(true);
     }catch(e){}
 }
 
@@ -502,6 +503,10 @@ function respuestaSesion(fila) {
 }
 const dosFactores = crearDosFactores({ pool, verificarClave, emitirSesion: respuestaSesion,
     cerrarSockets: id => { if (ioTiempoReal) ioTiempoReal.in(['usuario:' + Number(id),'auth-revocacion:'+Number(id)]).disconnectSockets(true); } });
+
+const passwordRecovery = createPasswordRecovery({pool,hashPassword:generarClaveHash,verifyPassword:verificarClave,
+    verifyFactor:(...args)=>dosFactores.verifyPasswordRecovery(...args),closeSockets:id=>desconectarSocketsDeUsuario(id,'credenciales')});
+registerPasswordRecovery(app,passwordRecovery,{requestLimit:limitadorGenerico(10,15),verifyLimit:limitadorGenerico(30,15),completeLimit:limitadorGenerico(10,15)});
 
 // ==========================================
 // AUTENTICACIÓN POR TOKEN (JWT 8h) + verificación en DB
@@ -870,37 +875,21 @@ app.post("/api/auth/change-password", limiteCambioClave, requiereAuth, async (re
             });
         }
 
-        const resultado = await pool.query(
-            `SELECT id_usuario, clave_hash
-             FROM usuarios
-             WHERE id_usuario = $1
-             LIMIT 1;`,
-            [req.user.id_usuario]
-        );
-
-        if (resultado.rowCount === 0 || !verificarClave(password_actual, resultado.rows[0].clave_hash)) {
-            return res.status(401).json({
-                estado: "error",
-                mensaje: "No fue posible validar las credenciales actuales."
-            });
-        }
-
-        const nuevoHash = generarClaveHash(password_nueva);
-
-        await pool.query(
-            `UPDATE usuarios
-             SET clave_hash = $1
-             WHERE id_usuario = $2;`,
-            [nuevoHash, resultado.rows[0].id_usuario]
-        );
-
-        return res.json({
-            estado: "ok",
-            mensaje: "Contraseña actualizada correctamente."
+        const updated=await passwordTransaction(pool,async c=>{
+            const {rows:[u]}=await c.query(`SELECT u.id_usuario,u.clave_hash,COALESCE(m.version,0) AS version
+                FROM usuarios u LEFT JOIN usuario_2fa m USING(id_usuario) WHERE u.id_usuario=$1 FOR UPDATE OF u`,[req.user.id_usuario]);
+            if(!u||u.version!==req.user.mfa_version||!verificarClave(password_actual,u.clave_hash))return false;
+            await c.query('UPDATE usuarios SET clave_hash=$2 WHERE id_usuario=$1',[u.id_usuario,generarClaveHash(password_nueva)]);
+            return true;
         });
+        if(!updated)return res.status(401).json({estado:'error',mensaje:'No fue posible validar las credenciales actuales.'});
+
+        res.json({estado:"ok",mensaje:"Contraseña actualizada. Inicia sesión nuevamente."});
+        await desconectarSocketsDeUsuario(req.user.id_usuario,'credenciales');
+        return;
 
     } catch (error) {
-        console.error(error);
+        console.error('Fallo interno al cambiar contraseña.');
 
         return res.status(500).json({
             estado: "error",

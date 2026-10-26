@@ -103,6 +103,17 @@ function crearDosFactores({ pool, verificarClave, emitirSesion, cerrarSockets = 
         return { ...rest, ...emitirSesion(sessionUser) };
     }
     return {
+        // Correo validado por el servicio de recuperación; nunca emite una sesión.
+        async verifyPasswordRecovery(c,id,version,code) {
+            const a=await account(c,id);
+            if(!a||a.m.version!==version||locked(a))return false;
+            if(!a.m.activo)return a.u.rol==='usuario';
+            if(!key())return false;
+            const method=await factor(c,a,code);
+            if(!method){await bad(c,a);return false;}
+            await c.query('UPDATE usuario_2fa SET fallos=0,bloqueado_hasta=NULL WHERE id_usuario=$1',[id]);
+            return true;
+        },
         async status(id) {
             const { rows: [m] } = await pool.query(`SELECT m.activo,u.rol,
                 (SELECT count(*)::int FROM usuario_2fa_recuperacion r WHERE r.id_usuario=m.id_usuario AND usado_en IS NULL) AS recuperacion

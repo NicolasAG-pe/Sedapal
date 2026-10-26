@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Recuperación segura de contraseña — backend de laboratorio
+
+- Código de correo y permiso de cambio de un uso, límites por IP/identidad y outbox cifrada independiente del registro OTP; Gmail ambiguo no se reenvía automáticamente.
+- Conserva 2FA y exige el factor existente a usuarios protegidos y Admin; cuentas administrativas sin factor requieren revisión de identidad independiente.
+- Migración aditiva 011 revoca JWT al cambiar credenciales también sin 2FA, invalida solicitudes anteriores y conserva los datos históricos; aplicación únicamente en PostgreSQL aislado.
+- Worker y función cerrados por defecto; 17 pruebas específicas aprobadas y regresiones documentadas en docs/pruebas/recuperacion-clave-120.md. Sin producción ni correo real.
+
 ## Identidad acuática — segunda composición visual
 
 - Encabezados y navegación inferior azules, deuda con degradado efectivo y superficies blancas/celestes alternadas; login y cabeceras de recibos/pagos con bloques de marca.
