@@ -227,13 +227,11 @@ function configurarTiempoReal(httpServer){
             if(!socket.connected || !actual.rows[0]?.activo || !permiteSesion(socket.authClaims,actual.rows[0])){socket.disconnect(true);return;}
             // Rooms asignadas por el SERVIDOR. El cliente nunca elige rooms.
             const u = socket.user;
-            socket.join('authenticated');
-            socket.join('usuario:' + Number(u.id_usuario));
-            if (u.rol === 'admin') {
-                socket.join('admins');
-            } else if (u.id_suministro) {
-                socket.join('suministro:' + Number(u.id_suministro));
-            }
+            await socket.join(['authenticated','usuario:'+Number(u.id_usuario),
+                ...(u.rol==='admin'?['admins']:u.id_suministro?['suministro:'+Number(u.id_suministro)]:[])]);
+            // Invalidación existente tras estar suscrito: cierra la ventana entre
+            // connect/primer GET y la comprobación asíncrona de revocación.
+            if(socket.connected)socket.emit(u.rol==='admin'?'pago:nuevo':'pago:registrado',{sincronizacion:true});
             rtLog('Socket conectado: usuario ' + u.id_usuario + ' rol ' + u.rol);
         }catch(e){socket.disconnect(true);}
         socket.on('disconnect', () => {
@@ -1095,8 +1093,8 @@ function emitirOperacion(req, op) {
     emitirASuministro(req.user.id_suministro, 'pago:registrado', {id_operacion:op.id,id_recibo:op.id_recibo});
     emitirAAdmins('pago:nuevo', {id_operacion:op.id,id_recibo:op.id_recibo});
 }
-app.get('/api/pagos/config', requiereAuth, (req,res)=>res.set('Cache-Control','no-store').json(operacionesPago.config()));
-app.get('/api/pagos/yape/qr', requiereAuth, (req,res)=>{try{res.set({'Cache-Control':'no-store','Content-Type':'image/png'}).send(operacionesPago.qr());}catch(e){responderErrorPago(res,e);}});
+app.get('/api/pagos/config', requiereAuth, async(req,res)=>{try{res.set('Cache-Control','no-store').json(await operacionesPago.overview(req.user));}catch(e){responderErrorPago(res,e);}});
+app.get('/api/pagos/yape/qr', requiereAuth, async(req,res)=>{try{const image=await operacionesPago.qr(req.user);res.set({'Cache-Control':'no-store','Content-Type':'image/png'}).send(image);}catch(e){responderErrorPago(res,e);}});
 // APK anteriores conservan la ruta y la estructura, pero nunca reciben estado Pagado ficticio.
 app.post('/api/pagos', limiteOperacionesSensibles, requiereAuth, async(req,res)=>{try{
     if(!req.body?.solicitud_id)return res.status(409).json({estado:'error',mensaje:'Actualiza la aplicación. Este método demostrativo no acredita pagos; el recibo permanece pendiente.'});
@@ -1109,10 +1107,10 @@ app.post('/api/me/operaciones-pago', limiteOperacionesSensibles, requiereAuth, a
     res.status(result.repetida?200:201).json(result);
 }catch(e){responderErrorPago(res,e);}});
 app.get('/api/me/operaciones-pago', requiereAuth, async(req,res)=>{try{res.set('Cache-Control','no-store').json({operaciones:await operacionesPago.list(req.user)});}catch(e){responderErrorPago(res,e);}});
-app.get('/api/admin/operaciones-pago', requiereAdmin, async(req,res)=>{try{res.set('Cache-Control','no-store').json({operaciones:await operacionesPago.list(req.user,true)});}catch(e){responderErrorPago(res,e);}});
+app.get('/api/admin/operaciones-pago', requiereAdmin, async(req,res)=>{try{res.set('Cache-Control','no-store').json(req.query.page?await operacionesPago.page(req.user,req.query):{operaciones:await operacionesPago.list(req.user,true)});}catch(e){responderErrorPago(res,e);}});
 for (const [prefix,auth,admin] of [['/api/me',requiereAuth,false],['/api/admin',requiereAdmin,true]]) {
     app.get(prefix+'/operaciones-pago/:id',auth,async(req,res)=>{try{res.set('Cache-Control','no-store').json(await operacionesPago.detail(req.params.id,req.user,admin));}catch(e){responderErrorPago(res,e);}});
-    app.get(prefix+'/operaciones-pago/:id/comprobante',auth,async(req,res)=>{try{res.set({'Cache-Control':'no-store','Content-Type':'image/png'}).send(await operacionesPago.proof(req.params.id,req.user,admin));}catch(e){responderErrorPago(res,e);}});
+    app.get(prefix+'/operaciones-pago/:id/comprobante',auth,async(req,res)=>{try{const image=await operacionesPago.proof(req.params.id,req.user,admin);res.set({'Cache-Control':'no-store','Content-Type':'image/png'}).send(image);}catch(e){responderErrorPago(res,e);}});
 }
 app.post('/api/me/operaciones-pago/:id/cancelar',limiteOperacionesSensibles,requiereAuth,async(req,res)=>{try{const op=await operacionesPago.cancel(req.params.id,req.user);emitirOperacion(req,op);res.json({operacion:op});}catch(e){responderErrorPago(res,e);}});
 app.post('/api/admin/operaciones-pago/:id/revisar',limiteOperacionesSensibles,requiereAdmin,async(req,res)=>{try{

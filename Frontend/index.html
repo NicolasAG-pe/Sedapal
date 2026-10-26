@@ -719,13 +719,16 @@
           <label class="pay-opt"><input type="radio" name="pay-method" value="yape_manual" disabled /><span><b>Pagar con Yape - verificación manual</b><small>Disponible únicamente en laboratorio autorizado</small></span></label>
         </div>
         <p id="pay-notice" class="pay-note" role="status">No se realizan cobros financieros. La confirmación de Yape no es automática.</p>
+        <button id="pay-existing-history" class="btn btn-ghost" type="button" hidden>Ver estado e historial</button>
+        <div id="pay-existing-state" role="status" aria-live="polite" hidden></div>
         <div id="pay-yape-fields" hidden>
           <img id="pay-yape-qr" alt="QR receptor de pruebas autorizado" width="200" height="200" hidden />
-          <p>No transfieras dinero real. Un administrador debe comprobar la recepción por separado; una captura no confirma un pago.</p>
-          <label for="pay-reference">Referencia declarada</label>
-          <input id="pay-reference" maxlength="100" autocomplete="off" aria-describedby="pay-feedback" placeholder="Referencia de la operación de prueba" />
+          <p id="pay-yape-guidance">No transfieras dinero real. Un administrador debe comprobar la recepción por separado; una captura no confirma un pago.</p>
+          <label id="pay-reference-label" for="pay-reference">Código de prueba</label>
+          <input id="pay-reference" maxlength="100" autocomplete="off" aria-describedby="pay-feedback" placeholder="PRUEBA20261026" />
           <label for="pay-proof">Comprobante opcional (PNG, máximo 1 MB)</label>
           <input id="pay-proof" type="file" accept="image/png" aria-describedby="pay-feedback" />
+          <label id="pay-voluntary-label" hidden><input id="pay-voluntary" type="checkbox" /> Declaro voluntariamente una transferencia externa entre cuentas autorizadas para este piloto; no estoy pagando una deuda oficial de agua.</label>
         </div>
         <p id="pay-feedback" role="alert" aria-live="polite"></p>
         <div class="dialog-actions">
@@ -1112,7 +1115,7 @@
   }
   function limpiarDatosCliente(){
     interfaz2fa.clear();
-    paymentRequests.clear();clearPaymentQr();paymentViewVersion++;
+    paymentRequests.clear();clearPaymentQr();paymentViewVersion++;paymentPilot=false;paymentPilotSynthetic=true;paymentExisting=false;document.getElementById('pay-existing-state').textContent='';document.getElementById('pay-existing-state').hidden=true;document.getElementById('pay-existing-history').hidden=true;
     window.HMClientHome.clear();
     recibos=[]; incidencias=[]; pagos=[]; cortes=[]; cortesGeneral=[];
     misSolicitudes=[]; notificaciones=[]; notifCargando=null;
@@ -1236,7 +1239,6 @@
      Máximo 1 socket por pestaña; sin listeners duplicados.
      ============================================================ */
   let socketTiempoReal = null;
-  let rtConectadoAntes = false;
   const rtTimers = {};
   // Misma regla que apiUrl(): mismo origen en web local, host
   // configurado en Android futuro. Sin hardcodear dominios.
@@ -1292,11 +1294,9 @@
     let _hmEpoch=sesionCliente.generation();
     if(!obtenerToken() || !sesionCliente.isUser()) return;
     try{
-      pagos = await conSesion(() => (cargarPagosDesdeAPI()), _hmEpoch);
-      payEstado = pagos.length ? 'ok' : 'vacio';
-      if(typeof renderPagos === 'function') renderPagos();
+      await refrescarPagos();
     }catch(e){
-      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
+      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;actualizarConexionCliente('stale');}
   }
   function rtRecargarNotif(){
     if(!sesionCliente.isUser()) return;
@@ -1339,11 +1339,11 @@
   function sincronizarTrasReconexion(){
     if(!rtSoloSesionActiva()) return;
     rtRecargarNotif();
+    rtRecargarPagos(); // Recupera también historial/Inicio/modal aunque otra sección esté visible.
     if(moduloVisible('sec-incidencias')) rtRecargarIncidencias();
     else if(moduloVisible('sec-ayuda')) rtRecargarAtencion();
     else if(moduloVisible('sec-cortes')) refrescarCortes();
     else if(moduloVisible('sec-historial') || moduloVisible('sec-inicio')) rtRecargarRecibosInicio();
-    else if(moduloVisible('sec-pagos')) rtRecargarPagos();
     else if(moduloVisible('sec-perfil')) cargarPerfil();
   }
   function actualizarConexionCliente(state){
@@ -1361,8 +1361,7 @@
     // Sin bucles: estos handlers solo hacen GET. Los POST/PATCH son los
     // únicos que emiten en el backend, y nunca desde un handler de aquí.
     s.on('connect', ()=>{
-      if(rtConectadoAntes) sincronizarTrasReconexion();
-      rtConectadoAntes = true;
+      sincronizarTrasReconexion();
       actualizarConexionCliente('online');
     });
     s.on('disconnect',()=>actualizarConexionCliente(navigator.onLine?'connecting':'offline'));
@@ -1388,7 +1387,6 @@
   }
   function iniciarTiempoReal(){
     try{ detenerTiempoReal(true); }catch(e){}
-    rtConectadoAntes = false;
     let token = '';
     try{ token = obtenerToken(); }catch(e){}
     if(!token) return;
@@ -1419,7 +1417,6 @@
     try{
       Object.keys(rtTimers).forEach(k=>{ clearTimeout(rtTimers[k]); delete rtTimers[k]; });
     }catch(e){}
-    rtConectadoAntes = false;
     if(socketTiempoReal){
       try{ socketTiempoReal.removeAllListeners(); }catch(e){}
       try{ socketTiempoReal.disconnect(); }catch(e){}
@@ -2025,6 +2022,7 @@
   /* ---------- Skeletons (carga) ---------- */
   function showSkeletons(){
     loading = true;
+    syncHidroBotVisibility();
     btnLogin.disabled = true;
     btnLoginText.textContent = 'Cargando información…';
     ['stat-debt','stat-due','stat-last','stat-cons','stat-pend','stat-serv'].forEach(id=>{ document.getElementById(id).textContent = '···'; });
@@ -2237,6 +2235,7 @@
     animateStats();
     actualizarInicio();
     loading = false;
+    syncHidroBotVisibility();
     btnLogin.disabled = false;
     btnLoginText.textContent = 'Iniciar Sesión';
   }
@@ -3466,6 +3465,10 @@
     const tutorial = document.body.classList.contains('tutorial-open');
     const drawer = document.body.classList.contains('drawer-open');
     const on = viewDash.classList.contains('active') && sesionCliente.isUser() && !tutorial && !drawer;
+    const ready=on&&hbDatosListos();
+    hbFab.disabled=!ready;
+    hbFab.setAttribute('aria-disabled',String(!ready));
+    hbFab.setAttribute('aria-label',ready?'Abrir HidroBot, asistente virtual':'HidroBot: cargando datos de tu suministro');
     hbRoot.classList.toggle('show', on);
     hbRoot.setAttribute('aria-hidden', on ? 'false' : 'true');
     const open = hidroBotState.open && on;
@@ -3814,16 +3817,35 @@ async function descargarConstanciaPDF(r, btn){
   const paymentRequests = new Map();
   let paymentQrUrl = null;
   let paymentViewVersion=0;
+  let paymentPilot=false,paymentPilotSynthetic=true,paymentExisting=false;
   function clearPaymentQr(){if(paymentQrUrl)URL.revokeObjectURL(paymentQrUrl);paymentQrUrl=null;const img=document.getElementById('pay-yape-qr');img.hidden=true;img.removeAttribute('src');}
-  function paymentLabel(p){return ({demostrativa:'Demostrativa',declarada:'Transferencia declarada',pendiente_verificacion:'Pendiente de verificación',verificada_manual:'Revisada manualmente (prueba)',acreditada_proveedor:'Aprobada por simulador',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'})[p.estado] || 'Histórico sin verificación financiera';}
+  function paymentLabel(p){
+    const synthetic=p.entorno==='simulado'||p.piloto_ensayo===true;
+    if(p.metodo==='yape_manual'){
+      if(p.estado==='pendiente_verificacion')return synthetic?'Pendiente de revisión':'Pendiente de verificación';
+      if(p.estado==='verificada_manual')return synthetic?'Ensayo confirmado':'Transferencia auténtica verificada manualmente';
+    }
+    return ({demostrativa:'Operación de prueba registrada',declarada:'Operación declarada',pendiente_verificacion:'Pendiente de verificación',acreditada_proveedor:'Aprobada por simulador (sin dinero)',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso simulado'})[p.estado]||'Histórico sin verificación financiera';
+  }
+
   function showPayState(s){
     document.getElementById('pay-main').hidden=s!=='main';
     document.getElementById('pay-processing').hidden=s!=='processing';
     document.getElementById('pay-success').hidden=s!=='success';
   }
+  function showExistingPayment(o){
+    paymentExisting=true;clearPaymentQr();payTarget.operacion_id=o.id;
+    document.querySelector('input[value="yape_manual"]').disabled=true;
+    document.getElementById('pay-yape-fields').hidden=true;
+    document.getElementById('pay-confirm').disabled=true;
+    document.getElementById('pay-existing-history').hidden=false;
+    const state=document.getElementById('pay-existing-state');state.hidden=false;
+    state.textContent=paymentLabel(o)+'. '+(o.estado==='rechazada'?'Motivo: '+(o.motivo||'Consulta la revisión')+'. ':'')+'No hagas otra transferencia. Para otro ensayo se necesita un piloto sintético nuevo e independiente.';
+  }
+  document.getElementById('pay-existing-history').addEventListener('click',()=>{closeModal(payModal);clearPaymentQr();payTarget=null;document.querySelector('#sidebar [data-sec="pagos"]').click();});
   async function abrirPago(r,opener){
     if(!r||!reciboPagable(r)){showToast('Este recibo no admite otra operación.');return;}
-    const epoch=sesionCliente.generation(),view=++paymentViewVersion;payTarget=r;clearPaymentQr();
+    const epoch=sesionCliente.generation(),view=++paymentViewVersion;payTarget=r;clearPaymentQr();paymentExisting=false;document.getElementById('pay-existing-history').hidden=true;document.getElementById('pay-existing-state').hidden=true;paymentPilot=false;paymentPilotSynthetic=true;document.getElementById('pay-voluntary').checked=false;document.getElementById('pay-voluntary-label').hidden=true;
     document.getElementById('pay-reference').value='';document.getElementById('pay-proof').value='';
     document.querySelector('input[name="pay-method"][value="demostrativo"]').checked=true;
     document.getElementById('pay-yape-fields').hidden=true;document.getElementById('pay-feedback').textContent='';
@@ -3836,24 +3858,34 @@ async function descargarConstanciaPDF(r, btn){
       const res=await conSesion(()=>apiFetch('/api/pagos/config'),epoch);
       if(!res.ok)throw Error('Configuración no disponible.');const config=await conSesion(()=>res.json(),epoch);
       if(payTarget!==r||view!==paymentViewVersion)return;
+      paymentPilot=config.entorno==='piloto_manual';paymentPilotSynthetic=config.piloto_ensayo!==false;
+      document.getElementById('pay-reference-label').textContent=paymentPilotSynthetic?'Código de prueba':'Número de operación de Yape';
+      document.getElementById('pay-reference').placeholder=paymentPilotSynthetic?'PRUEBA20261026':'Número del movimiento en Yape';
       document.getElementById('pay-notice').textContent=config.mensaje;
-      if(config.yape_manual){
-        const qr=await conSesion(()=>apiFetch('/api/pagos/yape/qr'),epoch);if(!qr.ok)throw Error('QR no disponible.');
+      document.getElementById('pay-title').textContent=paymentPilot?(paymentPilotSynthetic?'Ensayo Yape sin dinero':'Yape: verificación manual'):'Registrar operación';document.querySelector('#pay-modal .pay-amount span').textContent=paymentPilot?'Importe voluntario del piloto, sin deuda oficial':'Importe del recibo';
+      document.getElementById('pay-yape-guidance').textContent=paymentPilot&&!paymentPilotSynthetic?'La transferencia la realizas voluntariamente fuera de Hidro-Mejora. Revisa el destinatario en Yape antes de enviar. Un administrador debe comprobar la recepción; una captura no acredita dinero.':'No transfieras dinero real. Un administrador revisará el ensayo sintético; no declarará una recepción bancaria.';
+      const pilotReceiptOk=!paymentPilot||(String(config.recibo_piloto)===String(r.id_recibo)&&Number(config.importe_piloto)===Number(r.monto));
+      if(!pilotReceiptOk){document.getElementById('pay-notice').textContent='Este recibo no pertenece al piloto autorizado. No transfieras dinero.';}
+      if(config.operacion_existente&&pilotReceiptOk){showExistingPayment(config.operacion_existente);return;}
+      if(config.yape_manual&&pilotReceiptOk){
+        const qr=await conSesion(()=>apiFetch('/api/pagos/yape/qr'),epoch);if(!qr.ok){const error=await conSesion(()=>qr.json().catch(()=>null),epoch);throw Error(error?.mensaje||'QR no disponible.');}
         const blob=await conSesion(()=>qr.blob(),epoch);if(payTarget!==r||view!==paymentViewVersion)return;
         clearPaymentQr();paymentQrUrl=URL.createObjectURL(blob);document.getElementById('pay-yape-qr').src=paymentQrUrl;document.getElementById('pay-yape-qr').hidden=false;yape.disabled=false;
       }
-    }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation())return;document.getElementById('pay-notice').textContent='Yape no disponible. Puedes consultar tus recibos o registrar una demostración sin dinero.';}
+    }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation())return;document.getElementById('pay-notice').textContent='Yape no disponible. '+e.message+' Consulta el historial antes de declarar o transferir.';}
   }
   document.querySelectorAll('.pay-opt input').forEach(radio=>radio.addEventListener('change',()=>{
     document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
     const manual=document.querySelector('input[name="pay-method"]:checked').value==='yape_manual';
-    document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual?'Enviar a verificación':'Registrar demostración';
+    document.getElementById('pay-voluntary-label').hidden=!(manual&&paymentPilot&&!paymentPilotSynthetic);
+    document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual?(paymentPilotSynthetic?'Registrar ensayo':'Enviar a verificación manual'):'Registrar demostración';
   }));
   document.getElementById('pay-confirm').addEventListener('click',async ev=>{
     const btn=ev.currentTarget,epoch=sesionCliente.generation(),target=payTarget,view=paymentViewVersion;
-    if(!target||btn.dataset.busy==='1')return;
+    if(!target||paymentExisting||btn.dataset.busy==='1')return;
     const method=document.querySelector('input[name="pay-method"]:checked').value,reference=document.getElementById('pay-reference').value.trim();
     const error=document.getElementById('pay-feedback');error.textContent='';
+    if(method==='yape_manual'&&paymentPilot&&!paymentPilotSynthetic&&!document.getElementById('pay-voluntary').checked){error.textContent='Confirma que declaras voluntariamente una transferencia externa de este piloto.';return;}
     if(method==='yape_manual'&&!/^[A-Za-z0-9 -]{4,100}$/.test(reference)){error.textContent='Escribe una referencia de 4 a 100 caracteres.';document.getElementById('pay-reference').focus();return;}
     const file=document.getElementById('pay-proof').files[0];
     if(method==='yape_manual'&&file&&(file.type!=='image/png'||file.size>1048576)){error.textContent='El comprobante debe ser PNG y pesar como máximo 1 MB.';return;}
@@ -3865,17 +3897,18 @@ async function descargarConstanciaPDF(r, btn){
       if(pending&&pending.fingerprint!==fingerprint)throw Error('Hay una solicitud sin confirmar. Consulta el historial antes de cambiar los datos.');
       if(!pending){pending={fingerprint,id:crypto.randomUUID()};paymentRequests.set(String(target.id_recibo),pending);}
       showPayState('processing');
-      const res=await conSesion(()=>apiFetch('/api/me/operaciones-pago',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id_recibo:Number(target.id_recibo),metodo:method,solicitud_id:pending.id,referencia:reference,...(proof?{comprobante:proof}:{})})}),epoch);
+      const res=await conSesion(()=>apiFetch('/api/me/operaciones-pago',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id_recibo:Number(target.id_recibo),metodo:method,solicitud_id:pending.id,referencia:reference,declaracion_voluntaria:document.getElementById('pay-voluntary').checked,...(proof?{comprobante:proof}:{})})}),epoch);
       const data=await conSesion(()=>res.json(),epoch);
       if(!res.ok){if(res.status>=400&&res.status<500)paymentRequests.delete(String(target.id_recibo));throw Error(data.mensaje||'No se pudo registrar.');}
       paymentRequests.delete(String(target.id_recibo));if(payTarget!==target||view!==paymentViewVersion)return;target.operacion_id=data.operacion.id;
       document.getElementById('pay-reference').value='';document.getElementById('pay-proof').value='';clearPaymentQr();
       document.getElementById('pay-code').textContent=data.operacion.codigo_operacion;
-      document.getElementById('pay-success-text').textContent=paymentLabel(data.operacion)+'. El recibo mantiene su deuda; no se ha acreditado dinero real.';
+      document.getElementById('pay-success-text').textContent=paymentLabel(data.operacion)+(data.operacion.entorno==='piloto_manual'?'. Recibo sintético: no se ha pagado un servicio de agua. Consulta la comprobación en el historial.':'. El recibo mantiene su deuda; no se ha acreditado dinero real.');
       showPayState('success');showSuccess('Operación registrada. Consulta su verificación en el historial.');
-      pagos=await conSesion(()=>cargarPagosDesdeAPI(),epoch);payEstado=pagos.length?'ok':'vacio';renderPagos();
-    }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation()||payTarget!==target||view!==paymentViewVersion)return;showPayState('main');error.textContent=(e.message||'Sin conexión.')+' Si la respuesta se perdió, reintenta con los mismos datos o consulta el historial. No hagas otra transferencia.';}
-    finally{if(epoch===sesionCliente.generation()&&view===paymentViewVersion){btn.dataset.busy='0';btn.disabled=false;btn.removeAttribute('aria-busy');}}
+      await refrescarPagos();
+    }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation()||payTarget!==target||view!==paymentViewVersion)return;clearPaymentQr();showPayState('main');error.textContent=(e.message||'Sin conexión.')+' Consultando el historial antes de reintentar. No hagas otra transferencia.';
+      try{const recovered=await conSesion(()=>apiFetch('/api/pagos/config'),epoch);if(recovered.ok){const config=await conSesion(()=>recovered.json(),epoch);if(view===paymentViewVersion&&payTarget===target&&config.operacion_existente){paymentRequests.delete(String(target.id_recibo));showExistingPayment(config.operacion_existente);error.textContent='La respuesta se perdió; recuperamos la operación existente desde el historial. No se creó otra.';}}}catch(_){}}
+    finally{if(epoch===sesionCliente.generation()&&view===paymentViewVersion){btn.dataset.busy='0';btn.disabled=paymentExisting;btn.removeAttribute('aria-busy');}}
   });
   document.getElementById('pay-constancia').addEventListener('click', ev=>{
     if(payTarget) descargarConstanciaPDF(payTarget, ev.currentTarget);
@@ -4853,6 +4886,22 @@ async function descargarConstanciaPDF(r, btn){
       mes: mes
     };
   }
+  let paymentSync=null;
+  function refrescarPagos(){
+    const epoch=sesionCliente.generation();
+    if(paymentSync?.epoch===epoch){paymentSync.again=true;return paymentSync.task;}
+    const state={epoch,again:false,task:null};paymentSync=state;
+    state.task=(async()=>{do{
+      state.again=false;let data;try{data=await conSesion(()=>cargarPagosDesdeAPI(),epoch);}catch(error){if(state.again&&epoch===sesionCliente.generation())continue;throw error;}
+      // Un evento recibido durante el GET exige otra lectura; no publicar la instantánea antigua.
+      if(state.again)continue;
+      pagos=data;payEstado=pagos.length?'ok':'vacio';renderPagos();actualizarInicio();actualizarConexionCliente(socketTiempoReal?.connected?'online':navigator.onLine?'connecting':'offline');
+      if(payTarget&&payModal.classList.contains('open')){
+        const operation=pagos.find(p=>p.raw.metodo==='yape_manual'&&String(p.id_recibo)===String(payTarget.id_recibo));
+        if(operation){showExistingPayment(operation.raw);if(!document.getElementById('pay-success').hidden)document.getElementById('pay-success-text').textContent=paymentLabel(operation.raw)+'. Consulta el estado e historial. El recibo mantiene su estado; un ensayo no acredita dinero.';}
+      }
+    }while(state.again);})().finally(()=>{if(paymentSync===state)paymentSync=null;});return state.task;
+  }
   async function cargarPagosDesdeAPI(){
     let _hmEpoch=sesionCliente.generation();
     const resp = await conSesion(() => (apiFetch('/api/me/pagos')), _hmEpoch);
@@ -4922,7 +4971,8 @@ async function descargarConstanciaPDF(r, btn){
       const pgIzq = document.createElement('span');
       pgIzq.appendChild(nodo('span', 'card-month', pg.periodo));
       pgTop.appendChild(pgIzq);
-      pgTop.appendChild(nodo('span', 'badge Pendiente', pg.verificacion));
+      const stateClass=pg.raw.estado==='verificada_manual'?(pg.raw.piloto_ensayo||pg.raw.entorno==='simulado'?'op-synthetic':'op-manual'):pg.raw.estado==='demostrativa'?'op-demo':'op-pending';
+      pgTop.appendChild(nodo('span', 'badge '+stateClass, pg.verificacion));
       art.appendChild(pgTop);
       const pgMonto = document.createElement('div'); pgMonto.className = 'card-amount';
       pgMonto.appendChild(document.createTextNode(fmt(pg.monto) + ' '));
@@ -4931,9 +4981,10 @@ async function descargarConstanciaPDF(r, btn){
       const pgMeta = document.createElement('div'); pgMeta.className = 'card-meta';
       pgMeta.appendChild(nodo('span', null, pg.metodo + ' · ' + pg.fecha));
       art.appendChild(pgMeta);
-      const pgMeta2 = document.createElement('div'); pgMeta2.className = 'card-meta';
+      const pgMeta2 = document.createElement('div'); pgMeta2.className = 'card-meta payment-identifiers';
       const pgCod = document.createElement('span');
-      pgCod.appendChild(document.createTextNode('Código: '));
+      pgCod.appendChild(document.createTextNode('Operación interna: '));
+      if(pg.raw.referencia)pgMeta2.appendChild(nodo('span',null,(pg.raw.piloto_ensayo||pg.raw.entorno==='simulado'?'Código de prueba: ':'Número de operación de Yape: ')+pg.raw.referencia));
       pgCod.appendChild(nodo('b', null, pg.codigo));
       pgMeta2.appendChild(pgCod);
       art.appendChild(pgMeta2);
@@ -4948,7 +4999,11 @@ async function descargarConstanciaPDF(r, btn){
       pgAcc.appendChild(pgCopy);
       if(pg.raw.estado==='pendiente_verificacion'&&pg.raw.metodo==='yape_manual'){
         const cancel=document.createElement('button');cancel.type='button';cancel.className='btn-sm detail';cancel.textContent='Cancelar declaración';
-        cancel.addEventListener('click',async()=>{const epoch=sesionCliente.generation();if(cancel.disabled)return;cancel.disabled=true;try{const res=await conSesion(()=>apiFetch('/api/me/operaciones-pago/'+encodeURIComponent(pg.operacion_id)+'/cancelar',{method:'POST'}),epoch);if(!res.ok)throw Error('No se pudo cancelar. Actualiza el historial.');pagos=await conSesion(()=>cargarPagosDesdeAPI(),epoch);renderPagos();}catch(e){if(epoch===sesionCliente.generation()&&!esAbortado(e))showToast(e.message);}finally{cancel.disabled=false;}});pgAcc.appendChild(cancel);
+        cancel.addEventListener('click',async()=>{const epoch=sesionCliente.generation();if(cancel.disabled)return;cancel.disabled=true;try{const res=await conSesion(()=>apiFetch('/api/me/operaciones-pago/'+encodeURIComponent(pg.operacion_id)+'/cancelar',{method:'POST'}),epoch);if(!res.ok)throw Error('No se pudo cancelar. Actualiza el historial.');await refrescarPagos();}catch(e){if(epoch===sesionCliente.generation()&&!esAbortado(e))showToast(e.message);}finally{cancel.disabled=false;}});pgAcc.appendChild(cancel);
+      }
+      if(pg.operacion_id){
+        const history=document.createElement('button');history.type='button';history.className='btn-sm detail';history.textContent='Ver estado e historial';const box=document.createElement('div');box.setAttribute('role','status');
+        history.addEventListener('click',async()=>{if(history.disabled)return;history.disabled=true;const epoch=sesionCliente.generation();try{const r=await conSesion(()=>apiFetch('/api/me/operaciones-pago/'+encodeURIComponent(pg.operacion_id)),epoch);const d=await conSesion(()=>r.json(),epoch);if(!r.ok)throw Error('No se pudo consultar el historial.');box.replaceChildren();for(const h of d.historial){const line=document.createElement('p');line.textContent=window.HMShared.ui.date(h.fecha,true)+' · '+paymentLabel({...d,...h})+' · '+h.motivo;box.append(line);}if(d.estado==='rechazada'||d.estado==='cancelada'){const line=document.createElement('p');line.textContent='No repitas la transferencia. Contacta al responsable del piloto; otro ensayo requiere datos sintéticos independientes.';box.append(line);}}catch(e){if(epoch===sesionCliente.generation()&&!esAbortado(e))box.textContent=e.message;}finally{history.disabled=false;}});pgAcc.append(history);art.append(box);
       }
       art.appendChild(pgAcc);
       pgConst.addEventListener('click', ev=>descargarConstanciaPDF(reciboLiteDesdePago(pg), ev.currentTarget));
@@ -5018,7 +5073,7 @@ async function descargarConstanciaPDF(r, btn){
   }
   function mostrarLogin(){
     interfaz2fa.clear();
-    paymentRequests.clear();clearPaymentQr();paymentViewVersion++;
+    paymentRequests.clear();clearPaymentQr();paymentViewVersion++;paymentPilot=false;paymentPilotSynthetic=true;paymentExisting=false;document.getElementById('pay-existing-state').textContent='';document.getElementById('pay-existing-state').hidden=true;document.getElementById('pay-existing-history').hidden=true;
     verifyForm.hidden = true;
     regForm.hidden = true;
     authToLogin.hidden = true;
@@ -5476,8 +5531,7 @@ async function descargarConstanciaPDF(r, btn){
     }
     payEstado = 'cargando';
     try{
-      pagos = await conSesion(() => (cargarPagosDesdeAPI()), _hmEpoch);
-      payEstado = pagos.length ? 'ok' : 'vacio';
+      await refrescarPagos();
     }catch(err){
       if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
       console.error('No se pudieron cargar los pagos.', err);

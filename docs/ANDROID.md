@@ -134,3 +134,11 @@ Las APK antiguas conservan login y consultas; el POST demostrativo sin UUID devu
 la nueva declaración Yape hasta una futura actualización. 007/008 pendientes en
 producción; backend productivo no desplegado desde esta rama. Informe y límites:
 [Pagos/PDF 1.2.0](pruebas/pagos-pdf-120.md), [roadmap](ROADMAP-1.2.0.md).
+
+### Piloto local Yape (sin publicar)
+
+PR #14 / `feature/yape-piloto-120` depende de pagos/PDF #13. La prueba
+`npm run test:yape:pilot:native` usa únicamente AVD y QR sintéticos; comprueba revisión
+Admin/Socket.IO, sesión y PDF sin dinero real. La guía para un futuro dispositivo de
+prueba autorizado está en [Piloto local](yape-piloto-local.md). No usar las APK públicas
+contra esa base ni desinstalarlas para instalar debug. No cambia versión ni firma release.

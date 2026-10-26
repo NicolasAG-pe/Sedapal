@@ -29,7 +29,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   const{PNG}=require('../../Backend/node_modules/pngjs');const qr=new PNG({width:20,height:20});qr.data.fill(255);
   process.env.YAPE_QR_FILE=path.join(output,'qr-sintetico.png');fs.writeFileSync(process.env.YAPE_QR_FILE,PNG.sync.write(qr),{mode:0o600});process.env.PAYMENTS_MANUAL_ENABLED='1';
  }
- const ctx=await iniciar({autoDrain:false});let device,page;
+ const ctx=await iniciar({autoDrain:false,databasePrefix:process.argv.includes('--yape-pilot')?'yape_pilot':'api'});let device,page;
  let sessionRequests=0;
  ctx.httpServer.on('request',req=>{if(req.method==='GET'&&req.url==='/api/auth/session')sessionRequests++;});
  const supplyA='900000711',supplyB='900000712',password=ctx.registro(711).password;
@@ -67,11 +67,11 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  }
  async function loginScreen(){await page.waitForFunction(()=>!document.getElementById('login-form').hidden&&document.getElementById('session-restore').hidden);}
  async function login(supply){
-  await loginScreen();await page.locator('#suministro').fill(supply);await page.locator('#password').fill(password);await page.locator('#btn-login').click();await dashboard(supply);
+  report.stage='pantalla de login';await loginScreen();report.stage='enviar login';await page.locator('#suministro').fill(supply);await page.locator('#password').fill(password);await page.locator('#btn-login').click();report.stage='dashboard tras login';await dashboard(supply);
   // Omitir tutorial por su control real, sin hacer persistente ningún JWT de prueba.
-  await pause(800);
-  if(await page.locator('#spot-skip-mobile').isVisible())await page.locator('#spot-skip-mobile').click();
-  else if(await page.locator('#spot-skip').isVisible())await page.locator('#spot-skip').click();
+  await until(()=>page.evaluate(()=>!document.getElementById('hb-fab').disabled||document.body.classList.contains('tutorial-open')),'carga inicial terminada antes del tutorial y de HidroBot');
+  if(await page.evaluate(()=>document.body.classList.contains('tutorial-open')))await page.locator('#spot-skip-mobile:visible, #spot-skip:visible').first().click();
+  await until(()=>page.evaluate(()=>!document.body.classList.contains('tutorial-open')&&!document.getElementById('hb-fab').disabled),'tutorial cerrado y datos listos antes de navegar');
  }
  async function saved(){return page.evaluate(()=>HMNativeState.readSession());}
  async function setSaved(token){await page.evaluate(t=>HMNativeState.writeSession(t),token);}
@@ -89,6 +89,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   android('install','-r',path.join(output,'app/outputs/apk/debug/app-debug.apk'));
   android('install','-r',path.join(output,'app/outputs/apk/androidTest/debug/app-debug-androidTest.apk'));
   const instrument=android('shell','am','instrument','-w','-e','class','pe.edu.hidromejora.app.SecureStateInstrumentedTest','-e','hidroSecureFixture','1',pkg+'.test/androidx.test.runner.AndroidJUnitRunner');
+  android('shell','am','force-stop',pkg);
   fs.writeFileSync(path.join(output,'instrumentation.txt'),instrument);assert.match(instrument,/OK \(1 test\)/);ok('Android Keystore: clave no exportable, GCM/IV distinto, alteración rechazada y borrado confirmado');
   if(process.argv.includes('--payments')){
    android('shell','am','start','-n',pkg+'/.MainActivity');await attach();
@@ -115,6 +116,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   }
   await ctx.db.query("UPDATE usuarios SET correo_verificado_en=NULL WHERE correo='cliente711@example.invalid'");
   android('shell','am','start','-n',pkg+'/.MainActivity');await attach();await login(supplyA);await noPlainToken();
+  await page.evaluate(()=>{window.__hmHBTrace=[];for(const name of ['pointerdown','click'])document.addEventListener(name,e=>{if(window.__hmHBTrace.length<30)window.__hmHBTrace.push({event:name,target:e.target.closest('[id]')?.id,open:document.getElementById('hb-panel').className,body:document.body.className});},true);new MutationObserver(()=>{if(window.__hmHBTrace.length<30)window.__hmHBTrace.push({event:'panel',open:document.getElementById('hb-panel').className,body:document.body.className});}).observe(document.getElementById('hb-panel'),{attributes:true,attributeFilter:['class']});});
   await require('./chatbot-ui-checks.cjs')({client:{click:selector=>page.locator(selector).click(),
     fill:(selector,value)=>page.locator(selector).fill(value),evaluate:expression=>page.evaluate(expression)},wait:until,ok});
   const tokenA=(await saved()).token;assert.ok(typeof tokenA==='string'&&tokenA.length>50);
@@ -145,7 +147,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   const logs=execFileSync(adb,['-s',serial,'logcat','-d'],{encoding:'utf8',maxBuffer:32*1024*1024});assert.ok(!logs.includes(tokenA)&&!logs.includes(tokenB)&&!logs.includes(password),'No credenciales en logcat');ok('Logcat sin JWT ni contraseña del flujo; logging del bridge desactivado también en debug');
   await logout();report.result='passed';
  }catch(error){
-  report.result='failed';report.errors.push(error.message);
+  report.result='failed';report.errors.push(error.message);try{screenshot('failure');report.screen=await page?.evaluate(()=>({bodyClass:document.body.className,api:window.HM_API_BASE,loginHidden:document.getElementById('login-form')?.hidden,restoreHidden:document.getElementById('session-restore')?.hidden,dashboard:document.getElementById('view-dashboard')?.className,feedback:document.getElementById('login-error')?.textContent,botTrace:window.__hmHBTrace,toast:document.getElementById('toast')?.textContent,botClass:document.getElementById('hb-panel')?.className,buttonDisabled:document.getElementById('btn-login')?.disabled}));}catch(_){}
   fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2),{mode:0o600});
   console.error('Fallo antes de limpieza: '+error.message);throw error;
  }

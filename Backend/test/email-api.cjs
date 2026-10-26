@@ -6,8 +6,8 @@ const { crearRegistroCorreo } = require('../email-registration');
 const { crearProcesadorOutbox } = require('../email-outbox');
 const { crearRemitente } = require('../resend-mail');
 
-async function iniciar({ autoDrain = true, registrationEnabled = process.env.EMAIL_REGISTRATION_ENABLED ?? '1' } = {}) {
-    const { pool: db, connection } = await nuevaBase('api');
+async function iniciar({ autoDrain = true, registrationEnabled = process.env.EMAIL_REGISTRATION_ENABLED ?? '1', databasePrefix = 'api' } = {}) {
+    const { pool: db, connection } = await nuevaBase(databasePrefix);
     await db.query(sql('init.sql'));
     const authSecret = crypto.randomBytes(32).toString('hex');
     Object.assign(process.env, { DATABASE_URL: '', DB_HOST: connection.host, DB_PORT: String(connection.port),

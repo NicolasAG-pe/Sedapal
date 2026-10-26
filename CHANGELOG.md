@@ -1,5 +1,54 @@
 # Historial de versiones
 
+## Pagos Yape — sincronización visible y estados por entorno
+
+- Corrige ventanas en la primera conexión y suscripción Socket.IO; recupera pagos al reconectar aunque otra pantalla esté visible.
+- Agrupa lecturas, evita que respuestas antiguas sustituyan estados recientes y conserva filas/foco, filtros y contadores de Admin.
+- Código de prueba / Registrar ensayo / Pendiente de revisión / Ensayo confirmado para simulaciones; número de operación y comprobación manual explícitos para Yape auténtico.
+- Aviso de desconexión visible en móvil, identificadores sin superposición y constancias coherentes; no se modifica el contrato API ni el estado financiero del recibo.
+- Regresión focalizada 21/21, cliente/Admin/PDF 18/18, flujos reales y responsive aprobados; Android final: 10 comprobaciones sin errores, incluidos corte de red y aviso visible. Evidencia y límites en docs/pruebas/pagos-tiempo-real-120.md.
+
+## Auditoría de pagos — gestión compacta y recuperación segura
+
+- Admin sustituye formularios dentro de tarjetas por tabla adaptable, cinco secciones, búsqueda/filtros, contadores/paginación real y diálogo de revisión accesible.
+- Ensayos se confirman sin declarar dinero ficticio; revisión con hora/actor del servidor y cotejo independiente para Yape auténtico.
+- Cliente recupera estado/historial tras respuesta perdida, impide otro QR/declaración y limpia el resumen privado al cerrar sesión.
+- Constancia de ensayo explícita, ejemplos A4 sintéticos y sin sobrescribir documentos o APK anteriores.
+- HidroBot espera los datos antes de habilitar su botón: corregida la carrera reproducida en Android, con prueba de carga retenida.
+- Piloto Android final: 9 comprobaciones sin errores, PDF reales guardados/abiertos y retorno con Atrás; Gradle/JUnit/lint conservados aprobados.
+- Playwright integral: cinco resoluciones, 16 comprobaciones y Socket.IO real. Regresión de pagos/HidroBot: 8/8; sesión nativa general: 13 comprobaciones sin errores. Evidencia detallada en docs/pruebas/auditoria-pagos-admin-120.md.
+
+## Auditoría de pagos — integridad de la revisión
+
+- Separa la confirmación de ensayos de la recepción bancaria; fecha de revisión generada por PostgreSQL y fecha bancaria opcional sin inventarla.
+- Prepara migración local 010 sin reescribir el historial; bloquea otra declaración del mismo piloto tras rechazo/cancelación.
+- Consulta paginada, búsqueda parametrizada, contadores y recuperación de operación existente.
+- Backend focalizado: 9/9. Regresiones Node 22/PostgreSQL 18: 94 aprobadas, 1 histórico optativo omitido. Producción intacta.
+
+## Piloto Yape - evitar una transferencia repetida
+
+- Bloquea volver a mostrar el QR desde la primera declaración, incluso rechazada/cancelada; oculta la imagen ante respuesta incierta e indica consultar historial sin repetir dinero.
+- Regresión afectada: 12/12; backend ampliado: 8/8; Android final: 9 comprobaciones, 0 errores. No hubo transferencias reales.
+
+## Reproducibilidad de pruebas del piloto
+
+- Las pruebas crean su carpeta local de evidencia en un clon nuevo, sin depender de artefactos anteriores ni copiar archivos privados.
+- El launcher rechaza un contenedor detenido o cuyo puerto cambió; repetición backend/E2E: 9/9 aprobadas.
+
+## Piloto Yape 1.2.0 - interfaces, launcher privado y constancia
+
+- Cliente/Admin diferencian ensayo de transferencia voluntaria, con cotejo de importe, referencia, fecha y receptor; recibo sintético sin acreditación de servicio.
+- Launcher loopback independiente crea cuentas sintéticas/DB nueva y guarda archivos 0600 fuera de Git; no ejecuta transferencias.
+- Constancia con recepción/revisión separadas y sin datos del receptor; ejemplo sintético marcado.
+- 52 pruebas conjuntas aprobadas, 1 histórico optativo omitido; 8 comprobaciones Android nativas, con Socket.IO y PDF reales de laboratorio.
+- Guía humana de QR privado y prueba voluntaria; recepción real y prueba física pendientes, sin cambios productivos.
+
+## Piloto Yape 1.2.0 - barrera local y revisión detallada
+
+- Prepara 009 aditiva: entorno piloto local, marcador privado, ventana, participante/Admin/recibo acotados y datos de recepción contrastados.
+- Conserva bloqueo de producción, historial, deuda sintética e idempotencia previa; no conecta con Yape ni mueve dinero.
+- QR externo 0600 vinculado por huella; ninguna credencial bancaria ni dato receptor en PDF/API de operaciones.
+
 ## Verificación visual Android de PDF
 
 - El harness espera archivo/página y píxeles del documento renderizado, además de comprobar el PDF guardado; evita aprobar una captura de arranque negra.
