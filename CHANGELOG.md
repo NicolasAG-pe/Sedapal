@@ -1,5 +1,20 @@
 # Historial de versiones
 
+## Push Android — integración voluntaria y pruebas nativas
+
+- Plugin oficial @capacitor/push-notifications 7.0.7, canal e icono de gota, permiso voluntario desde Cuenta y estado seguro sin Firebase; no se publica APK ni se cambian versión/firma.
+- Capacidad de revocación/consentimiento en slot Keystore independiente; cierre offline pendiente de sincronizar, rotación y cambio de cuenta sin reutilizar colas anteriores.
+- Navegación por UUID revalidada vía cliente autenticado; espera la navegación en curso y la restauración segura antes de abrir datos. Corrige diferencias del bridge nativo al registrar listeners de ciclo de vida.
+- Chromium en cinco resoluciones, centro y Socket.IO reales con entrega simulada; Android 15: permisos/canal, almacenamiento cifrado y diez comprobaciones de login/toques/intents locales. Recepción remota FCM y dispositivos físicos pendientes.
+- Gradle, cuatro JUnit y lint sin errores; regresiones y guías detalladas en docs/pruebas/notificaciones-push-120.md. Producción y APK oficiales conservadas.
+
+## Push Android — backend de laboratorio
+
+- Migración aditiva 012 con dispositivos cifrados, consentimiento, asociación a suministro/versión de seguridad y cola idempotente separada del centro leído/no leído.
+- Adaptadores mock y FCM HTTP v1, OAuth de scope mínimo, backoff, retiro de tokens inválidos y resultado ambiguo sin reenvío automático. Todo cerrado por defecto.
+- Vencimientos programables con fechas reales y exclusión de recibos pagados; cortes localizados sin difusión general y repetición de estado de incidencia sin avisos duplicados.
+- 14 pruebas específicas Node 22/PostgreSQL 18 aprobadas. Arquitectura y límites en docs/pruebas/notificaciones-push-120.md; configuración futura en docs/android-push-firebase.md. Sin Firebase, migraciones o envíos productivos.
+
 ## Recuperación de contraseña — cliente, Admin y Android
 
 - Acceso «¿Olvidaste tu contraseña?» y formularios compartidos con diseño acuático, validaciones, bloqueo de duplicados, recuperación de respuesta perdida por UUID y mensajes accesibles. Código/permiso solo en memoria; éxito vuelve al login sin iniciar sesión.
