@@ -31,6 +31,8 @@ function configuration(env = process.env) {
   }
   if (!["mock", "fcm"].includes(env.PUSH_PROVIDER || "mock"))
     throw Error("Proveedor push inválido.");
+  if ((env.PUSH_PROVIDER || "mock") === "mock" && env.NODE_ENV !== "test")
+    throw Error("Mock push reservado al laboratorio.");
   return {
     key,
     keyId: digest(key).slice(0, 16),
@@ -64,7 +66,7 @@ const eligibleSQL = `d.activo AND u.activo AND u.rol='usuario' AND s.id_usuario=
  AND q.revision=d.revision AND q.vence_en>clock_timestamp()
  AND (n.alcance='General' OR n.id_suministro=d.id_suministro)
  AND CASE q.categoria WHEN 'recibos' THEN d.recibos WHEN 'vencimientos' THEN d.vencimientos WHEN 'incidencias' THEN d.incidencias WHEN 'cortes' THEN d.cortes ELSE FALSE END
- AND (q.categoria<>'vencimientos' OR EXISTS(SELECT 1 FROM recibos r WHERE r.id_recibo=n.push_recibo AND r.id_suministro=d.id_suministro AND r.estado IN('Emitido','Pendiente') AND r.fecha_vencimiento BETWEEN CURRENT_DATE AND CURRENT_DATE+3 AND NOT EXISTS(SELECT 1 FROM pagos p WHERE p.id_recibo=r.id_recibo)))
+ AND (q.categoria<>'vencimientos' OR EXISTS(SELECT 1 FROM recibos r WHERE r.id_recibo=n.push_recibo AND r.id_suministro=d.id_suministro AND r.estado IN('Emitido','Pendiente') AND r.fecha_vencimiento BETWEEN (clock_timestamp() AT TIME ZONE 'America/Lima')::date AND (clock_timestamp() AT TIME ZONE 'America/Lima')::date+3 AND NOT EXISTS(SELECT 1 FROM pagos p WHERE p.id_recibo=r.id_recibo)))
  AND (n.push_corte IS NULL OR EXISTS(SELECT 1 FROM cortes_servicio c WHERE c.id_corte=n.push_corte AND NOT c.cancelado AND (c.alcance='General' OR (c.alcance='Zona' AND c.distrito=s.distrito AND c.zona=s.zona) OR (c.alcance IS NULL AND EXISTS(SELECT 1 FROM cortes_suministros cs WHERE cs.id_corte=c.id_corte AND cs.id_suministro=s.id_suministro)))))`;
 const joins = `FROM push_entregas q JOIN push_dispositivos d ON d.id=q.id_dispositivo JOIN notificaciones n ON n.id_notificacion=q.id_notificacion
  JOIN usuarios u ON u.id_usuario=d.id_usuario JOIN suministros s ON s.id_suministro=d.id_suministro LEFT JOIN usuario_2fa m ON m.id_usuario=u.id_usuario`;
@@ -232,12 +234,10 @@ function registerPush(app, { service, auth, limit, expiry }) {
       await fn(req, res);
     } catch (_) {
       console.error("No se pudo completar la operación push.");
-      res
-        .status(503)
-        .json({
-          estado: "error",
-          mensaje: "Notificaciones push no disponibles temporalmente.",
-        });
+      res.status(503).json({
+        estado: "error",
+        mensaje: "Notificaciones push no disponibles temporalmente.",
+      });
     }
   };
   app.post(
@@ -248,14 +248,12 @@ function registerPush(app, { service, auth, limit, expiry }) {
       if (req.user.rol !== "usuario") return res.sendStatus(403);
       if (!service.enabled()) return res.sendStatus(503);
       const r = await service.bind(req.user, req.body || {}, expiry(req));
-      res
-        .status(r.status)
-        .json(
-          r.body || {
-            estado: "error",
-            mensaje: "No se pudo autorizar este dispositivo.",
-          },
-        );
+      res.status(r.status).json(
+        r.body || {
+          estado: "error",
+          mensaje: "No se pudo autorizar este dispositivo.",
+        },
+      );
     }),
   );
   // Capacidad solo de revocación, sin JWT: permite retirar una asociación tras logout/offline.
@@ -275,14 +273,12 @@ function registerPush(app, { service, auth, limit, expiry }) {
       if (req.user.rol !== "usuario") return res.sendStatus(403);
       if (!service.enabled()) return res.sendStatus(503);
       const r = await service.resolve(req.user, req.params.id);
-      res
-        .status(r ? 200 : 404)
-        .json(
-          r || {
-            estado: "error",
-            mensaje: "Aviso no disponible para esta sesión.",
-          },
-        );
+      res.status(r ? 200 : 404).json(
+        r || {
+          estado: "error",
+          mensaje: "Aviso no disponible para esta sesión.",
+        },
+      );
     }),
   );
 }

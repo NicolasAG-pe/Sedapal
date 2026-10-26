@@ -22,6 +22,8 @@ android {
     }
     defaultConfig {
         applicationId "pe.edu.hidromejora.app"
+        // Sin configuración privada autorizada no se registra Firebase.
+        buildConfigField "boolean", "HM_PUSH_CONFIGURED", (file('google-services.json').isFile() && System.getenv('HM_PUSH_ANDROID_ENABLED') == '1').toString()
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 5
@@ -33,6 +35,7 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    buildFeatures { buildConfig true }
     signingConfigs {
         release {
             if (releaseSigning.storeFile) storeFile file(releaseSigning.storeFile)

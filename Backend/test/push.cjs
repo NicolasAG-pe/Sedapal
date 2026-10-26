@@ -17,6 +17,8 @@ let ctx,
   seq = 5000;
 const sent = [];
 before(async () => {
+  process.env.EMAIL_PROVIDER = "resend";
+  process.env.EMAIL_REGISTRATION_ALLOWED_EMAIL = "";
   process.env.PUSH_TOKEN_KEY = crypto.randomBytes(32).toString("base64");
   process.env.PUSH_ENABLED = "1";
   process.env.PUSH_PROVIDER = "mock";
@@ -544,6 +546,7 @@ test("adaptador HTTP v1: scope/proyecto/payload fijo, errores definitivos/transi
       },
     });
   const msg = require("../push-worker").payload(crypto.randomUUID(), "cortes");
+  assert.equal((await make(Response.json({}))({token:'fixture-token',message:msg})).kind,'ambiguo');
   assert.equal(
     (
       await make(
@@ -671,7 +674,7 @@ test("eventos reales API: recibo, incidencia idempotente y corte General; centro
   assert.equal(center.status, 200);
   assert.ok(center.data.notificaciones.length >= 3);
 });
-test("lease abandonado no reenvía; revoke durante lease bloquea al proveedor; preferencias y versión se revalidan", async () => {
+test("lease abandonado no reenvía y el cambio de propietario cancela el aviso", async () => {
   const u = await user(),
     d = device();
   await bind(u, d);
@@ -782,4 +785,37 @@ test("credencial FCM privada: scope mínimo, OAuth simulado, caché, permisos y 
     global.fetch = original;
     fs.chmodSync(file, 0o600);
   }
+});
+test("revocación después del claim y antes del envío impide llamar al proveedor", async () => {
+  const u = await user(),
+    d = device();
+  await bind(u, d);
+  await notice(u);
+  let revoked = false,
+    called = 0;
+  const guarded = {
+    connect: () => ctx.db.connect(),
+    query: async (text, args) => {
+      if (
+        !revoked &&
+        text.startsWith("SELECT 1 ") &&
+        text.includes("FROM push_entregas")
+      ) {
+        revoked = true;
+        assert.equal((await api("/api/push/revoke", d)).status, 204);
+      }
+      return ctx.db.query(text, args);
+    },
+  };
+  const w = createPushWorker({
+    pool: guarded,
+    send: async () => {
+      called++;
+      return { kind: "simulado" };
+    },
+  });
+  const result = await w.processOne();
+  assert.equal(revoked, true);
+  assert.equal(called, 0);
+  assert.ok(["cancelado", "sin_lease"].includes(result.estado));
 });

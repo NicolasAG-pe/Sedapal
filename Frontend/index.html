@@ -493,6 +493,20 @@
             <div><dt>Fecha de registro</dt><dd id="pf-fecha">—</dd></div>
           </dl>
         </div>
+        <section id="push-settings" class="support-card" aria-labelledby="push-title">
+          <h4 id="push-title">Notificaciones de Hidro-Mejora</h4>
+          <p>Recibe avisos de recibos, incidencias y cortes sin abrir la app. Son opcionales y no muestran importes ni datos personales en la pantalla bloqueada.</p>
+          <p id="push-status" role="status" aria-live="polite">Consulta la disponibilidad en este dispositivo.</p>
+          <p id="push-permission" class="muted">El permiso Android se solicitará solo al pulsar Activar.</p>
+          <fieldset class="push-categories"><legend>Tipos de aviso</legend>
+            <label><input type="checkbox" id="push-recibos" checked> Recibos nuevos</label>
+            <label><input type="checkbox" id="push-vencimientos" checked> Vencimientos próximos</label>
+            <label><input type="checkbox" id="push-incidencias" checked> Incidencias</label>
+            <label><input type="checkbox" id="push-cortes" checked> Cortes de servicio</label>
+          </fieldset>
+          <div class="push-actions"><button class="btn btn-sky" id="push-enable" type="button" disabled>Activar notificaciones</button><button class="btn btn-ghost" id="push-save" type="button" disabled>Guardar preferencias</button><button class="btn btn-ghost" id="push-disable" type="button" disabled>Desactivar</button></div>
+          <small>La entrega depende de Android y de tu conexión. El centro de notificaciones conserva los avisos.</small>
+        </section>
         <div class="support-card" aria-label="Seguridad de la cuenta">
           <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Seguridad de la cuenta</h4>
           <p>Mantén tu cuenta protegida con una contraseña segura.</p>
@@ -944,6 +958,7 @@
 <script src="assets/js/native-state.js"></script>
 <script src="assets/js/registration-state.js"></script>
 <script src="assets/js/client-session.js"></script>
+<script src="assets/js/push-notifications.js"></script>
 <script src="shared/two-factor-ui.js"></script>
 <script src="shared/password-recovery-ui.js"></script>
 <script src="assets/js/sedapal-knowledge.js"></script>
@@ -1024,6 +1039,14 @@
 
   /* ---------- Sesión en memoria; persistencia cifrada solo en Android ---------- */
   const sesionCliente = window.createHMClientSession(cerrarSesionPorAuth);
+  const interfazPush=window.createHMPush({session:sesionCliente,
+    navigate:async section=>{
+      const epoch=sesionCliente.generation();
+      while(navLock&&sesionCliente.isUser()&&epoch===sesionCliente.generation())await new Promise(resolve=>setTimeout(resolve,40));
+      if(sesionCliente.isUser()&&epoch===sesionCliente.generation())return openDashboardPage(section);
+    },
+    refresh:()=>sincronizarUsuarioPorEvento('notificacion'),notice:mensaje=>showToast(mensaje)
+  });
   const fmtFechaLarga = window.HMShared.ui.date;
   let clienteCorreo='';
   let restauracionBloqueada=false, tareaRestauracion=null, reintentoSalida=false;
@@ -1081,6 +1104,7 @@
   async function cerrarSesionCompleta(mensaje){
     try{ detenerTiempoReal(); }catch(e){}
     try{ stopCortesPolling(); }catch(e){}
+    const retiradaPush=interfazPush.logout();
     const retirada=limpiarSesion();
     const retiradaRegistro=limpiarVerificacion();
     mostrarLogin();
@@ -1106,7 +1130,7 @@
     }catch(e){}
     showView(viewLogin);
     if(sesionCliente.isNative())mostrarEstadoSesion('Cerrando sesión…');
-    try{await Promise.all([retirada,retiradaRegistro]);}catch(_){
+    try{await Promise.all([retirada,retiradaRegistro,retiradaPush]);}catch(_){
       mostrarEstadoSesion('No se pudo cerrar la sesión de forma segura. Reintenta para retirar la credencial.',true,true);
       return;
     }
@@ -5562,6 +5586,7 @@ async function descargarConstanciaPDF(r, btn){
         const hsec = Object.keys(HASH_SEC).find(k=>HASH_SEC[k] === loginHash && ['inicio','historial','incidencias','cortes','pagos','perfil','notificaciones','ayuda'].indexOf(k) > -1);
         if(hsec) openDashboardPage(hsec);
         if(!hsec && !hasSeenTutorial()) startTutorial();
+      interfazPush.start(sup);
       cardsEl.classList.add('content-fade');
       chartEl.classList.add('content-fade');
       if(chartSpendEl) chartSpendEl.classList.add('content-fade');

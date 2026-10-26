@@ -55,3 +55,7 @@ dist-admin/
 
 # Documentos PDF generados para revisión local; conservar solo generador y fixtures.
 /output/pdf/
+
+# Firebase autorizado: mantenerlo siempre fuera de los commits.
+google-services.json
+*service-account*.json

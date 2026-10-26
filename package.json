@@ -54,11 +54,16 @@
     "test:password-recovery": "node --test Backend/test/password-recovery.cjs Backend/test/password-recovery-schema.cjs",
     "test:password-recovery:e2e": "node --test scripts/test/password-recovery-flow.cjs",
     "test:password-recovery:native": "node scripts/test/android-session-native.cjs --password-recovery",
-    "worker:password-recovery": "node Backend/workers/password-recovery.cjs"
+    "worker:password-recovery": "node Backend/workers/password-recovery.cjs",
+    "test:push": "node --test Backend/test/push.cjs Backend/test/push-schema.cjs",
+    "test:push:e2e": "node --test scripts/test/push-flow.cjs",
+    "test:push:native": "node scripts/test/android-session-native.cjs --push",
+    "worker:push": "node Backend/workers/push.cjs"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",
-    "@capacitor/core": "^7.4.3"
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/push-notifications": "7.0.7"
   },
   "devDependencies": {
     "@capacitor/android": "^7.4.3",
