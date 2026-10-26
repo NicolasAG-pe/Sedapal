@@ -31,9 +31,9 @@ y transparencias son variantes de la paleta, no una identidad alternativa.
 
 ## Reglas de interfaz
 
-- Fondo celeste suave y superficies blancas; no pantallas enteras de azul sólido.
-- Login con tarjeta contenida y motivo acuático decorativo CSS; no intercepta eventos.
-- Encabezado y navegación coherentes; tarjetas con borde/acento celeste y sombras suaves.
+- Fondo celeste y alternancia de superficies blancas/celestes; bandas de marca azules, sin convertir toda la pantalla en azul sólido.
+- Login con cabecera de marca azul dentro de una tarjeta celeste; el fondo y el panel lateral usan degradados de la misma paleta.
+- Encabezados principales, cabeceras de sección y barra inferior azules. Deuda/suministro con degradado azul; indicadores con superficies diferenciadas, no solo bordes.
 - Jerarquía de títulos, etiquetas sobre campos, controles táctiles >=44 px cuando aplica.
 - Mantener safe-area, teclado, barra móvil, foco visible y avisos de conexión existentes.
 - Tablas compactas, filtros y diálogo de revisión de pagos conservados; no formularios
@@ -78,3 +78,23 @@ transferencia auténtica mantiene sus controles y su estado distinto.
 Los nombres técnicos, contratos, estados y motivos de auditoría permanecen intactos.
 Solo se adaptan para presentación los mensajes automáticos conocidos mediante
 `HMShared.ui.paymentAuditMessage`; los motivos escritos por personas se conservan.
+
+## Segunda composición cromática
+
+Los archivos `app-layout.css` y `workspace.css` gobiernan la composición de cada
+producto después de sus estilos heredados y de `Shared/styles.css`. Se corrigieron
+las declaraciones de origen de topbar, cabecera Admin, login, deuda y navegación,
+y se sustituyeron los bloques finales de la primera identidad; no se añadió otra
+hoja superpuesta. La regla de deuda usa su selector específico
+`.account-overview .balance-card`, que antes anulaba el degradado menos específico.
+
+Las cabeceras y los indicadores oscuros usan texto blanco. El celeste vivo es acento,
+no fondo de texto blanco pequeño. Los degradados mantienen contraste en ambos extremos.
+En navegación inferior el elemento activo blanco usa foco azul, y el resto foco blanco.
+Admin conserva menú oscuro, tabla compacta, filtros, paginación y diálogo de revisión.
+HidroBot cambia únicamente sus superficies visuales. Logo e iconos se conservan.
+
+Las plantillas PDF siguen aprobadas: papel blanco para impresión, cabecera azul y
+bloques celestes con los mismos tokens; no necesitan aumentar el consumo de tinta
+para parecerse a la interfaz. La composición y sus funciones no se reconstruyen.
+Evidencia comparativa y límites: `docs/pruebas/identidad-acuatica-v2-120.md`.

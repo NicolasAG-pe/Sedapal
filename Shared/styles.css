@@ -35,10 +35,10 @@ button,input,select,textarea,a {touch-action:manipulation}
 .skip {position:fixed;left:-9999px;top:8px;z-index:1000;background:var(--navy);color:white;padding:12px 18px;border-radius:var(--radius-sm)}
 .skip:focus {left:8px}
 .sr-only {position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.btn,.btn-sm,.icon-btn {min-height:44px;border-radius:var(--radius-sm);font-weight:650;line-height:1.3;transition:background var(--transition),border-color var(--transition),box-shadow var(--transition)}
+.btn,.btn-sm,.icon-btn {min-height:44px;border-radius:11px;font-weight:650;line-height:1.3;transition:background var(--transition),border-color var(--transition),box-shadow var(--transition)}
 .btn {padding:.75rem 1rem}
 .btn-sm {padding:.6rem .8rem;font-size:var(--text-sm)}
-.btn-primary {background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn-primary {background:linear-gradient(120deg,var(--primary),var(--secondary));color:var(--white);border-color:var(--primary);box-shadow:0 4px 12px #0f4c8133}
 .btn-primary:hover,.btn-primary:focus-visible {background:var(--navy-dark);transform:none;box-shadow:var(--shadow-sm)}
 .btn-sky {background:var(--secondary);color:white;border-color:var(--secondary)}
 .btn-sky:hover {background:var(--sky-dark)}
@@ -49,10 +49,10 @@ button:disabled {opacity:.65;cursor:wait;transform:none!important}
 .icon-btn {min-width:44px;display:inline-grid;place-items:center;flex-shrink:0}
 .field label {font-size:var(--text-sm);font-weight:650;line-height:1.4;margin-bottom:var(--space-2)}
 .field input,.field select,.field textarea,.search-input,.year-select {
-  min-height:44px;border:1px solid #aebfce;background:var(--surface);color:var(--text);
+  min-height:44px;border:1px solid var(--border);background:var(--surface);color:var(--text);
   border-radius:var(--radius-sm);font-size:1rem;line-height:1.5;padding:.65rem .8rem;
 }
-.field input:focus,.field select:focus,.field textarea:focus,.search-input:focus,.year-select:focus {border-color:var(--primary);outline:2px solid #075d9133;outline-offset:1px;box-shadow:none}
+.field input:focus,.field select:focus,.field textarea:focus,.search-input:focus,.year-select:focus {border-color:var(--primary);outline:2px solid var(--primary);outline-offset:2px;box-shadow:none}
 input:disabled,input[readonly] {background:var(--bg)}
 textarea {resize:vertical;min-height:100px}
 .hint,.page-desc {color:var(--muted);line-height:1.6}
@@ -73,7 +73,7 @@ textarea {resize:vertical;min-height:100px}
 @keyframes hm-spin {to {transform:rotate(360deg)}}
 [aria-busy=true] {cursor:progress}
 .tbl {border-collapse:collapse;width:100%;font-size:var(--text-sm)}
-.tbl th {font-weight:650;color:var(--navy);background:#eff4f8;text-align:left;padding:12px 14px;border-bottom:1px solid var(--border)}
+.tbl th {font-weight:650;color:var(--navy);background:var(--water-foam);text-align:left;padding:12px 14px;border-bottom:1px solid var(--border)}
 .tbl td {padding:14px;border-bottom:1px solid var(--border);vertical-align:top}
 .table-scroll {overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius);background:white}
 .dialog {border-radius:var(--radius-lg);box-shadow:var(--shadow-md)}
@@ -101,9 +101,6 @@ input[aria-invalid=true],select[aria-invalid=true],textarea[aria-invalid=true]{b
 .dialog-head{color:var(--text)}.dialog-head p{color:var(--muted);font-size:.8rem}.dialog-head .icon-btn{color:var(--navy);background:var(--surface);border:1px solid var(--border)}
 
 /* Sistema acuático 1.2.0: acento de marca y superficies con contraste semántico. */
-.btn,.btn-sm,.icon-btn{border-radius:11px}.btn-primary{box-shadow:0 3px 7px #0f4c811c}.btn-primary:hover{background:var(--secondary)}
-.field input,.field select,.field textarea,.search-input,.year-select{border-color:var(--border);background:var(--white)}
-.field input:focus,.field textarea:focus,.field select:focus{outline:2px solid var(--primary);outline-offset:2px}
 .page-crumb,.auth-eyebrow,.eyebrow{color:var(--secondary)}
 .two-factor-settings{background:var(--surface);border:1px solid var(--border);border-top:4px solid var(--secondary);border-radius:var(--radius);box-shadow:var(--shadow-sm)}
 #two-factor-login{background:var(--sky-mist);border:1px solid var(--border);border-radius:var(--radius);padding:18px}

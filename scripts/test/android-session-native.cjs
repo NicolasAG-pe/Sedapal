@@ -156,6 +156,6 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   // Al terminar, detener solo la app del AVD dedicado: su reconexión puede impedir
   // cerrar el servidor HTTP del fixture. No borrar datos ni modificar otros procesos.
   try{android('shell','am','force-stop',pkg);}catch(_){}
-  await detach();await ctx.close();fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2),{mode:0o600});console.log('Evidencia local: '+path.relative(root,output));
+  await detach();await require('./close-native-fixture.cjs')(ctx);fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2),{mode:0o600});console.log('Evidencia local: '+path.relative(root,output));
  }
 })().catch(error=>{console.error(error.message);process.exitCode=1;});

@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Identidad acuática — segunda composición visual
+
+- Encabezados y navegación inferior azules, deuda con degradado efectivo y superficies blancas/celestes alternadas; login y cabeceras de recibos/pagos con bloques de marca.
+- Admin conserva menú oscuro y gestión compacta, con encabezado azul, indicadores diferenciados, filtros celestes y formularios con mejor jerarquía.
+- Corrige reglas de cascada que anulaban el degradado y devolvían los encabezados al blanco; foco y contraste adaptados a fondos oscuros.
+- 39 comparativas reales, contraste comprobado y regresiones/PDF/Android documentados en docs/pruebas/identidad-acuatica-v2-120.md.
+- El harness nativo libera conexiones HTTP remanentes del proxy del emulador al terminar; dos regresiones de cierre local. Sin cambios de negocio, publicación ni producción.
+
 ## PDF Android — código de operación
 
 - Etiquetas «Código de operación» en cliente, Admin y constancias; número Yape solo para referencias del flujo externo correspondiente.

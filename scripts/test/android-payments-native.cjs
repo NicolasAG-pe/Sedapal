@@ -15,7 +15,10 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot,login,log
   process.env.YAPE_PILOT_CONFIG_FILE=path.join(output,'pilot.json');fs.writeFileSync(process.env.YAPE_PILOT_CONFIG_FILE,JSON.stringify(manifest),{mode:0o600});process.env.YAPE_PILOT_ENABLED='1';
   await ctx.db.query('INSERT INTO control_piloto_yape(piloto_id,habilitado,ensayo_sintetico,id_recibo,id_usuario,id_admin,qr_hash,monto_maximo,inicio_en,vence_en) VALUES($1,true,true,$2,$3,$4,$5,$6,$7,$8)',[manifest.id,id,manifest.user_id,manifest.admin_id,manifest.qr_hash,amount,manifest.starts_at,manifest.expires_at]);
  }
- await login(supply);await p().evaluate(()=>document.querySelector('#sidebar [data-sec="historial"]').click());await p().locator('#cards [data-act="pay"]').first().click();
+ if(process.argv.includes('--visual-screens')){await p().waitForFunction(()=>!document.getElementById('login-form').hidden&&document.getElementById('session-restore').hidden);await pause(500);screenshot('visual-login');}
+ await login(supply);
+ if(process.argv.includes('--visual-screens')){for(const section of ['inicio','historial','pagos']){await p().evaluate(s=>document.querySelector('#sidebar [data-sec="'+s+'"]').click(),section);await p().waitForFunction(s=>document.getElementById('sec-'+s).classList.contains('active'),section);await pause(400);await p().evaluate(()=>scrollTo(0,0));screenshot('visual-'+section);}}
+ await p().evaluate(()=>document.querySelector('#sidebar [data-sec="historial"]').click());await p().locator('#cards [data-act="pay"]').first().click();
  await until(()=>p().evaluate(()=>!document.querySelector('input[value="yape_manual"]').disabled),'configuración de laboratorio y QR protegido');
  await p().locator('input[value="yape_manual"]').check();await p().locator('#pay-reference').fill('NATIVE-SIM-741');assert.equal(await p().locator('#pay-confirm').innerText(),'Registrar pago');assert.equal(await p().locator('#pay-title').innerText(),'Pago con Yape');assert.equal(await p().locator('#pay-reference-label').innerText(),'Código de operación');assert.equal(await p().locator('#pay-environment').isVisible(),true);screenshot('payment-register');
  // Petición llega a PG; descartar exclusivamente la primera respuesta en la WebView.
