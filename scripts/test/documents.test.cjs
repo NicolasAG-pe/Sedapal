@@ -78,3 +78,24 @@ test('piloto verificado: recepción y revisión separadas, sin receptor privado 
  assert.match(r.text.replace(/\s+/g,' '),/Transferencia auténtica verificada manualmente/);for(const v of['Recepción comprobada','Revisión del servidor','REF-SINTETICA','EJEMPLO SINTÉTICO','comprobante oficial de servicio de agua'])assert.ok(r.text.replace(/\s+/g,' ').toLowerCase().includes(v.toLowerCase()),v);for(const v of[p.receptor_huella,p.motivo])assert.ok(!r.text.includes(v));
  const synthetic=inspect(api.payment({...p,piloto_ensayo:true},receipt,context),'pilot-synthetic');assert.ok(synthetic.text.includes('Ensayo confirmado'));assert.ok(!synthetic.text.replace(/\s+/g,' ').includes('Transferencia auténtica verificada manualmente'));
 });
+
+test('paleta PDF corresponde a los tokens compartidos, sin una identidad independiente',()=>{
+ const css=fs.readFileSync('Shared/styles.css','utf8');
+ for(const[token,key]of Object.entries({primary:'navy',secondary:'blue',sky:'sky',green:'green',orange:'warning',red:'red',text:'text',border:'border',white:'white'})){
+  const hex=css.match(new RegExp('--'+token+':\\s*#([a-f0-9]{6})','i'))?.[1];assert.ok(hex,token);
+  assert.deepEqual(Array.from(api.palette[key]),[0,2,4].map(i=>parseInt(hex.slice(i,i+2),16)),token);
+ }
+});
+test('geometría de todas las páginas: contenido dentro de A4 y pie legal por página',()=>{
+ const samples=[api.receipt({...receipt,periodo:'Información extensa de prueba. '.repeat(130)},context),api.payment({id:'00000000-0000-4000-8000-000000000042',codigo_operacion:'PRUEBA-42',id_recibo:42,monto:1,metodo:'yape_manual',entorno:'simulado',estado:'verificada_manual',motivo:'Revisión sintética detallada. '.repeat(150)},receipt,context)];
+ samples.forEach((doc,index)=>{const file=path.join(temporary,'geometry-'+index+'.pdf');fs.writeFileSync(file,Buffer.from(doc.output('arraybuffer')));const xml=execFileSync('pdftotext',['-bbox-layout',file,'-'],{encoding:'utf8'});
+  const pages=[...xml.matchAll(/<page\b[^>]*>([\s\S]*?)<\/page>/g)];assert.equal(pages.length,doc.getNumberOfPages());
+  for(const page of pages){const words=[...page[1].matchAll(/<word xMin="([\d.]+)" yMin="([\d.]+)" xMax="([\d.]+)" yMax="([\d.]+)"[^>]*>(.*?)<\/word>/g)];assert.ok(words.length>20,'No páginas vacías');for(const w of words){assert.ok(+w[1]>=40&&+w[2]>=25&&+w[3]<=555&&+w[4]<=835,'Texto fuera de márgenes: '+w[5]);}for(let i=0;i<words.length;i++)for(let j=i+1;j<words.length;j++){const a=words[i],b=words[j],dx=Math.min(+a[3],+b[3])-Math.max(+a[1],+b[1]),dy=Math.min(+a[4],+b[4])-Math.max(+a[2],+b[2]);assert.ok(dx<=1||dy<=1,'Texto superpuesto: '+a[5]+' / '+b[5]);}assert.match(page[1],/referencial/);assert.match(page[1],/SUNAT/);}
+ });
+});
+
+test('recibo con correo largo e importe máximo conserva una sola página A4',()=>{
+ const doc=api.receipt({...receipt,periodo:'Septiembre 2026',monto:99999999.99},{...context,email:'cuenta.'+'x'.repeat(85)+'@example.invalid'});
+ assert.equal(doc.getNumberOfPages(),1,'Un dato válido largo no debe crear una página casi vacía');
+ const r=inspect(doc,'max-fields');assert.ok(r.text.includes('99999999.99'));assert.match(r.info,/A4/);
+});

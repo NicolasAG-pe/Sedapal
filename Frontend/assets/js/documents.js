@@ -1,7 +1,7 @@
 /* Documentos A4 del prototipo: jsPDF, datos registrados y ninguna tarifa estimada. */
 (function(global){
   'use strict';
-  const C={navy:[16,62,96],blue:[7,93,145],green:[20,108,72],greenPale:[233,245,238],muted:[82,104,121],text:[36,59,75],border:[217,227,235],pale:[244,247,250]};
+  const C={navy:[15,76,129],blue:[30,107,168],sky:[77,168,218],green:[46,139,87],greenInk:[33,102,63],warning:[217,164,65],red:[201,76,76],greenPale:[234,246,239],muted:[76,98,117],text:[36,55,70],border:[217,226,236],pale:[234,244,251],white:[255,255,255]};
   const text=value=>String(value??'').normalize('NFC').replace(/[\u2010-\u2015\u2212]/g,'-').replace(/[\u2018\u2019]/g,"'").replace(/[\u201c\u201d]/g,'"').replace(/[^\x20-\x7e\xa0-\xff\n]/gu,'').trim();
   function safeName(value){return text(value).replace(/[^a-zA-Z0-9_-]/g,'_').replace(/_+/g,'_').slice(0,100)||'sin_referencia';}
   function dateOnly(value){const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'/'+m[2]+'/'+m[1]:'No disponible';}
@@ -21,67 +21,91 @@
   }
   function createDocument(kind,context,payment=false){
     const doc=new global.jspdf.jsPDF({unit:'mm',format:'a4',compress:true,putOnlyUsedFonts:true});
-    const left=16,right=194,width=178,bottom=payment?268:265,accent=payment?C.green:C.blue;
+    const left=16,right=194,width=178,bottom=262;
     const generatedText=global.HMShared.ui.date(context.generatedAt?new Date(context.generatedAt):new Date(),true)+' (hora del dispositivo)';
     let y=0;
     doc.setProperties({title:kind+' | Hidro-Mejora',subject:'Proyecto universitario. Documento referencial sin valor oficial.',author:'Hidro-Mejora'});
     function write(value,x,yy,{size=9,color=C.text,bold=false,align='left'}={}){doc.setFont('helvetica',bold?'bold':'normal');doc.setFontSize(size);doc.setTextColor(...color);doc.text(text(value)||'-',x,yy,{align});}
     function line(yy){doc.setDrawColor(...C.border);doc.setLineWidth(.25);doc.line(left,yy,right,yy);}
-    function header(){
-      doc.setFillColor(...accent);doc.rect(left,10,width,1.3,'F');let brandX=left;
-      if(context.logo?.data){try{doc.addImage(context.logo.data,'PNG',left,16,17,17);brandX=38;}catch(_){}}
-      write('HIDRO-MEJORA',brandX,23,{size:14,color:C.navy,bold:true});write('Gestión de servicios de agua',brandX,29,{size:8,color:C.muted});
-      write('PROYECTO UNIVERSITARIO',right,23,{size:7,color:C.muted,align:'right'});line(39);
-      write(kind,left,51,{size:18,color:payment?C.green:C.navy,bold:true});
-      write(context.example?'EJEMPLO SINTÉTICO - NO HUBO TRANSFERENCIA':'Documento referencial - sin valor oficial',left,59,{size:8,color:C.muted});y=payment?67:74;
+    function box(x,yy,w,h,color){doc.setFillColor(...color);doc.roundedRect(x,yy,w,h,3,3,'F');}
+    function header(continued=false){
+      box(left,14,width,continued?25:32,C.navy);
+      let brandX=left+7;
+      if(context.logo?.data){try{
+        const ratio=Math.max(.01,Number(context.logo.width||1)/Number(context.logo.height||1));
+        const w=ratio>=1?19:19*ratio,h=ratio>=1?19/ratio:19;
+        box(left+5,19,22,22,C.white);doc.addImage(context.logo.data,'PNG',left+6.5+(19-w)/2,20.5+(19-h)/2,w,h);brandX=left+32;
+      }catch(_){}}
+      write('HIDRO-MEJORA',brandX,26,{size:14,color:C.white,bold:true});
+      write('Gestión de servicios de agua',brandX,33,{size:8,color:C.white});
+      write('INGENIERÍA DE SISTEMAS',right-7,25,{size:7,color:C.white,align:'right'});
+      write('PROYECTO UNIVERSITARIO',right-7,32,{size:7.5,color:C.white,align:'right'});
+      const titleSize=continued?12:19;doc.setFont('helvetica','bold');doc.setFontSize(titleSize);
+      const title=doc.splitTextToSize(text(kind),width);
+      title.forEach((t,i)=>write(t,left,(continued?49:61)+i*(continued?6:8),{size:titleSize,color:C.navy,bold:true}));
+      y=(continued?56:68)+(title.length-1)*8;
+      if(!continued){write(context.example?'EJEMPLO SINTÉTICO - NO HUBO TRANSFERENCIA':'Documento de consulta de tu suministro',left,y,{size:8,color:C.muted});y+=13;}
     }
-    function ensure(height){if(y+height>bottom){doc.addPage();header();}}
-    function section(label){ensure(20);write(label.toUpperCase(),left,y,{size:8,color:accent,bold:true});y+=4;line(y);y+=payment?6:10;}
+    function ensure(height){if(y+height>bottom){doc.addPage();header(true);}}
+    function section(label){ensure(19);doc.setFillColor(...C.blue);doc.rect(left,y-3,2,6,'F');write(label.toUpperCase(),left+5,y+1,{size:8.5,color:C.navy,bold:true});y+=payment?8:10;}
     function row(label,value){
-      doc.setFont('helvetica','normal');doc.setFontSize(9);const values=doc.splitTextToSize(text(value)||'No disponible',width-58);let position=0;
-      while(position<values.length){ensure(13);const step=payment?4.5:5,pad=payment?3:5;const capacity=Math.max(1,Math.floor((bottom-y-pad)/step));const lines=values.slice(position,position+capacity);
-        write(label+(position?' (cont.)':''),left,y,{size:8,color:C.muted});lines.forEach((value,index)=>write(value,left+58,y+index*step,{size:payment?8.5:9}));y+=lines.length*step+pad;line(y-3);position+=lines.length;}
+      doc.setFont('helvetica','normal');doc.setFontSize(9);
+      const values=doc.splitTextToSize(text(value)||'No disponible',width-58);let position=0;
+      const labelLines=doc.splitTextToSize(text(label),49);
+      while(position<values.length){
+        ensure(Math.max(16,labelLines.length*4.5+6));
+        const capacity=Math.max(1,Math.floor((bottom-y-6)/4.5));const lines=values.slice(position,position+capacity);
+        labelLines.forEach((v,i)=>write(v+(position&&i===0?' (cont.)':''),left+4,y+i*4.5,{size:8,color:C.muted}));
+        lines.forEach((v,i)=>write(v,left+58,y+i*4.5,{size:9}));
+        y+=Math.max(lines.length,labelLines.length)*4.5+(payment?4:6);line(y-3);position+=lines.length;
+      }
     }
     function columns(fields){
-      doc.setFont('helvetica','normal');doc.setFontSize(10);const cellWidth=width/fields.length;
-      const lines=fields.map(field=>doc.splitTextToSize(text(field[1])||'No disponible',cellWidth-10));
-      // Valores largos mantienen paginación mediante filas; no se recortan datos.
-      if(lines.some(value=>value.length>5)){fields.forEach(field=>row(...field));return;}
-      const height=(payment?10:13)+Math.max(...lines.map(value=>value.length))*(payment?4.5:5);ensure(height);
-      fields.forEach((field,index)=>{const x=left+index*cellWidth;write(field[0].toUpperCase(),x,y,{size:7,color:C.muted,bold:true});lines[index].forEach((value,n)=>write(value,x,y+7+n*5,{size:10,bold:true}));});y+=height;
+      doc.setFont('helvetica','normal');doc.setFontSize(10);const gap=4,cellWidth=(width-gap*(fields.length-1))/fields.length;
+      const values=fields.map(f=>doc.splitTextToSize(text(f[1])||'No disponible',cellWidth-12));
+      if(values.some(v=>v.length>4)){fields.forEach(f=>row(...f));return;}
+      const h=(payment?11:15)+Math.max(...values.map(v=>v.length))*5;ensure(h+6);
+      fields.forEach((f,index)=>{const x=left+index*(cellWidth+gap);box(x,y-4,cellWidth,h,C.pale);write(f[0].toUpperCase(),x+6,y+2,{size:7,color:C.muted,bold:true});values[index].forEach((v,n)=>write(v,x+6,y+10+n*5,{size:10,bold:true}));});y+=h+(payment?3:5);
     }
-    function paragraph(value){doc.setFont('helvetica','normal');doc.setFontSize(payment?8:8.5);const lines=doc.splitTextToSize(text(value),width);lines.forEach(value=>{ensure(6);write(value,left,y,{size:payment?8:8.5,color:C.muted});y+=payment?4.2:5;});y+=payment?3:5;}
+    function paragraph(value){doc.setFont('helvetica','normal');doc.setFontSize(8.2);const lines=doc.splitTextToSize(text(value),width-10);for(const v of lines){ensure(6);write(v,left+5,y,{size:8.2,color:C.muted});y+=4.5;}y+=payment?3:5;}
     function billingTable(consumption,amount){
-      ensure(31);doc.setFillColor(...C.pale);doc.rect(left,y-5,width,10,'F');
-      write('CONCEPTO REGISTRADO',left+4,y+1,{size:7,color:C.navy,bold:true});write('CONSUMO',left+119,y+1,{size:7,color:C.navy,bold:true,align:'right'});write('IMPORTE',right-4,y+1,{size:7,color:C.navy,bold:true,align:'right'});
-      y+=15;write('Total del recibo de servicio',left+4,y);write(consumption,left+119,y,{align:'right'});write(money(amount),right-4,y,{align:'right',bold:true});y+=8;line(y);y+=13;
+      ensure(35);box(left,y-4,width,10,C.navy);
+      write('CONCEPTO REGISTRADO',left+5,y+2,{size:7.5,color:C.white,bold:true});write('CONSUMO',left+125,y+2,{size:7.5,color:C.white,align:'right'});write('IMPORTE',right-5,y+2,{size:7.5,color:C.white,align:'right'});
+      y+=10;box(left,y-2,width,19,C.pale);write('Total del recibo de servicio',left+5,y+7,{size:9});write(consumption,left+125,y+7,{align:'right'});write(money(amount),right-5,y+7,{align:'right',bold:true});y+=26;
     }
     function receiptTotal(value,status){
-      ensure(40);doc.setFillColor(...C.pale);doc.roundedRect(right-91,y-3,91,30,2,2,'F');
-      write('TOTAL DEL RECIBO',right-86,y+4,{size:7,color:C.muted,bold:true});write(money(value),right-5,y+16,{size:23,color:C.navy,bold:true,align:'right'});
-      write('ESTADO REGISTRADO',left,y+4,{size:7,color:C.muted,bold:true});write(status,left,y+13,{size:11,color:status==='PAGADO'?C.green:C.blue,bold:true});y+=39;
+      ensure(37);box(left,y-3,width,31,C.pale);doc.setFillColor(...C.sky);doc.rect(left,y-1,2,27,'F');
+      write('TOTAL DEL RECIBO',left+7,y+5,{size:8,color:C.muted,bold:true});write(money(value),left+7,y+20,{size:27,color:C.navy,bold:true});
+      write('ESTADO REGISTRADO',right-7,y+5,{size:7.5,color:C.muted,align:'right'});write(status,right-7,y+17,{size:11,color:status==='PAGADO'?C.greenInk:C.navy,bold:true,align:'right'});y+=38;
     }
     function paymentAmount(value,label){
-      ensure(37);doc.setFillColor(...C.greenPale);doc.roundedRect(left,y-3,width,29,3,3,'F');
-      doc.setDrawColor(...C.green);doc.setLineWidth(.5);doc.circle(left+12,y+11,5);write('i',left+12,y+13,{size:12,color:C.green,bold:true,align:'center'});
-      write(label||'OPERACIÓN SIN ACREDITACIÓN FINANCIERA',left+24,y+4,{size:7.5,color:C.green,bold:true});write(money(value),left+24,y+19,{size:24,color:C.navy,bold:true});y+=34;
+      ensure(34);box(left,y-3,width,29,C.pale);doc.setFillColor(...C.blue);doc.rect(left,y,2,27,'F');
+      write(label||'IMPORTE REGISTRADO',left+8,y+5,{size:7.5,color:C.muted,bold:true});write(money(value),left+8,y+22,{size:27,color:C.navy,bold:true});
+      write('PEN',right-8,y+22,{size:11,color:C.blue,bold:true,align:'right'});y+=34;
     }
-    function operation(value){ensure(25);write('CÓDIGO DE OPERACIÓN',left,y,{size:7,color:C.green,bold:true});y+=8;row('Referencia del pago',value);}
-    function finish(){const pages=doc.getNumberOfPages();for(let page=1;page<=pages;page++){doc.setPage(page);line(276);write('Hidro-Mejora | Documento referencial',left,282,{size:7,color:C.muted});write('Página '+page+' de '+pages,right,282,{size:7,color:C.muted,align:'right'});write('Generado: '+generatedText,left,287,{size:7,color:C.muted});}return doc;}
-    header();return{section,row,columns,paragraph,billingTable,receiptTotal,paymentAmount,operation,finish};
+    function statusBand(value,state){
+      ensure(19);const confirmed=['verificada_manual','acreditada_proveedor'].includes(state),rejected=['rechazada','cancelada'].includes(state);
+      const ink=confirmed?C.greenInk:rejected?[152,53,53]:C.navy,bg=confirmed?C.greenPale:rejected?[255,241,241]:C.pale;
+      box(left,y-3,width,13,bg);write('ESTADO DE LA OPERACIÓN',left+5,y+5,{size:7,color:C.muted,bold:true});write(value,left+61,y+5,{size:9.5,color:ink,bold:true});y+=18;
+    }
+    function operation(value){section('Identificación de la operación');row('Código de operación',value);}
+    function finish(){
+      const pages=doc.getNumberOfPages();for(let page=1;page<=pages;page++){doc.setPage(page);line(276);write('HIDRO-MEJORA  /  Documento referencial sin valor oficial',left,282,{size:7,color:C.navy,bold:true});write('Página '+page+' de '+pages,right,282,{size:7.5,color:C.muted,align:'right'});write('No es un comprobante oficial de SEDAPAL ni de SUNAT.',left,287,{size:7.5,color:C.muted});write('Generado: '+generatedText,left,292,{size:7,color:C.muted});}return doc;
+    }
+    header();return{section,row,columns,paragraph,billingTable,receiptTotal,paymentAmount,statusBand,operation,finish};
   }
   function receipt(r,context){
     const pdf=createDocument('RECIBO DE SERVICIO',context);
-    pdf.columns([['Número de suministro',context.supply],['Referencia interna','R-'+r.id_recibo]]);
+    pdf.columns([['Número de recibo','R-'+r.id_recibo],['Número de suministro',context.supply]]);
     if(context.email)pdf.row('Correo del usuario',context.email);
     pdf.row('Periodo registrado',r.periodo||r.etiqueta);
     pdf.columns([['Fecha de emisión',r.fechaEmisionISO||r.fecha_emision?dateOnly(r.fechaEmisionISO||r.fecha_emision):r.emision],['Fecha de vencimiento',r.fechaVencimientoISO||r.fecha_vencimiento?dateOnly(r.fechaVencimientoISO||r.fecha_vencimiento):r.vencimiento]]);
     const consumption=r.consumoM3??r.consumo_m3;
-    pdf.section('Detalle del servicio');pdf.billingTable(consumption!==null&&consumption!==undefined&&consumption!==''&&Number.isFinite(Number(consumption))?Number(consumption)+' m³':'No disponible',r.monto);
     pdf.receiptTotal(r.monto,String(r.estado||'No disponible').toUpperCase());
+    pdf.section('Detalle del servicio');pdf.billingTable(consumption!==null&&consumption!==undefined&&consumption!==''&&Number.isFinite(Number(consumption))?Number(consumption)+' m³':'No disponible',r.monto);
     pdf.section('Información y verificación de pagos');
-    pdf.paragraph('Importe y consumo registrados, sin estimar tarifas, impuestos ni lecturas. Una declaración, demostración o captura no acredita fondos ni cancela la deuda. Consulta la verificación en tu historial.');
-    pdf.paragraph('Hidro-Mejora: proyecto universitario. No es un comprobante oficial de SEDAPAL ni de SUNAT.');return pdf.finish();
+    pdf.paragraph('Datos registrados, sin estimar tarifas, impuestos ni lecturas. Una declaración o captura no acredita fondos ni cancela la deuda.');
+    return pdf.finish();
   }
   function payment(pago,r,context){
     if(!pago.codigo_operacion)throw Error('Código de operación no disponible.');
@@ -91,26 +115,22 @@
     const status=pago.metodo==='yape_manual'&&pago.estado==='pendiente_verificacion'?(synthetic?'Pendiente de revisión':'Pendiente de verificación'):pago.metodo==='yape_manual'&&pago.estado==='verificada_manual'?(synthetic?'Ensayo confirmado':'Transferencia auténtica verificada manualmente'):(statuses[pago.estado]||'Histórico sin verificación financiera');
     const kind=pilot?(realPilot?'CONSTANCIA DE TRANSFERENCIA':'CONSTANCIA DE ENSAYO SINTÉTICO'):pago.estado==='verificada_manual'?'CONSTANCIA DE REVISIÓN MANUAL':pago.estado==='acreditada_proveedor'?'CONSTANCIA DE OPERACIÓN SIMULADA':pago.estado==='demostrativa'?'CONSTANCIA DEMOSTRATIVA':'CONSTANCIA DE OPERACIÓN';
     const pdf=createDocument(kind,context,true);
-    pdf.paymentAmount(pago.monto,realPilot&&pago.estado==='verificada_manual'?'IMPORTE COMPROBADO MANUALMENTE - PILOTO LOCAL':'IMPORTE REGISTRADO - SIN ACREDITACIÓN FINANCIERA');
-    pdf.columns([['Estado de verificación',status],['Moneda','PEN - soles peruanos']]);
-    pdf.row('Operación / verificación',pago.id||pago.codigo_operacion);
-    pdf.columns([['Fecha y hora del servidor',pago.fecha_pago?global.HMShared.ui.date(pago.fecha_pago,true)+' (America/Lima)':'No disponible'],['Método registrado',({demostrativo:'Demostración',yape_manual:'Yape - revisión manual',proveedor_simulado:'Proveedor simulado'})[pago.metodo]||pago.metodo]]);
-    pdf.columns([['Número de suministro',context.supply],['Referencia interna','R-'+pago.id_recibo]]);
-    pdf.row('Periodo registrado',pago.periodo||r.periodo||r.etiqueta);
+    pdf.paymentAmount(pago.monto,realPilot&&pago.estado==='verificada_manual'?'IMPORTE COMPROBADO MANUALMENTE':'IMPORTE REGISTRADO - SIN ACREDITACIÓN FINANCIERA');
+    pdf.statusBand(status,pago.estado);
+    pdf.columns([['Número de recibo','R-'+pago.id_recibo],['Número de suministro',context.supply]]);
+    pdf.columns([['Periodo registrado',pago.periodo||r.periodo||r.etiqueta],['Método registrado',({demostrativo:'Demostración',yape_manual:'Yape - revisión manual',proveedor_simulado:'Proveedor simulado'})[pago.metodo]||pago.metodo]]);
     pdf.section('Trazabilidad de la operación');
-    pdf.row(synthetic?'Código de prueba':'Número de operación de Yape',pago.referencia||'No declarada');
-    if(!pilot)pdf.row('Referencia del proveedor',pago.proveedor_id||'Sin confirmación comercial');
-    if(pilot)pdf.row('Recepción comprobada',!realPilot?'No aplica: ensayo sin dinero':pago.recibido_en?global.HMShared.ui.date(pago.recibido_en,true)+' (America/Lima)':'Fecha bancaria no registrada');
-    if(pago.revisado_en){
-      pdf.columns([['Revisión del servidor',global.HMShared.ui.date(pago.revisado_en,true)+' (America/Lima)'],['Revisor interno',pago.revisado_por?'Administrador #'+pago.revisado_por:'No disponible']]);
-    }
+    pdf.row('Código de operación',pago.id||pago.codigo_operacion);
+    pdf.columns([[synthetic?'Código de prueba':'Número de operación de Yape',pago.referencia||'No declarada'],['Fecha registrada',pago.fecha_pago?global.HMShared.ui.date(pago.fecha_pago,true)+' (America/Lima)':'No disponible']]);
+    if(pago.revisado_en)pdf.columns([['Revisión del servidor',global.HMShared.ui.date(pago.revisado_en,true)+' (America/Lima)'],['Revisor interno',pago.revisado_por?'Administrador #'+pago.revisado_por:'No disponible']]);
+    if(realPilot)pdf.row('Recepción comprobada',pago.recibido_en?global.HMShared.ui.date(pago.recibido_en,true)+' (America/Lima)':'Fecha bancaria no registrada');
+    if(!pilot&&pago.proveedor_id)pdf.row('Referencia del proveedor',pago.proveedor_id);
     if(pago.motivo&&!pilot)pdf.row('Motivo registrado',pago.motivo);
-    pdf.section('Alcance de la constancia');
-    pdf.paragraph(pilot?(realPilot&&pago.estado==='verificada_manual'?'El administrador declaró haber comprobado personalmente la recepción de una transferencia externa por Yape. No es una confirmación automática del proveedor ni un pago de servicio de agua.':(!realPilot?'Ensayo sintético sin movimiento de dinero. La revisión administrativa no declara una recepción bancaria ni cancela una deuda.':'Recepción aún no comprobada. No acredita una transferencia real ni el pago de un servicio de agua.')):pago.estado==='verificada_manual'?'Se registró una revisión manual en un entorno de pruebas. Requiere comprobar por separado el movimiento receptor; una captura no constituye validación automática.':pago.estado==='acreditada_proveedor'?'El proveedor simulado informó una aprobación de prueba. No existe un cargo real ni una acreditación bancaria.':'Esta constancia acredita únicamente el registro de una operación. No demuestra un cargo bancario ni cancela por sí sola la deuda.');
-    if(pilot)pdf.paragraph('Recibo y suministro sintéticos del piloto. Sin datos de la cuenta receptora. No constituye un comprobante oficial de servicio de agua.');
-    pdf.paragraph('Entorno: '+(pago.entorno||'histórico, origen financiero no verificado')+'. Sin valor tributario. No es un comprobante oficial de SEDAPAL ni de SUNAT.');
-    pdf.paragraph('Consulta el historial autenticado en Hidro-Mejora. No se incluye QR público: todavía no existe un servicio de validación documental público y seguro.');
+    pdf.section('Alcance del documento');
+    pdf.paragraph(synthetic?'Ensayo sin dinero. La revisión no declara recepción bancaria ni cancela una deuda.':realPilot&&pago.estado==='verificada_manual'?'Recepción comprobada personalmente según la revisión administrativa. No es una confirmación automática de Yape.':'Registro de una operación. No demuestra un cargo bancario ni recepción de fondos, ni cancela la deuda.');
+    if(pilot)pdf.paragraph('Recibo y suministro sintéticos. No constituye un comprobante oficial de servicio de agua.');
+    if(!pilot)pdf.paragraph('Consulta el historial autenticado. No se incluye QR público de validación.');
     return pdf.finish();
   }
-  global.HMDocuments={receipt,payment,receiptFileName,paymentFileName,save};
+  global.HMDocuments={receipt,payment,receiptFileName,paymentFileName,save,palette:Object.freeze(C)};
 })(window);

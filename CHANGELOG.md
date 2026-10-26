@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Documentos acuáticos — nueva composición y validación
+
+- Recibo con encabezado azul, identificación, total/estado destacado y tabla de consumo; constancia con importe, banda de estado y trazabilidad propia.
+- Logo proporcional, pie referencial, A4, tipografía y márgenes coherentes con la identidad compartida; no se inventan datos ni acreditaciones.
+- Ocho ejemplos sintéticos, once páginas renderizadas; textos largos conservados y corregida paginación innecesaria con correo largo.
+- 17 pruebas PDF y 3 de paleta; descargas web y Android verificadas. Informe: docs/pruebas/identidad-acuatica-pdf-120.md. Sin publicación 1.2.0 ni cambios productivos.
+
 ## Identidad acuática 1.2.0 — cliente y administración
 
 - Paleta compartida azul/celeste, superficies suaves, tarjetas, formularios y navegación consistentes; logo e iconos originales conservados.
