@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Seguimiento de incidencias — backend y PostgreSQL de laboratorio
+
+- Migración aditiva y repetible 013: eventos UUID append-only del registro y cambios reales, sin reconstruir el historial anterior ni copiar fotografías.
+- Cambio administrativo, evento, aviso interno y cola push se confirman juntos; UUID de solicitud y bloqueo por fila evitan duplicados y registran el estado anterior real ante concurrencia.
+- Consulta paginada por cursor opaco para propietario/Admin, 404 para incidencias ajenas, responsables solo en Admin y comentarios públicos validados. Conserva los tres estados y rutas anteriores.
+- Diez pruebas específicas Node 22/PostgreSQL 18 aprobadas; regresiones de seguridad, pagos y documentos comprobadas. Consulta el informe `docs/pruebas/seguimiento-incidencias-120.md`. No se aplicó 013 en producción.
+
 ## Push Android — integración voluntaria y pruebas nativas
 
 - Plugin oficial @capacitor/push-notifications 7.0.7, canal e icono de gota, permiso voluntario desde Cuenta y estado seguro sin Firebase; no se publica APK ni se cambian versión/firma.
