@@ -58,7 +58,10 @@
     "test:push": "node --test Backend/test/push.cjs Backend/test/push-schema.cjs",
     "test:push:e2e": "node --test scripts/test/push-flow.cjs",
     "test:push:native": "node scripts/test/android-session-native.cjs --push",
-    "worker:push": "node Backend/workers/push.cjs"
+    "worker:push": "node Backend/workers/push.cjs",
+    "test:incidents": "node --test Backend/test/incident-tracking.cjs",
+    "test:incidents:e2e": "node --test scripts/test/incident-tracking-flow.cjs",
+    "test:incidents:native": "node scripts/test/android-session-native.cjs --incidents"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",

@@ -12,6 +12,7 @@ const { obtenerConfigCorreo } = require('./email-provider');
 const { obtenerClaveOutbox } = require('./outbox-crypto');
 const { crearRegistroCorreo, registrarRutasCorreo } = require('./email-registration');
 const { crearDosFactores, permiteSesion } = require('./two-factor');
+const {createIncidentTracking,registerIncidentTracking,TrackingError}=require('./incident-tracking');
 const { createPush,registerPush } = require('./push');
 const { AUTH_CONTRACT } = require('./auth-contract');
 const { createPasswordRecovery, registerPasswordRecovery, transaction: passwordTransaction } = require('./password-recovery');
@@ -1673,75 +1674,24 @@ app.get("/api/admin/incidencias/:id/foto", requiereAdmin, async (req, res) => {
     }
 });
 
-app.patch("/api/admin/incidencias/:id/estado", requiereAdmin, async (req, res) => {
-    try {
-        const idIncidencia = Number(req.params.id);
-        const estado = String((req.body || {}).estado || '').trim();
-
-        if (!Number.isInteger(idIncidencia) || idIncidencia <= 0) {
-            return res.status(404).json({
-                estado: "error",
-                mensaje: "Incidencia no encontrada."
-            });
+const seguimientoIncidencias=createIncidentTracking({pool});
+registerIncidentTracking(app,{service:seguimientoIncidencias,auth:requiereAuth,admin:requiereAdmin});
+app.patch("/api/admin/incidencias/:id/estado", limitadorGenerico(60,15), requiereAdmin, async(req,res)=>{
+    try{
+        const result=await seguimientoIncidencias.change(req.user,req.params.id,req.body||{});
+        // El estado, evento y notificación/outbox ya confirmaron COMMIT.
+        if(result.cambiada){
+            const incidente=result.incidencia;
+            emitirASuministro(incidente.id_suministro,'notificacion:nueva',{id:result.notificacion_id,alcance:'Usuario',tipo:'incidencia'});
+            const aviso={id:incidente.id_incidencia,estado:incidente.estado};
+            emitirASuministro(incidente.id_suministro,'incidencia:actualizada',aviso);
+            emitirAAdmins('incidencia:actualizada',aviso);
         }
-
-        if (INCIDENCIA_ESTADOS.indexOf(estado) === -1) {
-            return res.status(400).json({
-                estado: "error",
-                mensaje: "Estado inválido. Debe ser Registrada, En revisión o Resuelta."
-            });
-        }
-
-        const resultado = await pool.query(
-            `UPDATE incidencias
-             SET estado = $1
-             WHERE id_incidencia = $2 AND estado IS DISTINCT FROM $1
-             RETURNING
-               id_incidencia,
-               id_suministro,
-               tipo,
-               descripcion,
-               referencia,
-               latitud,
-               longitud,
-               fecha_registro,
-               estado,
-               (foto IS NOT NULL) AS tiene_foto;`,
-            [estado, idIncidencia]
-        );
-
-        if (resultado.rowCount === 0) {
-            const actual=await pool.query(`SELECT id_incidencia,id_suministro,tipo,descripcion,referencia,latitud,longitud,fecha_registro,estado,(foto IS NOT NULL) AS tiene_foto FROM incidencias WHERE id_incidencia=$1`,[idIncidencia]);
-            if(actual.rowCount)return res.json({estado:'ok',incidencia:actual.rows[0]});
-            return res.status(404).json({estado:'error',mensaje:'Incidencia no encontrada.'});
-        }
-
-        // FASE 19: cambio de estado de incidencia => notificación al suministro.
-        try {
-            await crearNotificacion({
-                id_suministro: resultado.rows[0].id_suministro,
-                alcance: 'Usuario',
-                titulo: 'Incidencia #' + resultado.rows[0].id_incidencia + ' cambió a ' + estado,
-                mensaje: 'Tu reporte "' + resultado.rows[0].tipo + '" ahora está: ' + estado + '.',
-                tipo: 'incidencia'
-            });
-        } catch (e) {}
-
-        // Tiempo real: el propietario recarga Incidencias + Notificaciones por REST.
-        emitirASuministro(resultado.rows[0].id_suministro, 'incidencia:actualizada', { id: resultado.rows[0].id_incidencia, estado: estado });
-
-        return res.json({
-            estado: "ok",
-            incidencia: resultado.rows[0]
-        });
-
-    } catch (error) {
-        console.error(error);
-
-        return res.status(500).json({
-            estado: "error",
-            mensaje: "Error interno del servidor."
-        });
+        return res.set('Cache-Control','no-store').json({estado:'ok',incidencia:result.incidencia,cambiada:result.cambiada,repetida:result.repetida===true});
+    }catch(error){
+        const status=error instanceof TrackingError?error.status:503;
+        if(status===503)console.error('No se pudo actualizar el estado de incidencia.');
+        return res.status(status).json({estado:'error',mensaje:status===503?'No se pudo confirmar el cambio. Consulta el historial antes de reintentar.':error.message});
     }
 });
 

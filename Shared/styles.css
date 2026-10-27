@@ -118,3 +118,21 @@ input[aria-invalid=true],select[aria-invalid=true],textarea[aria-invalid=true]{b
 #recovery-message:not(:empty){padding:.75rem;background:#EAF4FB;border-radius:8px;color:#243746}
 #recovery-error:not(:empty){padding:.75rem;border-left:4px solid #C94C4C;background:#fff2f2;color:#9b2727}
 .form-error[data-result="success"],.login-error[data-result="success"]{background:var(--green-bg);color:var(--green-ink);border-color:#9FCAB0}
+
+/* Seguimiento de incidencias: composición compartida cliente/Admin. */
+.incident-history-dialog{width:min(620px,calc(100vw - 24px));max-height:85dvh;overflow:auto;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);text-align:left}
+.incident-history-dialog .dialog-head{position:sticky;top:0;background:var(--sky-soft);z-index:1;display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--border);padding:18px}
+.incident-history-dialog .dialog-head h3{font-size:1.15rem;color:var(--primary);margin:0 0 .4rem}
+.incident-history-dialog .dialog-head p{color:var(--text);line-height:1.5}
+.incident-history-dialog .dialog-body{padding:18px}
+.incident-history-dialog button{min-height:44px;white-space:normal}
+.incident-history-legacy{padding:12px;background:var(--sky-soft);border-left:3px solid var(--secondary);line-height:1.5;font-size:.86rem}
+.incident-timeline{list-style:none;padding:0;margin:18px 0;overflow-wrap:anywhere}
+.incident-event{position:relative;margin-left:9px;border-left:2px solid var(--sky);padding:0 0 22px 18px;display:grid;gap:6px}
+.incident-event:before{content:"";position:absolute;left:-6px;top:4px;width:10px;height:10px;border-radius:50%;background:var(--primary)}
+.incident-event strong{color:var(--primary);font-size:.95rem}.incident-event time,.incident-event small{color:var(--muted);font-size:.82rem}
+.incident-event-comment{background:var(--sky-mist);padding:10px;border-radius:var(--radius-sm);margin:0;white-space:pre-wrap;font-size:.9rem}
+.incident-history-actions{display:flex;gap:10px;flex-wrap:wrap}.incident-history-change{display:grid;gap:10px;margin-top:20px;padding-top:18px;border-top:1px solid var(--border)}
+.incident-history-change label{font-weight:650;font-size:.87rem}.incident-history-change select,.incident-history-change textarea{width:100%;min-width:0;box-sizing:border-box;font:inherit;padding:10px;border:1px solid var(--border);border-radius:var(--radius-sm)}
+#incident-history-error:not(:empty){background:var(--red-bg);color:var(--red-ink);padding:12px;border-radius:var(--radius-sm)}
+@media(max-width:480px){.incident-history-dialog .dialog-body,.incident-history-dialog .dialog-head{padding:14px}.incident-history-actions button{width:100%}.incident-history-dialog{max-height:calc(100dvh - 90px)}}
