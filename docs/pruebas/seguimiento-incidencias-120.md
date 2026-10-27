@@ -68,9 +68,11 @@ entrega al proveedor push simulado, sin envíos FCM reales.
 Regresión inicial: 132 aprobadas, 1 omisión condicional y 18 fallos de inicialización
 por no configurar `PLAYWRIGHT_BROWSERS_PATH`. Repetido solamente ese grupo con la
 ruta del proyecto: 18/18 aprobadas. No se cambió la aplicación para resolver ese error.
-La omisión corresponde a la variante histórica separada de recibos, pendiente aquí.
+La omisión corresponde a la variante histórica separada de recibos: se ejecutó después
+en su modo específico, con 12 aprobadas y 1 omisión inversa esperada. Así se comprobaron
+ambas variantes sin desactivar controles de integridad.
 
-## Interfaz y evidencias en curso
+## Interfaz y evidencia Chromium
 
 Se conservan tarjetas, código de seguimiento, foto, filtros/contadores y formulario.
 El cliente agrega «Ver seguimiento»; Admin agrega «Ver historial» y comentario público
@@ -82,7 +84,19 @@ Chromium con API/PostgreSQL y Socket.IO reales: cinco resoluciones, respuesta HT
 perdida, reintento UUID, cambios sin recargar, desconexión/reconexión, legado, foto y
 teclado/Escape aprobados. Capturas locales en
 `artifacts/seguimiento-incidencias-120/before/` y `after/`.
-El estado final de Android/Gradle/lint se completará en el siguiente incremento.
+Se comprobaron las resoluciones 360×800, 390×844, 768×1024, 1366×768 y 1920×1080,
+con cliente y Admin simultáneos. Nueve comprobaciones del flujo final (una suite E2E),
+sin errores JavaScript: el formulario original registra foto y un solo evento inicial,
+Admin recibe la incidencia nueva sin recargar, controles de teclado permanecen dentro
+del diálogo y Escape lo cierra. La prueba E2E existente de push también pasó con API/
+Socket.IO reales y proveedor simulado; no prueba una entrega FCM remota.
+
+La revisión visual corrigió una colisión de `workspace.css`: el nuevo encabezado celeste
+heredaba un párrafo blanco de los diálogos antiguos. Se fijó un selector específico del
+seguimiento; el test comprueba `rgb(36,55,70)` y conserva los otros módulos.
+El formulario de cambio permanece únicamente en Admin. Los controles de seguimiento
+se cierran y limpian al salir/cambiar de sesión; las solicitudes en curso se cancelan.
+
 
 ## Laboratorio reproducible
 
@@ -110,6 +124,87 @@ Android de las guías existentes. La contraseña mostrada es solo fixture sinté
 La prueba nativa usa el wrapper Java 21 y recursos recién sincronizados, compila debug
 en un directorio independiente y solo instala en el AVD dedicado. No genera release.
 
+## Android nativo y resultados finales
+
+Entorno: Node 22.23.4, PostgreSQL 18.6 en Docker, Java 21 y Gradle 8.11.1 mediante
+`scripts/android-gradle.sh`. AVD exclusivo `hm_110_debug_api35`, Android 15/API 35,
+serial `emulator-5582`; ningún teléfono físico. No se crearon dispositivos externos.
+
+Comparación nativa anterior: `artifacts/android-session-native-J4KLjv/`, recursos web
+preservados de 5e3ea8f antes de editar, con API exclusivamente del laboratorio.
+No se usa ese build histórico para aprobar la funcionalidad nueva. Comparación final:
+`artifacts/android-session-native-YuqMQL/`, sincronización oficial desde los recursos
+actuales. Ambos midieron viewports reales 360×800 y 390×844; no se redimensionan las
+imágenes para aparentarlo. Las capturas adb incluyen además las barras del sistema.
+
+Resultado final: **6 comprobaciones nativas registradas, sin errores**, más aserciones
+de logout/borrado de credencial y ausencia de JWT en Web Storage. Se comprobaron evento
+inicial, actualización por Socket.IO sin recarga, desconexión/reconexión, foto original,
+Atrás, cierre/reapertura, sesión validada restaurada desde Keystore e historial guardado
+en PostgreSQL. No se guardan copias del historial en almacenamiento persistente Android.
+
+La última repetición esperó el cierre real del transporte anterior al reiniciar:
+espera máxima observada **904 ms**; no desconectó sockets artificialmente ni alteró
+heartbeat del backend. Se mantiene la aserción de una única conexión nueva.
+
+`assembleDebug`, `assembleDebugAndroidTest`, `testDebugUnitTest`, `lintDebug` aprobados:
+**4 JUnit**, **1 prueba instrumental Keystore**, **0 errores lint / 16 advertencias**
+preexistentes sobre recursos, manifest e iconos. Advertencia de herramientas SDK XML
+v3/v4 documentada en el build, sin fallar la compilación. No se compila release.
+
+| Grupo | Resultado final |
+| --- | --- |
+| Seguimiento Node/PG18 | 10 aprobadas |
+| Regresión Node/Chromium de auth, OTP, 2FA, recuperación, push, pagos, recibos, PDF, HidroBot y sesión | 150 aprobadas; 1 omisión condicional cubierta por la variante histórica |
+| Recibos históricos en modo separado | 12 aprobadas; 1 omisión inversa esperada |
+| E2E seguimiento cliente/Admin con API y Socket.IO reales | 1 suite aprobada, 9 comprobaciones funcionales; 5 resoluciones |
+| E2E push existente, entrega simulada | 1 suite aprobada |
+| Verificación adicional runtime/sesión | 9 aprobadas, se superponen a la regresión |
+| Android 15 | 6 comprobaciones registradas; JUnit 4/4, Keystore instrumental 1/1, lint sin errores |
+| Android físico / TalkBack / FCM remoto | No ejecutados; requieren dispositivo/credenciales y autorización posteriores |
+
+Los conteos de grupos no se suman como pruebas únicas: hay regresiones superpuestas.
+Los fallos de preparación y automatización se conservan en los logs iniciales; las
+repeticiones finales indicadas están aprobadas y no queda un fallo crítico conocido.
+
+Abrir la galería local `artifacts/seguimiento-incidencias-120/index.html`: antes/después
+Chromium/Android y detalles de seguimiento. Copias nativas seleccionadas en
+`native-before/` y `native-after/`; fotos, capturas y logs permanecen locales, fuera de Git.
+Logs principales: `backend-final.log`, `regression.log`, `transition-final.log`,
+`receipts-legacy.log`, `flow-complete.log`, `push-ui-regression.log`, `runtime-final.log`
+y `native-drain-final.log`. Resultados máquina: `after/result.json` y
+`native-after/{result,incident-tracking}.json`.
+
+Archivos funcionales: `Backend/incident-tracking.js`, rutas acotadas de `server.js`,
+SQL 013/instalaciones nuevas, `Shared/incident-timeline.js`, estilos compartidos solo
+del seguimiento, `Admin/assets/js/incident-review.js`, integración en ambos HTML/Admin,
+allowlist/guardia de empaquetado y scripts de pruebas. No se modifica código de OTP,
+2FA, recuperación, pagos, PDF ni HidroBot.
+
+## Errores de prueba investigados
+
+- Fixture PNG con CRC inválido: reemplazado por PNG sintético válido de `pngjs`; no se
+  modificaron las fotografías originales ni la aplicación para tolerar archivos dañados.
+- La aserción del socket esperaba `id_incidencia`, pero el contrato existente usa `id`:
+  se corrigió la prueba y se conservó el evento público.
+- Selector nativo estricto esperaba un evento cuando la segunda resolución ya tenía dos:
+  espera el primer evento y comprueba por separado el número/estado correspondiente.
+- Resolución solicitada al AVD no equivalía al viewport WebView por barras del sistema:
+  calibración exclusivamente del AVD y medición de `innerWidth/innerHeight`, sin escalar
+  ni manipular capturas para aparentar otra resolución.
+- Una repetición final encontró transporte anterior todavía abierto tras force-stop al
+  redimensionar el AVD. Se detiene la app antes de cambiar tamaño y se espera la desaparición
+  real de sus transportes anteriores antes de arrancar. La aserción de un único Socket.IO
+  nuevo permanece; el fixture no desconecta sockets para hacerla pasar. Resultado final
+  y duración observada constan en la sección Android anterior.
+
+## Dependencias y revisión
+
+PR #18 con base #17; PR #12–17 son ancestros de la base comprobada. PR #11 no es ancestro
+literal, pero `git cherry HEAD origin/feature/verificacion-correo` marca su commit como
+parche equivalente ya incorporado; el inicio automático tras OTP se comprueba en las
+regresiones. No fusionar #11 por separado ni cambiar las ramas anteriores.
+
 ## Límites y seguridad de publicación
 
 Sin Neon, migraciones productivas, correos, FCM remoto, datos reales, pagos reales,
@@ -121,3 +216,9 @@ seguro y no inventa un historial ni ejecuta DDL automáticamente.
 Antes del primer push se comprobó Render en lectura: main, autoDeploy off, previews
 off; ambos proyectos Vercel tienen exclusión de esta rama en sus respectivos JSON.
 No hay workflows GitHub activos. No se modifican configuraciones remotas.
+
+APK oficiales conservadas: 1.1.1 SHA-256 `541b4c9d70a52396266358d786032db47c85e99aa2ae4d7ae1bcf5eb28c3bb4b`
+y 1.1.2 `a6b81541a210e79ffb6ec8a38c79b8b1260758ab45c246b81fca45ee4439ed93`,
+comprobadas por checksum en esta tarea. El entorno AVD es debug y no sustituye una APK
+release ni una validación en teléfono real. Se deja pendiente revisión física, despliegue
+autorizado de la cadena de PR y migración 013, sin activar FCM.

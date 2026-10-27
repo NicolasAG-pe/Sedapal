@@ -209,6 +209,12 @@
     const showToast = message => notify(message);
     const showSuccess = message => notify(message, true);
     let ctrlPagosAdmin = null, ctrlAtencionAdmin = null;
+    const incidentChanges=new Map(),pendingIncidentChanges=new Set();
+    const incidentTimeline=window.createHMIncidentReview({container:main,apiFetch,
+      path:(id,cursor)=>'/api/admin/incidencias/'+id+'/seguimiento?limite=30'+(cursor?'&despues='+cursor:''),
+      isActive:esAdmin,openDialog:openModal,closeDialog:closeModal,
+      change:(id,state,comment)=>cambiarEstadoIncidencia(id,state,null,comment)
+    });
     const confirmModal = document.getElementById('confirm-modal');
     const fotoModal = document.getElementById('foto-modal');
     function seccionContacto(title, pairs) {
@@ -226,6 +232,7 @@
       modal.querySelector('button').focus();
     }
     function closeModal(modal) {
+      if(modal.hmOnClose)modal.hmOnClose();
       modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true');
       if (modal === fotoModal) {
         photoRequest++;
@@ -237,7 +244,7 @@
       if (!main.querySelector('.overlay.open')) document.body.classList.remove('modal-open');
       if (lastFocus && lastFocus.isConnected) lastFocus.focus();
     }
-    function closeDialogs() { confirmarAccion = null; closeModal(confirmModal); closeModal(fotoModal); }
+    function closeDialogs() { confirmarAccion = null; closeModal(confirmModal); closeModal(fotoModal); incidentTimeline.clear(); }
     async function abrirFotoProtegida(path, title) {
       closeModal(fotoModal);
       const request = ++photoRequest;
@@ -857,6 +864,7 @@
         sin.className = 'inc-meta'; sin.textContent = 'Sin fotografía adjunta';
         box.appendChild(sin);
       }
+      const historyButton=nodo('button','btn-sm detail','Ver historial');historyButton.type='button';historyButton.dataset.historyId=i.id_incidencia;historyButton.setAttribute('aria-label','Ver historial de incidencia '+i.id_incidencia);historyButton.addEventListener('click',()=>incidentTimeline.open(i.id_incidencia,historyButton));box.append(historyButton);
       const sel = document.createElement('select');
       sel.className = 'year-select';
       sel.setAttribute('aria-label', 'Cambiar estado de incidencia ' + i.id_incidencia);
@@ -873,28 +881,19 @@
     });
     window.HMAdminTable(list);
   }
-  async function cambiarEstadoIncidencia(id, estado, sel){
-    if(!esAdmin()) return;
+  async function cambiarEstadoIncidencia(id, estado, sel, comentario){
+    const key=String(id);if(!esAdmin()||pendingIncidentChanges.has(key))return false;
+    const intent=JSON.stringify([estado,comentario?.trim()||null]);let pending=incidentChanges.get(key);
+    if(!pending||pending.intent!==intent){pending={intent,id:crypto.randomUUID()};incidentChanges.set(key,pending);}
+    pendingIncidentChanges.add(key);if(sel)sel.disabled=true;
     try{
-      const resp = await apiFetch('/api/admin/incidencias/' + encodeURIComponent(String(id)) + '/estado', {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({estado: estado})
-      });
-      const data = await resp.json().catch(err=>{ if(esAbortado(err)) throw err; return null; });
-      if(!resp.ok || !data || data.estado !== 'ok'){
-        showToast('⚠ ' + ((data && data.mensaje) || 'No se pudo actualizar el estado.'));
-        await cargarAdminIncidencias();
-        return;
-      }
-      showSuccess('Estado actualizado a ' + data.incidencia.estado + '.');
-      await cargarAdminIncidencias();
-    }catch(err){
-      if(esAbortado(err) || !esAdmin()) return;
-      console.error('No se pudo actualizar el estado.', err);
-      showToast('No se pudo actualizar el estado. Inténtalo nuevamente.');
-      await cargarAdminIncidencias();
-    }
+      const resp=await apiFetch('/api/admin/incidencias/'+encodeURIComponent(key)+'/estado',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({estado,solicitud_id:pending.id,...(comentario!==undefined?{comentario_publico:comentario}:{})})});
+      const data=await resp.json();
+      if(!resp.ok||data.estado!=='ok'){showToast(data.mensaje||'No se pudo actualizar el estado.');return false;}
+      incidentChanges.delete(key);showSuccess(data.cambiada?'Cambio de estado registrado.':'Solicitud confirmada; el historial muestra el estado actual.');
+      await cargarAdminIncidencias();incidentTimeline.refresh();return data;
+    }catch(error){if(!esAbortado(error)&&esAdmin())showToast('No se confirmó la respuesta. Consulta el historial o reintenta el mismo cambio.');return false;}
+    finally{pendingIncidentChanges.delete(key);if(sel?.isConnected)sel.disabled=false;}
   }
   document.getElementById('adm-inc-estado').addEventListener('change', ev=>{
     admIncEstado = ev.target.value;
@@ -1411,7 +1410,7 @@
         section?.setAttribute('aria-busy','true');
         if(section)sectionLoads.set(section,version);
         status.textContent='Cargando información…';
-        try{await loaders[name]();}
+        try{await loaders[name]();incidentTimeline.refresh();}
         finally{
           if(!disposed && section && sectionLoads.get(section)===version)section.removeAttribute('aria-busy');
           if(!disposed && version===loadVersion)status.textContent='';
@@ -1419,6 +1418,7 @@
       },
       closeDialogs,
       dispose() {
+        incidentTimeline.destroy();incidentChanges.clear();pendingIncidentChanges.clear();
         disposed = true;operationManager.dispose();
         cargarAdminPagosDebounced.cancel(); cargarAdminAtencionDebounced.cancel();
         if (ctrlPagosAdmin) ctrlPagosAdmin.abort();

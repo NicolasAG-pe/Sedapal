@@ -961,6 +961,7 @@
 <script src="assets/js/push-notifications.js"></script>
 <script src="shared/two-factor-ui.js"></script>
 <script src="shared/password-recovery-ui.js"></script>
+<script src="shared/incident-timeline.js"></script>
 <script src="assets/js/sedapal-knowledge.js"></script>
 <!-- Socket.IO cliente vendorizado (v4.8.4, igual que el backend): el script
      absoluto /socket.io/socket.io.js no resuelve en el WebView Android
@@ -1047,6 +1048,10 @@
     },
     refresh:()=>sincronizarUsuarioPorEvento('notificacion'),notice:mensaje=>showToast(mensaje)
   });
+  const incidentTimeline=window.createHMIncidentTimeline({apiFetch:(...args)=>sesionCliente.fetch(...args),
+    path:(id,cursor)=>'/api/me/incidencias/'+id+'/seguimiento?limite=30'+(cursor?'&despues='+cursor:''),
+    isActive:()=>sesionCliente.isUser(),openDialog:openModal,closeDialog:closeModal
+  });
   const fmtFechaLarga = window.HMShared.ui.date;
   let clienteCorreo='';
   let restauracionBloqueada=false, tareaRestauracion=null, reintentoSalida=false;
@@ -1117,7 +1122,7 @@
     try{ if(typeof misSolicitudes !== 'undefined') misSolicitudes = []; }catch(e){}
     try{ if(typeof notificaciones !== 'undefined') notificaciones = []; }catch(e){}
     try{ closeMobileNav({restore:false, immediate:true}); }catch(e){}
-    try{ [detModal,payModal,copiesModal,incModal,fotoModal,passModal].forEach(closeModal); }catch(e){}
+    try{ [detModal,payModal,copiesModal,incModal,fotoModal,passModal,incidentTimeline.modal].forEach(closeModal); }catch(e){}
     try{ endSpotlight(false, {markSeen:false}); }catch(e){}
     try{ resetHidroBotSession(); }catch(e){}
     try{ navLock = false; }catch(e){}
@@ -1142,6 +1147,7 @@
     showToast(mensaje || 'Sesión cerrada correctamente.');
   }
   function limpiarDatosCliente(){
+    incidentTimeline.clear();
     interfaz2fa.clear();
     paymentRequests.clear();clearPaymentQr();paymentViewVersion++;paymentPilot=false;paymentPilotSynthetic=true;paymentExisting=false;document.getElementById('pay-existing-state').textContent='';document.getElementById('pay-existing-state').hidden=true;document.getElementById('pay-existing-history').hidden=true;
     window.HMClientHome.clear();
@@ -1338,7 +1344,7 @@
     if(!rtSoloSesionActiva() || !sesionCliente.isUser()) return;
     switch(tipo){
       case 'incidencia':
-        programarSync('inc', ()=>{ rtRecargarIncidencias(); rtRecargarNotif(); });
+        programarSync('inc', ()=>{ rtRecargarIncidencias(); rtRecargarNotif(); incidentTimeline.refresh(); });
         break;
       case 'atencion':
         programarSync('ate', ()=>{ rtRecargarAtencion(); rtRecargarNotif(); });
@@ -1365,6 +1371,7 @@
   }
   // Tras reconectar no se asume nada: sincronización REST del módulo visible.
   function sincronizarTrasReconexion(){
+    incidentTimeline.refresh();
     if(!rtSoloSesionActiva()) return;
     rtRecargarNotif();
     rtRecargarPagos(); // Recupera también historial/Inicio/modal aunque otra sección esté visible.
@@ -1700,6 +1707,7 @@
     if(f) setTimeout(()=>{ try{ f.focus({preventScroll:true}); }catch(e){ f.focus(); } }, 30);
   }
   function closeModal(m){
+    if(m.hmOnClose)m.hmOnClose();
     if(m===incModal)cancelarUbicacionIncidencia();
     if(m===fotoModal){
       fotoVersion++; if(fotoController)fotoController.abort();fotoController=null;
@@ -3658,7 +3666,7 @@
   // (Estructura lista para futuro botón atrás Android/Capacitor: llamar a closeMobileNav(). Sin Capacitor ahora.)
   document.addEventListener('keydown', e=>{
     if(e.key !== 'Escape') return;
-    if(document.querySelector('.overlay.open,.overlay.closing')){ [detModal,payModal,copiesModal,incModal,fotoModal,passModal].forEach(closeModal); return; }
+    if(document.querySelector('.overlay.open,.overlay.closing')){ [detModal,payModal,copiesModal,incModal,fotoModal,passModal,incidentTimeline.modal].forEach(closeModal); return; }
     if(shell.classList.contains('nav-open')){ closeMobileNav(); btnMenu.focus(); return; }
     if(hidroBotState.open){ minimizeBot(); refocusFab(); }
   });
@@ -3676,7 +3684,7 @@
       App.addListener('backButton', function(){
         try{
           if(document.querySelector('.overlay.open,.overlay.closing')){
-            [detModal,payModal,copiesModal,incModal,fotoModal,passModal].forEach(closeModal);
+            [detModal,payModal,copiesModal,incModal,fotoModal,passModal,incidentTimeline.modal].forEach(closeModal);
             return;
           }
           if(shell.classList.contains('nav-open')){ closeMobileNav(); return; }
@@ -4432,6 +4440,7 @@ async function descargarConstanciaPDF(r, btn){
         box.appendChild(bF);
         d.appendChild(box);
       }
+      const historyButton=document.createElement('button');historyButton.type='button';historyButton.className='btn-sm detail';historyButton.textContent='Ver seguimiento';historyButton.dataset.historyId=inc.id;historyButton.setAttribute('aria-label','Ver seguimiento de '+inc.code);historyButton.addEventListener('click',()=>incidentTimeline.open(inc.id,historyButton));d.append(historyButton);
       list.appendChild(d);
     });
   }

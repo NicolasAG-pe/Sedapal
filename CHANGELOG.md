@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Seguimiento de incidencias — cliente, Admin y Android
+
+- Botones «Ver seguimiento»/«Ver historial» y diálogo acuático con eventos reales, fecha/estado, comentarios públicos y aviso explícito para incidencias anteriores; tarjetas, formularios, fotos, filtros y tablas conservados.
+- Vista compartida de consulta y controles exclusivos de Admin; cierre/limpieza por sesión, foco accesible, bloqueo de doble envío y recuperación de respuesta incierta sin duplicar cambios.
+- Socket.IO y reconexión recargan el historial autorizado. Corrige contraste heredado en el nuevo encabezado sin cambiar los diseños aprobados de otros módulos.
+- Chromium en cinco resoluciones y Android 15 real en AVD (360×800 y 390×844), foto/Atrás/red/reapertura/Keystore aprobados; Gradle, 4 JUnit, prueba instrumental y lint sin errores. Informe y galería locales referenciados en `docs/pruebas/seguimiento-incidencias-120.md`.
+- Producción y APK oficiales intactas; 013 solo en PostgreSQL 18 aislado, FCM remoto y prueba física pendientes.
+
 ## Seguimiento de incidencias — backend y PostgreSQL de laboratorio
 
 - Migración aditiva y repetible 013: eventos UUID append-only del registro y cambios reales, sin reconstruir el historial anterior ni copiar fotografías.

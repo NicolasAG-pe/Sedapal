@@ -32,6 +32,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   process.env.YAPE_QR_FILE=path.join(output,'qr-sintetico.png');fs.writeFileSync(process.env.YAPE_QR_FILE,PNG.sync.write(qr),{mode:0o600});process.env.PAYMENTS_MANUAL_ENABLED='1';
  }
  const ctx=await iniciar({autoDrain:false,databasePrefix:process.argv.includes('--yape-pilot')?'yape_pilot':'api'});let device,page;
+ let baselineRuntimeBackup=null;
  let sessionRequests=0;
  ctx.httpServer.on('request',req=>{if(req.method==='GET'&&req.url==='/api/auth/session')sessionRequests++;});
  const supplyA='900000711',supplyB='900000712',password=ctx.registro(711).password;
@@ -47,6 +48,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  }
  async function detach(){if(device){await device.close();device=null;}}
  async function restart(mode='force-stop',pushEvent){
+  const priorTransports=process.argv.includes('--incidents')?Object.keys(ctx.io.engine.clients):[];
   await detach();
   if(mode==='finish'){
    await attach();await page.evaluate(()=>Capacitor.Plugins.App.exitApp());await detach();await pause(300);
@@ -61,6 +63,14 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
    }else report.processTermination='ActivityManager am kill';
    await until(()=>{try{return android('shell','pidof',pkg).trim()!==pid;}catch(_){return true;}},'proceso anterior terminado');
   }else android('shell','am','force-stop',pkg);
+  if(priorTransports.length){
+   // Force-stop no garantiza FIN inmediato a través de netsimd. Esperar el cierre
+   // real por transporte/heartbeat antes de crear otro proceso; nunca desconectar
+   // sockets desde el fixture ni debilitar la aserción de una conexión nueva.
+   const started=Date.now();await until(()=>priorTransports.every(id=>!ctx.io.engine.clients[id]),'transporte del proceso anterior cerrado',65000);
+   report.previousTransportDrainMaxMs=Math.max(report.previousTransportDrainMaxMs||0,Date.now()-started);
+   console.log('AVD: transporte anterior cerrado en '+(Date.now()-started)+' ms');
+  }
   android('shell','am','start','-n',pkg+'/.MainActivity',...(pushEvent?['--es','google.message_id','fixture-local-intent','--es','hm_event',pushEvent]:[]));await pause(700);await attach();
  }
  async function dashboard(supply){
@@ -85,14 +95,27 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  try{
   report.database=ctx.connection.database;
   const env={...process.env,API_BASE_URL:ctx.base.replace('127.0.0.1','10.0.2.2')};
-  for(const [command,args,name]of [[process.execPath,['scripts/sync-android.cjs'],'sync.log'],['bash',['scripts/android-gradle.sh','--no-daemon','--console=plain','-PhidroBuildDir='+path.join(output,'app'),':app:assembleDebug',':app:assembleDebugAndroidTest',...((process.argv.includes('--password-recovery')||process.argv.includes('--push'))?[':app:testDebugUnitTest',':app:lintDebug']:[])],'build.log']]){
+  for(const [command,args,name]of [[process.execPath,['scripts/sync-android.cjs'],'sync.log'],['bash',['scripts/android-gradle.sh','--no-daemon','--console=plain','-PhidroBuildDir='+path.join(output,'app'),':app:assembleDebug',':app:assembleDebugAndroidTest',...((process.argv.includes('--password-recovery')||process.argv.includes('--push')||process.argv.includes('--incidents'))?[':app:testDebugUnitTest',':app:lintDebug']:[])],'build.log']]){
    const r=spawnSync(command,args,{cwd:root,env,encoding:'utf8',maxBuffer:32*1024*1024});fs.writeFileSync(path.join(output,name),(r.stdout||'')+(r.stderr||''),{mode:0o600});assert.equal(r.status,0,'Compilación '+name);
+   if(name==='sync.log'&&process.argv.includes('--incident-before')){
+    const baseline=path.join(root,'artifacts/seguimiento-incidencias-120/before/web'),publicDir=path.join(root,'android/app/src/main/assets/public');
+    assert.ok(fs.existsSync(path.join(baseline,'index.html')),'Baseline 5e3ea8f preservada antes de editar');
+    baselineRuntimeBackup=path.join(output,'current-runtime-preserved');fs.renameSync(publicDir,baselineRuntimeBackup);fs.cpSync(baseline,publicDir,{recursive:true});
+    fs.writeFileSync(path.join(publicDir,'hm-api-config.js'),'window.HM_API_BASE='+JSON.stringify(env.API_BASE_URL)+';');report.baseline='5e3ea8f: recursos históricos solo para comparación visual';
+   }
+
   }
   android('install','-r',path.join(output,'app/outputs/apk/debug/app-debug.apk'));
   android('install','-r',path.join(output,'app/outputs/apk/androidTest/debug/app-debug-androidTest.apk'));
   const instrument=android('shell','am','instrument','-w','-e','class','pe.edu.hidromejora.app.SecureStateInstrumentedTest','-e','hidroSecureFixture','1',pkg+'.test/androidx.test.runner.AndroidJUnitRunner');
   android('shell','am','force-stop',pkg);
   fs.writeFileSync(path.join(output,'instrumentation.txt'),instrument);assert.match(instrument,/OK \(1 test\)/);ok('Android Keystore: clave no exportable, GCM/IV distinto, alteración rechazada y borrado confirmado');
+
+  if(process.argv.includes('--incidents')){
+   android('shell','am','start','-n',pkg+'/.MainActivity');await attach();
+   await require('./android-incident-tracking-native.cjs')({ctx,getPage:()=>page,restart,until,ok,screenshot,login,dashboard,logout,android,output,before:process.argv.includes('--incident-before')});
+   report.result='passed';return;
+  }
   if(process.argv.includes('--push')){
    const fixture=await require('../../Backend/test/push-fixture.cjs').attach(ctx);
    const pushInstrument=android('shell','am','instrument','-w','-e','class','pe.edu.hidromejora.app.PushStateInstrumentedTest','-e','hidroSecureFixture','1',pkg+'.test/androidx.test.runner.AndroidJUnitRunner');
@@ -173,6 +196,8 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   // Al terminar, detener solo la app del AVD dedicado: su reconexión puede impedir
   // cerrar el servidor HTTP del fixture. No borrar datos ni modificar otros procesos.
   try{android('shell','am','force-stop',pkg);}catch(_){}
-  await detach();await require('./close-native-fixture.cjs')(ctx);fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2),{mode:0o600});console.log('Evidencia local: '+path.relative(root,output));
+  await detach();
+  if(baselineRuntimeBackup){const publicDir=path.join(root,'android/app/src/main/assets/public');fs.renameSync(publicDir,path.join(output,'baseline-runtime'));fs.renameSync(baselineRuntimeBackup,publicDir);}
+  await require('./close-native-fixture.cjs')(ctx);fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2),{mode:0o600});console.log('Evidencia local: '+path.relative(root,output));
  }
 })().catch(error=>{console.error(error.message);process.exitCode=1;});
