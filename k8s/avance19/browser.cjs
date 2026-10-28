@@ -1,8 +1,17 @@
 'use strict';
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'../..'),state=path.join(root,'artifacts/kubernetes-avance-19/state');
+const playwrightPath=process.env.HIDRO_PLAYWRIGHT_MODULE || path.join(root,'artifacts/vercel-validation/tools/node_modules/playwright');
+let chromium;
+try { ({chromium}=require(playwrightPath)); }
+catch (error) {
+  console.error('Playwright no está disponible. Instálalo como herramienta de pruebas y define:');
+  console.error('  HIDRO_PLAYWRIGHT_MODULE=/ruta/node_modules/playwright');
+  console.error('  PLAYWRIGHT_BROWSERS_PATH=/ruta/cache-de-browsers');
+  console.error('Ver k8s/avance19/README.md, sección Arranque y pruebas.');
+  process.exit(1);
+}
 process.env.PLAYWRIGHT_BROWSERS_PATH ||= path.join(root,'artifacts/vercel-validation/browsers');
-const {chromium}=require(process.env.HIDRO_PLAYWRIGHT_MODULE || path.join(root,'artifacts/vercel-validation/tools/node_modules/playwright'));
 const accounts=JSON.parse(fs.readFileSync(path.join(state,'accounts.json'))),web='http://localhost:8084',adminBase='http://localhost:8085';
 const report={checks:[],errors:[],assets:[]};
 const ok=text=>{report.checks.push(text);console.log('OK: '+text);};

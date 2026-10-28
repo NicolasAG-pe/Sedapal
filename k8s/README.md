@@ -1,28 +1,72 @@
 # Kubernetes para Sedapal
 
-**Avance 18:** base/overlays revisados para OTP/outbox; solo validación local de
-archivos y SQL, sin aplicar recursos. Ver [informe](../docs/pruebas/integracion-avance-18.md).
+Kubernetes es una **opción de ejecución local** mantenida en `main`, adicional a
+Docker Compose y a los despliegues de Render, Vercel y Neon. No sustituye esos
+servicios ni comparte sus volúmenes, secretos, bases o puertos. Los manifiestos
+se basan en `compose.yaml` y los Dockerfiles actuales; todos los recursos deben
+aplicarse en el mismo namespace. No se modifica Compose.
 
-Los cuatro YAML se basan en `compose.yaml` y los Dockerfiles actuales. Todos
-los recursos deben aplicarse en el mismo namespace. No se modifica Compose.
+- **Flujo local validado:** [avance19](avance19/README.md). Clúster kind
+  `hidro-avance19`, namespace `hidro-avance19`, puertos 8084/8085. Incluye
+  arranque, verificación HTTP, Chromium, persistencia y OTP simulado opcional.
+- **Guía histórica del compañero:** [local](local/README.md). Clúster
+  `sedapal-test` y puertos 8082/8083; se conserva como referencia y no es el
+  flujo que se mantiene para `main`.
+- **Manifiestos y overlays:** `base/` (producción), `local/` (clúster
+  histórico), `mail/` (worker opcional) y `avance19/` (entorno local aislado).
 
-## Prueba en esta PC
+Docker Compose sigue siendo el entorno rápido de desarrollo en 8080/8081.
+Kubernetes local usa otro clúster, namespace, PVC y secretos aleatorios; puede
+convivir con Compose, aunque en equipos de 4 GiB conviene ejecutar solo uno.
+Render, Vercel y Neon no leen estos manifiestos ni los Secretos del clúster.
 
-Ver [la guía local](local/README.md): herramientas instaladas dentro de
-`.local/k8s/`, clúster aislado y paneles en 8082/8083. Incluye creación de
-cuentas locales, verificación de API, navegador y persistencia.
+## Inicio rápido local
 
-## Rama y revisión
-
-La rama dedicada ya está creada. Para volver a ella y revisar los archivos:
+Requisitos, límites y detalles en [avance19/README.md](avance19/README.md).
+Desde la raíz del clon, con Docker activo:
 
 ```bash
-cd /home/saul-lab/Sedapal
-git switch feature/vercel-to-k8s
-mkdir -p k8s
-ls -R k8s
-git diff --check
+export HIDRO_KIND_BIN=/ruta/kind
+export HIDRO_KUBECTL_BIN=/ruta/kubectl
+docker build -f Backend/Dockerfile -t hidro-avance18-backend:local Backend
+docker build -f Frontend/Dockerfile -t hidro-avance18-web:local .
+docker build -f Admin/Dockerfile -t hidro-avance18-admin:local .
+docker pull postgres:18
+bash k8s/avance19/start.sh
+node k8s/avance19/verify.cjs
 ```
+
+Cliente en http://localhost:8084 y Admin en http://localhost:8085. Las pruebas
+opcionales (`browser.cjs`, `persistence.cjs`, `otp-fixture.cjs`) se ejecutan en
+serie después del verificador. No se usan `.env`, Neon, Render, Vercel ni correo
+real.
+
+Para **detener sin perder datos** (no borra el clúster ni el PVC):
+
+```bash
+docker stop hidro-avance19-control-plane
+```
+
+Para **recuperar** tras reiniciar la PC o una parada por memoria:
+
+```bash
+docker start hidro-avance19-control-plane
+bash k8s/avance19/start.sh
+node k8s/avance19/verify.cjs
+```
+
+El nodo kind no arranca solo. `start.sh` comprueba que el contenedor esté en
+marcha, espera hasta 60 s a que Kubernetes marque el nodo Ready y, si está
+detenido, indica cómo arrancarlo sin borrar datos. La guía detalla cómo
+diagnosticar Pods transitorios y por qué no hay que eliminar el clúster para
+liberar memoria.
+
+## Estado y alcance
+
+El soporte local forma parte de `main` a partir de la integración del PR #21,
+con los archivos de `k8s/avance19/`. Las herramientas, imágenes, kubeconfig,
+cuentas sintéticas y reportes son privados de cada equipo: `.local/` y
+`artifacts/` están ignorados por Git. No se comparten secretos entre laptops.
 
 ## Construir y publicar las imágenes
 
@@ -113,23 +157,26 @@ con pg_dump y restauración con pg_restore/psql en un volumen de destino limpio;
 no mezclar el esquema inicial con un dump completo. Esta preparación no realiza
 la migración ni configura alta disponibilidad, backups o recuperación.
 
-## Commit y push exclusivamente de estos artefactos
+## Verificación antes de publicar
+
+Kubernetes local no cambia el código de la aplicación ni los despliegues. Antes
+de abrir un cambio que afecte `k8s/`, ejecutar las pruebas disponibles:
 
 ```bash
 cd /home/saul-lab/Sedapal
-(
-  set -euo pipefail
-  test "$(git branch --show-current)" = feature/vercel-to-k8s
-  git add -- .gitignore Backend/server.js k8s/ scripts/check-admin-local.cjs
-  if git diff --cached --name-only | grep -Eqv '^(k8s/|\.gitignore$|scripts/check-admin-local\.cjs$|Backend/server\.js$)'; then
-    echo 'Hay archivos ajenos a la preparación de Kubernetes en staging; revisar antes de continuar.'
-    exit 1
-  fi
-  git diff --cached --check
-  git commit -m "feat(k8s): preparar migración aislada de Sedapal con servicios y PostgreSQL 18"
-  git push --set-upstream origin feature/vercel-to-k8s
-)
+HIDRO_KUBECTL=/ruta/kubectl npm run test:k8s
+npm run test:config
+npm run test:ui
+npm run test:documents
+git diff --check
+git status --short
 ```
+
+`test:k8s` renderiza base/local/mail y valida SQL en una base sintética nueva; no
+accede a un contexto ni ejecuta `apply`. Para el entorno local completo, usar la
+guía de [avance19](avance19/README.md). Revisar que `.local/`, `artifacts/`,
+`*.env`, kubeconfig, capturas y reportes no estén preparados para el commit. No
+publicar contraseñas, JWT, API keys ni credenciales de fixtures.
 
 ## Contrato OTP, sesión Android y worker (avance 18)
 

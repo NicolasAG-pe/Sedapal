@@ -5,43 +5,67 @@ Deriva de los manifiestos `k8s/local` del equipo; no los sustituye. Usa puertos
 loopback **8084** (cliente) y **8085** (Admin), sin tocar Compose 8080/8081 ni
 el clúster del compañero `sedapal-test`. No es una configuración productiva.
 
+Este flujo es la **opción local mantenida para `main`** a partir de la
+integración del [PR #21](https://github.com/NicolasAG-pe/Sedapal/pull/21).
+Compose, Render, Vercel y Neon siguen siendo independientes: Kubernetes local no
+lee `.env`, no usa Neon ni publica en esos servicios.
+
 ## Preparación en otra laptop
 
-Una vez confirmada la publicación de `integration/avance-18`, descargar un
-checkout independiente y comparar su hash con el comunicado por el equipo:
+Mientras el PR #21 está en revisión, usar su rama; una vez integrado, clonar
+`main`. Descargar un checkout independiente y comprobar su hash; conservar
+cualquier copia previa:
 
 ```sh
-git clone --branch integration/avance-18 --single-branch https://github.com/NicolasAG-pe/Sedapal.git Sedapal-integracion
+# Tras el merge del PR #21:
+git clone --branch main --single-branch https://github.com/NicolasAG-pe/Sedapal.git Sedapal-integracion
+# Mientras el PR está abierto:
+# git clone --branch feature/k8s-local-actualizado --single-branch https://github.com/NicolasAG-pe/Sedapal.git Sedapal-integracion
 cd Sedapal-integracion
 git status --short --branch
 git log -1 --oneline
 ```
 
-No fusionar main para reproducir esta validación. No copiar `.env`, secretos,
-kubeconfig, bases ni directorios `artifacts` de otra laptop. Cada entorno genera
-sus propias credenciales y datos sintéticos.
+Para reproducir una validación histórica, usar el commit de su informe. No
+copiar `.env`, secretos, kubeconfig, bases ni directorios `artifacts` de otra
+laptop. Cada entorno genera sus propias credenciales y datos sintéticos.
 
-Herramientas comprobadas: Linux amd64/Debian, Docker 29.9.1, kind 0.33.0,
-kubectl 1.37.1 y Node 20.19.2 (contenedor backend Node 22.23.4).
-El nodo está fijado a Kubernetes 1.37.0 con digest en `kind.yaml`.
-La máquina de validación tenía 15 GiB RAM y unos 30 GiB libres antes de arrancar;
-comprobar recursos/virtualización y espacio propios. Los puertos 8084/8085 deben
-estar libres. Si ya existe un clúster ajeno llamado `hidro-avance19`, no reutilizar
-estos scripts allí: usar una máquina o entorno independiente. No hay que modificar
-el kubeconfig global ni instalar un JDK.
+Requisitos comprobados en esta PC: Linux amd64/Debian, Docker 29.9.1, kind 0.33.0,
+kubectl 1.37.1 y Node 20.19.2 (contenedor backend Node 22.23.4). El nodo está
+fijado a Kubernetes 1.37.0 con digest en `kind.yaml`.
 
-Usar herramientas existentes en PATH, o indicar ejecutables privados:
+Antes de arrancar, comprobar en la máquina del compañero:
+
+- Docker activo y usuario con permiso para crear contenedores.
+- Node 20.19 o superior en PATH (los tests usan `fetch` y `AbortSignal.timeout`).
+- Al menos 8 GiB de RAM recomendados; **4 GiB es el mínimo** y solo si Compose
+  está detenido. En esta PC (3.7 GiB) el nodo kind fue detenido por el sistema
+  (`Exited 137`) al convivir con otros contenedores; tras liberar memoria y
+  arrancar solo el nodo, las pruebas pasaron. No ejecutar Compose durante la
+  validación.
+- Unos 15 GiB libres: imágenes locales (≈500 MiB), nodo kind (≈1.3 GiB) y PVC
+  declarado de 10 GiB.
+- Puertos **8084** y **8085** libres y sin otro proceso escuchando.
+- Virtualización habilitada si Docker la requiere.
+- Si ya existe un clúster ajeno llamado `hidro-avance19`, no reutilizar estos
+  scripts allí: usar una máquina o entorno independiente. No hay que modificar
+  el kubeconfig global ni instalar un JDK.
+
+Usar herramientas existentes en PATH, o indicar ejecutables privados en cada
+terminal donde se ejecuten los scripts y tests:
 
 ```sh
 export HIDRO_KIND_BIN=/ruta/kind
 export HIDRO_KUBECTL_BIN=/ruta/kubectl
 ```
 
-Los fallbacks de esta máquina están en `artifacts/kubernetes-avance-19/tools/kind`
-y `artifacts/integracion-18/tools/kubectl`; no se versionan. Para otra laptop,
-obtener herramientas de los proveedores y comprobar sus SHA256:
+`env.sh` también reconoce `.local/k8s/bin/` del propio checkout, pero esa carpeta
+está ignorada por Git y no se comparte. Obtener kind y kubectl de los proveedores
+y comprobar sus SHA256:
 [kind](https://kind.sigs.k8s.io/docs/user/quick-start/),
 [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/).
+Si no se definen las variables, el arranque falla con un mensaje explícito y no
+usa otro contexto.
 
 Las tres imágenes deben corresponder al código integrado. Si ya existen y se
 verificaron sus fuentes, reutilizarlas. Si faltan o cambió el código, construir
@@ -53,14 +77,15 @@ docker build -f Frontend/Dockerfile -t hidro-avance18-web:local .
 docker build -f Admin/Dockerfile -t hidro-avance18-admin:local .
 ```
 
-En esta validación se reutilizaron las tres imágenes del avance 18: **no se
-reconstruyeron**. Se contrastaron hashes del backend/worker, HTML y conocimiento
-Sedapal con las fuentes. No basta con que coincida el nombre de una etiqueta.
-PostgreSQL `postgres:18` debe existir localmente. Si falta, obtener la imagen
-oficial antes del arranque:
+La validación del 24 de octubre reutilizó las tres imágenes del avance 18 y
+contrastó hashes de fuentes; la repetición del 28 de octubre reconstruyó las
+imágenes desde el código actual. No basta con que coincida el nombre de una
+etiqueta. `start.sh` **no construye** imágenes: si falta alguna, se detiene con
+las instrucciones de build. PostgreSQL `postgres:18` debe existir localmente:
 
 ```sh
 docker pull postgres:18
+docker image ls 'hidro-avance18-*' postgres:18
 ```
 
 No se cargan datos o volúmenes de Compose.
@@ -96,17 +121,19 @@ contra una base o contexto distinto. La provisión inicial comprueba DB
 `hm_avance19`, usa contraseñas aleatorias y correo `@fixture.invalid`; no activa
 registro antiguo ni promueve cuentas existentes.
 
-`browser.cjs` reutiliza Playwright del proyecto. Si está en otra ruta:
+`browser.cjs` carga Playwright desde `HIDRO_PLAYWRIGHT_MODULE`. El módulo y su
+navegador deben corresponderse; si están en otra ruta:
 
 ```sh
 export HIDRO_PLAYWRIGHT_MODULE=/ruta/node_modules/playwright
 export PLAYWRIGHT_BROWSERS_PATH=/ruta/cache-de-browsers
 ```
 
-En esta PC: `artifacts/vercel-validation/tools/node_modules/playwright` y
-`artifacts/vercel-validation/browsers`. El compañero puede reutilizar su instalación
-`.local/k8s/browser`; el módulo y su navegador deben corresponderse. Si no dispone
-de ninguno, instalación **local de herramienta de pruebas**, fuera del código:
+En esta PC se usó Playwright 1.64.1 con Chromium Headless Shell desde
+`.local/k8s/browser/node_modules/playwright` y `.local/k8s/browser-cache`
+(carpetas ignoradas por Git). El compañero puede reutilizar su instalación
+privada; si no dispone de ninguna, instalación **local de herramienta de
+pruebas**, fuera del código:
 
 ```sh
 npm install --prefix artifacts/kubernetes-avance-19/browser --no-save --package-lock=false playwright@1.56.1
@@ -115,7 +142,9 @@ export PLAYWRIGHT_BROWSERS_PATH="$PWD/artifacts/kubernetes-avance-19/browsers"
 node "$HIDRO_PLAYWRIGHT_MODULE/cli.js" install chromium
 ```
 
-No se instaló Playwright de nuevo en esta sesión ni se añadió dependencia a la app.
+Ajustar la versión a la del navegador descargado; no se añade Playwright como
+dependencia de la aplicación. `verify.cjs` y `persistence.cjs` solo necesitan
+Node y `fetch`; no requieren `npm install` en el host.
 
 ## Qué modifica cada comando
 
@@ -164,11 +193,61 @@ No hay limpieza automática: no borrar clústeres, PVC, volúmenes, Secrets ni b
 El clúster se deja activo para revisión; los componentes OTP temporales quedan
 con cero réplicas. No iniciar Android ni conectar dispositivos reales.
 
+## Compatibilidad con Compose, Render, Vercel y Neon
+
+| Entorno | Puerto / acceso | Datos y secretos | Efecto de Kubernetes |
+| --- | --- | --- | --- |
+| Docker Compose | 8080/8081 | `.env` y volumen `postgres_data` | Ninguno; no comparte red ni volumen |
+| Kubernetes local | 8084/8085 | Secretos aleatorios y PVC `db-data` del clúster kind | Es este flujo |
+| Render / Vercel | Dominios públicos | Variables y secretos de cada plataforma | No se modifican ni se leen |
+| Neon | PostgreSQL gestionado | Cadena `DATABASE_URL` de producción | No se usa en el clúster local |
+
+Los manifiestos base usan `POSTGRES_*` y Services internos; no contienen cadenas
+de Neon ni credenciales de Render/Vercel. Levantar o detener el clúster local no
+reinicia contenedores de Compose ni cambia despliegues. En equipos con poca
+memoria, ejecutar Compose y kind a la vez puede provocar que Docker detenga el
+nodo; usar un solo entorno durante la validación.
+
+## Detener, reiniciar y recuperar
+
+Para **detener sin perder datos**, parar el nodo. Esto no borra el clúster, el
+PVC, las cuentas sintéticas ni los Secretos; al arrancarlo se reutilizan:
+
+```sh
+docker stop hidro-avance19-control-plane
+```
+
+El nodo kind no arranca solo. Tras reiniciar la PC, o si Docker lo detuvo por
+falta de memoria, arrancarlo y esperar a que esté Ready antes de repetir las
+pruebas:
+
+```sh
+docker start hidro-avance19-control-plane
+export KUBECONFIG="$PWD/artifacts/kubernetes-avance-19/state/kubeconfig"
+kubectl --context kind-hidro-avance19 wait --for=condition=Ready \
+  node/hidro-avance19-control-plane --timeout=180s
+bash k8s/avance19/start.sh   # reutiliza sin reiniciar si no hay cambios
+```
+
+No borrar el clúster para liberar memoria: el PVC y las cuentas viven en su
+volumen. `start.sh` comprueba que el nodo no esté detenido y espera hasta 60 s a
+que Kubernetes lo marque Ready antes de aplicar; si el contenedor está parado,
+falla con un mensaje que indica `docker start`. Durante el arranque los Pods
+pueden mostrar `Error` o reinicios transitorios y la API puede fallar readiness
+hasta recuperar PostgreSQL. Si el estado final no es cuatro Deployments
+disponibles, revisar `kubectl get events` y la memoria disponible antes de
+repetir. En esta PC el nodo apareció como `Exited 137` (coincide con falta de
+memoria) y se recuperó al arrancarlo sin Compose activo. Un `kubectl wait`
+inmediato justo después de `docker start` puede devolver `Forbidden` de forma
+transitoria mientras arranca el API server; el bucle de `start.sh` lo absorbe.
+
 ## Publicación posterior
 
-Ambos `vercel.json` excluyen explícitamente `integration/avance-18` y conservan la
-exclusión de `feature/verificacion-correo`. El avance 21 también excluye `main`
-para que una futura fusión autorizada no dispare despliegues Git Vercel.
-La publicación requiere comprobar además las conexiones Git/raíces de Vercel y
-las ramas/autodespliegues/vistas previas de Render. Una exclusión Vercel no protege
-otros proveedores. No ejecutar push, merge o PR como parte de esta guía local.
+El [PR #21](https://github.com/NicolasAG-pe/Sedapal/pull/21) integra este flujo
+en `main`. Ambos `vercel.json` excluyen explícitamente su rama
+(`feature/k8s-local-actualizado`) además de `integration/avance-18`,
+`feature/verificacion-correo` y `main`, para que el push no dispare despliegues
+Git Vercel. Antes del merge hay que comprobar las conexiones Git/raíces de Vercel
+y las ramas/autodespliegues/vistas previas de Render: una exclusión Vercel no
+protege otros proveedores. El merge no se ejecutó; requiere autorización y
+confirmar que Render no desplegará automáticamente `main` como consecuencia.

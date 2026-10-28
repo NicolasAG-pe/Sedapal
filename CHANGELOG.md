@@ -2,6 +2,52 @@
 
 Este archivo registra cambios publicados y comprobados. Para futuras versiones, añadir una entrada nueva arriba con su fecha y cambios relevantes, sin repetir los manuales.
 
+## En desarrollo — Kubernetes local actualizado
+
+### 28 de octubre de 2026 — integración de Kubernetes local en `main` (PR #21)
+
+- Kubernetes queda documentado como opción de ejecución local mantenida en
+  `main`, adicional a Compose, Render, Vercel y Neon; no comparte volúmenes,
+  secretos, bases ni puertos.
+- Guía principal reescrita para `main`: inicio rápido, detención sin borrar el
+  clúster, recuperación tras reinicio u OOM y verificación antes de publicar.
+- `start.sh` detecta el nodo detenido con un mensaje claro y espera hasta 60 s a
+  que Kubernetes esté Ready, inclusive justo después de `docker start`.
+- `k8s/local` se conserva como guía histórica del clúster del compañero;
+  `k8s/avance19` es el flujo mantenido.
+- `browser.cjs` explica cómo instalar Playwright si no está disponible.
+- Pruebas: `test:k8s` 3/3, configuración 13/13, UI 2/2, documentos 4/4,
+  chatbot 4/4, correo 66/66 entre sus suites, recibos 21/21, Android 49/49,
+  firma release 7/7, verificación k8s 14/14, Chromium 4/4 y persistencia OK.
+- Sin merge, sin despliegues nuevos y sin cambios en Neon/Render/Vercel.
+
+### 24 de octubre de 2026 — prueba de main en la PC
+
+- Copia de trabajo independiente desde `d6a6b83`, conservando la rama local y
+  la estructura de Frontend/Admin/Backend/Shared/Base-de-Datos y Compose.
+- Kubernetes reutiliza los manifiestos existentes y reconoce las herramientas
+  privadas de `.local/k8s/bin/`; guía de descarga actualizada a la rama de
+  integración.
+- Imágenes reconstruidas desde las fuentes actuales; cuatro Deployments Ready
+  en kind `hidro-avance19`, con PostgreSQL nuevo y cuentas sintéticas.
+- Pasaron configuración (13), documentos (4), importes (1), verificación
+  funcional, Chromium y persistencia al recrear el Pod DB sin reiniciar la API.
+- Rama `feature/k8s-local-actualizado` excluida de despliegues Git Vercel en
+  ambas raíces. Publicación pendiente de revisar las automatizaciones Render.
+- Evidencia y límites en `docs/pruebas/kubernetes-main-actualizado.md`.
+
+### 28 de octubre de 2026 — repetición y portabilidad para otra laptop
+
+- Repetición local: cuatro Pods Ready tras arrancar el nodo detenido, `start.sh`
+  idempotente, 14 comprobaciones de `verify.cjs`, Chromium y persistencia.
+- `test:config` 13/13, `test:ui` 2/2 y `test:documents` 4/4.
+- Guía para el compañero: rama de clonación, Node/RAM/puertos/disco requeridos,
+  build y verificación de imágenes, Playwright real y recuperación tras
+  reinicio o falta de memoria. `start.sh` explica qué construir si faltan
+  imágenes en vez de fallar con un error de Docker.
+- No cambia código de la aplicación; el nodo se detuvo por `Exited 137` y se
+  recuperó sin perder PVC ni datos sintéticos.
+
 ## En desarrollo — mejoras de interfaz
 
 ### 23 de octubre de 2026 — referencias copiables e importes legibles
