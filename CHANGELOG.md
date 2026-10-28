@@ -1,5 +1,20 @@
 # Historial de versiones
 
+## Firebase FCM — único envío real autorizado en Android 15
+
+- Una sola llamada HTTP v1 con el código del PR #19 y OAuth dedicado de 15 minutos: Firebase respondió 200; Android mostró el aviso genérico en la bandeja y el toque real abrió Incidencias mediante REST autorizado.
+- Propietario con historial 200, otra cuenta válida con evento/historial 404 y petición anónima 401. Se corrigió una URL auxiliar del verificador sin modificar el producto ni repetir el envío.
+- Entrega/worker/recordatorios apagados al terminar, dispositivo revocado, token OAuth retirado y recursos locales detenidos conservando las evidencias. APK oficiales intactas.
+- Informe en `docs/pruebas/firebase-fcm-envio-unico-120.md`. No autoriza otro mensaje, merge, despliegue ni prueba física.
+
+## Firebase FCM — preparación de piloto Android aislado
+
+- Compilación debug en worktree independiente con JSON privado validado y temporal; flag Firebase solo durante el build, sin cambiar dependencias, diseño ni APK oficiales.
+- El adaptador del PR #17 admite tokens OAuth temporales externos: valida identidad/scope/caducidad/permisos y falla cerrado; conserva el modo anterior y las entregas desactivadas por defecto.
+- Identidad dedicada de envío: roles personalizados `hmFcmPilotSender` y `hmFcmPilotTokenMinter`, con un permiso cada uno y obtención temporal de tokens sobre esa cuenta. APIs IAM/IAM Credentials habilitadas; sin claves privadas permanentes ni facturación. Cambios remotos inventariados en el informe.
+- 32 pruebas específicas y 101 regresiones aprobadas; Gradle/JUnit/lint y ocho comprobaciones Android 15 con registro FCM real, cifrado, consentimiento, cambio de cuenta y revocación, sin enviar mensajes.
+- Android 13/14 pendientes por espacio para imágenes; primer mensaje remoto sujeto a aprobación. Informe en `docs/pruebas/firebase-fcm-piloto-120.md` y operación en `docs/firebase-fcm-piloto.md`.
+
 ## Seguimiento de incidencias — cliente, Admin y Android
 
 - Botones «Ver seguimiento»/«Ver historial» y diálogo acuático con eventos reales, fecha/estado, comentarios públicos y aviso explícito para incidencias anteriores; tarjetas, formularios, fotos, filtros y tablas conservados.

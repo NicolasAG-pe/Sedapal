@@ -4,6 +4,7 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
 const {execFileSync,spawnSync}=require('node:child_process');
 const {iniciar}=require('../../Backend/test/email-api.cjs');
 const root=path.resolve(__dirname,'../..'),pkg='pe.edu.hidromejora.app';
+const fcmRegistration=process.argv.includes('--fcm-registration');
 const serial=process.env.HIDRO_NATIVE_SERIAL || 'emulator-5582';
 const adb=process.env.HIDRO_ADB || path.join(process.env.ANDROID_HOME || path.join(os.homedir(),'Android/Sdk'),'platform-tools/adb');
 const {_android}=require(process.env.HIDRO_PLAYWRIGHT_MODULE || path.join(root,'artifacts/vercel-validation/tools/node_modules/playwright'));
@@ -18,11 +19,15 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
 
 (async()=>{
  assert.match(serial,/^emulator-\d+$/,'No operar teléfonos físicos');
- assert.match(android('emu','avd','name'),/^hm_110_debug_api35\r?\n/,'AVD dedicado obligatorio');
+ assert.match(android('emu','avd','name'),fcmRegistration?/^hm_fcm_pilot_api(?:33|34|35)\r?\n/:/^hm_110_debug_api35\r?\n/,'AVD dedicado obligatorio');
  const output=fs.mkdtempSync(path.join(root,'artifacts/android-session-native-'));fs.chmodSync(output,0o700);
  const report={androidNative:true,checks:[],errors:[],applicationId:pkg};
  const ok=label=>{report.checks.push(label);fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2));console.log('OK: '+label);};
  if(process.argv.includes('--push'))require('../../Backend/test/push-fixture.cjs').configure();
+ if(fcmRegistration){
+  process.env.PUSH_REAL_DELIVERY_ALLOWED='0';process.env.PUSH_WORKER_ENABLED='0';process.env.PUSH_REMINDERS_ENABLED='0';
+  require('../../Backend/test/push-fixture.cjs').configure();
+ }
  if(process.argv.includes('--password-recovery'))require('../../Backend/test/password-recovery-fixture.cjs').configure();
  if(process.argv.includes('--two-factor')){
   process.env.TOTP_ENCRYPTION_KEY=require('node:crypto').randomBytes(32).toString('base64');process.env.TOTP_ENROLLMENT_ENABLED='1';
@@ -31,7 +36,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   const{PNG}=require('../../Backend/node_modules/pngjs');const qr=new PNG({width:20,height:20});qr.data.fill(255);
   process.env.YAPE_QR_FILE=path.join(output,'qr-sintetico.png');fs.writeFileSync(process.env.YAPE_QR_FILE,PNG.sync.write(qr),{mode:0o600});process.env.PAYMENTS_MANUAL_ENABLED='1';
  }
- const ctx=await iniciar({autoDrain:false,databasePrefix:process.argv.includes('--yape-pilot')?'yape_pilot':'api'});let device,page;
+ const ctx=await iniciar({autoDrain:false,databasePrefix:fcmRegistration?'fcm_registration':process.argv.includes('--yape-pilot')?'yape_pilot':'api',port:fcmRegistration?45679:0});let device,page;
  let baselineRuntimeBackup=null;
  let sessionRequests=0;
  ctx.httpServer.on('request',req=>{if(req.method==='GET'&&req.url==='/api/auth/session')sessionRequests++;});
@@ -48,7 +53,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  }
  async function detach(){if(device){await device.close();device=null;}}
  async function restart(mode='force-stop',pushEvent){
-  const priorTransports=process.argv.includes('--incidents')?Object.keys(ctx.io.engine.clients):[];
+  const priorTransports=(process.argv.includes('--incidents')||fcmRegistration)?Object.keys(ctx.io.engine.clients):[];
   await detach();
   if(mode==='finish'){
    await attach();await page.evaluate(()=>Capacitor.Plugins.App.exitApp());await detach();await pause(300);
@@ -95,7 +100,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  try{
   report.database=ctx.connection.database;
   const env={...process.env,API_BASE_URL:ctx.base.replace('127.0.0.1','10.0.2.2')};
-  for(const [command,args,name]of [[process.execPath,['scripts/sync-android.cjs'],'sync.log'],['bash',['scripts/android-gradle.sh','--no-daemon','--console=plain','-PhidroBuildDir='+path.join(output,'app'),':app:assembleDebug',':app:assembleDebugAndroidTest',...((process.argv.includes('--password-recovery')||process.argv.includes('--push')||process.argv.includes('--incidents'))?[':app:testDebugUnitTest',':app:lintDebug']:[])],'build.log']]){
+  for(const [command,args,name]of (fcmRegistration?[]:[[process.execPath,['scripts/sync-android.cjs'],'sync.log'],['bash',['scripts/android-gradle.sh','--no-daemon','--console=plain','-PhidroBuildDir='+path.join(output,'app'),':app:assembleDebug',':app:assembleDebugAndroidTest',...((process.argv.includes('--password-recovery')||process.argv.includes('--push')||process.argv.includes('--incidents'))?[':app:testDebugUnitTest',':app:lintDebug']:[])],'build.log']])){
    const r=spawnSync(command,args,{cwd:root,env,encoding:'utf8',maxBuffer:32*1024*1024});fs.writeFileSync(path.join(output,name),(r.stdout||'')+(r.stderr||''),{mode:0o600});assert.equal(r.status,0,'Compilación '+name);
    if(name==='sync.log'&&process.argv.includes('--incident-before')){
     const baseline=path.join(root,'artifacts/seguimiento-incidencias-120/before/web'),publicDir=path.join(root,'android/app/src/main/assets/public');
@@ -105,11 +110,26 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
    }
 
   }
-  android('install','-r',path.join(output,'app/outputs/apk/debug/app-debug.apk'));
-  android('install','-r',path.join(output,'app/outputs/apk/androidTest/debug/app-debug-androidTest.apk'));
+  const apkRoot=fcmRegistration?fs.realpathSync(process.env.HIDRO_FCM_LAB_BUILD||''):path.join(output,'app');
+  if(fcmRegistration){
+   assert.ok(apkRoot.startsWith(path.join(root,'artifacts/fcm-build-'))&&apkRoot.endsWith('/app'),'APK exclusivo del worktree Firebase');
+   const summary=JSON.parse(fs.readFileSync(path.join(apkRoot,'../result.json'),'utf8'));
+   assert.equal(summary.firebaseConfigured,true);assert.equal(summary.realDeliveryAllowed,false);
+   assert.equal(require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(apkRoot,'outputs/apk/debug/app-debug.apk'))).digest('hex'),summary.apkSha256);
+  }
+  android('install','-r',path.join(apkRoot,'outputs/apk/debug/app-debug.apk'));
+  android('install','-r',path.join(apkRoot,'outputs/apk/androidTest/debug/app-debug-androidTest.apk'));
   const instrument=android('shell','am','instrument','-w','-e','class','pe.edu.hidromejora.app.SecureStateInstrumentedTest','-e','hidroSecureFixture','1',pkg+'.test/androidx.test.runner.AndroidJUnitRunner');
   android('shell','am','force-stop',pkg);
   fs.writeFileSync(path.join(output,'instrumentation.txt'),instrument);assert.match(instrument,/OK \(1 test\)/);ok('Android Keystore: clave no exportable, GCM/IV distinto, alteración rechazada y borrado confirmado');
+
+  if(fcmRegistration){
+   await require('../../Backend/test/push-fixture.cjs').attach(ctx);
+   await ctx.db.query(require('../../Backend/test/email-schema.cjs').sql('migrations/013_seguimiento_incidencias.sql'));
+   android('shell','am','start','-n',pkg+'/.MainActivity');await attach();
+   await require('./android-fcm-registration-native.cjs')({ctx,getPage:()=>page,restart,until,ok,screenshot,login,dashboard,logout,android});
+   report.result='passed';return;
+  }
 
   if(process.argv.includes('--incidents')){
    android('shell','am','start','-n',pkg+'/.MainActivity');await attach();

@@ -7,7 +7,7 @@ const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 async function main(args = process.argv.slice(2), env = process.env) {
   if (args[0] === "--help") {
     console.log(
-      "Push desactivado. --once/--run/--reminders requiere PUSH_ENABLED=1, PUSH_WORKER_ENABLED=1, PUSH_DATABASE_URL y PUSH_EXPECTED_DATABASE; mock solo en laboratorio local, FCM además requiere autorización explícita y archivo privado.",
+      "Push desactivado. --once/--run/--reminders requiere PUSH_ENABLED=1, PUSH_WORKER_ENABLED=1, PUSH_DATABASE_URL y PUSH_EXPECTED_DATABASE; mock solo en laboratorio local, FCM además requiere autorización explícita y archivo privado de identidad o token temporal. Piloto: solo --once tras aprobar destino y cola.",
     );
     return 0;
   }
