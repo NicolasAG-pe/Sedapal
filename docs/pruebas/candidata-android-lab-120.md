@@ -44,7 +44,8 @@ La autenticación sigue siendo obligatoria; CORS no la sustituye.
 
 ## Pruebas actuales
 
-- Gradle: assembleLab, assembleLabAndroidTest, testLabUnitTest y lintLab aprobados.
+- Gradle: assembleLab, assembleLabAndroidTest y testLabUnitTest aprobados;
+  **JUnit 4/4**, lintLab **0 errores/17 advertencias** (sin ocultarlas).
 - Regresión unitarias/backend/PG: **213 casos, 212 aprobados, 1 omisión de legado,
   0 fallidos**. OTP, 2FA, sesiones, recuperación, Keystore, PDF, recibos/pagos,
   Yape, incidencias, push cifrado, identidad y configuración de Firebase sin envío.
@@ -75,3 +76,25 @@ userdata base inicial, sin copiar overlays ni borrar datos anteriores.
 
 Guía de instalación física, hashes y cierre: [guía LAB](../ANDROID-LABORATORIO-120.md).
 No se declara validación física, Android 13/14, TalkBack ni publicación oficial.
+
+## Cierre publicado y siguiente autorización
+
+Draft [PR #22](https://github.com/NicolasAG-pe/Sedapal/pull/22), dependiente del
+#20. Código preparado en `3ca124cea6bf084388671137e69fba48f08cf9e2` y push verificado.
+La APK exacta y certificado están en la guía; APK de 5 128 791 bytes, SHA-256
+comprobado y distinto certificado al permanente. Las APK oficiales 1.1.1/1.1.2
+conservan sus hashes. Galería local de ocho capturas nativas reales, sin editar.
+
+Clúster: mismos UID, generaciones y hash de especificaciones para deployments,
+services y PVC. Worktrees anteriores limpios. De 19 referencias remotas previas,
+18 se conservaron; `main` avanzó externamente de `d6a6b83` a `aba629f` por el merge
+del PR #21 (documentación Kubernetes), no ejecutado por esta sesión. No se
+revirtió, fusionó ni incorporó ese cambio: esta candidata sigue la base exacta
+#20. API/AVD/PG propios detenidos; volumen, base, respaldo y AVD conservados.
+Render mantiene siete despliegues históricos y Vercel cero de la rama; sin
+workflows/hooks GitHub y sin ningún despliegue nuevo tras publicar.
+
+La candidata queda preparada para **solicitar** autorización física después de
+identificar modelo/Android/WebView, espacio y disponibilidad USB. No se instaló
+ninguna APK en teléfonos. No se envió FCM/correo/cobro real ni se modificó ninguna
+cuenta de servicio, rol o API Firebase durante este incremento.
