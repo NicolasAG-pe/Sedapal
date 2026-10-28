@@ -19,7 +19,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
 
 (async()=>{
  assert.match(serial,/^emulator-\d+$/,'No operar teléfonos físicos');
- assert.match(android('emu','avd','name'),fcmRegistration?/^hm_fcm_pilot_api(?:33|34|35)\r?\n/:/^hm_110_debug_api35\r?\n/,'AVD dedicado obligatorio');
+ assert.match(android('emu','avd','name'),fcmRegistration?/^hm_fcm_pilot_api(?:33|34|35)\r?\n/:/^(?:hm_110_debug_api35|hm_quality_api35)\r?\n/,'AVD dedicado obligatorio');
  const output=fs.mkdtempSync(path.join(root,'artifacts/android-session-native-'));fs.chmodSync(output,0o700);
  const report={androidNative:true,checks:[],errors:[],applicationId:pkg};
  const ok=label=>{report.checks.push(label);fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2));console.log('OK: '+label);};

@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Auditoría integral 1.2.0 — incremento A
+
+- Base del PR #19 comprobada y cadena #11–#19 inventariada: #11 ya tiene parche equivalente, sin merges ni reconstrucción.
+- Auditoría por módulo, 63 capturas reales en seis resoluciones, referencias de rendimiento, revisión IAM en lectura y roadmap actualizado con #18/#19.
+- Verificadores alineados con FCM aprobado, demostraciones sin fondos, revocación tras cambio de contraseña y autologin OTP; tutorial nativo esperado mediante su control real.
+- 130 pruebas generales, 118 backend (una omisión condicional), 51 correo/sesión, 11 navegador, 30 comprobaciones E2E, migraciones repetidas y restore sintético aprobados; Android 15 con Keystore, sesión y seguimiento reales. Cero envíos reales.
+- Galería y guía de demostración locales, hallazgos B/C y puertas físicas/de seguridad documentados; rama excluida de despliegues automáticos en ambas raíces Vercel. No publica 1.2.0.
+
 ## Firebase FCM — único envío real autorizado en Android 15
 
 - Una sola llamada HTTP v1 con el código del PR #19 y OAuth dedicado de 15 minutos: Firebase respondió 200; Android mostró el aviso genérico en la bandeja y el toque real abrió Incidencias mediante REST autorizado.

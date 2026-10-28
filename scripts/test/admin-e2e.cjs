@@ -190,6 +190,8 @@ async function browser(executable) {
     await request('POST', '/api/me/operaciones-pago', user.token, { id_recibo: receipt.recibo.id_recibo, metodo: 'demostrativo', solicitud_id: crypto.randomUUID() }, 201);
     // Histórico sintético: la API demostrativa ya no crea registros financieros.
     await pool.query("INSERT INTO pagos(id_recibo,monto,metodo,codigo_operacion) VALUES($1,30,'Histórico sintético','FIXTURE-LEGACY')",[receipt.recibo.id_recibo]);
+    // El histórico se carga completo: una demostración por sí sola no salda recibos.
+    await pool.query("UPDATE recibos SET estado='Pagado' WHERE id_recibo=$1",[receipt.recibo.id_recibo]);
     const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=';
     const incident = await request('POST', '/api/incidencias', user.token, { tipo: 'Fuga de agua', descripcion: 'Reporte de prueba aislada', referencia: 'Dirección fixture', foto_base64: 'data:image/png;base64,' + png, foto_mime: 'image/png' }, 201);
     const attention = await request('POST', '/api/atencion', user.token, { categoria: 'Facturación', asunto: 'Consulta fixture', descripcion: 'Solicitud de prueba aislada' }, 201);

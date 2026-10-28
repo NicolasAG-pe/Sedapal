@@ -73,28 +73,23 @@ module.exports = async ({
       foto_mime: "image/png",
     })
   ).incidencia;
+  async function settleTutorial() {
+    await until(
+      () => p().evaluate(() =>
+        localStorage.getItem("hm_tutorial_seen") === "1" ||
+        document.body.classList.contains("tutorial-open")),
+      "tutorial disponible",
+    );
+    if (await p().evaluate(() => document.body.classList.contains("tutorial-open"))) {
+      await p().locator("#spot-skip-mobile:visible,#spot-skip:visible").first().click();
+    }
+    await until(
+      () => p().evaluate(() => !document.body.classList.contains("tutorial-open")),
+      "tutorial cerrado",
+    );
+  }
   await login(supply);
-  await until(
-    () =>
-      p().evaluate(
-        () =>
-          localStorage.getItem("hm_tutorial_seen") === "1" ||
-          document.body.classList.contains("tutorial-open"),
-      ),
-    "tutorial disponible",
-  );
-  if (
-    await p().evaluate(() => document.body.classList.contains("tutorial-open"))
-  )
-    await p()
-      .locator("#spot-skip-mobile:visible,#spot-skip:visible")
-      .first()
-      .click();
-  await until(
-    () =>
-      p().evaluate(() => !document.body.classList.contains("tutorial-open")),
-    "tutorial cerrado",
-  );
+  await settleTutorial();
   const originalSize = android("shell", "wm", "size"),
     originalDensity = android("shell", "wm", "density");
   const size = originalSize.match(/Override size: (\d+x\d+)/)?.[1],
@@ -110,6 +105,7 @@ module.exports = async ({
       android("shell", "wm", "density", "160");
       await restart();
       await dashboard(supply);
+      await settleTutorial();
       let physicalHeight = height + 48;
       for (let attempt = 0; attempt < 4; attempt++) {
         const actual = await p().evaluate(() => innerHeight);
@@ -119,6 +115,7 @@ module.exports = async ({
         android("shell", "wm", "size", width + "x" + physicalHeight);
         await restart();
         await dashboard(supply);
+        await settleTutorial();
       }
       await p().evaluate(() =>
         document.querySelector("#sidebar [data-sec=incidencias]").click(),
@@ -253,6 +250,7 @@ module.exports = async ({
       );
       await restart();
       await dashboard(supply);
+      await settleTutorial();
       await p().evaluate(() =>
         document.querySelector("#sidebar [data-sec=incidencias]").click(),
       );
