@@ -12,7 +12,8 @@
       "feature/recuperacion-clave-120": false,
       "feature/notificaciones-push-120": false,
       "feature/seguimiento-incidencias-120": false,
-      "feature/firebase-fcm-piloto-120": false
+      "feature/firebase-fcm-piloto-120": false,
+      "feature/auditoria-calidad-ux-120": false
     }
   },
   "framework": null,

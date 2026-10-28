@@ -1,8 +1,10 @@
 # Plan maestro de Hidro-Mejora 1.2.0
 
 Estado: desarrollo. **No publicada; sin fecha de lanzamiento comprometida.**
-Base de esta etapa: `feature/seguridad-totp` / Draft PR #12; pagos y PDF se revisan
-por separado en `feature/pagos-pdf-120`, Draft PR #13 con base de seguridad.
+Base integrada de auditoría: `feature/firebase-fcm-piloto-120` / Draft PR #19,
+commit `b13ebb0`. Incluye por ascendencia los PR #12–#18 y el cambio equivalente
+del #11; no requiere fusionar de nuevo ese parche. La auditoría A continúa en
+`feature/auditoria-calidad-ux-120`, con base #19, sin merges a main.
 La versión 1.2.0 reunirá varias mejoras futuras; este roadmap no autoriza activarlas.
 
 | Área | Avance comprobado | Próxima tarea y criterio de cierre |
@@ -12,12 +14,12 @@ La versión 1.2.0 reunirá varias mejoras futuras; este roadmap no autoriza acti
 | Recuperación de contraseña | Cliente/Android y Admin con correo verificado, código y permiso de un uso, límites, 2FA conservado, sesiones revocadas y worker cifrado separado; validado solo en laboratorio. | Revisar PR dependiente, autorizar 011/configuración/entrega, retención y control de rollback; revocación interinstancia y prueba física. Cerrado por defecto, sin Neon ni correos reales. |
 | Validación de pagos | Demostraciones separadas, declaración/revisión manual de laboratorio y simulador con auditoría. | Receptor autorizado, sandbox comercial, conciliación financiera, privacidad, contrato y autorización; 008 pendiente en producción y cobros bloqueados. |
 | Recibos y constancias | A4 con datos registrados, estados explícitos, trazabilidad y ejemplos sintéticos. | Revisión institucional/legal, accesibilidad PDF y prueba física de impresión/visualización. No comprobantes oficiales SEDAPAL/SUNAT. |
-| Push | Plugin oficial Capacitor 7, consentimiento en Cuenta, tokens cifrados, cola separada, proveedor simulado y adaptador FCM HTTP v1; permisos/intents locales comprobados en Android 15. Desactivado por defecto. | Proyecto Firebase autorizado, revisión/aplicación posterior de 012, entrega remota/rotación y pruebas físicas Android 13/14/15. Distrito independiente de cortes requiere ampliar el modelo vigente; nunca difusión general de avisos locales. |
-| Incidencias | Línea de tiempo cliente/Admin, eventos append-only y avisos atómicos, migración 013, consultas por propietario y Socket.IO; Chromium en cinco resoluciones y WebView Android 15 aprobados en laboratorio. | Revisión del Draft PR #18 con base #17, autorización posterior para 013 y prueba física/TalkBack. Sin historial anterior inventado ni FCM remoto declarado. |
+| Push | PR #17 y #19: plugin Capacitor 7, consentimiento, tokens cifrados y adaptador HTTP v1 con identidad dedicada/OAuth temporal. Un único envío autorizado fue aceptado y recibido en Android 15; toque real a Incidencias y aislamiento REST comprobados. Desactivado nuevamente. | Revisión/aplicación posterior autorizada de 012 y pruebas físicas/Android 13–14. El envío histórico no autoriza repetirlo durante auditoría. Distrito independiente de cortes requiere ampliar el modelo; nunca difusión general de avisos locales. |
+| Incidencias | PR #18 incorporado: línea de tiempo cliente/Admin, eventos append-only y avisos atómicos, migración 013, consultas por propietario y Socket.IO; pruebas navegador y WebView de laboratorio documentadas. | Revisión del Draft PR #18 con base #17, autorización posterior para 013 y prueba física/TalkBack. No inventar historial anterior; el único FCM remoto está documentado por separado en #19. |
 | Dashboard | Estructura existente conservada. | Métricas claras que no confundan declaración con dinero recibido; pruebas de estados vacíos, carga y error. |
-| Admin | 2FA y revisión de operaciones preparadas localmente. | Filtros/paginación de pendientes, doble control para cambios críticos y mejoras operativas con permisos explícitos. |
+| Admin | 2FA, tablas, filtros y revisión paginada de operaciones ya existentes; distribución de recibos y resumen operativo presentes. | Medir límites de listados heredados antes de añadir paginación; aclarar importes históricos sin atribuir acreditación bancaria. Doble control para cambios críticos pendiente. |
 | Auditoría | Historial append-only de operaciones nuevas. | Política de retención y exportación autorizada, separación de funciones y trazabilidad resistente a abuso administrativo. |
-| Reportes/estadísticas | No desarrollados aquí. | Métricas de fondos verificados separadas de históricos/simulaciones, sin datos personales en exportaciones. |
+| Reportes/estadísticas | Existen consumo/gasto derivados de recibos y conteos administrativos; no son conciliación bancaria. | Incremento C: distribuciones útiles y filtros a partir de datos existentes, estados vacíos y separación explícita de operaciones sintéticas/administrativas. No inventar fondos acreditados. |
 | HidroBot | Función existente y regresiones conservadas. | Respuestas basadas en estados financieros reales, revisión de intención y límites; ninguna autorización financiera por chat. |
 | Accesibilidad | Etiquetas, alertas y bloqueo de duplicados en formularios modificados. | Auditoría WCAG/TalkBack, teclado, contraste y PDF etiquetado (jsPDF actual no acredita PDF/UA). |
 | Rendimiento | Índices de operaciones y consultas acotadas. | Paginación por cursor más allá de 200 operaciones, carga/conciliación grande y medición en celulares modestos. |
@@ -50,6 +52,26 @@ pagos productivos. Guía: [yape-piloto-local.md](yape-piloto-local.md).
 Rama `feature/identidad-acuatica-pdf-120`, dependiente de PR #14. Paleta común,
 interfaz cliente/Admin y composición nueva de recibos/constancias. Ver
 `IDENTIDAD-VISUAL-120.md` y el informe de pruebas. No publica 1.2.0 ni habilita
-funciones financieras. La recuperación de contraseña se prepara en laboratorio; push, línea de tiempo de
-incidencias, reportes, seguridad adicional y pruebas físicas siguen pendientes
-en sus etapas; no se implementan como parte del rediseño.
+funciones financieras. La recuperación, push y línea de tiempo se incorporaron
+posteriormente en los PR #16–#19. Sus evidencias de laboratorio no aprueban
+publicación ni sustituyen pruebas físicas. Las estadísticas adicionales y la
+validación física siguen organizadas como incrementos independientes.
+
+## Auditoría integral — incrementos A–D
+
+A inventaría y comprueba la base integrada, corrige verificadores obsoletos y
+conserva capturas reales de referencia. B corrigió legibilidad/tamaño táctil con
+comparación real antes/después. C completó estados operativos en Admin y aclaró
+importes históricos sin cambios de contrato. Los límites de listados/carga grande
+requieren otra dependencia medida. D cerró la regresión de laboratorio y preparó
+la guía física; teléfono, TalkBack y despliegue autorizado continúan pendientes.
+La APK del emulador no sustituye la preparación de una candidata física.
+
+Informe y prioridades: [auditoria-calidad-ux-120](pruebas/auditoria-calidad-ux-120.md).
+Demostración reproducible: [DEMO-LABORATORIO-120](DEMO-LABORATORIO-120.md).
+El criterio de salida sigue abierto hasta resolver hallazgos prioritarios y
+validar teléfono físico/despliegue mediante autorizaciones independientes.
+
+Cierre actual: [validación final de laboratorio](pruebas/validacion-final-120.md).
+Las evidencias anteriores de `/tmp` se perdieron al reiniciar; las nuevas están
+en el worktree persistente y se verifican mediante un manifiesto SHA-256.

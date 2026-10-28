@@ -1,5 +1,35 @@
 # Historial de versiones
 
+## Validación de laboratorio y preparación física — incremento D
+
+- Candidata debug final en Android 15: 13 comprobaciones de sesión y seis de seguimiento, Keystore instrumental, JUnit 4/4 y lint sin errores (16 advertencias existentes).
+- Evidencias regeneradas en disco persistente: 63 pares comparativos y 153 capturas del recorrido completo; estados Admin con datos/vacío/carga/error/recuperación, 300 pruebas aprobadas y una omisión condicional.
+- AVD anterior conservado tras rechazo por firma debug temporal perdida; la prueba final usó otra instancia sin la aplicación instalada. APK oficiales y firma permanente intactas.
+- Backend, emulador y PostgreSQL de laboratorio detenidos conservando datos; sin FCM/correos/cobros reales ni cambios productivos. Informe `docs/pruebas/validacion-final-120.md`.
+- Teléfono físico, TalkBack, Android 13/14, carga grande y validación de despliegue siguen pendientes. La APK de emulador necesita preparar destino privado/modalidad de instalación antes de su uso físico; no publicación 1.2.0.
+
+## Resumen operativo 1.2.0 — incremento C
+
+- Admin muestra los siete estados existentes de incidencias/atención y distingue importes históricos sin atribuir acreditación bancaria; mismo contrato y una consulta por navegación.
+- Estados con datos, vacío, carga, 503 y recuperación comprobados; una demostración no incrementa pagos financieros. Sin endpoints ni migraciones nuevas.
+- Worktree y evidencias recuperados en disco persistente tras reinicio; 300 pruebas aprobadas y una omisión condicional, recorrido cliente/Admin con matriz visual aprobado y selector de recibo de prueba corregido sin debilitar su aserción.
+- Informe `docs/pruebas/reportes-operacion-120.md`; paginación de listados heredados y carga grande quedan como incremento de contrato separado.
+
+## Pulido UX 1.2.0 — incremento B
+
+- Accesos rápidos del teléfono en tres columnas: cinco acciones conservadas, etiquetas legibles sin partir palabras y botón de tutorial de 44 px.
+- HidroBot con controles táctiles de 44 px, encabezado y sugerencias redistribuidos y espacio de conversación comprobado; sin ocultar funciones ni cambiar la identidad.
+- 63 capturas posteriores en seis resoluciones, geometría y saludo real verificados; diez pruebas dirigidas aprobadas. Comparación local con el runtime anterior preservado.
+- Informe en `docs/pruebas/pulido-ux-120.md`; Android de la candidata final, teclado virtual y validación física siguen en D. No publicación ni entregas reales.
+
+## Auditoría integral 1.2.0 — incremento A
+
+- Base del PR #19 comprobada y cadena #11–#19 inventariada: #11 ya tiene parche equivalente, sin merges ni reconstrucción.
+- Auditoría por módulo, 63 capturas reales en seis resoluciones, referencias de rendimiento, revisión IAM en lectura y roadmap actualizado con #18/#19.
+- Verificadores alineados con FCM aprobado, demostraciones sin fondos, revocación tras cambio de contraseña y autologin OTP; tutorial nativo esperado mediante su control real.
+- 130 pruebas generales, 118 backend (una omisión condicional), 51 correo/sesión, 11 navegador, 30 comprobaciones E2E, migraciones repetidas y restore sintético aprobados; Android 15 con Keystore, sesión y seguimiento reales. Cero envíos reales.
+- Galería y guía de demostración locales, hallazgos B/C y puertas físicas/de seguridad documentados; rama excluida de despliegues automáticos en ambas raíces Vercel. No publica 1.2.0.
+
 ## Firebase FCM — único envío real autorizado en Android 15
 
 - Una sola llamada HTTP v1 con el código del PR #19 y OAuth dedicado de 15 minutos: Firebase respondió 200; Android mostró el aviso genérico en la bandeja y el toque real abrió Incidencias mediante REST autorizado.

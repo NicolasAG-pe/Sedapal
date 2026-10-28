@@ -2,7 +2,7 @@
 const { iniciar } = require("./email-api.cjs"),
   { sql } = require("./email-schema.cjs"),
   crypto = require("node:crypto");
-exports.start = async function () {
+exports.start = async function ({ includeLegacy = true } = {}) {
   process.env.EMAIL_PROVIDER = "resend";
   process.env.EMAIL_REGISTRATION_ALLOWED_EMAIL = "";
   process.env.PUSH_ENABLED = "1";
@@ -48,12 +48,12 @@ exports.start = async function () {
   const image = new PNG({ width: 12, height: 12 });
   image.data.fill(255);
   const photo = PNG.sync.write(image);
-  const legacy = (
+  const legacy = includeLegacy ? (
     await ctx.db.query(
       "INSERT INTO incidencias(id_suministro,tipo,descripcion,referencia,foto,foto_mime,estado,fecha_registro) VALUES($1,'Fuga','Incidencia anterior de laboratorio','Referencia sintética',$2,'image/png','En revisión','2026-01-10 10:30:00') RETURNING *",
       [client.suministro.id_suministro, photo],
     )
-  ).rows[0];
+  ).rows[0] : null;
   await ctx.db.query(sql("migrations/011_recuperacion_clave.sql"));
   await ctx.db.query(sql("migrations/012_notificaciones_push.sql"));
   await ctx.db.query(sql("migrations/013_seguimiento_incidencias.sql"));

@@ -19,7 +19,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
 
 (async()=>{
  assert.match(serial,/^emulator-\d+$/,'No operar teléfonos físicos');
- assert.match(android('emu','avd','name'),fcmRegistration?/^hm_fcm_pilot_api(?:33|34|35)\r?\n/:/^hm_110_debug_api35\r?\n/,'AVD dedicado obligatorio');
+ assert.match(android('emu','avd','name'),fcmRegistration?/^hm_fcm_pilot_api(?:33|34|35)\r?\n/:/^(?:hm_110_debug_api35|hm_quality_api35)\r?\n/,'AVD dedicado obligatorio');
  const output=fs.mkdtempSync(path.join(root,'artifacts/android-session-native-'));fs.chmodSync(output,0o700);
  const report={androidNative:true,checks:[],errors:[],applicationId:pkg};
  const ok=label=>{report.checks.push(label);fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(report,null,2));console.log('OK: '+label);};
@@ -87,6 +87,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
   report.stage='pantalla de login';await loginScreen();report.stage='enviar login';await page.locator('#suministro').fill(supply);await page.locator('#password').fill(password);await page.locator('#btn-login').click();report.stage='dashboard tras login';await dashboard(supply);
   // Omitir tutorial por su control real, sin hacer persistente ningún JWT de prueba.
   await until(()=>page.evaluate(()=>!document.getElementById('hb-fab').disabled||document.body.classList.contains('tutorial-open')),'carga inicial terminada antes del tutorial y de HidroBot');
+  await until(()=>page.evaluate(()=>localStorage.getItem('hm_tutorial_seen')==='1'||document.body.classList.contains('tutorial-open')),'preferencia previa o tutorial real disponible');
   if(await page.evaluate(()=>document.body.classList.contains('tutorial-open')))await page.locator('#spot-skip-mobile:visible, #spot-skip:visible').first().click();
   await until(()=>page.evaluate(()=>!document.body.classList.contains('tutorial-open')&&!document.getElementById('hb-fab').disabled),'tutorial cerrado y datos listos antes de navegar');
  }

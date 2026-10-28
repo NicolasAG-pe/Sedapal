@@ -42,9 +42,9 @@ async function fixture(t,admin=false,{holdReceipts=false}={}){
  return{page,calls,releaseReceipts,lose:()=>lose=true};
 }
 async function seed(period){return(await ctx.db.query("INSERT INTO recibos(id_suministro,periodo,fecha_emision,fecha_vencimiento,monto,consumo_m3,estado) VALUES($1,$2,CURRENT_DATE,CURRENT_DATE+7,78.90,15,'Pendiente') RETURNING id_recibo",[accounts[0].id_suministro,period])).rows[0].id_recibo;}
-async function openPayment(page){await page.evaluate(()=>document.querySelector('[data-sec="historial"]').click());await page.locator('#cards [data-act="pay"]').first().click();await page.waitForFunction(()=>!document.querySelector('input[value="yape_manual"]').disabled);}
+async function openPayment(page,period){await page.evaluate(()=>document.querySelector('[data-sec="historial"]').click());await page.locator('#cards .card').filter({hasText:period}).locator('[data-act="pay"]').click();await page.waitForFunction(()=>!document.querySelector('input[value="yape_manual"]').disabled);}
 test('Android Chromium: declaración Yape, respuesta perdida, mismo UUID y deuda conservada',async t=>{
- const id=await seed('Prueba Yape 2026'),f=await fixture(t);await openPayment(f.page);
+ const id=await seed('Prueba Yape 2026'),f=await fixture(t);await openPayment(f.page,'Prueba Yape 2026');
  await f.page.locator('input[value="yape_manual"]').check();await f.page.locator('#pay-reference').fill('UI-TEST-1234');
  await f.page.locator('#pay-proof').setInputFiles(process.env.YAPE_QR_FILE);f.lose();await f.page.locator('#pay-confirm').click();
  await f.page.waitForFunction(()=>document.getElementById('pay-feedback').textContent.includes('historial'));
@@ -69,8 +69,11 @@ test('Admin: motivo, revisión separada, historial y resultado visibles para el 
  assert.equal((await ctx.db.query("SELECT count(*)::int AS n FROM operaciones_pago WHERE referencia='UI-TEST-1234' AND revisado_por IS NOT NULL AND estado='verificada_manual'")).rows[0].n,1);
 });
 test('Demostración y logout: no factura deuda, no quedan referencia, imagen ni sesión',async t=>{
- await seed('Demostración 2026');const f=await fixture(t);await openPayment(f.page);await f.page.locator('#pay-confirm').click();await f.page.waitForFunction(()=>!document.getElementById('pay-success').hidden);
+ const id=await seed('Demostración 2026');const f=await fixture(t);await openPayment(f.page,'Demostración 2026');await f.page.locator('#pay-confirm').click();await f.page.waitForFunction(()=>!document.getElementById('pay-success').hidden);
  assert.match(await f.page.locator('#pay-success-text').textContent(),/Operación registrada/);
+ assert.equal((await ctx.db.query("SELECT count(*)::int n FROM operaciones_pago WHERE id_recibo=$1 AND estado='demostrativa'",[id])).rows[0].n,1);
+ assert.equal((await ctx.db.query('SELECT count(*)::int n FROM pagos WHERE id_recibo=$1',[id])).rows[0].n,0);
+ assert.equal((await ctx.db.query('SELECT estado FROM recibos WHERE id_recibo=$1',[id])).rows[0].estado,'Pendiente');
  await f.page.locator('#pay-done').click();await f.page.evaluate(()=>document.getElementById('btn-logout').click());
  await f.page.waitForFunction(()=>!document.getElementById('login-form').hidden);
  assert.equal(await f.page.locator('#pay-reference').inputValue(),'');assert.equal(await f.page.locator('#pay-yape-qr').getAttribute('src'),null);
