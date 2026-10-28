@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Validación de laboratorio y preparación física — incremento D
+
+- Candidata debug final en Android 15: 13 comprobaciones de sesión y seis de seguimiento, Keystore instrumental, JUnit 4/4 y lint sin errores (16 advertencias existentes).
+- Evidencias regeneradas en disco persistente: 63 pares comparativos y 153 capturas del recorrido completo; estados Admin con datos/vacío/carga/error/recuperación, 300 pruebas aprobadas y una omisión condicional.
+- AVD anterior conservado tras rechazo por firma debug temporal perdida; la prueba final usó otra instancia sin la aplicación instalada. APK oficiales y firma permanente intactas.
+- Backend, emulador y PostgreSQL de laboratorio detenidos conservando datos; sin FCM/correos/cobros reales ni cambios productivos. Informe `docs/pruebas/validacion-final-120.md`.
+- Teléfono físico, TalkBack, Android 13/14, carga grande y validación de despliegue siguen pendientes. La APK de emulador necesita preparar destino privado/modalidad de instalación antes de su uso físico; no publicación 1.2.0.
+
 ## Resumen operativo 1.2.0 — incremento C
 
 - Admin muestra los siete estados existentes de incidencias/atención y distingue importes históricos sin atribuir acreditación bancaria; mismo contrato y una consulta por navegación.

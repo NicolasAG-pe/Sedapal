@@ -4,6 +4,12 @@ Esta guía usa pantallas y contratos auténticos con datos sintéticos. No publi
 una demo, no habilita pagos y no acredita validación en teléfono físico.
 Base integrada y límites: [auditoría A](pruebas/auditoria-calidad-ux-120.md).
 
+Galería actual regenerada tras reinicio: en el worktree persistente
+`~/.local/share/hidromejora/quality-120/worktree/`, abrir localmente
+`artifacts/auditoria-calidad-120/comparacion-actual.html`. Contiene 63 pares reales;
+las carpetas de estados Admin y E2E complementan el recorrido. El
+[cierre D](pruebas/validacion-final-120.md) identifica pruebas actuales y límites.
+
 ## Preparación
 
 Usar un worktree independiente de la rama de auditoría. Requiere Node 22,
