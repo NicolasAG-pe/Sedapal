@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Firebase FCM — único envío real autorizado en Android 15
+
+- Una sola llamada HTTP v1 con el código del PR #19 y OAuth dedicado de 15 minutos: Firebase respondió 200; Android mostró el aviso genérico en la bandeja y el toque real abrió Incidencias mediante REST autorizado.
+- Propietario con historial 200, otra cuenta válida con evento/historial 404 y petición anónima 401. Se corrigió una URL auxiliar del verificador sin modificar el producto ni repetir el envío.
+- Entrega/worker/recordatorios apagados al terminar, dispositivo revocado, token OAuth retirado y recursos locales detenidos conservando las evidencias. APK oficiales intactas.
+- Informe en `docs/pruebas/firebase-fcm-envio-unico-120.md`. No autoriza otro mensaje, merge, despliegue ni prueba física.
+
 ## Firebase FCM — preparación de piloto Android aislado
 
 - Compilación debug en worktree independiente con JSON privado validado y temporal; flag Firebase solo durante el build, sin cambiar dependencias, diseño ni APK oficiales.

@@ -5,6 +5,11 @@ y árbol original limpio. Rama `feature/firebase-fcm-piloto-120`, worktree separ
 El PR #17 es ancestro y su implementación se conserva. Sin merges ni cambios en
 las ramas anteriores.
 
+Este documento conserva los resultados de la preparación inicial. El único envío
+remoto autorizado posteriormente se documenta por separado en
+[`firebase-fcm-envio-unico-120.md`](firebase-fcm-envio-unico-120.md), sin ampliar su
+autorización a otros mensajes o escenarios.
+
 ## Resultado comprobado
 
 El JSON descargado coincide con el proyecto HidroMejora-Push-Dev y la app Android

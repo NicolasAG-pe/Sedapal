@@ -4,6 +4,11 @@ Preparación dependiente del PR #18. Reutiliza el plugin Capacitor 7, consentimi
 en Cuenta, almacenamiento Keystore, API de dispositivos, cola y adaptador HTTP v1
 del PR #17. El JSON Android y las credenciales no forman parte de Git.
 
+El primer envío único ya fue autorizado y comprobado en el AVD Android 15; véase
+[`pruebas/firebase-fcm-envio-unico-120.md`](pruebas/firebase-fcm-envio-unico-120.md).
+El procedimiento siguiente no autoriza repetirlo: cualquier mensaje nuevo requiere
+una autorización nueva del propietario.
+
 ## Compilación y configuración privada
 
 Mantener una copia de `google-services.json` fuera del repositorio, archivo 600 y
