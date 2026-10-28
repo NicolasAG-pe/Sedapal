@@ -14,7 +14,7 @@
 | Respaldo Neon | Custom consistente, conexión directa/TLS verify-full,13 tablas,435941 bytes; sin escrituras productivas |
 | Restauración | Hashes de filas, columnas y secuencias iguales en contenedor sin red ni puertos |
 | Ensayo migraciones | 007–013 dos veces en otra base local; datos previos conservados |
-| Ruta productiva sin009/010 | **BLOQUEADA:** falta piloto_ensayo/recibido_en/monto_recibido en consulta normal; reproducido en tercera copia aislada, no en Neon |
+| Ruta productiva sin009/010 | Bloqueo histórico reproducido en1350258; corregido después por014 y validado en otra restauración. Ver informe de compatibilidad |
 | Docker runtime | COPY corregido para8 módulos ausentes; imagen local construida y smoke sin red aprobado1/1 |
 | Automatizaciones | Ambas raíces excluyen rama; Render autoDeploy/previews off; no workflow/hook nuevo |
 
@@ -52,8 +52,9 @@ Draft PR #23 hacia main; integración técnica `a87ef1a` con padres `aba629f` y
 `772e5e6`. Los PR originales no se fusionaron ni cambiaron de Draft. Ninguna
 función LAB del #22 está incorporada. Main sigue en `aba629f`.
 
-La publicación queda bloqueada por la ruta de migración productiva incompleta,
-además de las condiciones de revisión pendientes. La protección externa contra
+El bloqueo de pagos de esta preparación inicial quedó resuelto posteriormente
+por014, sin009/010. [Corrección y validación](compatibilidad-pagos-produccion-120.md).
+La publicación sigue sujeta a revisión del PR y autorizaciones pendientes. La protección externa contra
 downgrade no se ha instalado y la inscripción MFA permanece cerrada. No se
 publicó tag/release/APK oficial1.2.0 ni se ejecutaron despliegues o migraciones
 productivas. Las referencias de Render/Vercel y versiones previas se conservan;

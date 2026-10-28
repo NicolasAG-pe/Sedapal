@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## Compatibilidad productiva de pagos1.2.0 — PR23 para revisión
+
+- Nueva014 aditiva: seis metadatos de compatibilidad obligatoriamenteNULL y entorno simulado; sin tabla de piloto, sin009/010 ni cambios en consultas, historial, recibos o Admin. Rechaza la ruta de laboratorio y conserva restricciones de008.
+- Ruta007,008,011,012,013,014 verificada dos veces en una nueva restauración aislada.20 regresiones de pagos/migración/piloto,5 grupos REST y4 grupos cliente/Admin aprobados; datos previos conservados y ninguna acreditación de deuda.
+- APK firmada/Android, Kubernetes21, cadena anterior, laboratorio y respaldos intactos. Sin nuevas compilaciones/emuladores, migraciones Neon, merges, despliegues o release; pendientes revisión y autorizaciones.
+
 ## Preparación oficial 1.2.0 — aún sin publicar
 
 - Integración técnica de #12–#20 sobre main con #21 conservado; OTP equivalente sin duplicar y #22 excluido. Drafts y revisiones originales siguen abiertos.

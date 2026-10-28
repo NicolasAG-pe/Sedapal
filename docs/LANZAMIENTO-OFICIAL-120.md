@@ -1,6 +1,6 @@
 # Preparación del lanzamiento oficial 1.2.0
 
-**Estado: candidato firmado local, no publicado ni desplegado.**
+**Estado: candidato firmado local, compatibilidad de pagos corregida y probada; pendiente de revisión, no publicado ni desplegado.**
 Rama `preparation/lanzamiento-oficial-120`, independiente y persistente.
 Main de partida `aba629f` (PR #21); cadena integrada hasta PR #20 `772e5e6`.
 Los PR #12–#20 siguen Draft: esta integración técnica no aprueba sus condiciones
@@ -86,7 +86,7 @@ consulta de secuencias a texto en ambos lectores, sin omitirlas ni cambiar datos
 Un respaldo es de un instante: antes de la ventana final se requiere otro respaldo
 fresco y verificado, o reconciliar explícitamente las escrituras posteriores.
 
-## Bloqueo reproducido: ruta de migración productiva
+## Hallazgo de pagos y corrección productiva014
 
 No basta con dejar YAPE_PILOT_ENABLED=0. En una tercera base local restaurada se
 aplicaron únicamente 007,008,011,012,013, excluyendo las dos de laboratorio.
@@ -103,14 +103,17 @@ cuando sus valores son NULL. Por tanto, la ruta productiva quedaría incompleta.
 El ensayo con las siete migraciones era válido para laboratorio y no probaba
 la ruta productiva que excluye009/010; ambas evidencias quedan diferenciadas.
 
-**Acción crítica pendiente:** diseñar y revisar una migración de compatibilidad
-productiva y/o separar las consultas de laboratorio. Debe preservar el contrato,
-demostraciones e historial existentes, conservar cerrados los cobros reales y
-no crear/habilitar control_piloto_yape en Neon. Cualquier columnas de
-compatibilidad deben tener semántica/constraints de producción revisados; no
-copiar009/010, relajar sus guardas ni ejecutar init.sql. Después, ensayar la ruta
-productiva exacta en otra copia y comprobar cliente/Admin/pagos con flags cerrados.
-No se implementó una solución de esquema improvisada para forzar el lanzamiento.
+**Corrección preparada y verificada:**014 añade los seis metadatos que espera
+el backend y los obliga a NULL mediante CHECK, manteniendo entorno simulado.
+No crea control de pilotos ni habilita009/010; rechaza esquemas de laboratorio.
+Se conservan las consultas/contratos y todas las restricciones de008.
+
+La ruta007,008,011,012,013,014 pasó dos aplicaciones de cada migración en una
+restauración nueva;20 regresiones,5 grupos REST y4 grupos UI aprobados. El cotejo
+posterior conserva filas previas, históricos y deuda; ningún pago acreditado por
+demostración. [Diseño, pruebas y aprobaciones pendientes](pruebas/compatibilidad-pagos-produccion-120.md).
+El bloqueo SQL queda resuelto localmente;014 sigue pendiente de revisión y de
+aplicación productiva autorizada. La APK ya firmada se reutiliza sin reconstruir.
 
 ## Secuencia coordinada pendiente
 
@@ -120,11 +123,11 @@ No se implementó una solución de esquema improvisada para forzar el lanzamient
    Mantener autodeploy/previews apagados y excluir esta rama en ambas raíces.
 3. Registrar ventana, criterio de parada y copia reciente del estado/configuración;
    actualizar el respaldo verificado antes de la migración efectiva.
-4. **Tras resolver el bloqueo de compatibilidad de pagos**, aplicar las
+4. **Tras aprobar014 y su ventana de migración**, aplicar las
    migraciones revisadas, en orden y con lock/statement timeout,
    exclusivamente al destino verificado. Evitar tráfico durante incompatibilidades
-   y comprobar todas las instancias. 009/010 son de laboratorio: revisar su necesidad
-   y política antes de cualquier aplicación productiva, aunque el ensayo sea correcto.
+   y comprobar todas las instancias. Ruta exacta007,008,011,012,013,014.
+   **009/010 son de laboratorio y se excluyen de Neon.**
 5. Desplegar en Render el commit/digest exacto, no «latest». Mantener MFA/push/
    recuperación/pagos reales cerrados. Render actual tiene una instancia, plan
    free, autodeploy off y previews off: no crear servicios ni usar pre-deploy de pago.
