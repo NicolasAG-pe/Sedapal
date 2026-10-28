@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## Revisión y ventana oficial1.2.0 — aún sin aprobar/publicar
+
+- PR23 preparado para revisión independiente; alcance cerrado de inscripción2FA, cobros/manual, Yape, FCM y recuperación. Se conserva la exigencia de factores ya activos; el backend antiguo se excluye de recuperación y el control externo sigue pendiente antes de activar2FA.
+- Respaldo fresco Neon de solo lectura y restauración nueva cotejados:13 tablas y cero MFA activos. Firma/metadatos/hash de la APK existente verificados sin recompilar; pruebas anteriores reutilizadas y acta física específica pendiente de referencia.
+- Ventana condicionada documentada: ruta007,008,011,012,013,014 sin009/010, pausa de escritores por resolver, Render por SHA, Admin Vercel sin promoción automática y recuperación compatible. Kubernetes21 íntegro,22 excluido y datos/laboratorio conservados; sin merge, DDL productivo, despliegue ni release.
+
 ## Compatibilidad productiva de pagos1.2.0 — PR23 para revisión
 
 - Nueva014 aditiva: seis metadatos de compatibilidad obligatoriamenteNULL y entorno simulado; sin tabla de piloto, sin009/010 ni cambios en consultas, historial, recibos o Admin. Rechaza la ruta de laboratorio y conserva restricciones de008.

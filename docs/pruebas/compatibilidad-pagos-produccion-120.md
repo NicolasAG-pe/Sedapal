@@ -107,9 +107,10 @@ que estaba detenido antes; no borrar contenedores, bases, volúmenes ni evidenci
 
 1. Revisión del SQL014, sus seis metadatos NULL, CHECK, ruta exacta y pruebas;
    aceptar el SHA final del PR23 y la integración #12–#20 conservando#21.
-2. Registrar revisiones/actas externas de las condiciones originales. GitHub
-   mantiene los PR12–20 y23 abiertos en Draft, sin reviews formales ni comentarios
-   inline al comprobarlos; esto no equivale a aprobación tácita.
+2. Registrar revisiones/actas externas de las condiciones originales. Al cerrar
+   esta corrección6010e6d, PR12–20 y23 seguían Draft sin reviews formales ni
+   comentarios inline; no equivale a aprobación tácita. La preparación posterior
+   de23 para revisión se documenta en la [ventana](../VENTANA-LANZAMIENTO-120.md).
 3. El riesgo de downgrade2FA **no cambia**. No está impuesto el control externo:
    inscripción cliente/Admin cerrada. Aprobar explícitamente ese alcance
    desactivado; para activar2FA después, imponer controles de deploy/rollback,
@@ -118,7 +119,8 @@ que estaba detenido antes; no borrar contenedores, bases, volúmenes ni evidenci
    parada/recuperación compatible, aplicar solo la ruta aprobada y validar los
    servicios efectivos. El respaldo del ensayo no cubre escrituras posteriores.
 5. Autorizar posteriormente merge, despliegues coordinados y release del SHA
-   aprobado. Este encargo los prohíbe; no se ejecutaron ni se marcaron Draft Ready.
+   aprobado. No se ejecutaron en6010e6d. Preparar23 para revisión en el avance
+   posterior no aprueba producción ni cambia el estado de los Draft12–20.
 
 **014 no se aplicó en Neon.** No hay merge, despliegue, tag/release ni APK pública
 1.2.0 nueva. Cobros/FCM/correos reales desactivados en las pruebas. El bloqueo

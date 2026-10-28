@@ -23,7 +23,8 @@ como si fueran evidencia nueva. Se solicitó la referencia de aprobaciones físi
 externas porque los informes versionados todavía las marcan pendientes; no se
 inventa su resultado. El ensayo nuevo de upgrade es de emulador, no físico.
 
-No se convirtió ningún PR Draft en Ready/merged. Las reviews formales #12–#20
+Durante la preparación inicial no se convirtió ningún PR Draft en Ready/merged.
+Las reviews formales #12–#20
 siguen vacías; hay condiciones de seguridad/operación que deben cerrarse. La
 inscripción MFA queda deshabilitada: cero factores productivos activos observados
 no equivale a disponer de un control obligatorio de downgrade remoto.
@@ -48,7 +49,7 @@ con datos productivos/secretos no se incluyen en Git ni en artefactos públicos.
 
 ## Cierre de esta preparación
 
-Draft PR #23 hacia main; integración técnica `a87ef1a` con padres `aba629f` y
+Se abrió Draft PR #23 hacia main; integración técnica `a87ef1a` con padres `aba629f` y
 `772e5e6`. Los PR originales no se fusionaron ni cambiaron de Draft. Ninguna
 función LAB del #22 está incorporada. Main sigue en `aba629f`.
 
@@ -59,3 +60,30 @@ downgrade no se ha instalado y la inscripción MFA permanece cerrada. No se
 publicó tag/release/APK oficial1.2.0 ni se ejecutaron despliegues o migraciones
 productivas. Las referencias de Render/Vercel y versiones previas se conservan;
 las operaciones reales siguen apagadas.
+
+## Preparación para revisión independiente —28/10/2026
+
+Continuación de6010e6d, exclusivamente documental. Se reutilizan20 regresiones,
+5 grupos REST,4 UI y pruebas Android anteriores; no se atribuyen ejecuciones nuevas.
+
+- Nuevo respaldo Neon20:25:41Z, consistente/READ ONLY/TLS verify-full,435941 bytes.
+  Restore20:27:50Z en base nueva aislada:13 tablas, hashes de filas, columnas y
+  secuencias iguales; cero MFA activos. Producción sin DDL/escrituras; PG detenido
+  después y todas las copias anteriores conservadas.
+- Revalidación de la APK existente: apksigner correcto, certificado igual al pin
+  permanente, aapt1.2.0/código6/paquete oficial y SHA-256 idéntico. Sin reconstruir
+  ni abrir emuladores. La prueba física requiere referenciar el acta existente del
+  mismo hash; no consta aquí, ni se declara aprobada por el ensayo AVD.
+- Todo `k8s/` y el informe Kubernetes21 idénticos a mainaba629f. Cabezas12–20 son
+  ancestros;22 no lo es y faltan sus archivos exclusivos. OTP no se reaplica.
+- Render mismo deploy live, autodeploy/previews off. Admin estable mismo alias/ID,
+  API_BASE_URL HTTPS coincide y CORS contiene su origen. Vercel cero deployments
+  de esta rama antes de publicar. Sin workflows/hooks/rulesets ni protección de
+  main; checks/reviews de23 vacíos al inicio. No equiparar CLEAN con aprobación.
+- Revisor independiente disponible con permiso write:saul123bidfo. Solo23 se
+  prepara para Ready por solicitud del propietario;12–20 permanecen Draft.
+- Espacio libre aproximado2.4GiB/97% usado antes de los cambios; sin limpiezas.
+
+[Ventana propuesta y gates exactos](../VENTANA-LANZAMIENTO-120.md). El bloqueo SQL
+está resuelto; faltan revisión/actas, recuperación operativa y autorización de la
+ventana. No hay merge, despliegue, migración Neon ni release en este avance.

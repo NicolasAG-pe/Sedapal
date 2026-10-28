@@ -1,6 +1,6 @@
 # Preparación del lanzamiento oficial 1.2.0
 
-**Estado: candidato firmado local, compatibilidad de pagos corregida y probada; pendiente de revisión, no publicado ni desplegado.**
+**Estado: candidato firmado local, compatibilidad de pagos corregida y probada; preparado para revisión independiente, no aprobado ni publicado/desplegado.**
 Rama `preparation/lanzamiento-oficial-120`, independiente y persistente.
 Main de partida `aba629f` (PR #21); cadena integrada hasta PR #20 `772e5e6`.
 Los PR #12–#20 siguen Draft: esta integración técnica no aprueba sus condiciones
@@ -19,10 +19,14 @@ push y seguimiento; se añaden a COPY y se verifica la imagen sin red/puertos.
 Android solo cambia a 1.2.0/código6 y habilita instrumentación opt-in de upgrade.
 No se reconstruyen módulos ni se repiten las auditorías visuales/físicas.
 
-GitHub no registra reviews ni comentarios inline de revisión en #12–#20. Se
-solicitó la referencia de actas/aprobaciones externas para reutilizarlas; no se
-inventan aprobaciones ni se convierte ningún Draft en Ready. El historial local
-mantiene las comprobaciones anteriores y las nuevas específicas de lanzamiento.
+La comprobación del 28 de octubre mantiene #12–#20 abiertos en Draft, sin reviews
+formales; todas sus cabezas son ancestros del candidato. Se reutilizan las pruebas
+y se necesitan las actas externas para reconocer aprobaciones no registradas.
+Por indicación del propietario, solo #23 se prepara para Ready y solicitud de
+revisión a `saul123bidfo`, colaborador con permiso write. La solicitud y su resultado
+se verifican en GitHub; solicitar revisión no equivale a obtener APPROVED.
+Main no tiene protección/rulesets y el PR no tiene checks CI: MERGEABLE/CLEAN no
+certifica revisión ni seguridad. No se alteran permisos o protecciones remotas.
 
 ## Funciones cerradas y downgrade
 
@@ -52,9 +56,12 @@ factores: revisar y hacer obligatorio el control de commits/digests, todos los
 caminos manuales, credenciales, lectores de claves y recuperación. Ver
 [análisis existente](seguridad-despliegue-2fa.md).
 
-Los factores ya activos nunca deben eludirse por apagar inscripción; actualmente
-la inspección productiva encontró cero. Si cambia esa condición, detener el plan
-y revisar de nuevo las claves/lectores y la elegibilidad de recuperación.
+Los factores ya activos nunca deben eludirse por apagar inscripción: el candidato
+mantiene desafío, versión y validación del factor; la falta de clave falla cerrada,
+sin sesión por contraseña sola. La inspección productiva fresca encontró cero.
+Si cambia esa condición, detener el plan y revisar claves/lectores y recuperación.
+No entregar tráfico ni credenciales a un backend antiguo que omita factores;
+el backend anterior queda fuera de los candidatos de recuperación permitidos.
 La función de recuperación también sigue cerrada mientras faltan sus condiciones
 de producción; no se activan workers ni se generan claves nuevas por defecto.
 El OTP productivo existente y su worker no se modificaron ni enviaron canarios.
@@ -86,6 +93,15 @@ consulta de secuencias a texto en ambos lectores, sin omitirlas ni cambiar datos
 Un respaldo es de un instante: antes de la ventana final se requiere otro respaldo
 fresco y verificado, o reconciliar explícitamente las escrituras posteriores.
 
+**Actualización 2026-10-28:** respaldo nuevo terminado a las20:25:41Z y restauración
+verificada a las20:27:50Z:13 tablas,435941 bytes, hashes de filas/columnas/secuencias
+coincidentes y cero factores activos. Archivo privado conservado en
+`/home/nico/.local/share/hidromejora/release-120/private/review-window-20261028T202523Z/production-backup-NfNEOZ/production.dump`.
+Solo lectura en Neon; restauración en otra base nueva sin red, sin tocar copias
+anteriores. El contenedor se devolvió a detenido y se conserva su volumen.
+Esto no congela las escrituras productivas posteriores ni valida owner/ACL de
+una futura restauración productiva. Ver [ventana y condiciones](VENTANA-LANZAMIENTO-120.md).
+
 ## Hallazgo de pagos y corrección productiva014
 
 No basta con dejar YAPE_PILOT_ENABLED=0. En una tercera base local restaurada se
@@ -116,6 +132,10 @@ El bloqueo SQL queda resuelto localmente;014 sigue pendiente de revisión y de
 aplicación productiva autorizada. La APK ya firmada se reutiliza sin reconstruir.
 
 ## Secuencia coordinada pendiente
+
+El [procedimiento de ventana](VENTANA-LANZAMIENTO-120.md) concreta las acciones y
+sus puntos de parada. Es una propuesta condicionada a revisión y autorización;
+no un plan aprobado ni una orden de ejecutar producción.
 
 1. Cerrar las condiciones de revisión de los Draft y registrar actas externas,
    alcance realmente aprobado y commit exacto. No fusionar Draft para adelantar.
@@ -172,6 +192,14 @@ esquema compatible; no usar downgrade ni desinstalación para volver atrás.
   dos fases instrumentales con el mismo certificado permanente.
 - FCM nativo desactivado y sin SDK JSON. La candidata no es el APK LAB del #22.
 - No se instaló en teléfonos ni se modificó una APK anterior.
+
+El28 de octubre se comprobaron otra vez hash, firma con apksigner y metadatos
+con aapt, sin Gradle ni emulador. Las pruebas anteriores de upgrade se reutilizan.
+Para cerrar la puerta física, adjuntar el acta ya aprobada que identifique esta
+APK por hash, modelo/Android y versión oficial anterior instalada; no repetir
+la auditoría. Si esa evidencia no cubre la candidata, sigue pendiente demostrar
+actualización física sin desinstalar, conservación de datos y conexión/sesión
+contra el destino autorizado. Un ensayo de emulador no acredita ese resultado.
 
 Resultados específicos: [informe](pruebas/preparacion-release-120.md).
 Referencias: [Neon pg_dump](https://neon.com/docs/manage/backup-pg-dump),
