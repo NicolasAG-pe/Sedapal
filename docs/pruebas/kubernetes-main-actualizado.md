@@ -110,6 +110,7 @@ negocio, backend, Frontend, Admin, Compose ni `init.sql`.
 | Suite | Resultado |
 | --- | --- |
 | `k8s/avance19/start.sh` (reutilización) | 4 Deployments Ready, PVC Bound, sin reinicios por el apply |
+| `k8s/avance19/start.sh` (nodo detenido y reinicio) | Mensaje claro con el nodo parado; tras `docker start`, espera Ready y recupera sin perder PVC |
 | `k8s/avance19/verify.cjs` | 14/14 |
 | `k8s/avance19/browser.cjs` | 4/4 con Chromium 1.64.1 |
 | `k8s/avance19/persistence.cjs` | OK, Pod DB recreado y datos conservados |
@@ -146,7 +147,28 @@ repitieron en esta sesión.
 - `k8s/local/README.md` se marcó como guía histórica; el flujo mantenido es
   `avance19`.
 - `start.sh` ya explicaba las imágenes faltantes; se mantiene y se probó de nuevo.
+- Al arrancar el nodo y ejecutar `kubectl wait` de inmediato, el API server
+  devolvió `Forbidden` de forma transitoria. `start.sh` ahora detecta un nodo
+  detenido con un mensaje claro y reintenta la comprobación de Ready hasta 60 s;
+  la recuperación inmediata pasó sin intervención manual.
 - El nodo kind detenido por memoria se recuperó sin borrar PVC ni datos.
+
+### Verificación desde un clon independiente
+
+Se clonó la rama del PR en un directorio nuevo, sin `.local/` ni `artifacts/`
+provenientes del checkout de desarrollo. Solo se copiaron el kubeconfig y las
+cuentas sintéticas de la misma PC, que son estado privado esperado. Desde ese
+clon:
+
+- `start.sh` renderizó y reutilizó el clúster y las imágenes del host.
+- `verify.cjs` pasó 14/14 y `browser.cjs` 4/4.
+- Se detuvo el nodo, `start.sh` avisó correctamente; tras `docker start`
+  recuperó el nodo, aplicó sin cambios y `verify.cjs` volvió a pasar 14/14.
+- `persistence.cjs` recreó el Pod DB y conservó datos y login.
+
+No se probó la creación de un clúster nuevo en otra PC ni la descarga desde
+cero; esa parte depende de las herramientas y la red del compañero y queda
+cubierta por la guía de requisitos, no por esta ejecución.
 
 ### Dictamen
 

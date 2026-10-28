@@ -55,7 +55,9 @@ bash k8s/avance19/start.sh
 node k8s/avance19/verify.cjs
 ```
 
-El nodo kind no arranca solo. La guía detalla cómo esperar a que esté Ready,
+El nodo kind no arranca solo. `start.sh` comprueba que el contenedor esté en
+marcha, espera hasta 60 s a que Kubernetes marque el nodo Ready y, si está
+detenido, indica cómo arrancarlo sin borrar datos. La guía detalla cómo
 diagnosticar Pods transitorios y por qué no hay que eliminar el clúster para
 liberar memoria.
 

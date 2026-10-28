@@ -230,12 +230,16 @@ bash k8s/avance19/start.sh   # reutiliza sin reiniciar si no hay cambios
 ```
 
 No borrar el clúster para liberar memoria: el PVC y las cuentas viven en su
-volumen. Durante el arranque los Pods pueden mostrar `Error` o reinicios
-transitorios y la API puede fallar readiness hasta recuperar PostgreSQL. Si el
-estado final no es cuatro Deployments disponibles, revisar `kubectl get events`
-y la memoria disponible antes de repetir. En esta PC el nodo apareció como
-`Exited 137` (coincide con falta de memoria) y se recuperó al arrancarlo sin
-Compose activo.
+volumen. `start.sh` comprueba que el nodo no esté detenido y espera hasta 60 s a
+que Kubernetes lo marque Ready antes de aplicar; si el contenedor está parado,
+falla con un mensaje que indica `docker start`. Durante el arranque los Pods
+pueden mostrar `Error` o reinicios transitorios y la API puede fallar readiness
+hasta recuperar PostgreSQL. Si el estado final no es cuatro Deployments
+disponibles, revisar `kubectl get events` y la memoria disponible antes de
+repetir. En esta PC el nodo apareció como `Exited 137` (coincide con falta de
+memoria) y se recuperó al arrancarlo sin Compose activo. Un `kubectl wait`
+inmediato justo después de `docker start` puede devolver `Forbidden` de forma
+transitoria mientras arranca el API server; el bucle de `start.sh` lo absorbe.
 
 ## Publicación posterior
 

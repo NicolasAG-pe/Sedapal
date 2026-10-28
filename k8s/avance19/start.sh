@@ -20,10 +20,29 @@ if ((${#missing_images[@]})); then
   echo '  docker pull postgres:18' >&2
   exit 1
 fi
+if docker inspect hidro-avance19-control-plane >/dev/null 2>&1 && \
+   [[ "$(docker inspect -f '{{.State.Running}}' hidro-avance19-control-plane)" != "true" ]]; then
+  echo 'El nodo hidro-avance19-control-plane está detenido. Arrancarlo sin borrar datos:' >&2
+  echo '  docker start hidro-avance19-control-plane' >&2
+  echo 'Después repetir este script.' >&2
+  exit 1
+fi
 if ! "$kind_bin" get clusters | grep -qx hidro-avance19; then
   "$kind_bin" create cluster --name hidro-avance19 --config k8s/avance19/kind.yaml --kubeconfig "$KUBECONFIG" --retain --wait 180s
 fi
 [[ -s "$KUBECONFIG" ]] || { echo 'No existe kubeconfig privado del avance19; revisar manualmente, sin usar otro contexto.' >&2; exit 1; }
+# El API server puede tardar en autorizar lecturas justo después de arrancar el nodo.
+node_ready=""
+for _ in $(seq 1 30); do
+  if "$kubectl_bin" --kubeconfig "$KUBECONFIG" --context kind-hidro-avance19 \
+      get node hidro-avance19-control-plane -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' \
+      2>/dev/null | grep -qx True; then
+    node_ready=1
+    break
+  fi
+  sleep 2
+done
+[[ -n "$node_ready" ]] || { echo 'El nodo hidro-avance19 no está Ready; revisar Docker y kubectl get nodes.' >&2; exit 1; }
 # Docker/containerd puede guardar solo la plataforma local de un índice multiarch.
 # Si kind exige blobs ausentes de otras plataformas, importar solo la disponible.
 for image in hidro-avance18-web:local hidro-avance18-admin:local hidro-avance18-backend:local postgres:18; do

@@ -11,6 +11,8 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
   secretos, bases ni puertos.
 - Guía principal reescrita para `main`: inicio rápido, detención sin borrar el
   clúster, recuperación tras reinicio u OOM y verificación antes de publicar.
+- `start.sh` detecta el nodo detenido con un mensaje claro y espera hasta 60 s a
+  que Kubernetes esté Ready, inclusive justo después de `docker start`.
 - `k8s/local` se conserva como guía histórica del clúster del compañero;
   `k8s/avance19` es el flujo mantenido.
 - `browser.cjs` explica cómo instalar Playwright si no está disponible.
