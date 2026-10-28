@@ -1,5 +1,9 @@
 # Pulido medido de cliente — incremento B
 
+Nota posterior: las primeras capturas temporales se perdieron tras un reinicio.
+La referencia anterior se recompiló desde Git y se regeneraron capturas reales
+en el worktree persistente; ver [incremento C](reportes-operacion-120.md).
+
 Sobre el incremento A (`50f53cc`), sin reconstruir pantallas, cambiar logo,
 paleta, dependencias, contratos, documentos ni funciones de negocio.
 

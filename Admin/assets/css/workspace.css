@@ -50,6 +50,8 @@
 .admin-overview .mod-stat:nth-child(3) strong,.admin-overview .mod-stat:nth-child(3) small,.admin-overview .mod-stat:nth-child(3) .kpi-note,.admin-overview .mod-stat:nth-child(3) .hm-icon{color:var(--white)}
 .admin-insight:nth-child(even){background:var(--white)}
 .admin-insight h3{padding:12px;background:var(--water-foam);border-radius:10px}
+.operational-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.operational-group{min-width:0}.operational-group h4{color:var(--primary);font-size:.9rem;margin:0 0 8px}.operational-group .summary-line{gap:12px}
+@media(max-width:640px){.operational-groups{grid-template-columns:1fr}}
 .quick-card:nth-child(even){background:var(--sky-soft)}
 .toolbar,.payment-filters{background:var(--water-foam);border:1px solid var(--border);border-radius:14px;padding:14px}
 .payment-tabs button{background:var(--sky-soft);color:var(--primary)}

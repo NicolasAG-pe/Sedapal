@@ -523,7 +523,7 @@
       const atePend = d.solicitudes ? (Number(d.solicitudes.registradas || 0) + Number(d.solicitudes.atencion || 0)) : 0;
       document.getElementById('adm-dash-ate').textContent = atePend;
       document.getElementById('adm-dash-user-total').textContent=d.usuarios.total+' cuentas registradas';
-      document.getElementById('adm-dash-payment-total').textContent=fmt(d.pagos.monto_total)+' acumulados';
+      document.getElementById('adm-dash-payment-total').textContent=fmt(d.pagos.monto_total)+' registrados · '+d.pagos.hoy+' hoy';
       document.getElementById('adm-dash-cut-next').textContent=d.cortes.programados+' programados';
       const bar=document.getElementById('admin-receipt-bar');bar.replaceChildren();
       const breakdown=document.getElementById('admin-receipt-breakdown');breakdown.replaceChildren();
@@ -532,8 +532,14 @@
         const line=nodo('div','summary-line');line.append(nodo('span','',label),nodo('b','',count));breakdown.append(line);
       });
       const operation=document.getElementById('admin-operational-breakdown');operation.replaceChildren();
-      [['Incidencias resueltas',d.incidencias.resueltas],['Solicitudes respondidas',d.solicitudes.respondidas],['Pagos registrados hoy',d.pagos.hoy],['Cortes programados',d.cortes.programados]].forEach(([label,count])=>{
-        const line=nodo('div','summary-line');line.append(nodo('span','',label),nodo('b','',count));operation.append(line);
+      [['admin-incident-breakdown','Incidencias',d.incidencias,[['registradas','Registradas'],['revision','En revisión'],['resueltas','Resueltas']]],
+       ['admin-attention-breakdown','Atención',d.solicitudes,[['registradas','Registradas'],['atencion','En atención'],['respondidas','Respondidas'],['cerradas','Cerradas']]]].forEach(([id,title,data,fields])=>{
+        const group=nodo('section','operational-group');group.id=id;group.setAttribute('aria-label','Estados de '+title.toLowerCase());group.append(nodo('h4','',title));
+        if(data.total===0){group.append(nodo('p','hint',title==='Incidencias'?'Sin incidencias registradas.':'Sin solicitudes registradas.'));}
+        else fields.forEach(([key,label])=>{
+          const line=nodo('div','summary-line');line.dataset.stat=key;line.append(nodo('span','',label),nodo('b','',data[key]));group.append(line);
+        });
+        operation.append(group);
       });
     }catch(err){
       if(esAbortado(err) || !esAdmin()) return;

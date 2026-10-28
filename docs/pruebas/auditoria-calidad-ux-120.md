@@ -1,6 +1,10 @@
 # Auditoría integral 1.2.0 — incremento A
 
 Estado: auditoría en laboratorio; **no publicación ni aprobación física**.
+
+Nota posterior: un reinicio eliminó el directorio temporal de esta primera
+corrida. Sus conteos son históricos; las evidencias y verificaciones regeneradas
+en disco persistente se describen en [incremento C](reportes-operacion-120.md).
 Base verificada: PR #19, `b13ebb04a64ee546fa4276d1f1fd42fed0f1d288`.
 Worktree independiente, rama `feature/auditoria-calidad-ux-120`.
 

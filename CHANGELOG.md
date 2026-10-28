@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Resumen operativo 1.2.0 — incremento C
+
+- Admin muestra los siete estados existentes de incidencias/atención y distingue importes históricos sin atribuir acreditación bancaria; mismo contrato y una consulta por navegación.
+- Estados con datos, vacío, carga, 503 y recuperación comprobados; una demostración no incrementa pagos financieros. Sin endpoints ni migraciones nuevas.
+- Worktree y evidencias recuperados en disco persistente tras reinicio; 300 pruebas aprobadas y una omisión condicional, recorrido cliente/Admin con matriz visual aprobado y selector de recibo de prueba corregido sin debilitar su aserción.
+- Informe `docs/pruebas/reportes-operacion-120.md`; paginación de listados heredados y carga grande quedan como incremento de contrato separado.
+
 ## Pulido UX 1.2.0 — incremento B
 
 - Accesos rápidos del teléfono en tres columnas: cinco acciones conservadas, etiquetas legibles sin partir palabras y botón de tutorial de 44 px.

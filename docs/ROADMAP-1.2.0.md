@@ -60,10 +60,11 @@ validación física siguen organizadas como incrementos independientes.
 ## Auditoría integral — incrementos A–D
 
 A inventaría y comprueba la base integrada, corrige verificadores obsoletos y
-conserva capturas reales de referencia. B resolverá defectos visuales/funcionales
-medidos con comparación antes/después. C tratará estadísticas y límites de
-listados; los cambios de contrato o esquema grandes tendrán una dependencia
-separada. D cerrará regresiones de la candidata y preparará la prueba física.
+conserva capturas reales de referencia. B corrigió legibilidad/tamaño táctil con
+comparación real antes/después. C completó estados operativos en Admin y aclaró
+importes históricos sin cambios de contrato. Los límites de listados/carga grande
+requieren otra dependencia medida. D cerrará regresiones de la candidata y
+preparará la prueba física; no equivale a una aprobación física ni de despliegue.
 
 Informe y prioridades: [auditoria-calidad-ux-120](pruebas/auditoria-calidad-ux-120.md).
 Demostración reproducible: [DEMO-LABORATORIO-120](DEMO-LABORATORIO-120.md).

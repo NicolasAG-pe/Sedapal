@@ -15,24 +15,37 @@ async function main() {
   Object.assign(process.env, { PUSH_REAL_DELIVERY_ALLOWED: '0', PUSH_WORKER_ENABLED: '0', PUSH_REMINDERS_ENABLED: '0', PASSWORD_RECOVERY_REAL_DELIVERY_ALLOWED: '0' });
   const phase = process.argv[2] || 'baseline';
   assert.ok(['baseline', 'after'].includes(phase));
+  const statistics = process.env.HIDRO_QUALITY_STATISTICS === '1';
+  const emptyStatistics = statistics && process.env.HIDRO_QUALITY_EMPTY === '1';
+  if (statistics) assert.equal(phase, 'after');
   const parent = path.join(root, 'artifacts/auditoria-calidad-120');
   fs.mkdirSync(parent, { recursive: true });
   const out = fs.mkdtempSync(path.join(parent, phase + '-'));
   fs.chmodSync(out, 0o700);
   const report = { phase, fixturesOnly: true, realDeliveryAllowed: false, screens: [], geometry: [], states: [], requests: [], errors: [], resources: [] };
-  const c = await require('../../Backend/test/incident-tracking-fixture.cjs').start();
+  const c = await require('../../Backend/test/incident-tracking-fixture.cjs').start({ includeLegacy: !emptyStatistics });
   let server, browser;
   try {
     const { client, other, admin } = c.accounts;
-    const incident = await c.create();
+    let incident, firstReceipt;
+    if (!emptyStatistics) {
+    incident = await c.create();
     assert.equal(incident.status, 201);
     assert.equal((await c.change(incident.data.incidencia.id_incidencia, 'En revisión', { comentario_publico: 'Inspección programada en el laboratorio.' })).status, 200);
     for (const [index, state] of ['Emitido', 'Vencido', 'Anulado'].entries()) {
       const r = await c.api('/api/admin/recibos', { numero_suministro: client.numero_suministro, periodo: ['Agosto', 'Septiembre', 'Octubre'][index] + ' 2026', fecha_emision: '2026-10-01', fecha_vencimiento: '2026-11-30', monto: 50 + index * 10, consumo_m3: 15 + index * 2 }, admin.token);
       assert.equal(r.status, 201);
+      if (index === 0) firstReceipt = r.data.recibo.id_recibo;
       await c.db.query('UPDATE recibos SET estado=$1 WHERE id_recibo=$2', [state, r.data.recibo.id_recibo]);
     }
     assert.equal((await c.api('/api/atencion', { categoria: 'Facturación', asunto: 'Consulta de laboratorio', descripcion: 'Consulta sintética para la demostración de atención.' })).status, 201);
+    }
+    if (statistics && !emptyStatistics) {
+      const demo = await c.api('/api/me/operaciones-pago', { id_recibo: firstReceipt, metodo: 'demostrativo', solicitud_id: require('node:crypto').randomUUID() });
+      assert.equal(demo.status, 201);
+      assert.equal((await c.db.query('SELECT count(*)::int n FROM pagos')).rows[0].n, 0);
+      report.states.push({ name: 'demonstration-without-funds', operations: 1, historicalPayments: 0 });
+    }
     const reference = process.env.HIDRO_QUALITY_REFERENCE;
     if (reference) {
       assert.equal(phase, 'baseline');
@@ -125,7 +138,7 @@ async function main() {
       await page.waitForFunction(() => !document.body.classList.contains('tutorial-open'));
       report.states.push({ name: 'client-login-ready', width: page.viewportSize().width, milliseconds: Date.now() - started });
     }
-    for (const [width, height] of [[360, 800], [390, 844], [412, 915], [768, 1024]]) {
+    for (const [width, height] of (emptyStatistics ? [] : [[360, 800], [390, 844], [412, 915], [768, 1024]])) {
       const { ctx, page } = await context(width, height);
       await page.goto(origin); await capture(page, 'client-login');
       report.states.push({ name: 'client-cold-load', width, ...await page.evaluate(() => { const n = performance.getEntriesByType('navigation')[0]; return { domContentLoadedMs: Math.round(n.domContentLoadedEventEnd), loadMs: Math.round(n.loadEventEnd), resourceBytes: performance.getEntriesByType('resource').reduce((a, r) => a + r.transferSize, 0) }; }) });
@@ -154,13 +167,52 @@ async function main() {
       await page.locator('#admin-supply').fill(admin.numero_suministro);
       await page.locator('#admin-password').fill(admin.password); await page.locator('#admin-login-submit').click();
       await page.waitForFunction(() => !document.getElementById('admin-panel').hidden);
+      if (statistics) {
+        await page.waitForFunction(() => document.getElementById('admin-connection').dataset.state === 'online');
+        // El handshake existente refresca por REST tras 150 ms para recuperar
+        // eventos previos. Separarlo de la navegación que se está midiendo.
+        await pause(250);
+        await page.waitForFunction(() => document.getElementById('admin-incident-breakdown') && !document.getElementById('sec-admin').hasAttribute('aria-busy'));
+      }
       for (const section of ['admin', 'admin-usuarios', 'admin-recibos', 'admin-pagos', 'admin-incidencias', 'admin-cortes', 'admin-atencion', 'admin-cuenta']) {
+        const beforeRequests = report.requests.length;
         await page.locator('#admin-nav [data-sec="' + section + '"]').click();
         await page.waitForFunction(s => { const e = document.getElementById('sec-' + s); return e.classList.contains('active') && !e.hasAttribute('aria-busy'); }, section);
         await capture(page, section);
+        if (statistics && section === 'admin') {
+          const summary = await c.api('/api/admin/resumen', undefined, admin.token, 'GET'); assert.equal(summary.status, 200);
+          assert.equal(await page.locator('#adm-dash-pay').textContent(), String(summary.data.pagos.total));
+          assert.equal(summary.data.pagos.total, 0, 'Una demostración no aumenta pagos históricos');
+          await page.getByText('Pagos históricos', { exact: true }).waitFor();
+          await page.getByText('Sin acreditación bancaria atribuida', { exact: true }).waitFor();
+          for (const [id, data, keys, emptyText] of [
+            ['admin-incident-breakdown', summary.data.incidencias, ['registradas', 'revision', 'resueltas'], 'Sin incidencias registradas.'],
+            ['admin-attention-breakdown', summary.data.solicitudes, ['registradas', 'atencion', 'respondidas', 'cerradas'], 'Sin solicitudes registradas.']
+          ]) {
+            if (emptyStatistics) { assert.equal(data.total, 0); assert.equal(await page.locator('#' + id + ' .hint').textContent(), emptyText); }
+            else for (const key of keys) assert.equal(await page.locator('#' + id + ' [data-stat="' + key + '"] b').textContent(), String(data[key]));
+          }
+          const reloadRequests = report.requests.slice(beforeRequests).filter(r => r.route === '/api/admin/resumen');
+          assert.equal(reloadRequests.length, 1, 'Una consulta de resumen por entrada');
+          report.states.push({ name: 'statistics-contract', width, empty: emptyStatistics, uiSummaryRequests: reloadRequests.length, financialFundsInferred: false });
+
+          let release; const gate = new Promise(resolve => { release = resolve; });
+          await page.route('**/api/admin/resumen', async route => { await gate; await route.fulfill({ status: 503, json: { estado: 'error', mensaje: 'No disponible temporalmente.' } }); }, { times: 1 });
+          await page.locator('#admin-nav [data-sec="admin"]').click();
+          await page.waitForFunction(() => document.getElementById('sec-admin').getAttribute('aria-busy') === 'true');
+          await capture(page, 'admin-summary-loading'); release();
+          await page.locator('#admin-operational-breakdown').getByText('No fue posible consultar esta información.', { exact: true }).waitFor();
+          assert.equal(await page.locator('#adm-dash-pay').textContent(), '—', 'El error no conserva una cifra anterior');
+          await capture(page, 'admin-summary-error');
+          await page.locator('#admin-nav [data-sec="admin"]').click();
+          await page.waitForFunction(() => !document.getElementById('sec-admin').hasAttribute('aria-busy'));
+          assert.equal(await page.locator('#adm-dash-pay').textContent(), '0');
+          report.states.push({ name: 'statistics-loading-error-recovery', width, result: 'passed' });
+        }
       }
       await page.locator('#admin-logout').click(); await ctx.close(); console.log('Admin ' + width + 'x' + height + ': capturas reales guardadas');
     }
+    if (!emptyStatistics) {
     const { ctx, page } = await context(360, 800);
     await page.goto(origin); await clientLogin(page, other);
     for (const section of ['inicio', 'historial', 'pagos', 'incidencias', 'notificaciones']) {
@@ -168,6 +220,7 @@ async function main() {
       await capture(page, 'empty-' + section);
     }
     await page.evaluate(() => document.getElementById('btn-logout').click()); await ctx.close();
+    }
     assert.deepEqual(report.errors, [], 'Errores JavaScript'); assert.deepEqual(report.resources, [], 'Recursos HTTP fallidos');
     report.result = 'captured';
     report.findings = report.geometry.filter(r => r.overflow > 1 || r.unlabelled.length || r.unnamedButtons.length || r.clippedControls.length || r.brokenImages);
