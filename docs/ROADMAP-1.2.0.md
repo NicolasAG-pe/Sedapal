@@ -7,6 +7,13 @@ del #11; no requiere fusionar de nuevo ese parche. La auditoría A continúa en
 `feature/auditoria-calidad-ux-120`, con base #19, sin merges a main.
 La versión 1.2.0 reunirá varias mejoras futuras; este roadmap no autoriza activarlas.
 
+La preparación física continúa desde el cierre A–D del PR #20 (`772e5e6`) en
+`feature/candidata-android-lab-120`: variante y firma LAB propias, USB loopback,
+PostgreSQL exclusivo y pruebas Android15. La preferencia del tutorial no se
+reprodujo tras seis cierres rápidos en este entorno, sin cambio especulativo.
+[Guía de candidata física](ANDROID-LABORATORIO-120.md). Instalación física,
+TalkBack/Android13–14, publicación y cualquier entrega real siguen pendientes.
+
 | Área | Avance comprobado | Próxima tarea y criterio de cierre |
 | --- | --- | --- |
 | 2FA TOTP | Usuario y Admin, secreto cifrado, recuperación de un uso, sesiones revocadas, pruebas aisladas/nativas del PR #12. | Control externo obligatorio contra despliegue/rollback de backend antiguo; recuperación de identidad y revocación distribuida antes de activar factores reales. 007 pendiente en producción. |

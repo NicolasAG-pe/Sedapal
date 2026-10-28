@@ -13,7 +13,8 @@
       "feature/notificaciones-push-120": false,
       "feature/seguimiento-incidencias-120": false,
       "feature/firebase-fcm-piloto-120": false,
-      "feature/auditoria-calidad-ux-120": false
+      "feature/auditoria-calidad-ux-120": false,
+      "feature/candidata-android-lab-120": false
     }
   }
 }

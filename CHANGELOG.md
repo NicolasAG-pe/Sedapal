@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Candidata Android LAB 1.2.0 — identidad y conexión privadas
+
+- Variante lab con applicationId propio, firma de desarrollo independiente, backup desactivado y franja de entorno sintético; no sustituye la APK oficial.
+- API/PG exclusivos de laboratorio por loopback y USB reverse; rol PostgreSQL de ejecución sin privilegios administrativos, sin proveedores ni entregas reales.
+- Compilación, 212 pruebas de regresión y una omisión condicional, 4 pruebas de seguridad LAB, 8 comprobaciones nativas y 3 instrumentales aprobadas en Android 15. Tutorial no reproducido en seis cierres rápidos; sin cambio especulativo.
+- Preparación física publicada en Draft PR #22, dependiente del #20; guía con SHA-256/firma, instalación futura, recuperación y retirada segura. Recursos propios detenidos conservando datos y evidencias; aún sin instalar en teléfono ni aprobar publicación 1.2.0.
+
 ## Validación de laboratorio y preparación física — incremento D
 
 - Candidata debug final en Android 15: 13 comprobaciones de sesión y seis de seguimiento, Keystore instrumental, JUnit 4/4 y lint sin errores (16 advertencias existentes).

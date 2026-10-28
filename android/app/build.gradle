@@ -12,9 +12,14 @@ def releaseSigning = [
     keyAlias: System.getenv('HM_RELEASE_KEY_ALIAS'),
     keyPassword: System.getenv('HM_RELEASE_KEY_PASSWORD')
 ]
+def laboratory = System.getenv('HM_ANDROID_LAB') == '1'
+def labSigning = ['STORE_FILE', 'STORE_PASSWORD', 'KEY_ALIAS', 'KEY_PASSWORD'].collectEntries {
+    [(it): System.getenv('HM_LAB_' + it)]
+}
 
 android {
     namespace "pe.edu.hidromejora.app"
+    testBuildType laboratory ? 'lab' : 'debug'
     compileSdk rootProject.ext.compileSdkVersion
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
@@ -37,6 +42,12 @@ android {
     }
     buildFeatures { buildConfig true }
     signingConfigs {
+        lab {
+            if (labSigning.STORE_FILE) storeFile file(labSigning.STORE_FILE)
+            storePassword labSigning.STORE_PASSWORD
+            keyAlias labSigning.KEY_ALIAS
+            keyPassword labSigning.KEY_PASSWORD
+        }
         release {
             if (releaseSigning.storeFile) storeFile file(releaseSigning.storeFile)
             storePassword releaseSigning.storePassword
@@ -45,6 +56,16 @@ android {
         }
     }
     buildTypes {
+        lab {
+            initWith debug
+            applicationIdSuffix '.lab120'
+            versionNameSuffix '-lab.1'
+            signingConfig signingConfigs.lab
+            matchingFallbacks = ['debug']
+            resValue 'string', 'app_name', 'Hidro-Mejora LAB'
+            resValue 'string', 'title_activity_main', 'Hidro-Mejora LAB'
+            buildConfigField 'boolean', 'HM_PUSH_CONFIGURED', 'false'
+        }
         release {
             signingConfig signingConfigs.release
             debuggable false
@@ -52,6 +73,36 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+}
+
+android.applicationVariants.all { variant ->
+    if (variant.buildType.name == 'lab') {
+        variant.outputs.all { versionNameOverride = '1.2.0-lab.1' }
+    }
+}
+tasks.register('validateLaboratory') {
+    doLast {
+        if (!laboratory || System.getenv('HM_PUSH_ANDROID_ENABLED') != '0' ||
+            System.getenv('API_BASE_URL') != 'http://127.0.0.1:45679' || file('google-services.json').exists()) {
+            throw new GradleException('LAB requiere configuración explícita, API por USB local y Firebase desactivado.')
+        }
+        if (labSigning.values().any { !it?.trim() } ||
+            !file(labSigning.STORE_FILE).isFile() ||
+            file(labSigning.STORE_FILE).canonicalPath.startsWith(rootProject.projectDir.parentFile.canonicalPath + File.separator)) {
+            throw new GradleException('LAB requiere firma privada independiente fuera del repositorio.')
+        }
+        def ks = java.security.KeyStore.getInstance(file(labSigning.STORE_FILE), labSigning.STORE_PASSWORD.toCharArray())
+        def certificate = ks.getCertificate(labSigning.KEY_ALIAS)
+        def actual = java.security.MessageDigest.getInstance('SHA-256').digest(certificate.encoded).encodeHex().toString()
+        if (actual == rootProject.file('release-certificate.sha256').text.trim().toLowerCase()) {
+            throw new GradleException('La firma LAB debe ser distinta de la permanente.')
+        }
+        def config = new groovy.json.JsonSlurper().parse(rootProject.file('app/src/main/assets/capacitor.config.json'))
+        if (config.appId != 'pe.edu.hidromejora.app.lab120') throw new GradleException('Sin runtime LAB aislado.')
+    }
+}
+tasks.configureEach { task ->
+    if (task.name == 'preLabBuild' || task.name == 'validateSigningLab') task.dependsOn('validateLaboratory')
 }
 
 // También protege assemble/bundle invocados directamente, sin el script auxiliar.
