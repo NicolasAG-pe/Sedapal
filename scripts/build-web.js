@@ -44,6 +44,14 @@ function buildWeb(target, env = process.env, outputDirectory) {
     // No borrar archivos anteriores ni modificar la fuente Frontend/.
     const source = target === 'admin' ? 'Admin' : 'Frontend';
     fs.copyFileSync(path.join(root, source, 'index.html'), path.join(output, 'index.html'));
+    if (target === 'android' && env.HM_ANDROID_LAB === '1') {
+        if (apiBase !== 'http://127.0.0.1:45679') throw new Error('LAB exige USB y backend loopback explícito.');
+        const page = path.join(output, 'index.html');
+        fs.writeFileSync(page, fs.readFileSync(page, 'utf8').replace('<body',
+            '<body data-hm-laboratory="true"').replace('</body>',
+            '<aside aria-label="Entorno de pruebas" style="position:fixed;bottom:0;left:0;right:0;height:22px;z-index:10000;background:#0F4C81;color:#fff;text-align:center;font:600 12px/22px sans-serif;pointer-events:none">LAB · 1.2.0 · Datos sintéticos</aside></body>')
+            .replace('</head>', '<style>body[data-hm-laboratory]{padding-bottom:22px}.mobile-tabs{bottom:22px!important}</style></head>'));
+    }
     const references=fs.readFileSync(path.join(root,source,'index.html'),'utf8')+'\n'+runtimeText(path.join(root,source,'assets'));
     fs.cpSync(path.join(root, source, 'assets'), path.join(output, 'assets'), {
         recursive:true,

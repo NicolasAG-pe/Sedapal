@@ -4,8 +4,8 @@ const apiBase = readApiBase('android');
 const localHttp = apiBase.startsWith('http:');
 
 module.exports = {
-    appId: 'pe.edu.hidromejora.app',
-    appName: 'Hidro-Mejora',
+    appId: process.env.HM_ANDROID_LAB === '1' ? 'pe.edu.hidromejora.app.lab120' : 'pe.edu.hidromejora.app',
+    appName: process.env.HM_ANDROID_LAB === '1' ? 'Hidro-Mejora LAB' : 'Hidro-Mejora',
     // El bridge transporta credenciales en memoria; tampoco registrarlas en debug.
     loggingBehavior: 'none',
     webDir: 'artifacts/android/web-runtime',
