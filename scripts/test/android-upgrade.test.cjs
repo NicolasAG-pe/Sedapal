@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'../..');
 const old=file=>execFileSync('git',['show','v1.0.0:'+file],{cwd:root,encoding:'utf8'});
 const current=file=>fs.readFileSync(path.join(root,file),'utf8');
 const field=(source,name)=>source.match(new RegExp('\\b'+name+'\\s+(?:"([^"]+)"|(\\d+))'))?.slice(1).find(Boolean);
-test('Candidato tiene código/versión superiores y conserva identidad y certificado de v1.0.0',()=>{
+test('Candidato conserva identidad/certificado y solo añade el manifiesto FCM aprobado',()=>{
  const file='android/app/build.gradle',previous=old(file),next=current(file);
  assert.ok(Number(field(next,'versionCode'))>Number(field(previous,'versionCode')));
  const a=field(next,'versionName').split('.').map(Number),b=field(previous,'versionName').split('.').map(Number);
@@ -16,7 +16,17 @@ test('Candidato tiene código/versión superiores y conserva identidad y certifi
  const different=a.findIndex((v,i)=>v!==b[i]);assert.ok(different>=0 && a[different]>b[different]);
  for(const name of ['applicationId','namespace'])assert.equal(field(next,name),field(previous,name));
  assert.equal(current('android/release-certificate.sha256').trim(),old('android/release-certificate.sha256').trim());
- assert.equal(current('android/app/src/main/AndroidManifest.xml'),old('android/app/src/main/AndroidManifest.xml'));
+ // PR #17 añadió únicamente permiso voluntario y metadatos FCM. No aceptar
+ // otros permisos, componentes exportados ni cambios de respaldo por esta excepción.
+ const manifest=current('android/app/src/main/AndroidManifest.xml');
+ const additions=new Set([
+  '<meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />',
+  '<meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/hm_notification" />',
+  '<meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="hm_updates" />',
+  '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />'
+ ]);
+ for(const line of additions)assert.equal(manifest.split('\n').filter(value=>value.trim()===line).length,1,'Adición FCM exacta y única: '+line);
+ assert.equal(manifest.split('\n').filter(line=>!additions.has(line.trim())).join('\n'),old('android/app/src/main/AndroidManifest.xml'));
  assert.equal(current('android/variables.gradle'),old('android/variables.gradle'));
 });
 test('Capacitor conserva contenido empaquetado, esquema seguro y sin servidor remoto/OTA',()=>{

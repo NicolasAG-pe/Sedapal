@@ -298,3 +298,272 @@ CREATE TABLE notificaciones_lecturas (
         ON DELETE CASCADE
 );
 CREATE INDEX idx_lecturas_suministro ON notificaciones_lecturas(id_suministro);
+
+
+-- Manual, aditiva e idempotente. No activa 2FA ni modifica cuentas existentes.
+BEGIN;
+SET LOCAL lock_timeout='2s';
+SET LOCAL statement_timeout='30s';
+CREATE TABLE IF NOT EXISTS public.usuario_2fa (
+    id_usuario BIGINT PRIMARY KEY REFERENCES public.usuarios(id_usuario),
+    version INTEGER NOT NULL DEFAULT 0 CHECK (version >= 0),
+    activo BOOLEAN NOT NULL DEFAULT FALSE,
+    secreto TEXT,
+    ultimo_paso BIGINT NOT NULL DEFAULT -1,
+    pendiente_secreto TEXT,
+    pendiente_hasta TIMESTAMPTZ,
+    reautenticado_en TIMESTAMPTZ,
+    fallos SMALLINT NOT NULL DEFAULT 0 CHECK (fallos BETWEEN 0 AND 5),
+    bloqueado_hasta TIMESTAMPTZ,
+    CHECK (NOT activo OR secreto IS NOT NULL),
+    CHECK ((pendiente_secreto IS NULL) = (pendiente_hasta IS NULL))
+);
+CREATE TABLE IF NOT EXISTS public.usuario_2fa_recuperacion (
+    id_usuario BIGINT NOT NULL REFERENCES public.usuario_2fa(id_usuario),
+    codigo_hash CHAR(64) NOT NULL CHECK (codigo_hash ~ '^[a-f0-9]{64}$'),
+    usado_en TIMESTAMPTZ,
+    PRIMARY KEY (id_usuario,codigo_hash)
+);
+CREATE TABLE IF NOT EXISTS public.desafios_2fa (
+    id_hash CHAR(64) PRIMARY KEY CHECK (id_hash ~ '^[a-f0-9]{64}$'),
+    id_usuario BIGINT NOT NULL REFERENCES public.usuario_2fa(id_usuario),
+    version INTEGER NOT NULL CHECK (version >= 0),
+    clave_huella CHAR(64) NOT NULL,
+    vence_en TIMESTAMPTZ NOT NULL,
+    intentos SMALLINT NOT NULL DEFAULT 0 CHECK (intentos BETWEEN 0 AND 5),
+    usado_en TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_desafios_2fa_usuario ON public.desafios_2fa(id_usuario);
+CREATE INDEX IF NOT EXISTS idx_desafios_2fa_vencimiento ON public.desafios_2fa(vence_en);
+-- Los cambios futuros de permisos/estado revocan también JWT antiguos sin MFA.
+CREATE OR REPLACE FUNCTION public.revocar_2fa_al_cambiar_cuenta() RETURNS trigger
+LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
+BEGIN
+    IF NEW.rol IS DISTINCT FROM OLD.rol OR NEW.activo IS DISTINCT FROM OLD.activo THEN
+        INSERT INTO public.usuario_2fa(id_usuario,version) VALUES (NEW.id_usuario,1)
+        ON CONFLICT (id_usuario) DO UPDATE SET version=public.usuario_2fa.version+1;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+CREATE OR REPLACE TRIGGER revocar_2fa_cuenta
+AFTER UPDATE OF rol,activo ON public.usuarios
+FOR EACH ROW EXECUTE FUNCTION public.revocar_2fa_al_cambiar_cuenta();
+COMMIT;
+
+-- 008: operaciones de pago aisladas de los registros históricos.
+-- Operaciones separadas de los pagos históricos: ninguna declaración acredita deuda.
+BEGIN;
+SET LOCAL lock_timeout = '2s';
+SET LOCAL statement_timeout = '30s';
+DO $$ BEGIN
+ IF to_regclass('public.usuario_2fa') IS NULL THEN RAISE EXCEPTION 'Aplicar 007 antes de 008'; END IF;
+END $$;
+CREATE TABLE IF NOT EXISTS public.operaciones_pago (
+ id UUID PRIMARY KEY,
+ solicitud_id UUID NOT NULL,
+ id_usuario BIGINT NOT NULL REFERENCES public.usuarios(id_usuario),
+ id_recibo BIGINT NOT NULL REFERENCES public.recibos(id_recibo),
+ monto NUMERIC(10,2) NOT NULL CHECK(monto>0),
+ moneda TEXT NOT NULL DEFAULT 'PEN' CHECK(moneda='PEN'),
+ entorno TEXT NOT NULL CHECK(entorno='simulado'),
+ metodo TEXT NOT NULL CHECK(metodo IN ('demostrativo','yape_manual','proveedor_simulado')),
+ estado TEXT NOT NULL CHECK(estado IN ('demostrativa','declarada','pendiente_verificacion','verificada_manual','acreditada_proveedor','rechazada','cancelada','reembolsada')),
+ referencia TEXT CHECK(length(referencia) BETWEEN 4 AND 100),
+ referencia_hash TEXT CHECK(referencia_hash ~ '^[a-f0-9]{64}$'),
+ payload_hash TEXT NOT NULL CHECK(payload_hash ~ '^[a-f0-9]{64}$'),
+ comprobante BYTEA CHECK(octet_length(comprobante)<=1048576),
+ comprobante_hash TEXT CHECK(comprobante_hash ~ '^[a-f0-9]{64}$'),
+ proveedor_id TEXT UNIQUE,
+ creado_en TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+ actualizado_en TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+ revisado_por BIGINT REFERENCES public.usuarios(id_usuario),
+ revisado_en TIMESTAMPTZ,
+ motivo TEXT CHECK(length(motivo) BETWEEN 8 AND 500),
+ UNIQUE(id_usuario,solicitud_id),
+ CHECK ((comprobante IS NULL)=(comprobante_hash IS NULL)),
+ CHECK ((metodo='demostrativo')=(estado='demostrativa')),
+ CHECK (estado<>'verificada_manual' OR (metodo='yape_manual' AND revisado_por IS NOT NULL AND revisado_en IS NOT NULL AND motivo IS NOT NULL)),
+ CHECK (estado<>'acreditada_proveedor' OR (metodo='proveedor_simulado' AND proveedor_id IS NOT NULL))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_operacion_activa_recibo ON public.operaciones_pago(id_recibo)
+ WHERE estado IN ('declarada','pendiente_verificacion','verificada_manual','acreditada_proveedor');
+-- Una declaración no demuestra propiedad de la referencia: no debe reservarla globalmente.
+CREATE INDEX IF NOT EXISTS idx_referencia_declarada ON public.operaciones_pago(referencia_hash) WHERE referencia_hash IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_referencia_verificada ON public.operaciones_pago(referencia_hash)
+ WHERE estado='verificada_manual';
+CREATE INDEX IF NOT EXISTS idx_operaciones_revision ON public.operaciones_pago(creado_en,id) WHERE estado='pendiente_verificacion';
+CREATE TABLE IF NOT EXISTS public.operaciones_pago_historial (
+ id BIGSERIAL PRIMARY KEY,
+ operacion_id UUID NOT NULL REFERENCES public.operaciones_pago(id),
+ estado TEXT NOT NULL,
+ actor_id BIGINT REFERENCES public.usuarios(id_usuario),
+ motivo TEXT NOT NULL CHECK(length(motivo) BETWEEN 8 AND 500),
+ fecha TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+CREATE TABLE IF NOT EXISTS public.eventos_pago_proveedor (
+ evento_id TEXT PRIMARY KEY CHECK(length(evento_id) BETWEEN 1 AND 100),
+ operacion_id UUID NOT NULL REFERENCES public.operaciones_pago(id),
+ payload_hash TEXT NOT NULL,
+ recibido_en TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+CREATE OR REPLACE FUNCTION public.controlar_operacion_pago() RETURNS trigger
+LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
+BEGIN
+ IF TG_OP='DELETE' THEN RAISE EXCEPTION 'Las operaciones conservan su historial'; END IF;
+ IF ROW(NEW.id,NEW.solicitud_id,NEW.id_usuario,NEW.id_recibo,NEW.monto,NEW.moneda,NEW.entorno,NEW.metodo,NEW.referencia,NEW.referencia_hash,NEW.payload_hash,NEW.comprobante,NEW.comprobante_hash,NEW.creado_en)
+ IS DISTINCT FROM ROW(OLD.id,OLD.solicitud_id,OLD.id_usuario,OLD.id_recibo,OLD.monto,OLD.moneda,OLD.entorno,OLD.metodo,OLD.referencia,OLD.referencia_hash,OLD.payload_hash,OLD.comprobante,OLD.comprobante_hash,OLD.creado_en)
+ THEN RAISE EXCEPTION 'Datos originales inmutables'; END IF;
+ IF NEW.estado<>OLD.estado AND NOT (
+  (OLD.estado='declarada' AND NEW.estado='pendiente_verificacion') OR
+  (OLD.estado='pendiente_verificacion' AND NEW.estado IN ('verificada_manual','acreditada_proveedor','rechazada','cancelada')) OR
+  (OLD.estado='acreditada_proveedor' AND NEW.estado='reembolsada')
+ ) THEN RAISE EXCEPTION 'Transición no permitida'; END IF;
+ RETURN NEW;
+END $$;
+CREATE OR REPLACE TRIGGER controlar_operacion_pago BEFORE UPDATE OR DELETE ON public.operaciones_pago
+ FOR EACH ROW EXECUTE FUNCTION public.controlar_operacion_pago();
+CREATE OR REPLACE FUNCTION public.conservar_auditoria_pago() RETURNS trigger
+LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
+BEGIN RAISE EXCEPTION 'Auditoría de pagos inmutable'; END $$;
+CREATE OR REPLACE TRIGGER conservar_auditoria_pago BEFORE UPDATE OR DELETE ON public.operaciones_pago_historial
+ FOR EACH ROW EXECUTE FUNCTION public.conservar_auditoria_pago();
+COMMIT;
+-- Piloto local: no acredita recibos ni servicios. No ejecutar en Neon.
+BEGIN;
+SET LOCAL lock_timeout='2s';
+SET LOCAL statement_timeout='30s';
+DO $$ BEGIN IF to_regclass('public.operaciones_pago') IS NULL THEN RAISE EXCEPTION 'Aplicar 008 antes de 009'; END IF; END $$;
+CREATE TABLE IF NOT EXISTS public.control_piloto_yape (
+ singleton BOOLEAN PRIMARY KEY DEFAULT true CHECK(singleton),
+ piloto_id UUID NOT NULL UNIQUE,
+ habilitado BOOLEAN NOT NULL DEFAULT false,
+ ensayo_sintetico BOOLEAN NOT NULL,
+ id_recibo BIGINT NOT NULL REFERENCES public.recibos(id_recibo),
+ id_usuario BIGINT NOT NULL REFERENCES public.usuarios(id_usuario),
+ id_admin BIGINT NOT NULL REFERENCES public.usuarios(id_usuario),
+ qr_hash TEXT NOT NULL CHECK(qr_hash ~ '^[a-f0-9]{64}$'),
+ monto_maximo NUMERIC(10,2) NOT NULL CHECK(monto_maximo>0 AND monto_maximo<=5),
+ inicio_en TIMESTAMPTZ NOT NULL,
+ vence_en TIMESTAMPTZ NOT NULL,
+ CHECK(id_usuario<>id_admin),
+ CHECK(vence_en>inicio_en AND vence_en<=inicio_en+INTERVAL '4 hours'),
+ CHECK(current_database() ~ '^hm_(email_)?yape_pilot_[a-f0-9]{12,32}$')
+);
+ALTER TABLE public.operaciones_pago ADD COLUMN IF NOT EXISTS piloto_id UUID REFERENCES public.control_piloto_yape(piloto_id);
+ALTER TABLE public.operaciones_pago ADD COLUMN IF NOT EXISTS piloto_ensayo BOOLEAN;
+ALTER TABLE public.operaciones_pago ADD COLUMN IF NOT EXISTS receptor_huella TEXT;
+ALTER TABLE public.operaciones_pago ADD COLUMN IF NOT EXISTS recibido_en TIMESTAMPTZ;
+ALTER TABLE public.operaciones_pago ADD COLUMN IF NOT EXISTS monto_recibido NUMERIC(10,2);
+ALTER TABLE public.operaciones_pago ADD COLUMN IF NOT EXISTS receptor_comprobado BOOLEAN;
+ALTER TABLE public.operaciones_pago DROP CONSTRAINT IF EXISTS operaciones_pago_entorno_check;
+ALTER TABLE public.operaciones_pago ADD CONSTRAINT operaciones_pago_entorno_check CHECK(entorno IN ('simulado','piloto_manual'));
+DO $$ BEGIN IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conrelid='public.operaciones_pago'::regclass AND conname='chk_piloto_local') THEN
+ ALTER TABLE public.operaciones_pago ADD CONSTRAINT chk_piloto_local CHECK (
+  (entorno='simulado' AND piloto_id IS NULL AND piloto_ensayo IS NULL AND receptor_huella IS NULL AND recibido_en IS NULL AND monto_recibido IS NULL AND receptor_comprobado IS NULL) OR
+  (entorno='piloto_manual' AND current_database() ~ '^hm_(email_)?yape_pilot_[a-f0-9]{12,32}$' AND metodo='yape_manual' AND estado NOT IN ('demostrativa','acreditada_proveedor','reembolsada') AND piloto_id IS NOT NULL AND piloto_ensayo IS NOT NULL AND receptor_huella IS NOT NULL AND receptor_huella ~ '^[a-f0-9]{64}$' AND (estado<>'verificada_manual' OR (recibido_en IS NOT NULL AND monto_recibido IS NOT NULL AND monto_recibido=monto AND receptor_comprobado IS TRUE)))
+ ); END IF; END $$;
+CREATE OR REPLACE FUNCTION public.controlar_piloto_yape() RETURNS trigger
+LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
+BEGIN
+ IF TG_OP='DELETE' THEN RAISE EXCEPTION 'Las operaciones conservan su historial'; END IF;
+ IF ROW(NEW.piloto_id,NEW.piloto_ensayo,NEW.receptor_huella) IS DISTINCT FROM ROW(OLD.piloto_id,OLD.piloto_ensayo,OLD.receptor_huella) THEN RAISE EXCEPTION 'Piloto y receptor originales inmutables'; END IF;
+ IF OLD.revisado_en IS NOT NULL AND ROW(NEW.recibido_en,NEW.monto_recibido,NEW.receptor_comprobado,NEW.revisado_por,NEW.revisado_en,NEW.motivo) IS DISTINCT FROM ROW(OLD.recibido_en,OLD.monto_recibido,OLD.receptor_comprobado,OLD.revisado_por,OLD.revisado_en,OLD.motivo) THEN RAISE EXCEPTION 'Revisión final inmutable'; END IF;
+ RETURN NEW;
+END $$;
+CREATE OR REPLACE TRIGGER controlar_piloto_yape BEFORE UPDATE OR DELETE ON public.operaciones_pago
+ FOR EACH ROW EXECUTE FUNCTION public.controlar_piloto_yape();
+COMMIT;
+-- Solo laboratorio. Separa revisión sintética de recepción bancaria sin reescribir historia.
+BEGIN;
+SET LOCAL lock_timeout='2s';
+SET LOCAL statement_timeout='30s';
+DO $$ BEGIN IF to_regclass('public.control_piloto_yape') IS NULL THEN RAISE EXCEPTION 'Aplicar 009 antes de 010'; END IF; END $$;
+ALTER TABLE public.operaciones_pago DROP CONSTRAINT IF EXISTS chk_piloto_local;
+ALTER TABLE public.operaciones_pago ADD CONSTRAINT chk_piloto_local CHECK (
+ (entorno='simulado' AND piloto_id IS NULL AND piloto_ensayo IS NULL AND receptor_huella IS NULL AND recibido_en IS NULL AND monto_recibido IS NULL AND receptor_comprobado IS NULL) OR
+ (entorno='piloto_manual' AND current_database() ~ '^hm_(email_)?yape_pilot_[a-f0-9]{12,32}$' AND metodo='yape_manual' AND estado NOT IN ('demostrativa','acreditada_proveedor','reembolsada') AND piloto_id IS NOT NULL AND piloto_ensayo IS NOT NULL AND receptor_huella IS NOT NULL AND receptor_huella ~ '^[a-f0-9]{64}$' AND (estado<>'verificada_manual' OR piloto_ensayo IS TRUE OR (monto_recibido IS NOT NULL AND monto_recibido=monto AND receptor_comprobado IS TRUE)))
+);
+CREATE OR REPLACE FUNCTION public.validar_revision_sintetica() RETURNS trigger
+LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
+BEGIN
+ IF NEW.piloto_ensayo IS TRUE AND NEW.estado='verificada_manual' AND OLD.estado<>'verificada_manual' AND (NEW.recibido_en IS NOT NULL OR NEW.monto_recibido IS NOT NULL OR NEW.receptor_comprobado IS NOT NULL) THEN
+  RAISE EXCEPTION 'Un ensayo no registra recepción bancaria';
+ END IF;
+ RETURN NEW;
+END $$;
+CREATE OR REPLACE TRIGGER validar_revision_sintetica BEFORE UPDATE ON public.operaciones_pago FOR EACH ROW EXECUTE FUNCTION public.validar_revision_sintetica();
+COMMIT;
+
+
+-- Seguimiento para instalaciones nuevas. Nunca ejecutar init.sql sobre una base existente.
+-- Aditiva y repetible. No reescribe incidencias ni inventa eventos anteriores.
+BEGIN;
+SET LOCAL lock_timeout='2s';
+SET LOCAL statement_timeout='30s';
+CREATE TABLE IF NOT EXISTS public.incidencia_eventos (
+ id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+ orden BIGINT GENERATED ALWAYS AS IDENTITY UNIQUE,
+ id_incidencia BIGINT NOT NULL REFERENCES public.incidencias(id_incidencia),
+ fecha TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+ tipo TEXT NOT NULL CHECK(tipo IN('registro','estado')),
+ estado_anterior VARCHAR(20) CHECK(estado_anterior IN('Registrada','En revisión','Resuelta')),
+ estado_nuevo VARCHAR(20) NOT NULL CHECK(estado_nuevo IN('Registrada','En revisión','Resuelta')),
+ id_administrador BIGINT REFERENCES public.usuarios(id_usuario),
+ comentario_publico VARCHAR(300),
+ solicitud_id UUID UNIQUE,
+ CHECK((tipo='registro' AND estado_anterior IS NULL AND id_administrador IS NULL AND comentario_publico IS NULL) OR
+       (tipo='estado' AND estado_anterior IS NOT NULL AND estado_anterior<>estado_nuevo)),
+ CHECK(comentario_publico IS NULL OR (length(btrim(comentario_publico))>0 AND id_administrador IS NOT NULL))
+);
+CREATE INDEX IF NOT EXISTS idx_incidencia_eventos_orden ON public.incidencia_eventos(id_incidencia,orden);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_incidencia_evento_inicial ON public.incidencia_eventos(id_incidencia) WHERE tipo='registro';
+CREATE TABLE IF NOT EXISTS public.incidencia_cambios (
+ solicitud_id UUID PRIMARY KEY, id_incidencia BIGINT NOT NULL REFERENCES public.incidencias(id_incidencia),
+ id_administrador BIGINT NOT NULL REFERENCES public.usuarios(id_usuario),
+ huella CHAR(64) NOT NULL, resultado JSONB NOT NULL, fecha TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+CREATE OR REPLACE FUNCTION public.proteger_evento_incidencia() RETURNS trigger
+LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
+BEGIN
+ IF TG_OP='INSERT' AND pg_trigger_depth()>=2 THEN RETURN NEW; END IF;
+ RAISE EXCEPTION 'El historial de incidencias solo admite eventos de origen' USING ERRCODE='42501';
+END; $$;
+CREATE OR REPLACE TRIGGER proteger_evento_incidencia BEFORE INSERT OR UPDATE OR DELETE ON public.incidencia_eventos
+ FOR EACH ROW EXECUTE FUNCTION public.proteger_evento_incidencia();
+CREATE OR REPLACE TRIGGER proteger_evento_incidencia_truncate BEFORE TRUNCATE ON public.incidencia_eventos
+ FOR EACH STATEMENT EXECUTE FUNCTION public.proteger_evento_incidencia();
+CREATE OR REPLACE FUNCTION public.proteger_cambio_incidencia() RETURNS trigger
+LANGUAGE plpgsql SET search_path=pg_catalog,public AS $$
+BEGIN RAISE EXCEPTION 'Las decisiones registradas no se modifican' USING ERRCODE='42501'; END; $$;
+CREATE OR REPLACE TRIGGER proteger_cambio_incidencia BEFORE UPDATE OR DELETE ON public.incidencia_cambios
+ FOR EACH ROW EXECUTE FUNCTION public.proteger_cambio_incidencia();
+CREATE OR REPLACE TRIGGER proteger_cambio_incidencia_truncate BEFORE TRUNCATE ON public.incidencia_cambios
+ FOR EACH STATEMENT EXECUTE FUNCTION public.proteger_cambio_incidencia();
+CREATE OR REPLACE FUNCTION public.registrar_evento_incidencia() RETURNS trigger
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog,public AS $$
+DECLARE actor BIGINT; comentario TEXT; solicitud UUID;
+BEGIN
+ IF TG_OP='INSERT' THEN
+  INSERT INTO public.incidencia_eventos(id_incidencia,tipo,estado_nuevo) VALUES(NEW.id_incidencia,'registro',NEW.estado);
+ ELSIF NEW.estado IS DISTINCT FROM OLD.estado THEN
+  actor=NULLIF(current_setting('hidro.incident_actor',true),'')::BIGINT;
+  solicitud=NULLIF(current_setting('hidro.incident_request',true),'')::UUID;
+  IF actor IS NOT NULL THEN
+   IF NOT EXISTS(SELECT 1 FROM public.usuarios WHERE id_usuario=actor AND rol='admin' AND activo) THEN
+    RAISE EXCEPTION 'Responsable no autorizado' USING ERRCODE='42501';
+   END IF;
+   comentario=NULLIF(btrim(current_setting('hidro.incident_comment',true)),'');
+   IF length(comentario)>300 OR comentario ~ '[[:cntrl:]]' THEN RAISE EXCEPTION 'Comentario público inválido' USING ERRCODE='22023'; END IF;
+  END IF;
+  INSERT INTO public.incidencia_eventos(id_incidencia,tipo,estado_anterior,estado_nuevo,id_administrador,comentario_publico,solicitud_id)
+   VALUES(NEW.id_incidencia,'estado',OLD.estado,NEW.estado,actor,comentario,solicitud);
+ END IF;
+ RETURN NEW;
+END; $$;
+REVOKE ALL ON FUNCTION public.registrar_evento_incidencia() FROM PUBLIC;
+REVOKE INSERT,UPDATE,DELETE,TRUNCATE ON public.incidencia_eventos FROM PUBLIC;
+REVOKE UPDATE,DELETE,TRUNCATE ON public.incidencia_cambios FROM PUBLIC;
+CREATE OR REPLACE TRIGGER registrar_evento_incidencia AFTER INSERT OR UPDATE OF estado ON public.incidencias
+ FOR EACH ROW EXECUTE FUNCTION public.registrar_evento_incidencia();
+COMMIT;

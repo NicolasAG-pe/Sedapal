@@ -13,7 +13,7 @@ const digest=value=>crypto.createHash('sha256').update(JSON.stringify(value)).di
 const file=name=>path.join(state,name+'.json');
 const write=(name,value)=>fs.writeFileSync(file(name),JSON.stringify(value,null,2)+'\n',{mode:0o600});
 async function snapshot(pool,tables){
- const rows={};for(const table of tables){assert.match(table,/^[a-z_]+$/);rows[table]=(await pool.query(`SELECT to_jsonb(t)-'correo_verificado_en' AS row FROM public.${table} t ORDER BY (to_jsonb(t)-'correo_verificado_en')::text`)).rows;}
+ const rows={};for(const table of tables){assert.match(table,/^[a-z_][a-z0-9_]*$/);rows[table]=(await pool.query(`SELECT to_jsonb(t)-'correo_verificado_en' AS row FROM public.${table} t ORDER BY (to_jsonb(t)-'correo_verificado_en')::text`)).rows;}
  return rows;
 }
 async function main(){

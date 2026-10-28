@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#083b66">
+  <meta name="theme-color" content="#0F4C81">
   <title>Hidro-Mejora · Administración</title>
   <link rel="stylesheet" href="assets/css/admin.css">
   <link rel="stylesheet" href="shared/styles.css">
@@ -15,8 +15,8 @@
   <section id="admin-login" class="login-screen" aria-labelledby="login-title">
     <div class="admin-login-story"><img src="shared/assets/hm-symbol.svg" alt="Hidro-Mejora" width="56" height="56"><h2>Una visión clara de la operación.</h2><p>Gestiona cuentas, recibos e incidencias desde un espacio de trabajo compartido.</p><ul><li data-icon="users">Usuarios y suministros</li><li data-icon="receipt">Recibos y pagos registrados</li><li data-icon="support">Atención y seguimiento</li></ul></div>
     <div class="login-card">
-      <img src="shared/assets/hm-symbol.svg" class="login-logo" alt="Hidro-Mejora" width="48" height="48">
-      <p class="eyebrow">HIDRO-MEJORA</p>
+      <div class="admin-login-brand"><img src="shared/assets/hm-symbol.svg" class="login-logo" alt="Hidro-Mejora" width="48" height="48">
+      <p class="eyebrow">HIDRO-MEJORA</p></div>
       <h1 id="login-title">Panel administrativo</h1>
       <p class="hint">Acceso exclusivo para administradores.</p>
       <form id="admin-login-form">
@@ -27,6 +27,16 @@
           <input id="admin-password" name="password" type="password" autocomplete="current-password" minlength="4" maxlength="128" required></div>
         <button id="admin-login-submit" class="btn btn-primary" type="submit">Ingresar al panel</button>
       </form>
+    <p id="admin-forgot-wrap"><button id="admin-forgot" class="btn btn-ghost" type="button">¿Olvidaste tu contraseña?</button></p>
+    <div id="password-recovery" hidden></div>
+    <form id="two-factor-login" hidden>
+      <p>Ingresa el código de tu aplicación autenticadora o un código de recuperación de un solo uso.</p>
+      <div class="field"><label for="two-factor-login-code">Código de verificación</label>
+        <input id="two-factor-login-code" aria-describedby="two-factor-login-error" type="text" autocomplete="one-time-code" maxlength="35" required /></div>
+      <p id="two-factor-login-error" role="alert"></p>
+      <button class="btn btn-primary" type="submit">Verificar e ingresar</button>
+      <button class="btn btn-ghost" type="button" id="two-factor-cancel">Volver al inicio de sesión</button>
+    </form>
     </div>
   </section>
   <div id="admin-panel" hidden>
@@ -50,7 +60,37 @@
         <button type="button" data-sec="admin-cuenta" data-icon="user">Mi cuenta</button>
         <div class="nav-foot"><span>Hidro-Mejora</span>Proyecto universitario · Acceso por rol</div>
       </nav>
-      <div class="admin-workspace"><div id="admin-load-status" class="load-status" role="status" aria-live="polite"></div><main tabindex="-1" id="admin-content" class="dashboard" aria-label="Contenido administrativo"></main></div>
+      <div class="admin-workspace"><div id="admin-load-status" class="load-status" role="status" aria-live="polite"></div><main tabindex="-1" id="admin-content" class="dashboard" aria-label="Contenido administrativo"></main><div id="admin-security" class="dashboard" hidden>          <section class="two-factor-settings support-card" aria-labelledby="two-factor-title">
+            <h3 id="two-factor-title">Verificación en dos pasos</h3>
+            <p>Necesitarás un cliente compatible en todos tus dispositivos y tu aplicación autenticadora para volver a iniciar sesión.</p>
+            <p id="two-factor-status" role="status">Consulta el estado de protección de tu cuenta.</p>
+            <button class="btn btn-ghost" type="button" id="two-factor-open">Configurar verificación en dos pasos</button>
+            <div id="two-factor-controls" hidden>
+              <form id="two-factor-manage">
+                <div class="field"><label for="two-factor-password">Confirma tu contraseña actual</label>
+                  <input id="two-factor-password" type="password" autocomplete="current-password" maxlength="128" required /></div>
+                <div class="field" id="two-factor-existing" hidden><label for="two-factor-existing-code">Código del factor actual o de recuperación</label>
+                  <input id="two-factor-existing-code" aria-describedby="two-factor-settings-error" type="text" autocomplete="one-time-code" maxlength="35" /></div>
+                <button class="btn btn-sky" id="two-factor-setup" type="submit">Preparar activación</button>
+                <button class="btn btn-ghost" id="two-factor-recovery" type="button" hidden>Generar nuevos códigos de recuperación</button>
+                <button class="btn btn-ghost" id="two-factor-disable" type="button" hidden>Desactivar verificación en dos pasos</button>
+              </form>
+              <form id="two-factor-confirm" hidden>
+                <p>Escanea este QR con una aplicación autenticadora. Si estás usando el mismo teléfono, abre esta sección en otro dispositivo para escanearlo. Confirma antes de cinco minutos.</p>
+                <img id="two-factor-qr" width="300" height="300" alt="QR privado para vincular tu autenticador" />
+                <div class="field"><label for="two-factor-confirm-code">Código de seis dígitos</label>
+                  <input id="two-factor-confirm-code" aria-describedby="two-factor-settings-error" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required /></div>
+                <button class="btn btn-sky" type="submit">Activar y guardar códigos</button>
+              </form>
+              <div id="two-factor-codes" hidden>
+                <p>Guarda estos códigos en un lugar privado fuera de Hidro-Mejora. Solo se muestran ahora y cada uno sirve una vez.</p>
+                <pre id="two-factor-codes-list" tabindex="0" aria-label="Códigos de recuperación"></pre>
+              </div>
+              <p>Si perdiste tu autenticador, usa contraseña y recuperación para desactivar y volver a configurarlo. Para generar códigos nuevos necesitas tu autenticador.</p>
+              <p id="two-factor-settings-error" role="alert"></p>
+              <button class="btn btn-ghost" type="button" id="two-factor-close">Cerrar y ocultar datos privados</button>
+            </div>
+          </section></div></div>
     </div>
   </div>
   <div id="admin-toast" class="toast" role="status" aria-live="polite" hidden></div>
@@ -66,12 +106,12 @@
         <div class="mod-stats admin-overview" aria-label="Resumen administrativo">
           <div class="mod-stat priority"><div class="kpi-top"><small>Usuarios activos</small><span data-icon="users"></span></div><strong id="adm-dash-usu">—</strong><span class="kpi-note" id="adm-dash-user-total">Consultando cuentas</span></div>
           <div class="mod-stat"><div class="kpi-top"><small>Recibos registrados</small><span data-icon="receipt"></span></div><strong id="adm-dash-rec">—</strong><span class="kpi-note">Todos los estados</span></div>
-          <div class="mod-stat"><div class="kpi-top"><small>Pagos registrados</small><span data-icon="payment"></span></div><strong id="adm-dash-pay">—</strong><span class="kpi-note" id="adm-dash-payment-total">Consultando importe</span></div>
+          <div class="mod-stat"><div class="kpi-top"><small>Pagos históricos</small><span data-icon="payment"></span></div><strong id="adm-dash-pay">—</strong><span class="kpi-note" id="adm-dash-payment-total">Consultando importe</span><span class="kpi-note">Sin acreditación bancaria atribuida</span></div>
           <div class="mod-stat"><div class="kpi-top"><small>Incidencias pendientes</small><span data-icon="incident"></span></div><strong id="adm-dash-inc">—</strong><span class="kpi-note">Registradas y en revisión</span></div>
           <div class="mod-stat"><div class="kpi-top"><small>Cortes activos</small><span data-icon="cut"></span></div><strong id="adm-dash-activos">—</strong><span class="kpi-note" id="adm-dash-cut-next">Consultando programados</span></div>
           <div class="mod-stat"><div class="kpi-top"><small>Solicitudes pendientes</small><span data-icon="support"></span></div><strong id="adm-dash-ate">—</strong><span class="kpi-note">Registradas y en atención</span></div>
         </div>
-        <section class="admin-analysis" aria-label="Distribución y seguimiento"><div class="admin-insight"><h3>Estado de la facturación</h3><p>Distribución de los recibos registrados</p><div class="receipt-status-bar" id="admin-receipt-bar" aria-hidden="true"></div><div id="admin-receipt-breakdown"></div></div><div class="admin-insight"><h3>Seguimiento operativo</h3><p>Información del resumen compartido</p><div id="admin-operational-breakdown"></div></div></section>
+        <section class="admin-analysis" aria-label="Distribución y seguimiento"><div class="admin-insight"><h3>Estado de la facturación</h3><p>Distribución de los recibos registrados</p><div class="receipt-status-bar" id="admin-receipt-bar" aria-hidden="true"></div><div id="admin-receipt-breakdown"></div></div><div class="admin-insight"><h3>Seguimiento operativo</h3><p>Estados registrados de incidencias y atención</p><div class="operational-groups" id="admin-operational-breakdown"></div></div></section>
         <div class="quick-grid" aria-label="Accesos de administración">
           <button class="quick-card" data-action="adm-usuarios" type="button">
             <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-5.5 6.5-5.5s6.5 2 6.5 5.5"/></svg></span>
@@ -336,9 +376,16 @@
             <p class="page-desc">Consulta las operaciones registradas por los usuarios.</p>
           </div>
         </div>
+        <section aria-labelledby="admin-operation-title">
+          <h3 id="admin-operation-title">Operaciones y revisión manual</h3>
+          <p class="hint">Entorno de pruebas · Sin cobros reales</p>
+          <div id="admin-operation-manager"></div>
+        </section>
+        <h3>Registros históricos</h3>
+        <p>Estos registros anteriores no tienen una verificación financiera atribuida. Sus importes no demuestran cobros bancarios.</p>
         <div class="mod-stats" aria-label="Resumen de pagos" style="grid-template-columns:repeat(4,1fr)">
           <div class="mod-stat"><small>Pagos registrados</small><strong id="adm-pay-total">0</strong></div>
-          <div class="mod-stat"><small>Monto total</small><strong id="adm-pay-monto">S/ 0.00</strong></div>
+          <div class="mod-stat"><small>Importe histórico</small><strong id="adm-pay-monto">S/ 0.00</strong></div>
           <div class="mod-stat"><small>Pagos hoy</small><strong id="adm-pay-hoy">0</strong></div>
           <div class="mod-stat"><small>Este mes</small><strong id="adm-pay-mes">0</strong></div>
         </div>
@@ -473,7 +520,12 @@
   <script src="shared/ui.js"></script>
   <script src="shared/icons.js"></script>
   <script src="shared/realtime.js"></script>
+  <script src="shared/two-factor-ui.js"></script>
+  <script src="shared/password-recovery-ui.js"></script>
+  <script src="shared/incident-timeline.js"></script>
+  <script src="assets/js/incident-review.js"></script>
   <script src="assets/js/admin-table.js"></script>
+  <script src="assets/js/payment-management.js"></script>
   <script src="assets/js/admin.js"></script>
 </body>
 </html>

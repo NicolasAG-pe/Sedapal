@@ -1,7 +1,7 @@
 'use strict';
 // Escenario importado por el harness del AVD; PostgreSQL nuevo y proveedor simulado.
 const assert=require('node:assert/strict');
-module.exports=async function({ctx,getPage,restart,until,ok,screenshot}){
+module.exports=async function({ctx,getPage,restart,until,ok,screenshot,android,dashboard,logout,noPlainToken}){
  const page=()=>getPage(),account=ctx.registro(721);
  async function check(){await page().locator('#btn-check-email').click();}
  async function status(text){await until(()=>page().evaluate(t=>document.getElementById('verify-status').textContent.includes(t),text),'estado OTP '+text);}
@@ -58,4 +58,41 @@ module.exports=async function({ctx,getPage,restart,until,ok,screenshot}){
  await restart();await until(()=>page().evaluate(()=>document.getElementById('verify-code-hint').textContent.includes('solicitud venció')),'solicitud vencida confirmada');assert.ok(!(await saved()).pending);
  await page().locator('#btn-restart-register').click();await until(()=>page().evaluate(()=>!document.getElementById('register-form').hidden),'otros datos');assert.ok(!(await saved()).pending);
  ok('OTP: solicitud caducada se informa/retira y abandonar permite iniciar otra identidad');
+ async function directRegistration(n){
+  const a=ctx.registro(n);
+  for(const [selector,value]of [['#reg-correo',a.correo],['#reg-suministro',a.numero_suministro],['#reg-pass',a.password],['#reg-pass2',a.password]])await page().locator(selector).fill(value);
+  await page().locator('#btn-register').click();
+  await until(async()=>!!(await saved()).pending,'solicitud nueva persistida');
+  await drainTo('aceptado');await check();await status('aceptó');
+  return a;
+ }
+ // El token correcto no puede abrir datos privados si falla el almacenamiento nativo.
+ const failed=await directRegistration(723);
+ await page().evaluate(()=>{window.originalSecureWrite=HMNativeState.writeSession;HMNativeState.writeSession=async()=>{throw Error('Fallo sintético Keystore');};});
+ await page().locator('#verify-code').fill(ctx.codigo(failed.correo));await page().locator('#btn-verify-email').click();
+ await until(()=>page().evaluate(()=>!document.getElementById('login-form').hidden&&document.getElementById('session-restore').hidden),'fallo seguro vuelve al login');
+ assert.equal(await page().evaluate(()=>document.getElementById('view-dashboard').classList.contains('active')),false);
+ assert.ok(!await page().evaluate(async()=>(await HMNativeState.readSession()).token));
+ await page().evaluate(()=>{HMNativeState.writeSession=window.originalSecureWrite;delete window.originalSecureWrite;});
+ ok('OTP: fallo de escritura segura impide dashboard y retira credencial incompleta');
+ await page().locator('#show-register').click();
+ const direct=await directRegistration(724);let loginCalls=0;
+ const countLogin=req=>{if(req.url==='/api/auth/login')loginCalls++;};ctx.httpServer.on('request',countLogin);
+ try{
+  await page().locator('#verify-code').fill(ctx.codigo(direct.correo));await page().locator('#btn-verify-email').click();
+  await dashboard(direct.numero_suministro);await noPlainToken();
+  assert.equal(loginCalls,0,'No se utiliza contraseña ni segunda petición de login');
+  assert.ok(!(await saved()).pending);
+  assert.equal(await page().locator('#reg-pass').inputValue(),'');assert.equal(await page().locator('#verify-code').inputValue(),'');
+  const token=await page().evaluate(async()=>(await HMNativeState.readSession()).token);assert.ok(token);
+  const encrypted=android('shell','run-as','pe.edu.hidromejora.app','cat','no_backup/hm-secure-v1/session.bin');
+  assert.equal(encrypted.includes(token),false,'JWT ausente del archivo cifrado');
+  ok('OTP: confirmación abre dashboard sin login y conserva JWT cifrado, sin OTP ni contraseña');screenshot('otp-auto-dashboard');
+  await restart();await dashboard(direct.numero_suministro);ok('OTP: sesión automática se restaura tras force-stop');
+  await restart('kill');await dashboard(direct.numero_suministro);ok('OTP: sesión automática se restaura tras muerte del proceso');
+  await logout();await restart();
+  await until(()=>page().evaluate(()=>!document.getElementById('login-form').hidden),'logout no restaura');
+  assert.ok(!await page().evaluate(async()=>(await HMNativeState.readSession()).token));
+  ok('OTP: logout elimina sesión automática y sigue cerrado después de reiniciar');
+ }finally{ctx.httpServer.off('request',countLogin);}
 };

@@ -5,7 +5,17 @@
       "feature/verificacion-correo": false,
       "integration/avance-18": false,
       "main": false,
-      "preparation/backend-avance-23": false
+      "preparation/backend-avance-23": false,
+      "feature/seguridad-totp": false,
+      "feature/pagos-pdf-120": false,
+      "feature/yape-piloto-120": false,
+      "feature/identidad-acuatica-pdf-120": false,
+      "feature/recuperacion-clave-120": false,
+      "feature/notificaciones-push-120": false,
+      "feature/seguimiento-incidencias-120": false,
+      "feature/firebase-fcm-piloto-120": false,
+      "feature/auditoria-calidad-ux-120": false,
+      "preparation/lanzamiento-oficial-120": false
     }
   }
 }

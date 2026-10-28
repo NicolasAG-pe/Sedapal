@@ -15,7 +15,8 @@ test('Restauración consulta estado/rol reales, conserva cuentas previas y no re
   const restored=await session(login.token,200);assert.equal(restored.usuario.rol,'usuario');assert.equal(restored.usuario.correo,account.correo);assert.equal(restored.suministro.numero_suministro,account.numero_suministro);assert.equal(restored.token,undefined);
   assert.deepEqual((await ctx.db.query('SELECT to_jsonb(u) AS row FROM usuarios u')).rows,before);
   await ctx.db.query('UPDATE usuarios SET activo=false WHERE correo=$1',[account.correo]);await session(login.token,403);
-  await ctx.db.query("UPDATE usuarios SET activo=true,rol='admin' WHERE correo=$1",[account.correo]);await session(login.token,403);
-  await ctx.db.query("UPDATE usuarios SET rol='usuario' WHERE correo=$1",[account.correo]);await session(login.token,200);
+  await ctx.db.query("UPDATE usuarios SET activo=true,rol='admin' WHERE correo=$1",[account.correo]);await session(login.token,401);
+  await ctx.db.query("UPDATE usuarios SET rol='usuario' WHERE correo=$1",[account.correo]);await session(login.token,401);
+  const fresh=(await ctx.request('login',{numero_suministro:account.numero_suministro,password:account.password},200)).data;await session(fresh.token,200);
  }finally{await ctx.close();}
 });

@@ -15,6 +15,8 @@ def releaseSigning = [
 
 android {
     namespace "pe.edu.hidromejora.app"
+    // Instrumentación opt-in con el certificado permanente; no cambia el APK.
+    testBuildType project.hasProperty('hidroReleaseUpgradeTest') ? 'release' : 'debug'
     compileSdk rootProject.ext.compileSdkVersion
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_21
@@ -22,10 +24,12 @@ android {
     }
     defaultConfig {
         applicationId "pe.edu.hidromejora.app"
+        // Sin configuración privada autorizada no se registra Firebase.
+        buildConfigField "boolean", "HM_PUSH_CONFIGURED", (file('google-services.json').isFile() && System.getenv('HM_PUSH_ANDROID_ENABLED') == '1').toString()
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 4
-        versionName "1.1.1"
+        versionCode 6
+        versionName "1.2.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -33,6 +37,7 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    buildFeatures { buildConfig true }
     signingConfigs {
         release {
             if (releaseSigning.storeFile) storeFile file(releaseSigning.storeFile)

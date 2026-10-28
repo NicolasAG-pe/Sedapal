@@ -24,3 +24,14 @@ test('los importes inválidos no rompen la interfaz', () => {
   assert.equal(money(null), 'S/ 0.00');
   assert.equal(money('sin monto'), 'S/ 0.00');
 });
+
+test('presentación de auditoría: textos breves sin modificar motivos humanos ni estados internos', () => {
+  const format = window.HMShared.ui.paymentAuditMessage;
+  assert.equal(format('Ensayo sintético revisado sin movimiento de dinero'), 'Operación confirmada. No se recibió dinero.');
+  assert.equal(format('Operación demostrativa sin acreditación financiera'), 'Operación registrada sin acreditación financiera.');
+  assert.equal(format('Estado consultado al proveedor simulado; sin movimiento financiero'), 'Estado actualizado por el proveedor de pruebas; sin movimiento financiero.');
+  for (const original of ['Motivo escrito por el administrador: ensayo sin recepción', 'verificada_manual', 'ensayo_confirmado']) {
+    assert.equal(format(original), original, 'No reinterpretar campos ni motivos arbitrarios');
+  }
+  assert.equal(format(null), '');
+});
