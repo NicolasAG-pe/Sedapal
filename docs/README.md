@@ -18,6 +18,8 @@ Documentación en español de Hidro-Mejora **v1.0.0**, contrastada con el códig
 ## Infraestructura
 
 - [Producción: Vercel, Render, Neon y distribución APK](DEPLOYMENT.md).
+- [Kubernetes local integrado en `main`](../k8s/README.md) y su
+  [guía de arranque, parada y recuperación](../k8s/avance19/README.md).
 
 ## Android
 

@@ -1,7 +1,9 @@
-> Avance 18: esta guía describe operaciones futuras que requieren autorización.
-> No se ejecutó up.sh ni se aplicaron manifiestos durante la integración. Altas
-> cerradas por defecto; PVC anterior requiere migraciones manuales 003–006.
-> La validación histórica del compañero no acredita el código integrado.
+> **Guía histórica del clúster `sedapal-test` (compañero).** El flujo local
+> mantenido para `main` es [avance19](../avance19/README.md), con clúster,
+> namespace y puertos propios (8084/8085). Esta guía se conserva como referencia;
+> no se ejecutó `up.sh` durante la integración del avance 18. Altas cerradas por
+> defecto; PVC anterior requiere migraciones manuales 003–006. La validación
+> histórica del compañero no acredita el código integrado actual.
 
 # Prueba local de Sedapal en Kubernetes
 

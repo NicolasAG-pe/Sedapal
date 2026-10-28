@@ -5,23 +5,30 @@ Deriva de los manifiestos `k8s/local` del equipo; no los sustituye. Usa puertos
 loopback **8084** (cliente) y **8085** (Admin), sin tocar Compose 8080/8081 ni
 el clúster del compañero `sedapal-test`. No es una configuración productiva.
 
+Este flujo es la **opción local mantenida para `main`** a partir de la
+integración del [PR #21](https://github.com/NicolasAG-pe/Sedapal/pull/21).
+Compose, Render, Vercel y Neon siguen siendo independientes: Kubernetes local no
+lee `.env`, no usa Neon ni publica en esos servicios.
+
 ## Preparación en otra laptop
 
-Los ajustes de portabilidad y esta guía viven en
-`feature/k8s-local-actualizado` hasta que su Draft PR se revise. Descargar un
-checkout independiente y comprobar su hash; conservar cualquier copia previa:
+Mientras el PR #21 está en revisión, usar su rama; una vez integrado, clonar
+`main`. Descargar un checkout independiente y comprobar su hash; conservar
+cualquier copia previa:
 
 ```sh
-git clone --branch feature/k8s-local-actualizado --single-branch https://github.com/NicolasAG-pe/Sedapal.git Sedapal-integracion
+# Tras el merge del PR #21:
+git clone --branch main --single-branch https://github.com/NicolasAG-pe/Sedapal.git Sedapal-integracion
+# Mientras el PR está abierto:
+# git clone --branch feature/k8s-local-actualizado --single-branch https://github.com/NicolasAG-pe/Sedapal.git Sedapal-integracion
 cd Sedapal-integracion
 git status --short --branch
 git log -1 --oneline
 ```
 
-Si la rama ya fue integrada, usar `main` y su commit. Para reproducir una
-validación histórica, usar el commit de su informe. No copiar `.env`, secretos,
-kubeconfig, bases ni directorios `artifacts` de otra laptop. Cada entorno genera
-sus propias credenciales y datos sintéticos.
+Para reproducir una validación histórica, usar el commit de su informe. No
+copiar `.env`, secretos, kubeconfig, bases ni directorios `artifacts` de otra
+laptop. Cada entorno genera sus propias credenciales y datos sintéticos.
 
 Requisitos comprobados en esta PC: Linux amd64/Debian, Docker 29.9.1, kind 0.33.0,
 kubectl 1.37.1 y Node 20.19.2 (contenedor backend Node 22.23.4). El nodo está
@@ -186,11 +193,33 @@ No hay limpieza automática: no borrar clústeres, PVC, volúmenes, Secrets ni b
 El clúster se deja activo para revisión; los componentes OTP temporales quedan
 con cero réplicas. No iniciar Android ni conectar dispositivos reales.
 
-## Nodo detenido o reinicio de la PC
+## Compatibilidad con Compose, Render, Vercel y Neon
 
-El nodo kind no arranca solo. Tras reiniciar, o si Docker lo detuvo por falta de
-memoria, arrancarlo y esperar a que esté Ready antes de repetir las pruebas. No
-borrar el clúster: el PVC y las cuentas sintéticas viven en su volumen.
+| Entorno | Puerto / acceso | Datos y secretos | Efecto de Kubernetes |
+| --- | --- | --- | --- |
+| Docker Compose | 8080/8081 | `.env` y volumen `postgres_data` | Ninguno; no comparte red ni volumen |
+| Kubernetes local | 8084/8085 | Secretos aleatorios y PVC `db-data` del clúster kind | Es este flujo |
+| Render / Vercel | Dominios públicos | Variables y secretos de cada plataforma | No se modifican ni se leen |
+| Neon | PostgreSQL gestionado | Cadena `DATABASE_URL` de producción | No se usa en el clúster local |
+
+Los manifiestos base usan `POSTGRES_*` y Services internos; no contienen cadenas
+de Neon ni credenciales de Render/Vercel. Levantar o detener el clúster local no
+reinicia contenedores de Compose ni cambia despliegues. En equipos con poca
+memoria, ejecutar Compose y kind a la vez puede provocar que Docker detenga el
+nodo; usar un solo entorno durante la validación.
+
+## Detener, reiniciar y recuperar
+
+Para **detener sin perder datos**, parar el nodo. Esto no borra el clúster, el
+PVC, las cuentas sintéticas ni los Secretos; al arrancarlo se reutilizan:
+
+```sh
+docker stop hidro-avance19-control-plane
+```
+
+El nodo kind no arranca solo. Tras reiniciar la PC, o si Docker lo detuvo por
+falta de memoria, arrancarlo y esperar a que esté Ready antes de repetir las
+pruebas:
 
 ```sh
 docker start hidro-avance19-control-plane
@@ -200,18 +229,21 @@ kubectl --context kind-hidro-avance19 wait --for=condition=Ready \
 bash k8s/avance19/start.sh   # reutiliza sin reiniciar si no hay cambios
 ```
 
-Durante el arranque los Pods pueden mostrar `Error` o reinicios transitorios y
-la API puede fallar readiness hasta recuperar PostgreSQL. Si el estado final no
-es cuatro Deployments disponibles, revisar `kubectl get events` y la memoria
-disponible antes de repetir. En esta PC el nodo apareció como `Exited 137`
-(coincide con falta de memoria) y se recuperó al arrancarlo sin Compose activo.
+No borrar el clúster para liberar memoria: el PVC y las cuentas viven en su
+volumen. Durante el arranque los Pods pueden mostrar `Error` o reinicios
+transitorios y la API puede fallar readiness hasta recuperar PostgreSQL. Si el
+estado final no es cuatro Deployments disponibles, revisar `kubectl get events`
+y la memoria disponible antes de repetir. En esta PC el nodo apareció como
+`Exited 137` (coincide con falta de memoria) y se recuperó al arrancarlo sin
+Compose activo.
 
 ## Publicación posterior
 
-Ambos `vercel.json` excluyen explícitamente esta rama
+El [PR #21](https://github.com/NicolasAG-pe/Sedapal/pull/21) integra este flujo
+en `main`. Ambos `vercel.json` excluyen explícitamente su rama
 (`feature/k8s-local-actualizado`) además de `integration/avance-18`,
 `feature/verificacion-correo` y `main`, para que el push no dispare despliegues
-Git Vercel. La publicación requiere comprobar además las conexiones Git/raíces
-de Vercel y las ramas/autodespliegues/vistas previas de Render. Una exclusión
-Vercel no protege otros proveedores. No ejecutar merge ni desplegar desde esta
-guía local; el push y el Draft PR se hacen solo tras revisar esas automatizaciones.
+Git Vercel. Antes del merge hay que comprobar las conexiones Git/raíces de Vercel
+y las ramas/autodespliegues/vistas previas de Render: una exclusión Vercel no
+protege otros proveedores. El merge no se ejecutó; requiere autorización y
+confirmar que Render no desplegará automáticamente `main` como consecuencia.
