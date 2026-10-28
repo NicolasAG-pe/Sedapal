@@ -5,6 +5,7 @@
 - Integración técnica de #12–#20 sobre main con #21 conservado; OTP equivalente sin duplicar y #22 excluido. Drafts y revisiones originales siguen abiertos.
 - Android1.2.0/código6 compilado con firma permanente; actualización sobre1.1.2 comprobada en AVD offline sin desinstalar ni perder identidad/preferencias.
 - Respaldo Neon de solo lectura restaurado y cotejado; ensayo007–013 repetido en otra copia, sin migraciones productivas. Inscripción2FA, FCM y cobros reales cerrados.
+- Bloqueo productivo reproducido en copia restaurada: consultas normales de pagos dependen de columnas de009/010, exclusivas de laboratorio. Se documenta la separación de esquema pendiente; no se ejecutan esas migraciones en Neon ni se publica release.
 - Corregida omisión Docker de módulos recuperación/push/seguimiento; imagen local y smoke de arranque/importación aprobados. Plan coordinado Render/Vercel y referencias previas conservadas; sin despliegues, tag o release.
 
 ## Validación de laboratorio y preparación física — incremento D

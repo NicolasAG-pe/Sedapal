@@ -86,6 +86,32 @@ consulta de secuencias a texto en ambos lectores, sin omitirlas ni cambiar datos
 Un respaldo es de un instante: antes de la ventana final se requiere otro respaldo
 fresco y verificado, o reconciliar explícitamente las escrituras posteriores.
 
+## Bloqueo reproducido: ruta de migración productiva
+
+No basta con dejar YAPE_PILOT_ENABLED=0. En una tercera base local restaurada se
+aplicaron únicamente 007,008,011,012,013, excluyendo las dos de laboratorio.
+La consulta normal siguiente falla por columna inexistente (42703):
+
+```sql
+SELECT o.piloto_ensayo, o.recibido_en, o.monto_recibido
+FROM operaciones_pago o LIMIT 0;
+```
+
+`Backend/payment-operations.js` las proyecta en `publicColumns`, y el INSERT
+común también escribe `piloto_id`, `piloto_ensayo` y `receptor_huella`, incluso
+cuando sus valores son NULL. Por tanto, la ruta productiva quedaría incompleta.
+El ensayo con las siete migraciones era válido para laboratorio y no probaba
+la ruta productiva que excluye009/010; ambas evidencias quedan diferenciadas.
+
+**Acción crítica pendiente:** diseñar y revisar una migración de compatibilidad
+productiva y/o separar las consultas de laboratorio. Debe preservar el contrato,
+demostraciones e historial existentes, conservar cerrados los cobros reales y
+no crear/habilitar control_piloto_yape en Neon. Cualquier columnas de
+compatibilidad deben tener semántica/constraints de producción revisados; no
+copiar009/010, relajar sus guardas ni ejecutar init.sql. Después, ensayar la ruta
+productiva exacta en otra copia y comprobar cliente/Admin/pagos con flags cerrados.
+No se implementó una solución de esquema improvisada para forzar el lanzamiento.
+
 ## Secuencia coordinada pendiente
 
 1. Cerrar las condiciones de revisión de los Draft y registrar actas externas,
@@ -94,7 +120,8 @@ fresco y verificado, o reconciliar explícitamente las escrituras posteriores.
    Mantener autodeploy/previews apagados y excluir esta rama en ambas raíces.
 3. Registrar ventana, criterio de parada y copia reciente del estado/configuración;
    actualizar el respaldo verificado antes de la migración efectiva.
-4. Aplicar las migraciones revisadas, en orden y con lock/statement timeout,
+4. **Tras resolver el bloqueo de compatibilidad de pagos**, aplicar las
+   migraciones revisadas, en orden y con lock/statement timeout,
    exclusivamente al destino verificado. Evitar tráfico durante incompatibilidades
    y comprobar todas las instancias. 009/010 son de laboratorio: revisar su necesidad
    y política antes de cualquier aplicación productiva, aunque el ensayo sea correcto.
