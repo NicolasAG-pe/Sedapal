@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Firebase FCM — preparación de piloto Android aislado
+
+- Compilación debug en worktree independiente con JSON privado validado y temporal; flag Firebase solo durante el build, sin cambiar dependencias, diseño ni APK oficiales.
+- El adaptador del PR #17 admite tokens OAuth temporales externos: valida identidad/scope/caducidad/permisos y falla cerrado; conserva el modo anterior y las entregas desactivadas por defecto.
+- Identidad dedicada de envío: roles personalizados `hmFcmPilotSender` y `hmFcmPilotTokenMinter`, con un permiso cada uno y obtención temporal de tokens sobre esa cuenta. APIs IAM/IAM Credentials habilitadas; sin claves privadas permanentes ni facturación. Cambios remotos inventariados en el informe.
+- 32 pruebas específicas y 101 regresiones aprobadas; Gradle/JUnit/lint y ocho comprobaciones Android 15 con registro FCM real, cifrado, consentimiento, cambio de cuenta y revocación, sin enviar mensajes.
+- Android 13/14 pendientes por espacio para imágenes; primer mensaje remoto sujeto a aprobación. Informe en `docs/pruebas/firebase-fcm-piloto-120.md` y operación en `docs/firebase-fcm-piloto.md`.
+
 ## Seguimiento de incidencias — cliente, Admin y Android
 
 - Botones «Ver seguimiento»/«Ver historial» y diálogo acuático con eventos reales, fecha/estado, comentarios públicos y aviso explícito para incidencias anteriores; tarjetas, formularios, fotos, filtros y tablas conservados.

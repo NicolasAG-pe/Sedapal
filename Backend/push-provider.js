@@ -75,6 +75,14 @@ function configuredSender(env = process.env) {
   }
   if (env.PUSH_PROVIDER !== "fcm" || env.PUSH_REAL_DELIVERY_ALLOWED !== "1")
     throw Error("FCM real no autorizado.");
+  const mode = env.PUSH_AUTH_MODE || "service_account";
+  if (mode === "access_token_file") {
+    if (env.PUSH_SERVICE_ACCOUNT_FILE) throw Error("Identidades FCM incompatibles.");
+    const getAccessToken = require("./push-credentials").temporaryAccessToken(env);
+    return createFcmSender({ projectId: env.PUSH_FIREBASE_PROJECT_ID, getAccessToken });
+  }
+  if (mode !== "service_account" || env.PUSH_ACCESS_TOKEN_FILE)
+    throw Error("Modo de autenticación FCM inválido.");
   const file = path.resolve(env.PUSH_SERVICE_ACCOUNT_FILE || ""),
     repo = path.resolve(__dirname, ".."),
     stat = fs.lstatSync(file);

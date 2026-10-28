@@ -61,7 +61,10 @@
     "worker:push": "node Backend/workers/push.cjs",
     "test:incidents": "node --test Backend/test/incident-tracking.cjs",
     "test:incidents:e2e": "node --test scripts/test/incident-tracking-flow.cjs",
-    "test:incidents:native": "node scripts/test/android-session-native.cjs --incidents"
+    "test:incidents:native": "node scripts/test/android-session-native.cjs --incidents",
+    "android:fcm:lab": "node scripts/build-android-fcm-lab.cjs",
+    "test:fcm:lab": "node --test Backend/test/push-credentials.cjs scripts/test/firebase-lab.cjs",
+    "test:fcm:registration:native": "node scripts/test/android-session-native.cjs --fcm-registration"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",
