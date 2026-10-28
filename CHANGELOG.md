@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Pulido UX 1.2.0 — incremento B
+
+- Accesos rápidos del teléfono en tres columnas: cinco acciones conservadas, etiquetas legibles sin partir palabras y botón de tutorial de 44 px.
+- HidroBot con controles táctiles de 44 px, encabezado y sugerencias redistribuidos y espacio de conversación comprobado; sin ocultar funciones ni cambiar la identidad.
+- 63 capturas posteriores en seis resoluciones, geometría y saludo real verificados; diez pruebas dirigidas aprobadas. Comparación local con el runtime anterior preservado.
+- Informe en `docs/pruebas/pulido-ux-120.md`; Android de la candidata final, teclado virtual y validación física siguen en D. No publicación ni entregas reales.
+
 ## Auditoría integral 1.2.0 — incremento A
 
 - Base del PR #19 comprobada y cadena #11–#19 inventariada: #11 ya tiene parche equivalente, sin merges ni reconstrucción.

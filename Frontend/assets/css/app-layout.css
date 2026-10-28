@@ -29,7 +29,7 @@
 .nav-item:hover:not(.active){background:var(--bg)}.side-cons{background:var(--sky-mist);border-color:var(--border)}.side-cons.ok .side-cons-value{color:var(--primary)}
 .dashboard{min-width:0;padding-bottom:48px}.page-header{margin-bottom:20px;padding:20px;background:linear-gradient(110deg,var(--primary),var(--secondary));color:var(--white);border-radius:18px}.page-title{font-size:1.65rem;letter-spacing:-.04em}.page-desc{font-size:.86rem}
 #sec-inicio>.page-header{display:none}.hero.client-greeting{display:flex;border:0;background:var(--water-foam);padding:20px;margin:0 0 16px;border-radius:18px;min-height:0;align-items:center;overflow:visible}.client-greeting>div{flex:1;min-width:0}
-.client-greeting h2{font-size:1.6rem}.client-greeting p{font-size:.82rem;margin-top:6px}.client-greeting .btn{padding:8px 10px;min-height:40px;background:var(--white);border:0;color:var(--primary);font-size:.76rem}
+.client-greeting h2{font-size:1.6rem}.client-greeting p{font-size:.82rem;margin-top:6px}.client-greeting .btn{padding:8px 10px;min-height:var(--touch-target);background:var(--white);border:0;color:var(--primary);font-size:.76rem}
 .stats.account-overview{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:24px}
 .account-overview .balance-card{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;gap:20px;padding:26px;background:linear-gradient(120deg,var(--primary),var(--secondary));color:var(--white);border:0;border-radius:22px;box-shadow:var(--shadow-md);position:relative;overflow:hidden}
 .balance-main small{color:var(--white);font-size:.78rem}.balance-main>strong{display:block;color:white;font-size:clamp(2.5rem,5vw,3.1rem);letter-spacing:-.045em;line-height:1.2;margin:10px 0}
@@ -93,7 +93,7 @@ body:not(.login-seen) #view-login.active .brand-logo,body:not(.login-seen) #view
  .sidebar{visibility:hidden;transition:transform 200ms var(--ease-out),visibility 0s 200ms}.shell.nav-open .sidebar{visibility:visible;transition-delay:0s}
  .mobile-tabs .nav-item{font-size:.75rem}
 }
-@media(max-width:640px){#sec-inicio .quick-body b{font-size:.72rem}.client-greeting .btn{font-size:.75rem}.activity-copy small{font-size:.75rem}.bar-label,.bar-val{font-size:.65rem}}
+@media(max-width:640px){#sec-inicio .quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))}#sec-inicio .quick-body b{font-size:.8125rem}.client-greeting .btn{font-size:.75rem}.activity-copy small{font-size:.75rem}.bar-label,.bar-val{font-size:.65rem}}
 .invoice summary{cursor:pointer;font-size:.82rem;font-weight:650;color:var(--muted);min-height:44px;padding:10px 0}.invoice summary:focus-visible{outline:3px solid var(--primary);outline-offset:2px}.invoice .hint{margin:6px 0 14px}.alert-leak .hm-icon{vertical-align:middle;width:18px}
 .client-greeting #btn-replay-tutorial:focus-visible{outline-offset:-3px}
 @media(max-width:640px){.account-overview .stat:not(.balance-card){display:flex;flex-direction:column;justify-content:space-between;min-height:110px}.account-overview .stat-top small{font-size:.73rem}.account-overview .stat:not(.balance-card)>strong{font-size:clamp(.98rem,4.2vw,1.18rem);white-space:nowrap;letter-spacing:-.035em}.support-card p,.inc-desc{font-size:.86rem}.inc-item{padding:16px;gap:8px}}

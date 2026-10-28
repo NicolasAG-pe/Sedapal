@@ -250,3 +250,8 @@ Guía/recorrido y lista específica para celular:
 [DEMO-LABORATORIO-120](../DEMO-LABORATORIO-120.md). Las evidencias y APK debug
 son locales y privadas, fuera de Git; la galería se abre desde `gallery.html`.
 El recurso FCM original, APK oficiales, main y ramas anteriores se conservan.
+
+Actualización posterior: B-01/B-02 y el objetivo táctil del tutorial se resolvieron
+en el [incremento B](pulido-ux-120.md), con referencia anterior ejecutada contra
+el mismo laboratorio y comparaciones reales. La tabla de A conserva el estado
+de los hallazgos al terminar la auditoría inicial.

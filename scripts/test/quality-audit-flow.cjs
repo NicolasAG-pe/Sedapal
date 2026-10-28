@@ -33,8 +33,17 @@ async function main() {
       await c.db.query('UPDATE recibos SET estado=$1 WHERE id_recibo=$2', [state, r.data.recibo.id_recibo]);
     }
     assert.equal((await c.api('/api/atencion', { categoria: 'Facturación', asunto: 'Consulta de laboratorio', descripcion: 'Consulta sintética para la demostración de atención.' })).status, 201);
-    const clientDir = buildWeb('web', { API_BASE_URL: '' }, path.join(out, 'web'));
-    const adminDir = buildWeb('admin', { API_BASE_URL: '' }, path.join(out, 'admin'));
+    const reference = process.env.HIDRO_QUALITY_REFERENCE;
+    if (reference) {
+      assert.equal(phase, 'baseline');
+      assert.match(reference, /^baseline-[A-Za-z0-9]+$/);
+      assert.equal(path.dirname(fs.realpathSync(path.join(parent, reference))), fs.realpathSync(parent));
+      report.referenceRuntime = reference;
+    }
+    // Una comparación puede servir el runtime previo preservado, sin revertir
+    // archivos ni sustituir pantallas. API y PostgreSQL siguen siendo reales.
+    const clientDir = reference ? path.join(parent, reference, 'web') : buildWeb('web', { API_BASE_URL: '' }, path.join(out, 'web'));
+    const adminDir = reference ? path.join(parent, reference, 'admin') : buildWeb('admin', { API_BASE_URL: '' }, path.join(out, 'admin'));
     server = http.createServer(async (req, res) => {
       if (req.url.startsWith('/api/') || req.url.startsWith('/socket.io/')) {
         try {
@@ -77,7 +86,7 @@ async function main() {
       const file = name + '-' + size.width + 'x' + size.height + '.png';
       await page.screenshot({ path: path.join(out, file), fullPage: true });
       report.screens.push({ name, file, ...size });
-      report.geometry.push(await page.evaluate(({ name }) => {
+      const geometry = await page.evaluate(({ name }) => {
         const visible = e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden';
         const named = e => e.getAttribute('aria-label') || e.getAttribute('aria-labelledby') || e.labels?.length || e.getAttribute('title');
         const controls = [...document.querySelectorAll('button,input:not([type=hidden]),select,textarea')].filter(visible);
@@ -86,9 +95,22 @@ async function main() {
           unnamedButtons: controls.filter(e => e.tagName === 'BUTTON' && !e.textContent.trim() && !named(e)).map(e => e.id),
           clippedControls: controls.filter(e => !e.closest('.table-scroll,#admin-nav')).filter(e => { const r = e.getBoundingClientRect(); return r.left < -1 || r.right > innerWidth + 1; }).map(e => e.id || e.textContent.trim().slice(0, 40)),
           smallTargets: controls.filter(e => { const r = e.getBoundingClientRect(); return r.height < 44 || r.width < 44; }).map(e => ({ id: e.id || e.textContent.trim().slice(0, 40), width: Math.round(e.getBoundingClientRect().width), height: Math.round(e.getBoundingClientRect().height) })),
+          quickWords: [...document.querySelectorAll('#sec-inicio .quick-grid b')].filter(visible).map(e => { const range = document.createRange(); range.selectNodeContents(e); return { text: e.textContent, lines: range.getClientRects().length }; }),
+          assistantBodyHeight: document.getElementById('hb-panel')?.classList.contains('open') ? Math.round(document.getElementById('hb-body').getBoundingClientRect().height) : null,
           brokenImages: [...document.images].filter(visible).filter(e => e.getAttribute('src') && (!e.complete || !e.naturalWidth)).length,
           reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches };
-      }, { name }));
+      }, { name });
+      report.geometry.push(geometry);
+      if (phase === 'after') {
+        if (name === 'client-inicio') {
+          assert.equal(geometry.quickWords.length, 5);
+          assert.ok(geometry.quickWords.every(word => word.lines === 1), 'Accesos rápidos legibles sin partir palabras');
+        }
+        if (name === 'client-hidrobot') {
+          assert.deepEqual(geometry.smallTargets, [], 'Controles HidroBot de al menos 44 px');
+          assert.ok(geometry.assistantBodyHeight >= 96, 'Conversación visible junto con sugerencias y controles');
+        }
+      }
     }
     async function clientLogin(page, account) {
       await page.locator('#suministro').fill(account.numero_suministro);
@@ -121,6 +143,7 @@ async function main() {
         }
       }
       await page.locator('#hb-fab').click(); await page.locator('#hb-panel.open').waitFor();
+      await page.locator('#hb-body .hb-msg.bot').first().waitFor();
       await capture(page, 'client-hidrobot'); await page.locator('#hb-close').click();
       await page.evaluate(() => document.getElementById('btn-logout').click());
       await ctx.close(); console.log('Cliente ' + width + 'x' + height + ': capturas reales guardadas');
