@@ -69,7 +69,11 @@ function crearServicioRecibos({ pool, validarRecibo }) {
         // Sentencia nueva DESPUÉS del lock: ve pagos confirmados mientras esperaba.
         const { rows: [r] } = await client.query(`SELECT EXISTS(
             SELECT 1 FROM public.pagos WHERE id_recibo=$1) AS tiene_pago`, [id]);
-        return r.tiene_pago;
+        if (r.tiene_pago) return true;
+        const {rowCount} = await client.query(`SELECT 1 FROM public.operaciones_pago WHERE id_recibo=$1
+            AND estado IN ('declarada','pendiente_verificacion','verificada_manual','acreditada_proveedor') LIMIT 1`, [id]);
+        if(rowCount>0)return true;
+        return (await client.query(`SELECT 1 FROM public.control_piloto_yape WHERE id_recibo=$1 AND habilitado AND vence_en>clock_timestamp() LIMIT 1`,[id])).rowCount>0;
     }
     async function comprobarDuplicado(client, suministro, periodo, id = null) {
         const { rowCount } = await client.query(`SELECT r.id_recibo FROM public.recibos r
@@ -118,26 +122,8 @@ function crearServicioRecibos({ pool, validarRecibo }) {
                 return { recibo: { ...recibo, numero_suministro: s.numero_suministro, tiene_pago: false } };
             });
         },
-        async pagar(id, metodo, idSuministro, idUsuario) {
-            if (!Number.isSafeInteger(id) || id <= 0) throw new ErrorRecibo(400, 'Identificador de recibo inválido.');
-            if (!idSuministro || !idUsuario) throw inexistente();
-            const method = String(metodo || '').trim();
-            if (!method || method.length > 30) throw new ErrorRecibo(400, 'El método de pago es obligatorio (máximo 30 caracteres).');
-            return transaccion(async client => {
-                const { recibo: r, suministro: s } = await bloquearRecibo(client, id, idSuministro);
-                if (String(s.id_usuario) !== String(idUsuario)) throw inexistente();
-                if (await tienePago(client, id) || r.estado === 'Pagado') throw conflicto('El recibo ya se encuentra pagado.');
-                if (r.estado === 'Anulado') throw conflicto('No se puede pagar un recibo anulado.');
-                // No cobrar un histórico ambiguo antes de su reconciliación autorizada.
-                await comprobarDuplicado(client, r.id_suministro, r.periodo, id);
-                const { rows: [p] } = await client.query(`INSERT INTO public.pagos(id_recibo,monto,metodo,codigo_operacion)
-                    VALUES ($1,$2,$3,'PENDIENTE') RETURNING id_pago`, [id, r.monto, method]);
-                const codigo = 'HM-PAG-' + new Date().getFullYear() + '-' + String(p.id_pago).padStart(6, '0');
-                const { rows: [pago] } = await client.query(`UPDATE public.pagos SET codigo_operacion=$1
-                    WHERE id_pago=$2 RETURNING id_pago,id_recibo,monto,metodo,codigo_operacion,fecha_pago`, [codigo, p.id_pago]);
-                await client.query("UPDATE public.recibos SET estado='Pagado' WHERE id_recibo=$1", [id]);
-                return { pago, recibo: { id_recibo: id, estado: 'Pagado' } };
-            });
+        async pagar() {
+            throw new ErrorRecibo(410, 'Utiliza operaciones de pago; una demostración no acredita la deuda.');
         }
     };
 }

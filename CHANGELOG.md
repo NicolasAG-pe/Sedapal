@@ -1,5 +1,229 @@
 # Historial de versiones
 
+## Revisión y ventana oficial1.2.0 — aún sin aprobar/publicar
+
+- PR23 preparado para revisión independiente; alcance cerrado de inscripción2FA, cobros/manual, Yape, FCM y recuperación. Se conserva la exigencia de factores ya activos; el backend antiguo se excluye de recuperación y el control externo sigue pendiente antes de activar2FA.
+- Respaldo fresco Neon de solo lectura y restauración nueva cotejados:13 tablas y cero MFA activos. Firma/metadatos/hash de la APK existente verificados sin recompilar; pruebas anteriores reutilizadas y acta física específica pendiente de referencia.
+- Ventana condicionada documentada: ruta007,008,011,012,013,014 sin009/010, pausa de escritores por resolver, Render por SHA, Admin Vercel sin promoción automática y recuperación compatible. Kubernetes21 íntegro,22 excluido y datos/laboratorio conservados; sin merge, DDL productivo, despliegue ni release.
+
+## Compatibilidad productiva de pagos1.2.0 — PR23 para revisión
+
+- Nueva014 aditiva: seis metadatos de compatibilidad obligatoriamenteNULL y entorno simulado; sin tabla de piloto, sin009/010 ni cambios en consultas, historial, recibos o Admin. Rechaza la ruta de laboratorio y conserva restricciones de008.
+- Ruta007,008,011,012,013,014 verificada dos veces en una nueva restauración aislada.20 regresiones de pagos/migración/piloto,5 grupos REST y4 grupos cliente/Admin aprobados; datos previos conservados y ninguna acreditación de deuda.
+- APK firmada/Android, Kubernetes21, cadena anterior, laboratorio y respaldos intactos. Sin nuevas compilaciones/emuladores, migraciones Neon, merges, despliegues o release; pendientes revisión y autorizaciones.
+
+## Preparación oficial 1.2.0 — aún sin publicar
+
+- Integración técnica de #12–#20 sobre main con #21 conservado; OTP equivalente sin duplicar y #22 excluido. Drafts y revisiones originales siguen abiertos.
+- Android1.2.0/código6 compilado con firma permanente; actualización sobre1.1.2 comprobada en AVD offline sin desinstalar ni perder identidad/preferencias.
+- Respaldo Neon de solo lectura restaurado y cotejado; ensayo007–013 repetido en otra copia, sin migraciones productivas. Inscripción2FA, FCM y cobros reales cerrados.
+- Bloqueo productivo reproducido en copia restaurada: consultas normales de pagos dependen de columnas de009/010, exclusivas de laboratorio. Se documenta la separación de esquema pendiente; no se ejecutan esas migraciones en Neon ni se publica release.
+- Corregida omisión Docker de módulos recuperación/push/seguimiento; imagen local y smoke de arranque/importación aprobados. Plan coordinado Render/Vercel y referencias previas conservadas; sin despliegues, tag o release.
+
+## Validación de laboratorio y preparación física — incremento D
+
+- Candidata debug final en Android 15: 13 comprobaciones de sesión y seis de seguimiento, Keystore instrumental, JUnit 4/4 y lint sin errores (16 advertencias existentes).
+- Evidencias regeneradas en disco persistente: 63 pares comparativos y 153 capturas del recorrido completo; estados Admin con datos/vacío/carga/error/recuperación, 300 pruebas aprobadas y una omisión condicional.
+- AVD anterior conservado tras rechazo por firma debug temporal perdida; la prueba final usó otra instancia sin la aplicación instalada. APK oficiales y firma permanente intactas.
+- Backend, emulador y PostgreSQL de laboratorio detenidos conservando datos; sin FCM/correos/cobros reales ni cambios productivos. Informe `docs/pruebas/validacion-final-120.md`.
+- Teléfono físico, TalkBack, Android 13/14, carga grande y validación de despliegue siguen pendientes. La APK de emulador necesita preparar destino privado/modalidad de instalación antes de su uso físico; no publicación 1.2.0.
+
+## Resumen operativo 1.2.0 — incremento C
+
+- Admin muestra los siete estados existentes de incidencias/atención y distingue importes históricos sin atribuir acreditación bancaria; mismo contrato y una consulta por navegación.
+- Estados con datos, vacío, carga, 503 y recuperación comprobados; una demostración no incrementa pagos financieros. Sin endpoints ni migraciones nuevas.
+- Worktree y evidencias recuperados en disco persistente tras reinicio; 300 pruebas aprobadas y una omisión condicional, recorrido cliente/Admin con matriz visual aprobado y selector de recibo de prueba corregido sin debilitar su aserción.
+- Informe `docs/pruebas/reportes-operacion-120.md`; paginación de listados heredados y carga grande quedan como incremento de contrato separado.
+
+## Pulido UX 1.2.0 — incremento B
+
+- Accesos rápidos del teléfono en tres columnas: cinco acciones conservadas, etiquetas legibles sin partir palabras y botón de tutorial de 44 px.
+- HidroBot con controles táctiles de 44 px, encabezado y sugerencias redistribuidos y espacio de conversación comprobado; sin ocultar funciones ni cambiar la identidad.
+- 63 capturas posteriores en seis resoluciones, geometría y saludo real verificados; diez pruebas dirigidas aprobadas. Comparación local con el runtime anterior preservado.
+- Informe en `docs/pruebas/pulido-ux-120.md`; Android de la candidata final, teclado virtual y validación física siguen en D. No publicación ni entregas reales.
+
+## Auditoría integral 1.2.0 — incremento A
+
+- Base del PR #19 comprobada y cadena #11–#19 inventariada: #11 ya tiene parche equivalente, sin merges ni reconstrucción.
+- Auditoría por módulo, 63 capturas reales en seis resoluciones, referencias de rendimiento, revisión IAM en lectura y roadmap actualizado con #18/#19.
+- Verificadores alineados con FCM aprobado, demostraciones sin fondos, revocación tras cambio de contraseña y autologin OTP; tutorial nativo esperado mediante su control real.
+- 130 pruebas generales, 118 backend (una omisión condicional), 51 correo/sesión, 11 navegador, 30 comprobaciones E2E, migraciones repetidas y restore sintético aprobados; Android 15 con Keystore, sesión y seguimiento reales. Cero envíos reales.
+- Galería y guía de demostración locales, hallazgos B/C y puertas físicas/de seguridad documentados; rama excluida de despliegues automáticos en ambas raíces Vercel. No publica 1.2.0.
+
+## Firebase FCM — único envío real autorizado en Android 15
+
+- Una sola llamada HTTP v1 con el código del PR #19 y OAuth dedicado de 15 minutos: Firebase respondió 200; Android mostró el aviso genérico en la bandeja y el toque real abrió Incidencias mediante REST autorizado.
+- Propietario con historial 200, otra cuenta válida con evento/historial 404 y petición anónima 401. Se corrigió una URL auxiliar del verificador sin modificar el producto ni repetir el envío.
+- Entrega/worker/recordatorios apagados al terminar, dispositivo revocado, token OAuth retirado y recursos locales detenidos conservando las evidencias. APK oficiales intactas.
+- Informe en `docs/pruebas/firebase-fcm-envio-unico-120.md`. No autoriza otro mensaje, merge, despliegue ni prueba física.
+
+## Firebase FCM — preparación de piloto Android aislado
+
+- Compilación debug en worktree independiente con JSON privado validado y temporal; flag Firebase solo durante el build, sin cambiar dependencias, diseño ni APK oficiales.
+- El adaptador del PR #17 admite tokens OAuth temporales externos: valida identidad/scope/caducidad/permisos y falla cerrado; conserva el modo anterior y las entregas desactivadas por defecto.
+- Identidad dedicada de envío: roles personalizados `hmFcmPilotSender` y `hmFcmPilotTokenMinter`, con un permiso cada uno y obtención temporal de tokens sobre esa cuenta. APIs IAM/IAM Credentials habilitadas; sin claves privadas permanentes ni facturación. Cambios remotos inventariados en el informe.
+- 32 pruebas específicas y 101 regresiones aprobadas; Gradle/JUnit/lint y ocho comprobaciones Android 15 con registro FCM real, cifrado, consentimiento, cambio de cuenta y revocación, sin enviar mensajes.
+- Android 13/14 pendientes por espacio para imágenes; primer mensaje remoto sujeto a aprobación. Informe en `docs/pruebas/firebase-fcm-piloto-120.md` y operación en `docs/firebase-fcm-piloto.md`.
+
+## Seguimiento de incidencias — cliente, Admin y Android
+
+- Botones «Ver seguimiento»/«Ver historial» y diálogo acuático con eventos reales, fecha/estado, comentarios públicos y aviso explícito para incidencias anteriores; tarjetas, formularios, fotos, filtros y tablas conservados.
+- Vista compartida de consulta y controles exclusivos de Admin; cierre/limpieza por sesión, foco accesible, bloqueo de doble envío y recuperación de respuesta incierta sin duplicar cambios.
+- Socket.IO y reconexión recargan el historial autorizado. Corrige contraste heredado en el nuevo encabezado sin cambiar los diseños aprobados de otros módulos.
+- Chromium en cinco resoluciones y Android 15 real en AVD (360×800 y 390×844), foto/Atrás/red/reapertura/Keystore aprobados; Gradle, 4 JUnit, prueba instrumental y lint sin errores. Informe y galería locales referenciados en `docs/pruebas/seguimiento-incidencias-120.md`.
+- Producción y APK oficiales intactas; 013 solo en PostgreSQL 18 aislado, FCM remoto y prueba física pendientes.
+
+## Seguimiento de incidencias — backend y PostgreSQL de laboratorio
+
+- Migración aditiva y repetible 013: eventos UUID append-only del registro y cambios reales, sin reconstruir el historial anterior ni copiar fotografías.
+- Cambio administrativo, evento, aviso interno y cola push se confirman juntos; UUID de solicitud y bloqueo por fila evitan duplicados y registran el estado anterior real ante concurrencia.
+- Consulta paginada por cursor opaco para propietario/Admin, 404 para incidencias ajenas, responsables solo en Admin y comentarios públicos validados. Conserva los tres estados y rutas anteriores.
+- Diez pruebas específicas Node 22/PostgreSQL 18 aprobadas; regresiones de seguridad, pagos y documentos comprobadas. Consulta el informe `docs/pruebas/seguimiento-incidencias-120.md`. No se aplicó 013 en producción.
+
+## Push Android — integración voluntaria y pruebas nativas
+
+- Plugin oficial @capacitor/push-notifications 7.0.7, canal e icono de gota, permiso voluntario desde Cuenta y estado seguro sin Firebase; no se publica APK ni se cambian versión/firma.
+- Capacidad de revocación/consentimiento en slot Keystore independiente; cierre offline pendiente de sincronizar, rotación y cambio de cuenta sin reutilizar colas anteriores.
+- Navegación por UUID revalidada vía cliente autenticado; espera la navegación en curso y la restauración segura antes de abrir datos. Corrige diferencias del bridge nativo al registrar listeners de ciclo de vida.
+- Chromium en cinco resoluciones, centro y Socket.IO reales con entrega simulada; Android 15: permisos/canal, almacenamiento cifrado y diez comprobaciones de login/toques/intents locales. Recepción remota FCM y dispositivos físicos pendientes.
+- Gradle, cuatro JUnit y lint sin errores; regresiones y guías detalladas en docs/pruebas/notificaciones-push-120.md. Producción y APK oficiales conservadas.
+
+## Push Android — backend de laboratorio
+
+- Migración aditiva 012 con dispositivos cifrados, consentimiento, asociación a suministro/versión de seguridad y cola idempotente separada del centro leído/no leído.
+- Adaptadores mock y FCM HTTP v1, OAuth de scope mínimo, backoff, retiro de tokens inválidos y resultado ambiguo sin reenvío automático. Todo cerrado por defecto.
+- Vencimientos programables con fechas reales y exclusión de recibos pagados; cortes localizados sin difusión general y repetición de estado de incidencia sin avisos duplicados.
+- 14 pruebas específicas Node 22/PostgreSQL 18 aprobadas. Arquitectura y límites en docs/pruebas/notificaciones-push-120.md; configuración futura en docs/android-push-firebase.md. Sin Firebase, migraciones o envíos productivos.
+
+## Recuperación de contraseña — cliente, Admin y Android
+
+- Acceso «¿Olvidaste tu contraseña?» y formularios compartidos con diseño acuático, validaciones, bloqueo de duplicados, recuperación de respuesta perdida por UUID y mensajes accesibles. Código/permiso solo en memoria; éxito vuelve al login sin iniciar sesión.
+- Android espera la restauración pendiente antes de abrir recuperación; conserva el borrado seguro de Keystore ante revocación y la sesión cifrada después del nuevo login.
+- Chromium responsive, WebView Android real, scrypt/2FA/JWT/Socket.IO, regresiones, Gradle/unitarias y lint comprobados; evidencia y límites en docs/pruebas/recuperacion-clave-120.md. PDF y APK oficiales conservados; sin cambios productivos.
+
+## Recuperación segura de contraseña — backend de laboratorio
+
+- Código de correo y permiso de cambio de un uso, límites por IP/identidad y outbox cifrada independiente del registro OTP; Gmail ambiguo no se reenvía automáticamente.
+- Conserva 2FA y exige el factor existente a usuarios protegidos y Admin; cuentas administrativas sin factor requieren revisión de identidad independiente.
+- Migración aditiva 011 revoca JWT al cambiar credenciales también sin 2FA, invalida solicitudes anteriores y conserva los datos históricos; aplicación únicamente en PostgreSQL aislado.
+- Worker y función cerrados por defecto; 17 pruebas específicas aprobadas y regresiones documentadas en docs/pruebas/recuperacion-clave-120.md. Sin producción ni correo real.
+
+## Identidad acuática — segunda composición visual
+
+- Encabezados y navegación inferior azules, deuda con degradado efectivo y superficies blancas/celestes alternadas; login y cabeceras de recibos/pagos con bloques de marca.
+- Admin conserva menú oscuro y gestión compacta, con encabezado azul, indicadores diferenciados, filtros celestes y formularios con mejor jerarquía.
+- Corrige reglas de cascada que anulaban el degradado y devolvían los encabezados al blanco; foco y contraste adaptados a fondos oscuros.
+- 39 comparativas reales, contraste comprobado y regresiones/PDF/Android documentados en docs/pruebas/identidad-acuatica-v2-120.md.
+- El harness nativo libera conexiones HTTP remanentes del proxy del emulador al terminar; dos regresiones de cierre local. Sin cambios de negocio, publicación ni producción.
+
+## PDF Android — código de operación
+
+- Etiquetas «Código de operación» en cliente, Admin y constancias; número Yape solo para referencias del flujo externo correspondiente.
+- Identidad acuática, contratos, auditoría y controles financieros conservados; los documentos de laboratorio no acreditan dinero ni cancelan deuda.
+- Presentación/PDF 23/23, dos E2E web y diez comprobaciones Android nativas aprobadas; guardado/visor de ambos PDF reales de laboratorio. Guía USB sin instalar APK en docs/pruebas/pdf-android-codigo-operacion-120.md.
+
+## Textos de pagos — presentación breve y alcance explícito
+
+- Cliente Android/web, Admin y PDF usan «Pago con Yape», «Registrar pago», «Confirmar operación», «Operación confirmada» y «Constancia de operación».
+- Aviso «Entorno de pruebas · Sin cobros reales» y confirmación obligatoria de que no se recibió dinero; no se acredita dinero ni se cancela deuda.
+- La presentación de mensajes automáticos de auditoría conserva sus literales originales en la API/base; los motivos humanos no se reescriben.
+- Pruebas de documentos/UI/paleta 23/23, backend 18/18, flujos web y responsive aprobados; Android nativo final 10 comprobaciones sin errores. Evidencia y fallos de entorno resueltos en docs/pruebas/textos-pagos-120.md.
+
+## Documentos acuáticos — nueva composición y validación
+
+- Recibo con encabezado azul, identificación, total/estado destacado y tabla de consumo; constancia con importe, banda de estado y trazabilidad propia.
+- Logo proporcional, pie referencial, A4, tipografía y márgenes coherentes con la identidad compartida; no se inventan datos ni acreditaciones.
+- Ocho ejemplos sintéticos, once páginas renderizadas; textos largos conservados y corregida paginación innecesaria con correo largo.
+- 17 pruebas PDF y 3 de paleta; descargas web y Android verificadas. Informe: docs/pruebas/identidad-acuatica-pdf-120.md. Sin publicación 1.2.0 ni cambios productivos.
+
+## Identidad acuática 1.2.0 — cliente y administración
+
+- Paleta compartida azul/celeste, superficies suaves, tarjetas, formularios y navegación consistentes; logo e iconos originales conservados.
+- Cliente Android/web y Admin mantienen funciones, tablas compactas y diálogo de pagos, con tintas semánticas accesibles.
+- Capturas antes/después en cinco resoluciones y navegación real sin errores JavaScript; contratos OTP/2FA y Android de laboratorio comprobados.
+- Exclusión de despliegues para la rama visual en ambos proyectos Vercel. Sin publicación, migraciones ni cambios productivos.
+
+## Pagos Yape — sincronización visible y estados por entorno
+
+- Corrige ventanas en la primera conexión y suscripción Socket.IO; recupera pagos al reconectar aunque otra pantalla esté visible.
+- Agrupa lecturas, evita que respuestas antiguas sustituyan estados recientes y conserva filas/foco, filtros y contadores de Admin.
+- Código de prueba / Registrar ensayo / Pendiente de revisión / Ensayo confirmado para simulaciones; número de operación y comprobación manual explícitos para Yape auténtico.
+- Aviso de desconexión visible en móvil, identificadores sin superposición y constancias coherentes; no se modifica el contrato API ni el estado financiero del recibo.
+- Regresión focalizada 21/21, cliente/Admin/PDF 18/18, flujos reales y responsive aprobados; Android final: 10 comprobaciones sin errores, incluidos corte de red y aviso visible. Evidencia y límites en docs/pruebas/pagos-tiempo-real-120.md.
+
+## Auditoría de pagos — gestión compacta y recuperación segura
+
+- Admin sustituye formularios dentro de tarjetas por tabla adaptable, cinco secciones, búsqueda/filtros, contadores/paginación real y diálogo de revisión accesible.
+- Ensayos se confirman sin declarar dinero ficticio; revisión con hora/actor del servidor y cotejo independiente para Yape auténtico.
+- Cliente recupera estado/historial tras respuesta perdida, impide otro QR/declaración y limpia el resumen privado al cerrar sesión.
+- Constancia de ensayo explícita, ejemplos A4 sintéticos y sin sobrescribir documentos o APK anteriores.
+- HidroBot espera los datos antes de habilitar su botón: corregida la carrera reproducida en Android, con prueba de carga retenida.
+- Piloto Android final: 9 comprobaciones sin errores, PDF reales guardados/abiertos y retorno con Atrás; Gradle/JUnit/lint conservados aprobados.
+- Playwright integral: cinco resoluciones, 16 comprobaciones y Socket.IO real. Regresión de pagos/HidroBot: 8/8; sesión nativa general: 13 comprobaciones sin errores. Evidencia detallada en docs/pruebas/auditoria-pagos-admin-120.md.
+
+## Auditoría de pagos — integridad de la revisión
+
+- Separa la confirmación de ensayos de la recepción bancaria; fecha de revisión generada por PostgreSQL y fecha bancaria opcional sin inventarla.
+- Prepara migración local 010 sin reescribir el historial; bloquea otra declaración del mismo piloto tras rechazo/cancelación.
+- Consulta paginada, búsqueda parametrizada, contadores y recuperación de operación existente.
+- Backend focalizado: 9/9. Regresiones Node 22/PostgreSQL 18: 94 aprobadas, 1 histórico optativo omitido. Producción intacta.
+
+## Piloto Yape - evitar una transferencia repetida
+
+- Bloquea volver a mostrar el QR desde la primera declaración, incluso rechazada/cancelada; oculta la imagen ante respuesta incierta e indica consultar historial sin repetir dinero.
+- Regresión afectada: 12/12; backend ampliado: 8/8; Android final: 9 comprobaciones, 0 errores. No hubo transferencias reales.
+
+## Reproducibilidad de pruebas del piloto
+
+- Las pruebas crean su carpeta local de evidencia en un clon nuevo, sin depender de artefactos anteriores ni copiar archivos privados.
+- El launcher rechaza un contenedor detenido o cuyo puerto cambió; repetición backend/E2E: 9/9 aprobadas.
+
+## Piloto Yape 1.2.0 - interfaces, launcher privado y constancia
+
+- Cliente/Admin diferencian ensayo de transferencia voluntaria, con cotejo de importe, referencia, fecha y receptor; recibo sintético sin acreditación de servicio.
+- Launcher loopback independiente crea cuentas sintéticas/DB nueva y guarda archivos 0600 fuera de Git; no ejecuta transferencias.
+- Constancia con recepción/revisión separadas y sin datos del receptor; ejemplo sintético marcado.
+- 52 pruebas conjuntas aprobadas, 1 histórico optativo omitido; 8 comprobaciones Android nativas, con Socket.IO y PDF reales de laboratorio.
+- Guía humana de QR privado y prueba voluntaria; recepción real y prueba física pendientes, sin cambios productivos.
+
+## Piloto Yape 1.2.0 - barrera local y revisión detallada
+
+- Prepara 009 aditiva: entorno piloto local, marcador privado, ventana, participante/Admin/recibo acotados y datos de recepción contrastados.
+- Conserva bloqueo de producción, historial, deuda sintética e idempotencia previa; no conecta con Yape ni mueve dinero.
+- QR externo 0600 vinculado por huella; ninguna credencial bancaria ni dato receptor en PDF/API de operaciones.
+
+## Verificación visual Android de PDF
+
+- El harness espera archivo/página y píxeles del documento renderizado, además de comprobar el PDF guardado; evita aprobar una captura de arranque negra.
+- Distingue extracción accesible diferida de Google Viewer de un defecto del documento. Repetición completa: 7 comprobaciones nativas aprobadas, sin cambios productivos ni nuevas releases.
+
+## Desarrollo 1.2.0 - PDF profesionales y validación conjunta
+
+- Recibos y constancias A4 con identidad visual, estado real, referencias, hora de servidor y alcance explícito; sin datos tributarios inventados ni QR de validación inexistente.
+- Genera cinco ejemplos sintéticos locales; pruebas de paginación y consumo ausente.
+- Android emulado: 7 comprobaciones, incluidos Keystore, recuperación, SAF y visor PDF; 4 JUnit, lint sin errores.
+- Documenta proveedores/sandbox, bloqueos comerciales y roadmap maestro; producción y APK anteriores intactas.
+
+## Desarrollo 1.2.0 - integridad de referencias declaradas
+
+- Una declaración sin verificar no reserva referencias ajenas: aviso de coincidencias y unicidad al confirmar, probada bajo concurrencia.
+- Normaliza separadores y prioriza pendientes; conserva rechazo seguro del pago demostrativo antiguo.
+- Regresión PostgreSQL 18: 30 aprobadas, 1 histórico optativo omitido; sin cambios productivos.
+
+## Desarrollo 1.2.0 - declaración Yape e historial transparente
+
+- Cliente móvil: importe y suministro, QR privado, referencia/comprobante PNG y recuperación por UUID tras respuesta perdida.
+- Admin: historial, evidencia protegida, motivo y confirmación de revisión independiente, con prevención de dobles envíos.
+- Las pantallas mantienen la deuda y distinguen registros históricos de operaciones simuladas.
+- Flujo Chromium/API/SQL validado con Node 22: 3 pruebas, sin correos ni movimientos reales.
+
+## Desarrollo 1.2.0 - operaciones de pago sin acreditación ficticia
+
+- Separa demostraciones, declaraciones y verificación de los pagos históricos.
+- Prepara migración aditiva 008, revisión Yape solo de laboratorio, evidencia protegida e historial.
+- Añade contrato/simulador de proveedor con idempotencia y conciliación; cobros reales bloqueados.
+- Conserva 2FA y sesión automática OTP; sin publicación, migraciones ni despliegues productivos.
+
 Este archivo registra cambios publicados y comprobados. Para futuras versiones, añadir una entrada nueva arriba con su fecha y cambios relevantes, sin repetir los manuales.
 
 ## En desarrollo — Kubernetes local actualizado
@@ -47,6 +271,62 @@ Este archivo registra cambios publicados y comprobados. Para futuras versiones, 
   imágenes en vez de fallar con un error de Docker.
 - No cambia código de la aplicación; el nodo se detuvo por `Exited 137` y se
   recuperó sin perder PVC ni datos sintéticos.
+
+## En desarrollo — auditoría y endurecimiento 2FA (sin lanzamiento)
+
+- Admin: segundo factor antes de cargar permisos, QR y gestión de su propia cuenta,
+  UI compartida accesible, sesión web solo en memoria y alta administrativa cerrada
+  por defecto. Promocionar un usuario conserva su factor y exige login nuevo.
+- Downgrade reproducido en Docker aislado; comprobación de candidato rechaza el
+  backend antiguo. La imposición externa en todos los despliegues/rollbacks sigue
+  pendiente y bloquea una activación productiva segura.
+- Cierre verificado: 80 pruebas backend aprobadas y 1 histórica omitida; 45 cliente,
+  6 UX y 8 runtime, más 4 focalizadas Admin. WebView nativa: 6 comprobaciones 2FA y
+  12 OTP; Java 21/Gradle y lint sin errores. Ninguna release nueva.
+- Custodia: cifrado v2 con identificador de clave, lectura v1/anillo anterior,
+  respaldo cifrado independiente, restauración 0600 y recifrado SQL transaccional.
+  25 pruebas focalizadas aprobadas; dump/restauración aislada conserva 16 tablas,
+  8 secuencias, fotografía, metadatos MFA y claves recuperadas.
+- Recuperación sin factores: procedimiento humano y límites documentados; sin
+  bypass por correo/suministro ni endpoint administrativo de emergencia.
+- Corregidas carreras demostradas: socket pendiente tras revocación, petición
+  de gestión con versión obsoleta y respuesta que repoblaba códigos tras logout.
+- JWT ligado al rol vigente; la migración 007 pendiente incorpora revocación
+  persistente al cambiar rol/estado, sin modificar las cuentas al aplicarla.
+- Retención acotada de material temporal, sin borrar versiones de seguridad ni
+  pasos TOTP. Regenerar recuperación requiere autenticador disponible; un código
+  de recuperación sigue permitiendo desactivar de forma segura si se perdió.
+- Pruebas focalizadas: 27 backend Node 22 y 18 Chromium aprobadas. Se conserva
+  OTP/sesión automática y las APK existentes. Sin producción ni publicación.
+- [Auditoría y trabajo pendiente](docs/pruebas/auditoria-2fa-seguridad.md).
+
+## En preparación — 2FA opcional (propuesta 1.2.0 / código 6)
+
+- Perfil: «Seguridad de la cuenta → Verificación en dos pasos», QR privado,
+  confirmación TOTP, recuperación de un solo uso y desactivación con contraseña
+  reciente más el factor existente. El secreto se cifra con AES-256-GCM en servidor.
+- Login: desafío opaco de cinco minutos, sin JWT hasta completar el segundo
+  factor; límites persistentes, prevención de reutilización y revocación de sesiones
+  y sockets anteriores al cambiar 2FA. Usuarios sin factor mantienen el login.
+- Migración manual 007 aditiva y esquema inicial; solo probados en PostgreSQL 18
+  aislado. Nuevas activaciones cerradas por defecto; ningún cambio en Neon/Render.
+- Se conserva la sesión automática tras OTP de 1.1.2 y su APK firmada intacta.
+  Actualización compatible de `body-parser` 2.3.0 → 2.4.0; audit sin vulnerabilidades.
+- [Informe, pruebas nativas y límites para publicar](docs/pruebas/seguridad-totp.md).
+
+## 1.1.2 — candidata local, 24 de octubre de 2026
+
+- OTP confirmado: la API entrega un JWT de ocho horas solo después del COMMIT,
+  tras comprobar nuevamente usuario activo, rol y suministro. Se conserva el
+  contrato anterior; la consulta pública y los OTP repetidos nunca recuperan tokens.
+- Cliente: usa la sesión segura existente y entra al dashboard sin otro login,
+  limpia el formulario y muestra la bienvenida. Ante respuesta perdida, backend
+  anterior o fallo de almacenamiento, conserva una recuperación segura por login.
+- Android 1.1.2/código 5: candidata local con certificado permanente y API HTTPS;
+  no sustituye la APK 1.1.1. Pruebas de API/SQL aislado, Chromium, WebView Android,
+  Keystore, reinicio/logout, Gradle y lint verificadas. Sin cambios en producción,
+  esquema PostgreSQL, correo, outbox ni flags de registro.
+- [Resultados y límites de la validación](docs/pruebas/android-otp-sesion-automatica.md).
 
 ## En desarrollo — mejoras de interfaz
 

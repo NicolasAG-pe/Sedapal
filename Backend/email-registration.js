@@ -1,5 +1,6 @@
 'use strict';
 const crypto = require('node:crypto');
+const { AUTH_CONTRACT } = require('./auth-contract');
 const { encolarCorreo, cancelarEventos } = require('./email-outbox');
 const { crearCodigo, coincideCodigo, OTP_MAX_ATTEMPTS,
     OTP_RESEND_SECONDS, OTP_MAX_SENDS_HOUR, REGISTRATION_TTL_SECONDS } = require('./email-otp');
@@ -16,7 +17,7 @@ const uuid = valor => typeof valor === 'string' && /^[a-f0-9]{8}-[a-f0-9]{4}-4[a
 const CONTRATO_CORREO = 'otp-outbox-v1';
 const ACTUALIZAR_CLIENTE = 'Actualiza Hidro-Mejora para crear una cuenta y verificar tu correo. Si ya tienes cuenta, puedes iniciar sesión normalmente.';
 
-function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verificarClave, altasHabilitadas = true, proveedor = 'resend', correoPermitido = null }) {
+function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verificarClave, altasHabilitadas = true, proveedor = 'resend', correoPermitido = null, emitirSesion = null }) {
     if (correoPermitido !== null && (typeof correoPermitido !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoPermitido))) throw new Error('Destinatario canario inválido.');
     function permitirCorreo(correo) {
         if (correoPermitido !== null && correo !== correoPermitido.toLowerCase()) throw new ErrorRegistro(503, 'El registro no está disponible temporalmente. Intenta más tarde.');
@@ -194,17 +195,23 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verif
                     clave_hash='',codigo_hash=$2 WHERE id=$1`, [r.id, '0'.repeat(64)]);
                 await cancelarEventos(cliente, r.id);
                 return { estado: 'ok', mensaje: 'Correo verificado. Ya puedes iniciar sesión.',
-                    usuario: { numero_suministro: r.numero_suministro } };
+                    usuario: { numero_suministro: r.numero_suministro }, identidad: { id_usuario: u.id_usuario, numero_suministro: r.numero_suministro } };
             });
             if (!resultado) throw invalido();
-            return resultado;
+            // La cuenta debe estar confirmada en PostgreSQL antes de emitir un JWT.
+            // Consultar el estado o repetir el OTP nunca recupera esta credencial.
+            const { identidad, ...respuesta } = resultado;
+            if (!emitirSesion) return respuesta;
+            const sesion = await emitirSesion(identidad);
+            if (!sesion) throw new ErrorRegistro(403, 'La cuenta no está habilitada para iniciar sesión.');
+            return { ...respuesta, ...sesion, usuario: { ...respuesta.usuario, ...sesion.usuario } };
         }
     };
 }
 
 function registrarRutasCorreo(app, servicio, { registro, verificacion, reenvio, consulta }) {
     app.get('/api/auth/capabilities', consulta, (req,res)=>res.set('Cache-Control','no-store').json({
-        estado:'ok',contratos_registro:[CONTRATO_CORREO],verificacion_correo_obligatoria:true
+        estado:'ok',contratos_registro:[CONTRATO_CORREO],verificacion_correo_obligatoria:true,auth_contract:AUTH_CONTRACT
     }));
     for (const [ruta, accion, limite, status] of [
         ['register', 'registrar', registro, 202], ['verify-email', 'verificar', verificacion, 201],

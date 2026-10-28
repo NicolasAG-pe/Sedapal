@@ -21,7 +21,7 @@ async function request(method, route, token, data, base = ctx.base) {
 const create = data => request('POST', '/api/admin/recibos', admin, data);
 const edit = (id, data) => request('PATCH', '/api/admin/recibos/' + id, admin, data);
 const cancel = id => request('PATCH', '/api/admin/recibos/' + id + '/anular', admin);
-const pay = (id, token = user) => request('POST', '/api/pagos', token, { id_recibo: id, metodo: 'fixture', monto: 999 });
+const pay = (id, token = user) => request('POST', '/api/me/operaciones-pago', token, { id_recibo: id, metodo: 'demostrativo', solicitud_id: crypto.randomUUID(), monto: 999 });
 async function receipt(periodo, monto = 10) {
     const result = await create(body(periodo, monto)); assert.equal(result.status, 201);
     return result.data.recibo.id_recibo;
@@ -111,14 +111,14 @@ test('alta concurrente: exactamente un 201 y un 409, un recibo y una notificaci�
     } finally { pause.release(); hook = undefined; }
 });
 
-test('edición frente a pago: monto del pago y recibo siempre coinciden', { timeout: 20000 }, async () => {
+test('edición frente a demostración: usa el monto actual sin crear un pago financiero', { timeout: 20000 }, async () => {
     const id = await receipt('editar-pagar'); const pause = pauseNext(paymentCheck);
     const editing = edit(id, body('editar-pagar', 20));
     try {
         await pause.reached; const paying = pay(id); await competing(paying); pause.release();
         const [e, p] = await Promise.all([editing, paying]);
         assert.equal(e.status, 200); assert.equal(p.status, 201);
-        assert.deepEqual(await state(id), { estado: 'Pagado', monto: '20.00', pagos: 1, pagado: '20.00' });
+        assert.deepEqual(await state(id), { estado: 'Emitido', monto: '20.00', pagos: 0, pagado: null });
     } finally { pause.release(); hook = undefined; }
 });
 
@@ -133,17 +133,18 @@ test('anulación frente a pago: anulación ganadora impide cualquier pago', { ti
     } finally { pause.release(); hook = undefined; }
 });
 
-test('pago ganador bloquea edición y anulación; pagos paralelos consumen una vez', { timeout: 20000 }, async () => {
-    const id = await receipt('pago-primero');
-    const pause = pauseNext(sql => /FROM (?:public\.)?recibos r/.test(sql) && /FOR UPDATE/.test(sql));
+test('demostración no impide editar o anular ni crea acreditaciones paralelas', { timeout: 20000 }, async () => {
+    const id = await receipt('demo-primero');
+    const pause = pauseNext(sql => /FROM recibos WHERE id_recibo/.test(sql) && /FOR UPDATE/.test(sql));
     const paying = pay(id);
     try {
         await pause.reached;
-        const editing = edit(id, body('pago-primero', 30)), cancelling = cancel(id), duplicate = pay(id);
+        const editing = edit(id, body('demo-primero', 30));
         await competing(editing); pause.release();
-        assert.deepEqual((await Promise.all([paying, editing, cancelling, duplicate])).map(r => r.status), [201, 409, 409, 409]);
-        assert.deepEqual(await state(id), { estado: 'Pagado', monto: '10.00', pagos: 1, pagado: '10.00' });
-    } finally { pause.release(); hook = undefined; }
+        assert.deepEqual((await Promise.all([paying,editing])).map(r=>r.status),[201,200]);
+        assert.equal((await cancel(id)).status,200);
+        assert.deepEqual(await state(id), { estado:'Anulado', monto:'30.00', pagos:0, pagado:null });
+    } finally { pause.release(); hook=undefined; }
 });
 
 test('permisos, propiedad, validación y compatibilidad de respuestas', async () => {
@@ -196,13 +197,13 @@ test('histórico inconsistente no permite segundo pago ni cambios de recibo paga
     for (const call of [() => pay(missing), () => edit(missing, body('historico-estado', 50)), () => cancel(missing)]) assert.equal((await call()).status, 409);
 });
 
-test('fallo tras insertar pago revierte todo; error público no contiene detalles SQL', async () => {
+test('fallo tras insertar declaración revierte todo; error público no contiene detalles SQL', async () => {
     const id = await receipt('rollback');
-    hook = async (sql, result) => { if (/INSERT INTO public.pagos/.test(sql)) throw new Error('fixture-sensitive-details'); return result; };
+    hook = async (sql, result) => { if (/INSERT INTO operaciones_pago/.test(sql)) throw new Error('fixture-sensitive-details'); return result; };
     const errors = [], original = console.error; console.error = value => errors.push(String(value));
     try {
         const result = await pay(id);
-        assert.equal(result.status, 500); assert.equal(result.data.mensaje, 'Error interno del servidor.');
+        assert.equal(result.status, 500); assert.equal(result.data.mensaje, 'No se pudo procesar la operación.');
         assert.ok(!errors.join('').includes('fixture-sensitive-details'));
         assert.deepEqual(await state(id), { estado: 'Emitido', monto: '10.00', pagos: 0, pagado: null });
     } finally { hook = undefined; console.error = original; }
@@ -221,7 +222,7 @@ test('lock_timeout responde 409, revierte y libera conexión; otros suministros 
     assert.equal((await edit(id, body('lock-timeout', 40))).status, 200);
 });
 
-test('carga mixta concurrente mantiene un pago y montos/estado coherentes', async () => {
+test('carga mixta concurrente no convierte demostraciones en pagos financieros', async () => {
     const ids = await Promise.all([1, 2, 3].map(n => receipt('mixto-' + n)));
     const results = await Promise.all(ids.flatMap((id, index) => [
         pay(id), edit(id, body('mixto-' + (index + 1), 35)), cancel(id), pay(id)

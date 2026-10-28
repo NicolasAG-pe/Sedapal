@@ -19,15 +19,16 @@
           reconnectionDelay: 1000, reconnectionDelayMax: 8000, timeout: 10000
         };
         socket = global.HM_API_BASE ? global.io(global.HM_API_BASE, config) : global.io(config);
-        let connected = false;
-        socket.on('connect', () => {
-          options.onStatus?.('online');
-          if (connected && session.token()) options.onChange('reconnect');
-          connected = true;
-        });
-        (options.events || []).forEach(event => socket.on(event, () => {
+        const refresh = event => {
           clearTimeout(timer);
           timer = setTimeout(() => { if (session.token()) options.onChange(event); }, 150);
+        };
+        socket.on('connect', () => {
+          options.onStatus?.('online');
+          refresh('reconnect'); // También al primer enlace: pueden existir eventos anteriores al handshake.
+        });
+        (options.events || []).forEach(event => socket.on(event, () => {
+          refresh(event);
         }));
         socket.on('sesion:invalidada', options.onInvalidated);
         socket.on('disconnect',()=>options.onStatus?.(navigator.onLine?'connecting':'offline'));

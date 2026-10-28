@@ -11,17 +11,28 @@
   const loginError = document.getElementById('admin-login-error');
   const loginButton = document.getElementById('admin-login-submit');
   let modules = null, loginController = null, toastTimer = null;
+  const authControllers=new Set();
   let page = 'admin', attempt = 0;
   const allowedPages = ['admin', 'admin-usuarios', 'admin-recibos', 'admin-cortes',
     'admin-incidencias', 'admin-pagos', 'admin-atencion', 'admin-cuenta'];
   const api = shared.createApi(session, () => logout('Sesión terminada o acceso denegado. Inicia sesión nuevamente.'));
+  const security=window.createHMTwoFactorUI({session:{token:session.token,authFetch:authRequest},apiFetch:api.fetch,
+    showLogin:message=>logout(message || ''),
+    showChallenge:()=>{document.getElementById('admin-forgot-wrap').hidden=true;loginForm.hidden=true;document.getElementById('admin-password').value='';},
+    authenticated:async data=>{const epoch=attempt;try{await completeAdminLogin(data,epoch);}catch(error){if(epoch===attempt&&!shared.ui.isAborted(error))logout('No se pudo confirmar la sesión. Inicia sesión nuevamente.');throw error;}},showProfile:()=>navigate('admin-cuenta')});
   const realtime = shared.createRealtime(session, {
     events: ['incidencia:nueva', 'incidencia:actualizada', 'atencion:nueva',
       'atencion:actualizada', 'recibo:nuevo', 'recibo:actualizado', 'pago:nuevo', 'corte:actualizado'],
     onChange: () => { if (session.isAdmin() && modules) modules.load(page); },
     onStatus: updateConnection,
-    onInvalidated: () => logout('La cuenta fue desactivada. Inicia sesión nuevamente.')
+    onInvalidated: () => logout('Tu sesión cambió o terminó. Inicia sesión nuevamente.')
   });
+
+  const passwordRecovery=window.createHMPasswordRecovery({container:document.getElementById('password-recovery'),
+    onOpen:()=>{security.clear();loginForm.reset();loginForm.hidden=true;document.getElementById('admin-forgot-wrap').hidden=true;},
+    onClose:(message,success)=>logout(message,success)
+  });
+  document.getElementById('admin-forgot').addEventListener('click',()=>passwordRecovery.open());
 
   function updateConnection(state){
     const element=document.getElementById('admin-connection');
@@ -39,9 +50,12 @@
     element.hidden = false;
     toastTimer = setTimeout(() => { element.textContent = ''; element.hidden = true; }, 4500);
   }
-  function logout(message = '') {
+  function logout(message = '', success = false) {
     attempt++;
+    passwordRecovery.clear();document.getElementById('admin-forgot-wrap').hidden=false;
+    security.clear();
     if (loginController) loginController.abort();
+    authControllers.forEach(c=>c.abort());authControllers.clear();
     loginController = null;
     shared.ui.clearFormLocks(document);
     session.clear();
@@ -61,10 +75,12 @@
     document.body.classList.remove('modal-open');
     history.replaceState(null, '', location.pathname + location.search);
     loginForm.reset();
+    loginForm.hidden=false;
     loginButton.disabled = false;
     delete loginButton.dataset.loading;
     loginForm.removeAttribute('aria-busy');
     loginButton.textContent = 'Ingresar al panel';
+    loginError.dataset.result=success?'success':'error';loginError.setAttribute('role',success?'status':'alert');
     loginError.textContent = message;
     loginError.hidden = !message;
     login.hidden = false;
@@ -76,6 +92,8 @@
       return;
     }
     page = allowedPages.includes(next) ? next : 'admin';
+    document.getElementById('admin-security').hidden=page!=='admin-cuenta';
+    if(page==='admin-cuenta')security.load();
     document.getElementById('admin-current-page').textContent = document.querySelector('#admin-nav [data-sec="'+page+'"]')?.textContent || 'Administración';
     main.querySelectorAll('.dash-sec').forEach(section => section.classList.toggle('active', section.id === 'sec-' + page));
     document.querySelectorAll('[data-sec]').forEach(item => {
@@ -115,6 +133,7 @@
   loginForm.addEventListener('submit', async event => {
     event.preventDefault();
     if (loginButton.disabled) return;
+    loginError.dataset.result='error';loginError.setAttribute('role','alert');
     const supply = document.getElementById('admin-supply').value.trim();
     const password = document.getElementById('admin-password').value;
     if (!/^\d{9}$/.test(supply) || password.length < 4) {
@@ -134,25 +153,12 @@
       });
       const data = await response.json();
       if (currentAttempt !== attempt) return;
+      if(response.status===202 && data.estado==='segundo_factor'){
+        if(data.rol!=='admin')throw new Error('Este panel es exclusivo para administradores.');
+        security.challenge(data);return;
+      }
       if (!response.ok || data.estado !== 'ok' || !data.token) throw new Error(data.mensaje || 'No se pudo iniciar sesión.');
-      // Un usuario normal no provoca ni una consulta /api/admin/*.
-      if (!data.usuario || data.usuario.rol !== 'admin') throw new Error('Este panel es exclusivo para administradores.');
-      // Confirmación del permiso vigente en PostgreSQL antes de renderizar.
-      const permission = await fetch(shared.apiUrl('/api/admin/resumen'), {
-        signal: loginController.signal, headers: { Authorization: 'Bearer ' + data.token }
-      });
-      if (!permission.ok) throw new Error('No tienes acceso administrativo o tu sesión ya no está habilitada.');
-      await permission.json();
-      if (currentAttempt !== attempt) return;
-      session.set(data.token, 'admin');
-      main.replaceChildren(document.getElementById('admin-pages').content.cloneNode(true));
-      shared.icons.decorate(main);
-      modules = createAdminModules();
-      document.getElementById('admin-identity').textContent = data.usuario.correo || 'Administrador';
-      document.getElementById('admin-password').value = '';
-      login.hidden = true; panel.hidden = false;
-      navigate(location.hash.slice(1));
-      realtime.start();
+      await completeAdminLogin(data,currentAttempt,loginController.signal);
     } catch (error) {
       if (currentAttempt !== attempt || shared.ui.isAborted(error)) return;
       logout(error.message || 'No se pudo conectar con el servidor.');
@@ -165,6 +171,28 @@
       }
     }
   });
+  async function authRequest(path,options={}){
+    const epoch=attempt,controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
+    authControllers.add(controller);
+    const finish=()=>{clearTimeout(timer);authControllers.delete(controller);};
+    const current=()=>{if(epoch!==attempt)throw new DOMException('Sesión cambiada.','AbortError');};
+    try{
+      const res=await fetch(shared.apiUrl(path),{...options,signal:controller.signal});current();
+      return{ok:res.ok,status:res.status,json:async()=>{try{const data=await res.json();current();return data;}finally{finish();}}};
+    }catch(error){finish();if(epoch!==attempt)throw new DOMException('Sesión cambiada.','AbortError');throw error;}
+  }
+  async function completeAdminLogin(data,currentAttempt,signal){
+    if(!data.token||data.usuario?.rol!=='admin')throw new Error('Este panel es exclusivo para administradores.');
+    const permission=await fetch(shared.apiUrl('/api/admin/resumen'),{signal:signal || AbortSignal.timeout(15000),headers:{Authorization:'Bearer '+data.token}});
+    if(!permission.ok)throw new Error('No tienes acceso administrativo o tu sesión ya no está habilitada.');
+    await permission.json();
+    if(currentAttempt!==attempt)throw new DOMException('Sesión cambiada.','AbortError');
+    api.cancel();realtime.stop();if(modules)modules.dispose();
+    session.set(data.token,'admin');main.replaceChildren(document.getElementById('admin-pages').content.cloneNode(true));
+    shared.icons.decorate(main);modules=createAdminModules();document.getElementById('admin-identity').textContent=data.usuario.correo || 'Administrador';
+    document.getElementById('admin-password').value='';login.hidden=true;panel.hidden=false;
+    navigate(location.hash.slice(1));realtime.start();
+  }
   // No se recuperan sesiones anteriores sin una autenticación nueva.
   logout();
 
@@ -181,6 +209,12 @@
     const showToast = message => notify(message);
     const showSuccess = message => notify(message, true);
     let ctrlPagosAdmin = null, ctrlAtencionAdmin = null;
+    const incidentChanges=new Map(),pendingIncidentChanges=new Set();
+    const incidentTimeline=window.createHMIncidentReview({container:main,apiFetch,
+      path:(id,cursor)=>'/api/admin/incidencias/'+id+'/seguimiento?limite=30'+(cursor?'&despues='+cursor:''),
+      isActive:esAdmin,openDialog:openModal,closeDialog:closeModal,
+      change:(id,state,comment)=>cambiarEstadoIncidencia(id,state,null,comment)
+    });
     const confirmModal = document.getElementById('confirm-modal');
     const fotoModal = document.getElementById('foto-modal');
     function seccionContacto(title, pairs) {
@@ -198,6 +232,7 @@
       modal.querySelector('button').focus();
     }
     function closeModal(modal) {
+      if(modal.hmOnClose)modal.hmOnClose();
       modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true');
       if (modal === fotoModal) {
         photoRequest++;
@@ -209,7 +244,7 @@
       if (!main.querySelector('.overlay.open')) document.body.classList.remove('modal-open');
       if (lastFocus && lastFocus.isConnected) lastFocus.focus();
     }
-    function closeDialogs() { confirmarAccion = null; closeModal(confirmModal); closeModal(fotoModal); }
+    function closeDialogs() { confirmarAccion = null; closeModal(confirmModal); closeModal(fotoModal); incidentTimeline.clear(); }
     async function abrirFotoProtegida(path, title) {
       closeModal(fotoModal);
       const request = ++photoRequest;
@@ -488,7 +523,7 @@
       const atePend = d.solicitudes ? (Number(d.solicitudes.registradas || 0) + Number(d.solicitudes.atencion || 0)) : 0;
       document.getElementById('adm-dash-ate').textContent = atePend;
       document.getElementById('adm-dash-user-total').textContent=d.usuarios.total+' cuentas registradas';
-      document.getElementById('adm-dash-payment-total').textContent=fmt(d.pagos.monto_total)+' acumulados';
+      document.getElementById('adm-dash-payment-total').textContent=fmt(d.pagos.monto_total)+' registrados · '+d.pagos.hoy+' hoy';
       document.getElementById('adm-dash-cut-next').textContent=d.cortes.programados+' programados';
       const bar=document.getElementById('admin-receipt-bar');bar.replaceChildren();
       const breakdown=document.getElementById('admin-receipt-breakdown');breakdown.replaceChildren();
@@ -497,8 +532,14 @@
         const line=nodo('div','summary-line');line.append(nodo('span','',label),nodo('b','',count));breakdown.append(line);
       });
       const operation=document.getElementById('admin-operational-breakdown');operation.replaceChildren();
-      [['Incidencias resueltas',d.incidencias.resueltas],['Solicitudes respondidas',d.solicitudes.respondidas],['Pagos registrados hoy',d.pagos.hoy],['Cortes programados',d.cortes.programados]].forEach(([label,count])=>{
-        const line=nodo('div','summary-line');line.append(nodo('span','',label),nodo('b','',count));operation.append(line);
+      [['admin-incident-breakdown','Incidencias',d.incidencias,[['registradas','Registradas'],['revision','En revisión'],['resueltas','Resueltas']]],
+       ['admin-attention-breakdown','Atención',d.solicitudes,[['registradas','Registradas'],['atencion','En atención'],['respondidas','Respondidas'],['cerradas','Cerradas']]]].forEach(([id,title,data,fields])=>{
+        const group=nodo('section','operational-group');group.id=id;group.setAttribute('aria-label','Estados de '+title.toLowerCase());group.append(nodo('h4','',title));
+        if(data.total===0){group.append(nodo('p','hint',title==='Incidencias'?'Sin incidencias registradas.':'Sin solicitudes registradas.'));}
+        else fields.forEach(([key,label])=>{
+          const line=nodo('div','summary-line');line.dataset.stat=key;line.append(nodo('span','',label),nodo('b','',data[key]));group.append(line);
+        });
+        operation.append(group);
       });
     }catch(err){
       if(esAbortado(err) || !esAdmin()) return;
@@ -829,6 +870,7 @@
         sin.className = 'inc-meta'; sin.textContent = 'Sin fotografía adjunta';
         box.appendChild(sin);
       }
+      const historyButton=nodo('button','btn-sm detail','Ver historial');historyButton.type='button';historyButton.dataset.historyId=i.id_incidencia;historyButton.setAttribute('aria-label','Ver historial de incidencia '+i.id_incidencia);historyButton.addEventListener('click',()=>incidentTimeline.open(i.id_incidencia,historyButton));box.append(historyButton);
       const sel = document.createElement('select');
       sel.className = 'year-select';
       sel.setAttribute('aria-label', 'Cambiar estado de incidencia ' + i.id_incidencia);
@@ -845,28 +887,19 @@
     });
     window.HMAdminTable(list);
   }
-  async function cambiarEstadoIncidencia(id, estado, sel){
-    if(!esAdmin()) return;
+  async function cambiarEstadoIncidencia(id, estado, sel, comentario){
+    const key=String(id);if(!esAdmin()||pendingIncidentChanges.has(key))return false;
+    const intent=JSON.stringify([estado,comentario?.trim()||null]);let pending=incidentChanges.get(key);
+    if(!pending||pending.intent!==intent){pending={intent,id:crypto.randomUUID()};incidentChanges.set(key,pending);}
+    pendingIncidentChanges.add(key);if(sel)sel.disabled=true;
     try{
-      const resp = await apiFetch('/api/admin/incidencias/' + encodeURIComponent(String(id)) + '/estado', {
-        method: 'PATCH',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({estado: estado})
-      });
-      const data = await resp.json().catch(err=>{ if(esAbortado(err)) throw err; return null; });
-      if(!resp.ok || !data || data.estado !== 'ok'){
-        showToast('⚠ ' + ((data && data.mensaje) || 'No se pudo actualizar el estado.'));
-        await cargarAdminIncidencias();
-        return;
-      }
-      showSuccess('Estado actualizado a ' + data.incidencia.estado + '.');
-      await cargarAdminIncidencias();
-    }catch(err){
-      if(esAbortado(err) || !esAdmin()) return;
-      console.error('No se pudo actualizar el estado.', err);
-      showToast('No se pudo actualizar el estado. Inténtalo nuevamente.');
-      await cargarAdminIncidencias();
-    }
+      const resp=await apiFetch('/api/admin/incidencias/'+encodeURIComponent(key)+'/estado',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({estado,solicitud_id:pending.id,...(comentario!==undefined?{comentario_publico:comentario}:{})})});
+      const data=await resp.json();
+      if(!resp.ok||data.estado!=='ok'){showToast(data.mensaje||'No se pudo actualizar el estado.');return false;}
+      incidentChanges.delete(key);showSuccess(data.cambiada?'Cambio de estado registrado.':'Solicitud confirmada; el historial muestra el estado actual.');
+      await cargarAdminIncidencias();incidentTimeline.refresh();return data;
+    }catch(error){if(!esAbortado(error)&&esAdmin())showToast('No se confirmó la respuesta. Consulta el historial o reintenta el mismo cambio.');return false;}
+    finally{pendingIncidentChanges.delete(key);if(sel?.isConnected)sel.disabled=false;}
   }
   document.getElementById('adm-inc-estado').addEventListener('change', ev=>{
     admIncEstado = ev.target.value;
@@ -1133,6 +1166,9 @@
     renderAdminRecibos();
   });
 
+  const operationManager=window.createHMPaymentManagement({apiFetch,active:esAdmin,notify:showSuccess});
+  const cargarOperacionesPago=()=>operationManager.load();
+
   /* ---------- Panel administrativo: pagos (solo consulta) ---------- */
   let adminPagos = [];
   let admPaySum = '';
@@ -1140,6 +1176,7 @@
   let admPayMet = 'Todos';
   async function cargarAdminPagos(){
     if(!esAdmin()) return;
+    await cargarOperacionesPago();if(!esAdmin())return;
     const list = document.getElementById('admin-pay-list');
     const emptyEl = document.getElementById('admin-pay-empty');
     if(ctrlPagosAdmin) try{ ctrlPagosAdmin.abort(); }catch(e){}
@@ -1379,7 +1416,7 @@
         section?.setAttribute('aria-busy','true');
         if(section)sectionLoads.set(section,version);
         status.textContent='Cargando información…';
-        try{await loaders[name]();}
+        try{await loaders[name]();incidentTimeline.refresh();}
         finally{
           if(!disposed && section && sectionLoads.get(section)===version)section.removeAttribute('aria-busy');
           if(!disposed && version===loadVersion)status.textContent='';
@@ -1387,7 +1424,8 @@
       },
       closeDialogs,
       dispose() {
-        disposed = true;
+        incidentTimeline.destroy();incidentChanges.clear();pendingIncidentChanges.clear();
+        disposed = true;operationManager.dispose();
         cargarAdminPagosDebounced.cancel(); cargarAdminAtencionDebounced.cancel();
         if (ctrlPagosAdmin) ctrlPagosAdmin.abort();
         if (ctrlAtencionAdmin) ctrlAtencionAdmin.abort();

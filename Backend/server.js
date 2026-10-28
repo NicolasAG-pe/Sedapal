@@ -11,6 +11,11 @@ const { obtenerConfiguracion } = require('./config');
 const { obtenerConfigCorreo } = require('./email-provider');
 const { obtenerClaveOutbox } = require('./outbox-crypto');
 const { crearRegistroCorreo, registrarRutasCorreo } = require('./email-registration');
+const { crearDosFactores, permiteSesion } = require('./two-factor');
+const {createIncidentTracking,registerIncidentTracking,TrackingError}=require('./incident-tracking');
+const { createPush,registerPush } = require('./push');
+const { AUTH_CONTRACT } = require('./auth-contract');
+const { createPasswordRecovery, registerPasswordRecovery, transaction: passwordTransaction } = require('./password-recovery');
 const { crearServicioRecibos, responderErrorRecibo } = require('./receipt-transactions');
 
 const app = express();
@@ -149,12 +154,12 @@ async function desconectarSocketsDeSuministro(idSuministro){
     }catch(e){}
 }
 
-async function desconectarSocketsDeUsuario(idUsuario){
+async function desconectarSocketsDeUsuario(idUsuario,motivo='desactivada'){
     try{
         if (!ioTiempoReal || !idUsuario) return;
-        const sala = 'usuario:' + Number(idUsuario);
-        ioTiempoReal.to(sala).emit('sesion:invalidada', { motivo: 'desactivada' });
-        await ioTiempoReal.in(sala).disconnectSockets(true);
+        const salas = ['usuario:' + Number(idUsuario),'auth-revocacion:' + Number(idUsuario)];
+        ioTiempoReal.to(salas).emit('sesion:invalidada', { motivo });
+        await ioTiempoReal.in(salas).disconnectSockets(true);
     }catch(e){}
 }
 
@@ -188,10 +193,11 @@ function configurarTiempoReal(httpServer){
                 return next(new Error('Autenticación requerida.'));
             }
             const verif = await pool.query(
-                `SELECT u.id_usuario, u.rol, u.activo,
+                `SELECT u.id_usuario, u.rol, u.activo, COALESCE(m.version,0) AS mfa_version, COALESCE(m.activo,FALSE) AS mfa_activo,
                         s.id_suministro, s.numero_suministro
                  FROM usuarios u
                  LEFT JOIN suministros s ON s.id_usuario = u.id_usuario
+                 LEFT JOIN usuario_2fa m ON m.id_usuario=u.id_usuario
                  WHERE u.id_usuario = $1
                  LIMIT 1;`,
                 [idUsuario]
@@ -200,6 +206,8 @@ function configurarTiempoReal(httpServer){
                 return next(new Error('Acceso denegado.'));
             }
             const fila = verif.rows[0];
+            if (!permiteSesion(datos, fila)) return next(new Error('Autenticación requerida.'));
+            socket.authClaims=datos;
             socket.user = {
                 id_usuario: fila.id_usuario,
                 id_suministro: fila.id_suministro,
@@ -212,19 +220,23 @@ function configurarTiempoReal(httpServer){
         }
     });
 
-    io.on('connection', (socket) => {
+    io.on('connection', async (socket) => {
         try{
+            // Esta sala solo sirve para revocar; nunca recibe datos de negocio.
+            // Entrar antes de releer cierra la carrera handshake/COMMIT/revocación.
+            await socket.join('auth-revocacion:'+Number(socket.user.id_usuario));
+            const actual=await pool.query(`SELECT u.rol,u.activo,COALESCE(m.version,0) AS mfa_version,COALESCE(m.activo,FALSE) AS mfa_activo
+                FROM usuarios u LEFT JOIN usuario_2fa m USING(id_usuario) WHERE u.id_usuario=$1`,[socket.user.id_usuario]);
+            if(!socket.connected || !actual.rows[0]?.activo || !permiteSesion(socket.authClaims,actual.rows[0])){socket.disconnect(true);return;}
             // Rooms asignadas por el SERVIDOR. El cliente nunca elige rooms.
             const u = socket.user;
-            socket.join('authenticated');
-            socket.join('usuario:' + Number(u.id_usuario));
-            if (u.rol === 'admin') {
-                socket.join('admins');
-            } else if (u.id_suministro) {
-                socket.join('suministro:' + Number(u.id_suministro));
-            }
+            await socket.join(['authenticated','usuario:'+Number(u.id_usuario),
+                ...(u.rol==='admin'?['admins']:u.id_suministro?['suministro:'+Number(u.id_suministro)]:[])]);
+            // Invalidación existente tras estar suscrito: cierra la ventana entre
+            // connect/primer GET y la comprobación asíncrona de revocación.
+            if(socket.connected)socket.emit(u.rol==='admin'?'pago:nuevo':'pago:registrado',{sincronizacion:true});
             rtLog('Socket conectado: usuario ' + u.id_usuario + ' rol ' + u.rol);
-        }catch(e){}
+        }catch(e){socket.disconnect(true);}
         socket.on('disconnect', () => {
             try{
                 const id = socket.user ? socket.user.id_usuario : '?';
@@ -252,6 +264,7 @@ app.get("/api/health", async (req, res) => {
         res.json({
             estado: "ok",
             mensaje: "Servicio de Hidro Mejora operativo",
+            auth_contract: AUTH_CONTRACT,
             fecha: resultado.rows[0].fecha_servidor
         });
 
@@ -475,12 +488,27 @@ function generarTokenAcceso(datos){
             id_usuario: datos.id_usuario,
             id_suministro: datos.id_suministro,
             numero_suministro: datos.numero_suministro,
-            rol: datos.rol
+            rol: datos.rol,
+            token_use: 'access',
+            mfa_version: Number(datos.mfa_version || 0),
+            amr: datos.amr || ['pwd']
         },
         obtenerSecretoAuth(),
         { expiresIn: '8h' }
     );
 }
+
+function respuestaSesion(fila) {
+    return { token: generarTokenAcceso(fila),
+        usuario: { id_usuario: fila.id_usuario, correo: fila.correo, rol: fila.rol },
+        suministro: { id_suministro: fila.id_suministro, numero_suministro: fila.numero_suministro } };
+}
+const dosFactores = crearDosFactores({ pool, verificarClave, emitirSesion: respuestaSesion,
+    cerrarSockets: id => { if (ioTiempoReal) ioTiempoReal.in(['usuario:' + Number(id),'auth-revocacion:'+Number(id)]).disconnectSockets(true); } });
+
+const passwordRecovery = createPasswordRecovery({pool,hashPassword:generarClaveHash,verifyPassword:verificarClave,
+    verifyFactor:(...args)=>dosFactores.verifyPasswordRecovery(...args),closeSockets:id=>desconectarSocketsDeUsuario(id,'credenciales')});
+registerPasswordRecovery(app,passwordRecovery,{requestLimit:limitadorGenerico(10,15),verifyLimit:limitadorGenerico(30,15),completeLimit:limitadorGenerico(10,15)});
 
 // ==========================================
 // AUTENTICACIÓN POR TOKEN (JWT 8h) + verificación en DB
@@ -496,7 +524,7 @@ async function requiereAuth(req, res, next){
 
     if (partes.length !== 2 || partes[0] !== 'Bearer' || !partes[1]) {
         return res.status(401).json({
-            estado: "error",
+            estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
             mensaje: "Autenticación requerida."
         });
     }
@@ -506,7 +534,7 @@ async function requiereAuth(req, res, next){
         datosToken = jwt.verify(partes[1], obtenerSecretoAuth());
     } catch (e) {
         return res.status(401).json({
-            estado: "error",
+            estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
             mensaje: "Autenticación requerida."
         });
     }
@@ -514,7 +542,7 @@ async function requiereAuth(req, res, next){
     const idUsuarioToken = Number(datosToken.id_usuario);
     if (!Number.isInteger(idUsuarioToken) || idUsuarioToken <= 0) {
         return res.status(401).json({
-            estado: "error",
+            estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
             mensaje: "Autenticación requerida."
         });
     }
@@ -522,10 +550,11 @@ async function requiereAuth(req, res, next){
     try {
         // Sin clave_hash, sin foto, sin secretos. Solo estado y rol actual.
         const verif = await pool.query(
-            `SELECT u.id_usuario, u.rol, u.activo,
+            `SELECT u.id_usuario, u.rol, u.activo, COALESCE(m.version,0) AS mfa_version, COALESCE(m.activo,FALSE) AS mfa_activo,
                     s.id_suministro, s.numero_suministro
              FROM usuarios u
              LEFT JOIN suministros s ON s.id_usuario = u.id_usuario
+             LEFT JOIN usuario_2fa m ON m.id_usuario=u.id_usuario
              WHERE u.id_usuario = $1
              LIMIT 1;`,
             [idUsuarioToken]
@@ -533,37 +562,43 @@ async function requiereAuth(req, res, next){
 
         if (verif.rowCount === 0) {
             return res.status(403).json({
-                estado: "error",
+                estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
                 mensaje: "Acceso denegado."
             });
         }
 
         const fila = verif.rows[0];
-
         if (fila.activo === false) {
             return res.status(403).json({
-                estado: "error",
+                estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
                 mensaje: "Acceso denegado."
             });
         }
+
+        if (!permiteSesion(datosToken, fila)) return res.status(401).json({ estado: 'error', codigo:'SESSION_REAUTH_REQUIRED', mensaje: 'Inicia sesión nuevamente para verificar tu cuenta.' });
 
         req.user = {
             id_usuario: fila.id_usuario,
             id_suministro: fila.id_suministro,
             numero_suministro: fila.numero_suministro,
-            rol: fila.rol
+            rol: fila.rol,
+            mfa_version: fila.mfa_version
         };
 
         return next();
     } catch (e) {
         // En producción, mensaje genérico; detalle solo en log servidor.
-        console.error(esProduccion() ? 'Error de autenticación.' : e);
+        console.error('Error de autenticación.');
         return res.status(500).json({
             estado: "error",
             mensaje: "Error interno del servidor."
         });
     }
 }
+
+registerPush(app,{service:createPush({pool}),auth:requiereAuth,limit:limitadorGenerico(60,15),
+    // El middleware ya verificó este JWT; aquí solo se limita la vigencia push.
+    expiry:req=>Number(jwt.decode(req.headers.authorization.split(' ')[1])?.exp)*1000});
 
 function requiereAdmin(req, res, next){
     requiereAuth(req, res, () => {
@@ -584,6 +619,7 @@ function requiereAdmin(req, res, next){
 // ==========================================
 
 app.post("/api/auth/login", limiteLogin, async (req, res) => {
+    res.set('Cache-Control','no-store');
     try {
         const { numero_suministro, password } = req.body || {};
 
@@ -608,10 +644,13 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
               u.clave_hash,
               u.rol,
               u.activo,
+              COALESCE(m.version,0) AS mfa_version,
+              COALESCE(m.activo,FALSE) AS mfa_activo,
               s.id_suministro,
               s.numero_suministro
             FROM suministros s
             JOIN usuarios u ON u.id_usuario = s.id_usuario
+            LEFT JOIN usuario_2fa m ON m.id_usuario=u.id_usuario
             WHERE s.numero_suministro = $1
             LIMIT 1;
         `;
@@ -641,6 +680,12 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
             });
         }
 
+        if (fila.mfa_activo) {
+            const challenge = await dosFactores.challenge(fila);
+            if (challenge.error) return res.status(challenge.error.status).json({ estado: 'error', mensaje: challenge.error.mensaje });
+            return res.set('Cache-Control','no-store').status(202).json(challenge);
+        }
+
         return res.status(200).json({
             estado: "ok",
             token: generarTokenAcceso(fila),
@@ -656,7 +701,7 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        console.error('Fallo interno de inicio de sesión.');
 
         return res.status(500).json({
             estado: "error",
@@ -701,12 +746,45 @@ const registroCorreo = crearRegistroCorreo({ pool, key: configCorreo && configCo
     proveedor: configCorreo?.provider || 'resend',
     secreto: configCorreo && configCorreo.secreto, generarClaveHash, verificarClave,
     correoPermitido: process.env.EMAIL_REGISTRATION_ALLOWED_EMAIL || null,
-    altasHabilitadas: process.env.EMAIL_REGISTRATION_ENABLED === '1' });
+    altasHabilitadas: process.env.EMAIL_REGISTRATION_ENABLED === '1',
+    emitirSesion: async ({ id_usuario, numero_suministro }) => {
+        const { rows: [fila] } = await pool.query(`SELECT u.id_usuario,u.correo,u.rol,u.activo,s.id_suministro,s.numero_suministro
+            FROM usuarios u JOIN suministros s ON s.id_usuario=u.id_usuario
+            WHERE u.id_usuario=$1 AND s.numero_suministro=$2`, [id_usuario, numero_suministro]);
+        if (!fila || fila.activo !== true || fila.rol !== 'usuario') return null;
+        return { token: generarTokenAcceso(fila),
+            usuario: { id_usuario: fila.id_usuario, correo: fila.correo, rol: fila.rol },
+            suministro: { id_suministro: fila.id_suministro, numero_suministro: fila.numero_suministro } };
+    } });
 registrarRutasCorreo(app, registroCorreo, { registro: limiteRegistro,
     verificacion: limitadorGenerico(30, 15), reenvio: limitadorGenerico(10, 15), consulta: limitadorGenerico(240, 15) });
 
 
 // ==========================================
+// 2FA: desafíos opacos sin acceso a rutas JWT; operaciones de perfil autenticadas.
+for (const [ruta, action, autenticada] of [
+    ['login', 'login', false], ['setup', 'setup', true], ['confirm', 'confirm', true],
+    ['disable', 'disable', true], ['recovery', 'regenerate', true]
+]) {
+    const handlers = [limitadorGenerico(20, 15)];
+    if (autenticada) handlers.push(requiereAuth);
+    app.post('/api/auth/2fa/' + ruta, ...handlers, async (req, res) => {
+        res.set('Cache-Control','no-store');
+        if (autenticada && !['usuario','admin'].includes(req.user.rol)) return res.status(403).json({ estado: 'error', mensaje: 'Acceso denegado.' });
+        try {
+            const result = autenticada ? await dosFactores[action](req.user.id_usuario, req.body || {},req.user) : await dosFactores[action](req.body || {});
+            if (result.error) return res.status(result.error.status).json({ estado: 'error', mensaje: result.error.mensaje, ...(result.error.codigo?{codigo:result.error.codigo}:{}) });
+            return res.json(result);
+        } catch (_) { return res.status(503).json({ estado: 'error', mensaje: 'No se pudo completar la operación de seguridad. Reintenta más tarde.' }); }
+    });
+}
+app.get('/api/auth/2fa', requiereAuth, async (req, res) => {
+    res.set('Cache-Control','no-store');
+    if (!['usuario','admin'].includes(req.user.rol)) return res.status(403).json({ estado: 'error', mensaje: 'Acceso denegado.' });
+    try { return res.json(await dosFactores.status(req.user.id_usuario)); }
+    catch (_) { return res.status(503).json({ estado:'error',mensaje:'No se pudo consultar la seguridad de la cuenta.' }); }
+});
+
 // PERFIL DE USUARIO (solo datos no sensibles)
 // LEGACY: candidata a eliminar. Usar GET /api/me/perfil (JWT).
 // Exige token y aislamiento por suministro.
@@ -803,37 +881,21 @@ app.post("/api/auth/change-password", limiteCambioClave, requiereAuth, async (re
             });
         }
 
-        const resultado = await pool.query(
-            `SELECT id_usuario, clave_hash
-             FROM usuarios
-             WHERE id_usuario = $1
-             LIMIT 1;`,
-            [req.user.id_usuario]
-        );
-
-        if (resultado.rowCount === 0 || !verificarClave(password_actual, resultado.rows[0].clave_hash)) {
-            return res.status(401).json({
-                estado: "error",
-                mensaje: "No fue posible validar las credenciales actuales."
-            });
-        }
-
-        const nuevoHash = generarClaveHash(password_nueva);
-
-        await pool.query(
-            `UPDATE usuarios
-             SET clave_hash = $1
-             WHERE id_usuario = $2;`,
-            [nuevoHash, resultado.rows[0].id_usuario]
-        );
-
-        return res.json({
-            estado: "ok",
-            mensaje: "Contraseña actualizada correctamente."
+        const updated=await passwordTransaction(pool,async c=>{
+            const {rows:[u]}=await c.query(`SELECT u.id_usuario,u.clave_hash,COALESCE(m.version,0) AS version
+                FROM usuarios u LEFT JOIN usuario_2fa m USING(id_usuario) WHERE u.id_usuario=$1 FOR UPDATE OF u`,[req.user.id_usuario]);
+            if(!u||u.version!==req.user.mfa_version||!verificarClave(password_actual,u.clave_hash))return false;
+            await c.query('UPDATE usuarios SET clave_hash=$2 WHERE id_usuario=$1',[u.id_usuario,generarClaveHash(password_nueva)]);
+            return true;
         });
+        if(!updated)return res.status(401).json({estado:'error',mensaje:'No fue posible validar las credenciales actuales.'});
+
+        res.json({estado:"ok",mensaje:"Contraseña actualizada. Inicia sesión nuevamente."});
+        await desconectarSocketsDeUsuario(req.user.id_usuario,'credenciales');
+        return;
 
     } catch (error) {
-        console.error(error);
+        console.error('Fallo interno al cambiar contraseña.');
 
         return res.status(500).json({
             estado: "error",
@@ -1019,24 +1081,40 @@ app.post("/api/incidencias", limiteOperacionesSensibles, requiereAuth, async (re
 });
 
 
-// ==========================================
-// REGISTRAR PAGO REAL EN POSTGRESQL
-// Movimiento bancario SIMULADO con fines académicos.
-// Todo lo demás es real: monto desde DB, código en
-// backend, fecha, método, cambio a Pagado, historial.
-// ==========================================
-
-app.post("/api/pagos", limiteOperacionesSensibles, requiereAuth, async (req, res) => {
-    try {
-        const result = await servicioRecibos.pagar(Number((req.body || {}).id_recibo),
-            (req.body || {}).metodo, req.user.id_suministro, req.user.id_usuario);
-        // El servicio confirma y libera la conexión antes de notificar.
-        emitirASuministro(req.user.id_suministro, 'pago:registrado', { id_pago: result.pago.id_pago, id_recibo: result.recibo.id_recibo });
-        emitirAAdmins('pago:nuevo', { id_pago: result.pago.id_pago, id_recibo: result.recibo.id_recibo });
-        return res.status(201).json({ estado: 'ok', ...result });
-    } catch (error) { return responderErrorRecibo(res, error); }
-});
-
+// Operaciones de pago: ninguna declaración ni simulación acredita un cargo real.
+const { crearOperacionesPago, responderErrorPago } = require('./payment-operations');
+const operacionesPago = crearOperacionesPago({pool});
+function emitirOperacion(req, op) {
+    emitirASuministro(req.user.id_suministro, 'pago:registrado', {id_operacion:op.id,id_recibo:op.id_recibo});
+    emitirAAdmins('pago:nuevo', {id_operacion:op.id,id_recibo:op.id_recibo});
+}
+app.get('/api/pagos/config', requiereAuth, async(req,res)=>{try{res.set('Cache-Control','no-store').json(await operacionesPago.overview(req.user));}catch(e){responderErrorPago(res,e);}});
+app.get('/api/pagos/yape/qr', requiereAuth, async(req,res)=>{try{const image=await operacionesPago.qr(req.user);res.set({'Cache-Control':'no-store','Content-Type':'image/png'}).send(image);}catch(e){responderErrorPago(res,e);}});
+// APK anteriores conservan la ruta y la estructura, pero nunca reciben estado Pagado ficticio.
+app.post('/api/pagos', limiteOperacionesSensibles, requiereAuth, async(req,res)=>{try{
+    if(!req.body?.solicitud_id)return res.status(409).json({estado:'error',mensaje:'Actualiza la aplicación. Este método demostrativo no acredita pagos; el recibo permanece pendiente.'});
+    const result=await operacionesPago.create({...req.body,solicitud_id:req.body?.solicitud_id||crypto.randomUUID()},req.user,true);
+    emitirOperacion(req,result.operacion);
+    res.status(result.repetida?200:201).json({estado:'ok',pago:result.operacion,recibo:{id_recibo:result.operacion.id_recibo,estado:'Pendiente'},mensaje:'Operación demostrativa. No acredita un pago ni cancela la deuda.'});
+}catch(e){responderErrorPago(res,e);}});
+app.post('/api/me/operaciones-pago', limiteOperacionesSensibles, requiereAuth, async(req,res)=>{try{
+    const result=await operacionesPago.create(req.body||{},req.user);emitirOperacion(req,result.operacion);
+    res.status(result.repetida?200:201).json(result);
+}catch(e){responderErrorPago(res,e);}});
+app.get('/api/me/operaciones-pago', requiereAuth, async(req,res)=>{try{res.set('Cache-Control','no-store').json({operaciones:await operacionesPago.list(req.user)});}catch(e){responderErrorPago(res,e);}});
+app.get('/api/admin/operaciones-pago', requiereAdmin, async(req,res)=>{try{res.set('Cache-Control','no-store').json(req.query.page?await operacionesPago.page(req.user,req.query):{operaciones:await operacionesPago.list(req.user,true)});}catch(e){responderErrorPago(res,e);}});
+for (const [prefix,auth,admin] of [['/api/me',requiereAuth,false],['/api/admin',requiereAdmin,true]]) {
+    app.get(prefix+'/operaciones-pago/:id',auth,async(req,res)=>{try{res.set('Cache-Control','no-store').json(await operacionesPago.detail(req.params.id,req.user,admin));}catch(e){responderErrorPago(res,e);}});
+    app.get(prefix+'/operaciones-pago/:id/comprobante',auth,async(req,res)=>{try{const image=await operacionesPago.proof(req.params.id,req.user,admin);res.set({'Cache-Control':'no-store','Content-Type':'image/png'}).send(image);}catch(e){responderErrorPago(res,e);}});
+}
+app.post('/api/me/operaciones-pago/:id/cancelar',limiteOperacionesSensibles,requiereAuth,async(req,res)=>{try{const op=await operacionesPago.cancel(req.params.id,req.user);emitirOperacion(req,op);res.json({operacion:op});}catch(e){responderErrorPago(res,e);}});
+app.post('/api/admin/operaciones-pago/:id/revisar',limiteOperacionesSensibles,requiereAdmin,async(req,res)=>{try{
+    const op=await operacionesPago.review(req.params.id,req.body||{},req.user);
+    emitirAAdmins('pago:nuevo',{id_operacion:op.id,id_recibo:op.id_recibo});
+    const own=await pool.query('SELECT id_suministro FROM suministros WHERE numero_suministro=$1',[op.numero_suministro]);
+    if(own.rows[0])emitirASuministro(own.rows[0].id_suministro,'pago:registrado',{id_operacion:op.id,id_recibo:op.id_recibo});
+    res.json({operacion:op});
+}catch(e){responderErrorPago(res,e);}});
 
 // ==========================================
 // CONSULTAR PAGOS POR SUMINISTRO
@@ -1596,76 +1674,24 @@ app.get("/api/admin/incidencias/:id/foto", requiereAdmin, async (req, res) => {
     }
 });
 
-app.patch("/api/admin/incidencias/:id/estado", requiereAdmin, async (req, res) => {
-    try {
-        const idIncidencia = Number(req.params.id);
-        const estado = String((req.body || {}).estado || '').trim();
-
-        if (!Number.isInteger(idIncidencia) || idIncidencia <= 0) {
-            return res.status(404).json({
-                estado: "error",
-                mensaje: "Incidencia no encontrada."
-            });
+const seguimientoIncidencias=createIncidentTracking({pool});
+registerIncidentTracking(app,{service:seguimientoIncidencias,auth:requiereAuth,admin:requiereAdmin});
+app.patch("/api/admin/incidencias/:id/estado", limitadorGenerico(60,15), requiereAdmin, async(req,res)=>{
+    try{
+        const result=await seguimientoIncidencias.change(req.user,req.params.id,req.body||{});
+        // El estado, evento y notificación/outbox ya confirmaron COMMIT.
+        if(result.cambiada){
+            const incidente=result.incidencia;
+            emitirASuministro(incidente.id_suministro,'notificacion:nueva',{id:result.notificacion_id,alcance:'Usuario',tipo:'incidencia'});
+            const aviso={id:incidente.id_incidencia,estado:incidente.estado};
+            emitirASuministro(incidente.id_suministro,'incidencia:actualizada',aviso);
+            emitirAAdmins('incidencia:actualizada',aviso);
         }
-
-        if (INCIDENCIA_ESTADOS.indexOf(estado) === -1) {
-            return res.status(400).json({
-                estado: "error",
-                mensaje: "Estado inválido. Debe ser Registrada, En revisión o Resuelta."
-            });
-        }
-
-        const resultado = await pool.query(
-            `UPDATE incidencias
-             SET estado = $1
-             WHERE id_incidencia = $2
-             RETURNING
-               id_incidencia,
-               id_suministro,
-               tipo,
-               descripcion,
-               referencia,
-               latitud,
-               longitud,
-               fecha_registro,
-               estado,
-               (foto IS NOT NULL) AS tiene_foto;`,
-            [estado, idIncidencia]
-        );
-
-        if (resultado.rowCount === 0) {
-            return res.status(404).json({
-                estado: "error",
-                mensaje: "Incidencia no encontrada."
-            });
-        }
-
-        // FASE 19: cambio de estado de incidencia => notificación al suministro.
-        try {
-            await crearNotificacion({
-                id_suministro: resultado.rows[0].id_suministro,
-                alcance: 'Usuario',
-                titulo: 'Incidencia #' + resultado.rows[0].id_incidencia + ' cambió a ' + estado,
-                mensaje: 'Tu reporte "' + resultado.rows[0].tipo + '" ahora está: ' + estado + '.',
-                tipo: 'incidencia'
-            });
-        } catch (e) {}
-
-        // Tiempo real: el propietario recarga Incidencias + Notificaciones por REST.
-        emitirASuministro(resultado.rows[0].id_suministro, 'incidencia:actualizada', { id: resultado.rows[0].id_incidencia, estado: estado });
-
-        return res.json({
-            estado: "ok",
-            incidencia: resultado.rows[0]
-        });
-
-    } catch (error) {
-        console.error(error);
-
-        return res.status(500).json({
-            estado: "error",
-            mensaje: "Error interno del servidor."
-        });
+        return res.set('Cache-Control','no-store').json({estado:'ok',incidencia:result.incidencia,cambiada:result.cambiada,repetida:result.repetida===true});
+    }catch(error){
+        const status=error instanceof TrackingError?error.status:503;
+        if(status===503)console.error('No se pudo actualizar el estado de incidencia.');
+        return res.status(status).json({estado:'error',mensaje:status===503?'No se pudo confirmar el cambio. Consulta el historial antes de reintentar.':error.message});
     }
 });
 

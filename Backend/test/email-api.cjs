@@ -6,9 +6,9 @@ const { crearRegistroCorreo } = require('../email-registration');
 const { crearProcesadorOutbox } = require('../email-outbox');
 const { crearRemitente } = require('../resend-mail');
 
-async function iniciar({ autoDrain = true, registrationEnabled = process.env.EMAIL_REGISTRATION_ENABLED ?? '1' } = {}) {
-    const { pool: db, connection } = await nuevaBase('api');
-    await db.query(sql('init.sql'));
+async function iniciar({ autoDrain = true, registrationEnabled = process.env.EMAIL_REGISTRATION_ENABLED ?? '1', databasePrefix = 'api', schemaSql, port = 0 } = {}) {
+    const { pool: db, connection } = await nuevaBase(databasePrefix);
+    await db.query(schemaSql || sql('init.sql'));
     const authSecret = crypto.randomBytes(32).toString('hex');
     Object.assign(process.env, { DATABASE_URL: '', DB_HOST: connection.host, DB_PORT: String(connection.port),
         POSTGRES_DB: connection.database, POSTGRES_USER: connection.user, POSTGRES_PASSWORD: connection.password,
@@ -36,7 +36,8 @@ async function iniciar({ autoDrain = true, registrationEnabled = process.env.EMA
         for(let i=0;i<50;i++) { const r=await worker.procesarUno(); if(r.estado==='vacio')return; }
         throw new Error('Demasiados trabajos en fixture.');
     }
-    await new Promise(resolve => backend.httpServer.listen(0, '127.0.0.1', resolve));
+    assert.ok(Number.isInteger(port) && port >= 0 && port <= 65535, 'Puerto de laboratorio inválido.');
+    await new Promise((resolve, reject) => { backend.httpServer.once('error', reject); backend.httpServer.listen(port, '127.0.0.1', resolve); });
     const base = `http://127.0.0.1:${backend.httpServer.address().port}`;
     let ip = 1;
     async function request(ruta, body, status, fixedIP) {

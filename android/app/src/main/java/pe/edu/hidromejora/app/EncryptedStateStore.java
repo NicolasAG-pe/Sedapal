@@ -30,7 +30,7 @@ final class EncryptedStateStore {
     }
 
     private AtomicFile file(String slot) {
-        if (!"session".equals(slot) && !"registration".equals(slot)) throw new IllegalArgumentException("Estado no admitido.");
+        if (!"session".equals(slot) && !"registration".equals(slot) && !"push".equals(slot)) throw new IllegalArgumentException("Estado no admitido.");
         return new AtomicFile(new File(directory, slot + ".bin"));
     }
 

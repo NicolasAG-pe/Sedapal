@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#103e60" />
+<meta name="theme-color" content="#0F4C81" />
 <meta name="description" content="Hidro-Mejora: recibos, consumo y atención de tu suministro de agua. Proyecto universitario." />
 <title>Hidro-Mejora · Mi suministro</title>
 <link rel="icon" type="image/svg+xml" href="shared/assets/hm-symbol.svg">
@@ -103,9 +103,18 @@
       <button type="button" class="btn btn-ghost" id="btn-retry-registration" hidden>Volver al registro</button>
       <button type="button" class="btn btn-ghost" id="btn-restart-register">Usar otros datos</button>
     </form>
+    <form id="two-factor-login" hidden>
+      <p>Ingresa el código de tu aplicación autenticadora o un código de recuperación de un solo uso.</p>
+      <div class="field"><label for="two-factor-login-code">Código de verificación</label>
+        <input id="two-factor-login-code" aria-describedby="two-factor-login-error" type="text" autocomplete="one-time-code" maxlength="35" required /></div>
+      <p id="two-factor-login-error" role="alert"></p>
+      <button class="btn btn-primary" type="submit">Verificar e ingresar</button>
+      <button class="btn btn-ghost" type="button" id="two-factor-cancel">Volver al inicio de sesión</button>
+    </form>
     <div class="auth-switch" id="auth-to-login" hidden>¿Ya tienes una cuenta? <a href="#" id="show-login">Iniciar sesión</a></div>
 
-    <div class="login-foot">¿Olvidaste tu clave? <a href="#" id="forgot-link">Recupérala aquí</a> · <a href="#" id="help-link">Ayuda</a></div>
+    <div id="password-recovery" hidden></div>
+    <div class="login-foot"><a href="#" id="forgot-link">¿Olvidaste tu contraseña?</a> · <a href="#" id="help-link">Ayuda</a></div>
   </div>
   <div class="login-foot-brand">Hidro-Mejora · Proyecto universitario</div>
   </div>
@@ -452,7 +461,7 @@
         </div>
         <div class="mod-stats" aria-label="Resumen de pagos" style="grid-template-columns:repeat(3,1fr)">
           <div class="mod-stat"><small>Pagos registrados</small><strong id="pay-total-count">0</strong></div>
-          <div class="mod-stat"><small>Total pagado</small><strong id="pay-total-monto">S/ 0.00</strong></div>
+          <div class="mod-stat"><small>Importe registrado</small><strong id="pay-total-monto">S/ 0.00</strong></div>
           <div class="mod-stat"><small>Último pago</small><strong id="pay-last-fecha">—</strong></div>
         </div>
         <div class="section-head">
@@ -461,6 +470,7 @@
             <input type="search" id="pay-search" class="search-input" placeholder="Buscar por periodo o código…" aria-label="Buscar pagos por periodo o código" maxlength="100" />
           </div>
         </div>
+        <p class="hint">Entorno de pruebas · Sin cobros reales</p>
         <div id="pay-list" class="cards" role="list"></div>
         <div id="pay-empty" class="empty">No hay pagos registrados para este suministro.</div>
       </div>
@@ -483,10 +493,55 @@
             <div><dt>Fecha de registro</dt><dd id="pf-fecha">—</dd></div>
           </dl>
         </div>
+        <section id="push-settings" class="support-card" aria-labelledby="push-title">
+          <h4 id="push-title">Notificaciones de Hidro-Mejora</h4>
+          <p>Recibe avisos de recibos, incidencias y cortes sin abrir la app. Son opcionales y no muestran importes ni datos personales en la pantalla bloqueada.</p>
+          <p id="push-status" role="status" aria-live="polite">Consulta la disponibilidad en este dispositivo.</p>
+          <p id="push-permission" class="muted">El permiso Android se solicitará solo al pulsar Activar.</p>
+          <fieldset class="push-categories"><legend>Tipos de aviso</legend>
+            <label><input type="checkbox" id="push-recibos" checked> Recibos nuevos</label>
+            <label><input type="checkbox" id="push-vencimientos" checked> Vencimientos próximos</label>
+            <label><input type="checkbox" id="push-incidencias" checked> Incidencias</label>
+            <label><input type="checkbox" id="push-cortes" checked> Cortes de servicio</label>
+          </fieldset>
+          <div class="push-actions"><button class="btn btn-sky" id="push-enable" type="button" disabled>Activar notificaciones</button><button class="btn btn-ghost" id="push-save" type="button" disabled>Guardar preferencias</button><button class="btn btn-ghost" id="push-disable" type="button" disabled>Desactivar</button></div>
+          <small>La entrega depende de Android y de tu conexión. El centro de notificaciones conserva los avisos.</small>
+        </section>
         <div class="support-card" aria-label="Seguridad de la cuenta">
-          <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Seguridad</h4>
+          <h4><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Seguridad de la cuenta</h4>
           <p>Mantén tu cuenta protegida con una contraseña segura.</p>
           <button class="btn btn-sky" id="btn-change-pass" type="button">Cambiar contraseña</button>
+          <section class="two-factor-settings" aria-labelledby="two-factor-title">
+            <h5 id="two-factor-title">Verificación en dos pasos</h5>
+            <p>Necesitarás un cliente compatible en todos tus dispositivos y tu aplicación autenticadora para volver a iniciar sesión.</p>
+            <p id="two-factor-status" role="status">Consulta el estado de protección de tu cuenta.</p>
+            <button class="btn btn-ghost" type="button" id="two-factor-open">Configurar verificación en dos pasos</button>
+            <div id="two-factor-controls" hidden>
+              <form id="two-factor-manage">
+                <div class="field"><label for="two-factor-password">Confirma tu contraseña actual</label>
+                  <input id="two-factor-password" type="password" autocomplete="current-password" maxlength="128" required /></div>
+                <div class="field" id="two-factor-existing" hidden><label for="two-factor-existing-code">Código del factor actual o de recuperación</label>
+                  <input id="two-factor-existing-code" aria-describedby="two-factor-settings-error" type="text" autocomplete="one-time-code" maxlength="35" /></div>
+                <button class="btn btn-sky" id="two-factor-setup" type="submit">Preparar activación</button>
+                <button class="btn btn-ghost" id="two-factor-recovery" type="button" hidden>Generar nuevos códigos de recuperación</button>
+                <button class="btn btn-ghost" id="two-factor-disable" type="button" hidden>Desactivar verificación en dos pasos</button>
+              </form>
+              <form id="two-factor-confirm" hidden>
+                <p>Escanea este QR con una aplicación autenticadora. Si estás usando el mismo teléfono, abre esta sección en otro dispositivo para escanearlo. Confirma antes de cinco minutos.</p>
+                <img id="two-factor-qr" width="300" height="300" alt="QR privado para vincular tu autenticador" />
+                <div class="field"><label for="two-factor-confirm-code">Código de seis dígitos</label>
+                  <input id="two-factor-confirm-code" aria-describedby="two-factor-settings-error" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required /></div>
+                <button class="btn btn-sky" type="submit">Activar y guardar códigos</button>
+              </form>
+              <div id="two-factor-codes" hidden>
+                <p>Guarda estos códigos en un lugar privado fuera de Hidro-Mejora. Solo se muestran ahora y cada uno sirve una vez.</p>
+                <pre id="two-factor-codes-list" tabindex="0" aria-label="Códigos de recuperación"></pre>
+              </div>
+              <p>Si perdiste tu autenticador, usa contraseña y recuperación para desactivar y volver a configurarlo. Para generar códigos nuevos necesitas tu autenticador.</p>
+              <p id="two-factor-settings-error" role="alert"></p>
+              <button class="btn btn-ghost" type="button" id="two-factor-close">Cerrar y ocultar datos privados</button>
+            </div>
+          </section>
         </div>
         </div>
       </div>
@@ -659,7 +714,7 @@
         <button class="btn btn-ghost" id="btn-copy-detail" type="button">Copiar datos</button>
         <button class="btn btn-sky" id="btn-pay-detail" type="button">Pagar ahora</button>
         <button class="btn btn-primary" id="btn-pdf" type="button">Descargar recibo</button>
-        <button class="btn btn-primary" id="btn-constancia" type="button" hidden>Constancia de pago</button>
+        <button class="btn btn-primary" id="btn-constancia" type="button" hidden>Constancia de operación</button>
       </div>
     </div>
   </div>
@@ -673,14 +728,26 @@
       <button class="icon-btn" id="pay-close" type="button" aria-label="Cerrar pago" data-icon="close"></button>
     </div>
     <div class="dialog-body">
+      <p class="pay-note" id="pay-environment">Entorno de pruebas · Sin cobros reales</p>
       <div id="pay-main">
         <div class="pay-amount"><span>Monto a pagar</span><strong id="pay-monto">S/ 0.00</strong></div>
-        <div class="pay-methods" role="radiogroup" aria-label="Método de pago">
-          <label class="pay-opt sel"><input type="radio" name="pay-method" value="Tarjeta" checked /><span><b>Tarjeta</b><small>Débito o crédito</small></span></label>
-          <label class="pay-opt"><input type="radio" name="pay-method" value="Banca móvil" /><span><b>Banca móvil</b><small>Transferencia desde tu banco</small></span></label>
-          <label class="pay-opt"><input type="radio" name="pay-method" value="Billetera digital" /><span><b>Billetera digital</b><small>Yape / Plin</small></span></label>
+        <div class="pay-methods" role="radiogroup" aria-label="Tipo de operación">
+          <label class="pay-opt sel"><input type="radio" name="pay-method" value="demostrativo" checked /><span><b>Registro directo</b><small>Registro informativo; no cancela deuda</small></span></label>
+          <label class="pay-opt"><input type="radio" name="pay-method" value="yape_manual" disabled /><span><b>Pago con Yape</b><small>Disponible únicamente en laboratorio autorizado</small></span></label>
         </div>
-        <div class="pay-note">Esta versión registra la operación en Hidro Mejora y no realiza cargos bancarios.</div>
+        <p id="pay-notice" class="pay-note" role="status">Una operación registrada requiere revisión; la confirmación de Yape no es automática.</p>
+        <button id="pay-existing-history" class="btn btn-ghost" type="button" hidden>Ver estado e historial</button>
+        <div id="pay-existing-state" role="status" aria-live="polite" hidden></div>
+        <div id="pay-yape-fields" hidden>
+          <img id="pay-yape-qr" alt="QR receptor de pruebas autorizado" width="200" height="200" hidden />
+          <p id="pay-yape-guidance">No transfieras dinero real. Un administrador debe comprobar la recepción por separado; una captura no confirma un pago.</p>
+          <label id="pay-reference-label" for="pay-reference">Código de operación</label>
+          <input id="pay-reference" maxlength="100" autocomplete="off" aria-describedby="pay-feedback" placeholder="PRUEBA20261026" />
+          <label for="pay-proof">Comprobante opcional (PNG, máximo 1 MB)</label>
+          <input id="pay-proof" type="file" accept="image/png" aria-describedby="pay-feedback" />
+          <label id="pay-voluntary-label" hidden><input id="pay-voluntary" type="checkbox" /> Declaro voluntariamente una transferencia externa entre cuentas autorizadas para este piloto; no estoy pagando una deuda oficial de agua.</label>
+        </div>
+        <p id="pay-feedback" role="alert" aria-live="polite"></p>
         <div class="dialog-actions">
           <button class="btn btn-ghost" id="pay-cancel" type="button">Cancelar</button>
           <button class="btn btn-primary" id="pay-confirm" type="button">Confirmar pago</button>
@@ -693,8 +760,8 @@
       <div id="pay-success" hidden>
         <div class="pay-ok">
           <span class="big"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M4.5 12.5l5 5 10-11"/></svg></span>
-          <h4>Pago exitoso</h4>
-          <p id="pay-success-text">Tu recibo fue cancelado.</p>
+          <h4>Operación registrada</h4>
+          <p id="pay-success-text">Consulta el estado de verificación en tu historial.</p>
           <div class="pay-code-row"><span class="pay-code" id="pay-code">—</span><button class="btn-sm detail" id="pay-copy" type="button">Copiar código</button></div>
         </div>
         <div class="dialog-actions">
@@ -891,6 +958,10 @@
 <script src="assets/js/native-state.js"></script>
 <script src="assets/js/registration-state.js"></script>
 <script src="assets/js/client-session.js"></script>
+<script src="assets/js/push-notifications.js"></script>
+<script src="shared/two-factor-ui.js"></script>
+<script src="shared/password-recovery-ui.js"></script>
+<script src="shared/incident-timeline.js"></script>
 <script src="assets/js/sedapal-knowledge.js"></script>
 <!-- Socket.IO cliente vendorizado (v4.8.4, igual que el backend): el script
      absoluto /socket.io/socket.io.js no resuelve en el WebView Android
@@ -969,10 +1040,42 @@
 
   /* ---------- Sesión en memoria; persistencia cifrada solo en Android ---------- */
   const sesionCliente = window.createHMClientSession(cerrarSesionPorAuth);
+  const interfazPush=window.createHMPush({session:sesionCliente,
+    navigate:async section=>{
+      const epoch=sesionCliente.generation();
+      while(navLock&&sesionCliente.isUser()&&epoch===sesionCliente.generation())await new Promise(resolve=>setTimeout(resolve,40));
+      if(sesionCliente.isUser()&&epoch===sesionCliente.generation())return openDashboardPage(section);
+    },
+    refresh:()=>sincronizarUsuarioPorEvento('notificacion'),notice:mensaje=>showToast(mensaje)
+  });
+  const incidentTimeline=window.createHMIncidentTimeline({apiFetch:(...args)=>sesionCliente.fetch(...args),
+    path:(id,cursor)=>'/api/me/incidencias/'+id+'/seguimiento?limite=30'+(cursor?'&despues='+cursor:''),
+    isActive:()=>sesionCliente.isUser(),openDialog:openModal,closeDialog:closeModal
+  });
   const fmtFechaLarga = window.HMShared.ui.date;
   let clienteCorreo='';
   let restauracionBloqueada=false, tareaRestauracion=null, reintentoSalida=false;
   function guardarSesion(token, rol){return sesionCliente.establish(token, rol);}
+  const interfaz2fa=window.createHMTwoFactorUI({session:sesionCliente,apiFetch,
+    showLogin:mensaje=>{if(mensaje){cerrarSesionCompleta(mensaje);return;}ocultarEstadoSesion();mostrarLogin();},
+    showChallenge:()=>{
+      form.hidden=true;regForm.hidden=true;verifyForm.hidden=true;
+      authToRegister.hidden=true;authToLogin.hidden=true;
+      if(loginFoot)loginFoot.hidden=true;if(demoBox)demoBox.hidden=true;
+      loginTitle.textContent='Verificación en dos pasos';inpPass.value='';
+    },
+    authenticated:async data=>{
+      if(data.usuario?.rol!=='usuario' || !/^\d{9}$/.test(data.suministro?.numero_suministro || '') || !data.token)throw new Error('Respuesta de sesión incompleta.');
+      let epoch=sesionCliente.generation();
+      try{
+        detenerTiempoReal();
+        const guardado=guardarSesion(data.token,data.usuario.rol);epoch=sesionCliente.generation();
+        await conSesion(()=>guardado,epoch);clienteCorreo=data.usuario.correo || '';
+        await entrarDashboard(data.suministro.numero_suministro,epoch);
+      }catch(error){if(!esAbortado(error)&&epoch===sesionCliente.generation())await cerrarSesionCompleta('No se pudo guardar la sesión de forma segura. Inicia sesión nuevamente.');throw error;}
+    },
+    showProfile:()=>document.querySelector('[data-sec="perfil"]').click()
+  });
   function obtenerToken(){ return sesionCliente.token(); }
   function limpiarSesion(){ return sesionCliente.clear(); }
   function mostrarEstadoSesion(mensaje,reintentar=false,salida=false){
@@ -1006,6 +1109,7 @@
   async function cerrarSesionCompleta(mensaje){
     try{ detenerTiempoReal(); }catch(e){}
     try{ stopCortesPolling(); }catch(e){}
+    const retiradaPush=interfazPush.logout();
     const retirada=limpiarSesion();
     const retiradaRegistro=limpiarVerificacion();
     mostrarLogin();
@@ -1018,7 +1122,7 @@
     try{ if(typeof misSolicitudes !== 'undefined') misSolicitudes = []; }catch(e){}
     try{ if(typeof notificaciones !== 'undefined') notificaciones = []; }catch(e){}
     try{ closeMobileNav({restore:false, immediate:true}); }catch(e){}
-    try{ [detModal,payModal,copiesModal,incModal,fotoModal,passModal].forEach(closeModal); }catch(e){}
+    try{ [detModal,payModal,copiesModal,incModal,fotoModal,passModal,incidentTimeline.modal].forEach(closeModal); }catch(e){}
     try{ endSpotlight(false, {markSeen:false}); }catch(e){}
     try{ resetHidroBotSession(); }catch(e){}
     try{ navLock = false; }catch(e){}
@@ -1031,7 +1135,7 @@
     }catch(e){}
     showView(viewLogin);
     if(sesionCliente.isNative())mostrarEstadoSesion('Cerrando sesión…');
-    try{await Promise.all([retirada,retiradaRegistro]);}catch(_){
+    try{await Promise.all([retirada,retiradaRegistro,retiradaPush]);}catch(_){
       mostrarEstadoSesion('No se pudo cerrar la sesión de forma segura. Reintenta para retirar la credencial.',true,true);
       return;
     }
@@ -1043,6 +1147,9 @@
     showToast(mensaje || 'Sesión cerrada correctamente.');
   }
   function limpiarDatosCliente(){
+    incidentTimeline.clear();
+    interfaz2fa.clear();
+    paymentRequests.clear();clearPaymentQr();paymentViewVersion++;paymentPilot=false;paymentPilotSynthetic=true;paymentExisting=false;document.getElementById('pay-existing-state').textContent='';document.getElementById('pay-existing-state').hidden=true;document.getElementById('pay-existing-history').hidden=true;
     window.HMClientHome.clear();
     recibos=[]; incidencias=[]; pagos=[]; cortes=[]; cortesGeneral=[];
     misSolicitudes=[]; notificaciones=[]; notifCargando=null;
@@ -1166,7 +1273,6 @@
      Máximo 1 socket por pestaña; sin listeners duplicados.
      ============================================================ */
   let socketTiempoReal = null;
-  let rtConectadoAntes = false;
   const rtTimers = {};
   // Misma regla que apiUrl(): mismo origen en web local, host
   // configurado en Android futuro. Sin hardcodear dominios.
@@ -1222,11 +1328,9 @@
     let _hmEpoch=sesionCliente.generation();
     if(!obtenerToken() || !sesionCliente.isUser()) return;
     try{
-      pagos = await conSesion(() => (cargarPagosDesdeAPI()), _hmEpoch);
-      payEstado = pagos.length ? 'ok' : 'vacio';
-      if(typeof renderPagos === 'function') renderPagos();
+      await refrescarPagos();
     }catch(e){
-      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
+      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;actualizarConexionCliente('stale');}
   }
   function rtRecargarNotif(){
     if(!sesionCliente.isUser()) return;
@@ -1240,7 +1344,7 @@
     if(!rtSoloSesionActiva() || !sesionCliente.isUser()) return;
     switch(tipo){
       case 'incidencia':
-        programarSync('inc', ()=>{ rtRecargarIncidencias(); rtRecargarNotif(); });
+        programarSync('inc', ()=>{ rtRecargarIncidencias(); rtRecargarNotif(); incidentTimeline.refresh(); });
         break;
       case 'atencion':
         programarSync('ate', ()=>{ rtRecargarAtencion(); rtRecargarNotif(); });
@@ -1267,13 +1371,14 @@
   }
   // Tras reconectar no se asume nada: sincronización REST del módulo visible.
   function sincronizarTrasReconexion(){
+    incidentTimeline.refresh();
     if(!rtSoloSesionActiva()) return;
     rtRecargarNotif();
+    rtRecargarPagos(); // Recupera también historial/Inicio/modal aunque otra sección esté visible.
     if(moduloVisible('sec-incidencias')) rtRecargarIncidencias();
     else if(moduloVisible('sec-ayuda')) rtRecargarAtencion();
     else if(moduloVisible('sec-cortes')) refrescarCortes();
     else if(moduloVisible('sec-historial') || moduloVisible('sec-inicio')) rtRecargarRecibosInicio();
-    else if(moduloVisible('sec-pagos')) rtRecargarPagos();
     else if(moduloVisible('sec-perfil')) cargarPerfil();
   }
   function actualizarConexionCliente(state){
@@ -1291,8 +1396,7 @@
     // Sin bucles: estos handlers solo hacen GET. Los POST/PATCH son los
     // únicos que emiten en el backend, y nunca desde un handler de aquí.
     s.on('connect', ()=>{
-      if(rtConectadoAntes) sincronizarTrasReconexion();
-      rtConectadoAntes = true;
+      sincronizarTrasReconexion();
       actualizarConexionCliente('online');
     });
     s.on('disconnect',()=>actualizarConexionCliente(navigator.onLine?'connecting':'offline'));
@@ -1311,14 +1415,13 @@
     s.on('notificacion:nueva', ()=>{ sincronizarUsuarioPorEvento('notificacion'); });
     s.on('perfil:actualizado', ()=>{ sincronizarUsuarioPorEvento('perfil'); });
     s.on('sesion:invalidada', ()=>{
-      try{ showToast('Tu sesión fue desactivada por un administrador.'); }catch(e){}
+      try{ showToast('Tu sesión cambió o terminó. Inicia sesión nuevamente.'); }catch(e){}
       try{ detenerTiempoReal(); }catch(e){}
       try{ cerrarSesionCompleta('Sesión terminada. Inicia sesión nuevamente.'); }catch(e){}
     });
   }
   function iniciarTiempoReal(){
     try{ detenerTiempoReal(true); }catch(e){}
-    rtConectadoAntes = false;
     let token = '';
     try{ token = obtenerToken(); }catch(e){}
     if(!token) return;
@@ -1349,7 +1452,6 @@
     try{
       Object.keys(rtTimers).forEach(k=>{ clearTimeout(rtTimers[k]); delete rtTimers[k]; });
     }catch(e){}
-    rtConectadoAntes = false;
     if(socketTiempoReal){
       try{ socketTiempoReal.removeAllListeners(); }catch(e){}
       try{ socketTiempoReal.disconnect(); }catch(e){}
@@ -1605,6 +1707,7 @@
     if(f) setTimeout(()=>{ try{ f.focus({preventScroll:true}); }catch(e){ f.focus(); } }, 30);
   }
   function closeModal(m){
+    if(m.hmOnClose)m.hmOnClose();
     if(m===incModal)cancelarUbicacionIncidencia();
     if(m===fotoModal){
       fotoVersion++; if(fotoController)fotoController.abort();fotoController=null;
@@ -1955,6 +2058,7 @@
   /* ---------- Skeletons (carga) ---------- */
   function showSkeletons(){
     loading = true;
+    syncHidroBotVisibility();
     btnLogin.disabled = true;
     btnLoginText.textContent = 'Cargando información…';
     ['stat-debt','stat-due','stat-last','stat-cons','stat-pend','stat-serv'].forEach(id=>{ document.getElementById(id).textContent = '···'; });
@@ -2121,7 +2225,7 @@
       acc.appendChild(bPdf);
       if(esPagado){
         const bC = document.createElement('button');
-        bC.type = 'button'; bC.className = 'btn-sm detail'; bC.dataset.act = 'const'; bC.textContent = 'Constancia de pago';
+        bC.type = 'button'; bC.className = 'btn-sm detail'; bC.dataset.act = 'const'; bC.textContent = 'Constancia de operación';
         acc.appendChild(bC);
       } else if(reciboPagable(r)){
         const bP = document.createElement('button');
@@ -2167,6 +2271,7 @@
     animateStats();
     actualizarInicio();
     loading = false;
+    syncHidroBotVisibility();
     btnLogin.disabled = false;
     btnLoginText.textContent = 'Iniciar Sesión';
   }
@@ -3174,7 +3279,7 @@
       if(id === 'payments_count'){
         const totalPagado = pagos.reduce((a,x)=>a + (Number.isFinite(x.monto) ? x.monto : 0), 0);
         const uno = pagos.length === 1 ? 'pago registrado' : 'pagos registrados';
-        return {text:'Tienes ' + pagos.length + ' ' + uno + ' por un total de ' + fmt(totalPagado) + '.',
+        return {text:'Tienes ' + pagos.length + ' ' + uno + ' por un importe registrado de ' + fmt(totalPagado) + '. El registro no implica acreditación financiera.',
           actions:[createBotAction('Ver historial de pagos', ()=>hbGo('pagos'))]};
       }
       if(id === 'payment_code'){
@@ -3396,6 +3501,10 @@
     const tutorial = document.body.classList.contains('tutorial-open');
     const drawer = document.body.classList.contains('drawer-open');
     const on = viewDash.classList.contains('active') && sesionCliente.isUser() && !tutorial && !drawer;
+    const ready=on&&hbDatosListos();
+    hbFab.disabled=!ready;
+    hbFab.setAttribute('aria-disabled',String(!ready));
+    hbFab.setAttribute('aria-label',ready?'Abrir HidroBot, asistente virtual':'HidroBot: cargando datos de tu suministro');
     hbRoot.classList.toggle('show', on);
     hbRoot.setAttribute('aria-hidden', on ? 'false' : 'true');
     const open = hidroBotState.open && on;
@@ -3557,7 +3666,7 @@
   // (Estructura lista para futuro botón atrás Android/Capacitor: llamar a closeMobileNav(). Sin Capacitor ahora.)
   document.addEventListener('keydown', e=>{
     if(e.key !== 'Escape') return;
-    if(document.querySelector('.overlay.open,.overlay.closing')){ [detModal,payModal,copiesModal,incModal,fotoModal,passModal].forEach(closeModal); return; }
+    if(document.querySelector('.overlay.open,.overlay.closing')){ [detModal,payModal,copiesModal,incModal,fotoModal,passModal,incidentTimeline.modal].forEach(closeModal); return; }
     if(shell.classList.contains('nav-open')){ closeMobileNav(); btnMenu.focus(); return; }
     if(hidroBotState.open){ minimizeBot(); refocusFab(); }
   });
@@ -3575,7 +3684,7 @@
       App.addListener('backButton', function(){
         try{
           if(document.querySelector('.overlay.open,.overlay.closing')){
-            [detModal,payModal,copiesModal,incModal,fotoModal,passModal].forEach(closeModal);
+            [detModal,payModal,copiesModal,incModal,fotoModal,passModal,incidentTimeline.modal].forEach(closeModal);
             return;
           }
           if(shell.classList.contains('nav-open')){ closeMobileNav(); return; }
@@ -3694,11 +3803,14 @@ async function descargarConstanciaPDF(r, btn){
         showToast('Número de suministro inválido.');
         return;
       }
-      const resp = await conSesion(() => (apiFetch('/api/me/pagos')), _hmEpoch);
-      if(!resp.ok) throw new Error('No se pudieron cargar los pagos (código ' + resp.status + ')');
-      const data = await conSesion(() => (resp.json()), _hmEpoch);
-      const lista = Array.isArray(data.pagos) ? data.pagos : [];
-      const pago = lista.find(x=>String(x.id_recibo) === String(r.id_recibo));
+      let pago;
+      if(r.operacion_id){
+        const response=await conSesion(()=>apiFetch('/api/me/operaciones-pago/'+encodeURIComponent(r.operacion_id)),_hmEpoch);
+        if(!response.ok)throw Error('No se pudo consultar la operación.');pago=await conSesion(()=>response.json(),_hmEpoch);
+      }else{
+        const resp=await conSesion(()=>apiFetch('/api/me/pagos'),_hmEpoch);if(!resp.ok)throw Error('No se pudo consultar el registro histórico.');
+        const data=await conSesion(()=>resp.json(),_hmEpoch);pago=(data.pagos||[]).find(x=>String(x.id_recibo)===String(r.id_recibo));
+      }
       if(!pago){
         showToast('No se encontró un pago registrado para este recibo.');
         return;
@@ -3709,7 +3821,7 @@ async function descargarConstanciaPDF(r, btn){
       const saved=await conSesion(() => window.HMDocuments.save(doc,window.HMDocuments.paymentFileName(pago)),_hmEpoch);
       if(!saved){showToast('Guardado del documento cancelado.');return;}
       if(btn){ btn.textContent = 'Constancia descargada'; }
-      showToast(window.Capacitor?.isNativePlatform?.()?'Constancia de pago guardada.':'Constancia de pago descargada.');
+      showToast(window.Capacitor?.isNativePlatform?.()?'Constancia de operación guardada.':'Constancia de operación descargada.');
     }catch(error){
       if(esAbortado(error) || _hmEpoch!==sesionCliente.generation())return;
       console.error('No se pudo generar la constancia PDF.', error);
@@ -3737,147 +3849,102 @@ async function descargarConstanciaPDF(r, btn){
     if(selected && reciboPagable(selected)) abrirPago(selected);
   });
 
-  /* ---------- Pago en línea real contra PostgreSQL ---------- */
+  /* ---------- Declaraciones de pago: nunca acreditar deuda desde el cliente ---------- */
+  const paymentRequests = new Map();
+  let paymentQrUrl = null;
+  let paymentViewVersion=0;
+  let paymentPilot=false,paymentPilotSynthetic=true,paymentExisting=false;
+  function clearPaymentQr(){if(paymentQrUrl)URL.revokeObjectURL(paymentQrUrl);paymentQrUrl=null;const img=document.getElementById('pay-yape-qr');img.hidden=true;img.removeAttribute('src');}
+  function paymentLabel(p){
+    const synthetic=p.entorno==='simulado'||p.piloto_ensayo===true;
+    if(p.metodo==='yape_manual'){
+      if(p.estado==='pendiente_verificacion')return synthetic?'Pendiente de revisión':'Pendiente de verificación';
+      if(p.estado==='verificada_manual')return synthetic?'Operación confirmada':'Transferencia auténtica verificada manualmente';
+    }
+    return ({demostrativa:'Operación registrada',declarada:'Operación declarada',pendiente_verificacion:'Pendiente de verificación',acreditada_proveedor:'Aprobación registrada',rechazada:'Rechazada',cancelada:'Cancelada',reembolsada:'Reembolso registrado'})[p.estado]||'Histórico sin verificación financiera';
+  }
+
   function showPayState(s){
-    document.getElementById('pay-main').hidden = s!=='main';
-    document.getElementById('pay-processing').hidden = s!=='processing';
-    document.getElementById('pay-success').hidden = s!=='success';
+    document.getElementById('pay-main').hidden=s!=='main';
+    document.getElementById('pay-processing').hidden=s!=='processing';
+    document.getElementById('pay-success').hidden=s!=='success';
   }
-  function abrirPago(r, opener){
-    if(!r || r.estado==='Pagado'){ showToast('Este recibo ya está pagado.'); return; }
-    if(!reciboPagable(r)){ showToast('Este recibo no se puede pagar.'); return; }
-    payTarget = r;
-    document.getElementById('pay-sub').textContent = r.etiqueta + ' · Suministro ' + supplyLabel.textContent;
-    document.getElementById('pay-monto').textContent = fmt(r.monto);
-    showPayState('main');
-    const cf = document.getElementById('pay-confirm');
-    cf.dataset.busy = '0';
-    cf.disabled = false;
-    cf.textContent = 'Confirmar pago · ' + fmt(r.monto);
-    openModal(payModal, opener);
+  function showExistingPayment(o){
+    paymentExisting=true;clearPaymentQr();payTarget.operacion_id=o.id;
+    document.querySelector('input[value="yape_manual"]').disabled=true;
+    document.getElementById('pay-yape-fields').hidden=true;
+    document.getElementById('pay-confirm').disabled=true;
+    document.getElementById('pay-existing-history').hidden=false;
+    const state=document.getElementById('pay-existing-state');state.hidden=false;
+    state.textContent=paymentLabel(o)+'. '+(o.estado==='rechazada'?'Motivo: '+(o.motivo||'Consulta la revisión')+'. ':'')+'No hagas otra transferencia. Para otra prueba se necesita una operación independiente.';
   }
-  document.querySelectorAll('.pay-opt input').forEach(radio=>{
-    radio.addEventListener('change', ()=>{
-      document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel', o.querySelector('input').checked));
-    });
-  });
-  document.getElementById('pay-confirm').addEventListener('click', async ev=>{
-    let _hmEpoch=sesionCliente.generation();
-    const btn = ev.currentTarget;
-    if(!payTarget || !reciboPagable(payTarget)) return;
-    if(btn.dataset.busy === '1') return;
-    const target = payTarget;
-    const supply = String(supplyLabel.textContent || '').trim();
-    const metodoEl = document.querySelector('input[name="pay-method"]:checked');
-    const metodo = metodoEl ? String(metodoEl.value || '').trim() : '';
-    if(!/^\d{9}$/.test(supply)){
-      showToast('Número de suministro inválido.');
-      return;
-    }
-    if(!metodo){
-      showToast('Selecciona un método de pago.');
-      return;
-    }
-    const idRecibo = Number(target.id_recibo);
-    if(!Number.isInteger(idRecibo) || idRecibo <= 0){
-      showToast('Recibo inválido.');
-      return;
-    }
-    btn.dataset.busy = '1';
-    btn.disabled = true;
-    btn.textContent = 'Procesando...';
-    showPayState('processing');
+  document.getElementById('pay-existing-history').addEventListener('click',()=>{closeModal(payModal);clearPaymentQr();payTarget=null;document.querySelector('#sidebar [data-sec="pagos"]').click();});
+  async function abrirPago(r,opener){
+    if(!r||!reciboPagable(r)){showToast('Este recibo no admite otra operación.');return;}
+    const epoch=sesionCliente.generation(),view=++paymentViewVersion;payTarget=r;clearPaymentQr();paymentExisting=false;document.getElementById('pay-existing-history').hidden=true;document.getElementById('pay-existing-state').hidden=true;paymentPilot=false;paymentPilotSynthetic=true;document.getElementById('pay-voluntary').checked=false;document.getElementById('pay-voluntary-label').hidden=true;
+    document.getElementById('pay-reference').value='';document.getElementById('pay-proof').value='';
+    document.querySelector('input[name="pay-method"][value="demostrativo"]').checked=true;
+    document.getElementById('pay-yape-fields').hidden=true;document.getElementById('pay-feedback').textContent='';
+    document.getElementById('pay-sub').textContent='Suministro '+supplyLabel.textContent.trim()+' · '+(r.periodo||r.etiqueta);
+    document.getElementById('pay-monto').textContent=fmt(r.monto);
+    const btn=document.getElementById('pay-confirm');btn.textContent='Registrar pago';btn.disabled=false;delete btn.dataset.busy;
+    showPayState('main');openModal(payModal,opener);
+    const yape=document.querySelector('input[name="pay-method"][value="yape_manual"]');yape.disabled=true;
     try{
-      const resp = await conSesion(() => (apiFetch('/api/pagos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          id_recibo: idRecibo,
-          metodo: metodo
-        })
-      })), _hmEpoch);
-      const data = await conSesion(() => (resp.json().catch(()=>null)), _hmEpoch);
-      if(resp.status === 409){
-        showPayState('main');
-        btn.dataset.busy = '0';
-        btn.disabled = false;
-        btn.textContent = 'Confirmar pago · ' + fmt(target.monto);
-        showToast((data && data.mensaje) || 'El recibo ya se encuentra pagado.');
-        try{
-          const datos = await conSesion(() => (cargarRecibosDesdeAPI()), _hmEpoch);
-          recibos = datos;
-          recibosEstado = datos.length ? 'ok' : 'vacio';
-          renderCards();
-          if(copiesModal.classList.contains('open')) renderCopies(false);
-        }catch(e){
-      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
-        return;
+      const res=await conSesion(()=>apiFetch('/api/pagos/config'),epoch);
+      if(!res.ok)throw Error('Configuración no disponible.');const config=await conSesion(()=>res.json(),epoch);
+      if(payTarget!==r||view!==paymentViewVersion)return;
+      paymentPilot=config.entorno==='piloto_manual';paymentPilotSynthetic=config.piloto_ensayo!==false;
+      document.getElementById('pay-reference-label').textContent=paymentPilotSynthetic?'Código de operación':'Número de operación de Yape';
+      document.getElementById('pay-reference').placeholder=paymentPilotSynthetic?'PRUEBA20261026':'Número del movimiento en Yape';
+      document.getElementById('pay-notice').textContent=config.mensaje;
+      document.getElementById('pay-title').textContent=paymentPilot?'Pago con Yape':'Registrar operación';document.querySelector('#pay-modal .pay-amount span').textContent=paymentPilot?'Importe voluntario del piloto, sin deuda oficial':'Importe del recibo';
+      document.getElementById('pay-yape-guidance').textContent=paymentPilot&&!paymentPilotSynthetic?'La transferencia la realizas voluntariamente fuera de Hidro-Mejora. Revisa el destinatario en Yape antes de enviar. Un administrador debe comprobar la recepción; una captura no acredita dinero.':'No transfieras dinero real. Un administrador revisará la operación. No se recibió dinero y no se acreditarán fondos.';
+      const pilotReceiptOk=!paymentPilot||(String(config.recibo_piloto)===String(r.id_recibo)&&Number(config.importe_piloto)===Number(r.monto));
+      if(!pilotReceiptOk){document.getElementById('pay-notice').textContent='Este recibo no pertenece al piloto autorizado. No transfieras dinero.';}
+      if(config.operacion_existente&&pilotReceiptOk){showExistingPayment(config.operacion_existente);return;}
+      if(config.yape_manual&&pilotReceiptOk){
+        const qr=await conSesion(()=>apiFetch('/api/pagos/yape/qr'),epoch);if(!qr.ok){const error=await conSesion(()=>qr.json().catch(()=>null),epoch);throw Error(error?.mensaje||'QR no disponible.');}
+        const blob=await conSesion(()=>qr.blob(),epoch);if(payTarget!==r||view!==paymentViewVersion)return;
+        clearPaymentQr();paymentQrUrl=URL.createObjectURL(blob);document.getElementById('pay-yape-qr').src=paymentQrUrl;document.getElementById('pay-yape-qr').hidden=false;yape.disabled=false;
       }
-      if(!resp.ok || !data || data.estado !== 'ok' || !data.pago){
-        showPayState('main');
-        btn.dataset.busy = '0';
-        btn.disabled = false;
-        btn.textContent = 'Confirmar pago · ' + fmt(target.monto);
-        showToast((data && data.mensaje) || 'No se pudo registrar el pago. Inténtalo nuevamente.');
-        return;
-      }
-      // Éxito: PostgreSQL es la fuente de verdad. Nunca generar código en frontend.
-      const codigoReal = data.pago.codigo_operacion;
-      const montoReal = Number(data.pago.monto);
-      target.paymentCode = codigoReal;
-      target.estado = 'Pagado';
-      if(Number.isFinite(montoReal)) target.monto = montoReal;
-      document.getElementById('pay-success-text').textContent =
-        'Recibo ' + target.etiqueta + ' cancelado por ' + fmt(target.monto) + '. Deuda actual: ' + fmt(0) + '.';
-      document.getElementById('pay-code').textContent = codigoReal;
-      showPayState('success');
-      showSuccess('Pago registrado. El recibo ahora figura como Pagado.');
-      btn.dataset.busy = '0';
-      btn.disabled = false;
-      btn.textContent = 'Confirmar pago · ' + fmt(target.monto);
-      // Recargar lista real desde PostgreSQL y conservar el código para el PDF.
-      try{
-        const datos = await conSesion(() => (cargarRecibosDesdeAPI(supply)), _hmEpoch);
-        recibos = datos;
-        recibosEstado = datos.length ? 'ok' : 'vacio';
-        const actualizado = recibos.find(r=>String(r.id_recibo) === String(idRecibo));
-        if(actualizado) actualizado.paymentCode = codigoReal;
-        // Mantener payTarget apuntando al objeto actualizado para la constancia PDF.
-        const nuevoTarget = recibos.find(r=>String(r.id_recibo) === String(idRecibo));
-        if(nuevoTarget) payTarget = nuevoTarget;
-        renderCards();
-        if(copiesModal.classList.contains('open')) renderCopies(false);
-        if(selected && String(selected.id_recibo) === String(idRecibo)){
-          selected.estado = 'Pagado';
-          selected.paymentCode = codigoReal;
-        }
-        try{
-          pagos = await conSesion(() => (cargarPagosDesdeAPI()), _hmEpoch);
-          payEstado = pagos.length ? 'ok' : 'vacio';
-        }catch(payErr){
-      if(esAbortado(payErr) || _hmEpoch!==sesionCliente.generation())return;
-          console.error('No se pudieron recargar pagos tras el pago.', payErr);
-          pagos = [];
-          payEstado = 'error';
-        }
-        renderPagos();
-      }catch(err){
-      if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
-        console.error('No se pudo recargar recibos tras el pago.', err);
-        renderCards();
-        if(copiesModal.classList.contains('open')) renderCopies(false);
-      }
-    }catch(err){
-      if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
-      console.error('No se pudo registrar el pago.', err);
-      showPayState('main');
-      btn.dataset.busy = '0';
-      btn.disabled = false;
-      if(payTarget) btn.textContent = 'Confirmar pago · ' + fmt(payTarget.monto);
-      showToast('No se pudo registrar el pago. Inténtalo nuevamente.');
-    }
+    }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation())return;document.getElementById('pay-notice').textContent='Yape no disponible. '+e.message+' Consulta el historial antes de declarar o transferir.';}
+  }
+  document.querySelectorAll('.pay-opt input').forEach(radio=>radio.addEventListener('change',()=>{
+    document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
+    const manual=document.querySelector('input[name="pay-method"]:checked').value==='yape_manual';
+    document.getElementById('pay-voluntary-label').hidden=!(manual&&paymentPilot&&!paymentPilotSynthetic);
+    document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual?(paymentPilotSynthetic?'Registrar pago':'Enviar a verificación manual'):'Registrar pago';
+  }));
+  document.getElementById('pay-confirm').addEventListener('click',async ev=>{
+    const btn=ev.currentTarget,epoch=sesionCliente.generation(),target=payTarget,view=paymentViewVersion;
+    if(!target||paymentExisting||btn.dataset.busy==='1')return;
+    const method=document.querySelector('input[name="pay-method"]:checked').value,reference=document.getElementById('pay-reference').value.trim();
+    const error=document.getElementById('pay-feedback');error.textContent='';
+    if(method==='yape_manual'&&paymentPilot&&!paymentPilotSynthetic&&!document.getElementById('pay-voluntary').checked){error.textContent='Confirma que declaras voluntariamente una transferencia externa de este piloto.';return;}
+    if(method==='yape_manual'&&!/^[A-Za-z0-9 -]{4,100}$/.test(reference)){error.textContent='Escribe una referencia de 4 a 100 caracteres.';document.getElementById('pay-reference').focus();return;}
+    const file=document.getElementById('pay-proof').files[0];
+    if(method==='yape_manual'&&file&&(file.type!=='image/png'||file.size>1048576)){error.textContent='El comprobante debe ser PNG y pesar como máximo 1 MB.';return;}
+    btn.dataset.busy='1';btn.disabled=true;btn.setAttribute('aria-busy','true');
+    try{
+      let proof=null;if(method==='yape_manual'&&file)proof=await conSesion(()=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('No se pudo leer el comprobante.'));reader.readAsDataURL(file);}),epoch);
+      const fingerprint=JSON.stringify([target.id_recibo,method,reference,proof]);
+      let pending=paymentRequests.get(String(target.id_recibo));
+      if(pending&&pending.fingerprint!==fingerprint)throw Error('Hay una solicitud sin confirmar. Consulta el historial antes de cambiar los datos.');
+      if(!pending){pending={fingerprint,id:crypto.randomUUID()};paymentRequests.set(String(target.id_recibo),pending);}
+      showPayState('processing');
+      const res=await conSesion(()=>apiFetch('/api/me/operaciones-pago',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id_recibo:Number(target.id_recibo),metodo:method,solicitud_id:pending.id,referencia:reference,declaracion_voluntaria:document.getElementById('pay-voluntary').checked,...(proof?{comprobante:proof}:{})})}),epoch);
+      const data=await conSesion(()=>res.json(),epoch);
+      if(!res.ok){if(res.status>=400&&res.status<500)paymentRequests.delete(String(target.id_recibo));throw Error(data.mensaje||'No se pudo registrar.');}
+      paymentRequests.delete(String(target.id_recibo));if(payTarget!==target||view!==paymentViewVersion)return;target.operacion_id=data.operacion.id;
+      document.getElementById('pay-reference').value='';document.getElementById('pay-proof').value='';clearPaymentQr();
+      document.getElementById('pay-code').textContent=data.operacion.codigo_operacion;
+      document.getElementById('pay-success-text').textContent=paymentLabel(data.operacion)+(data.operacion.entorno==='piloto_manual'?'. Consulta el estado e historial. El recibo conserva su estado.':'. El recibo mantiene su deuda; no se ha acreditado dinero real.');
+      showPayState('success');showSuccess('Operación registrada. Consulta su verificación en el historial.');
+      await refrescarPagos();
+    }catch(e){if(esAbortado(e)||epoch!==sesionCliente.generation()||payTarget!==target||view!==paymentViewVersion)return;clearPaymentQr();showPayState('main');error.textContent=(e.message||'Sin conexión.')+' Consultando el historial antes de reintentar. No hagas otra transferencia.';
+      try{const recovered=await conSesion(()=>apiFetch('/api/pagos/config'),epoch);if(recovered.ok){const config=await conSesion(()=>recovered.json(),epoch);if(view===paymentViewVersion&&payTarget===target&&config.operacion_existente){paymentRequests.delete(String(target.id_recibo));showExistingPayment(config.operacion_existente);error.textContent='La respuesta se perdió; recuperamos la operación existente desde el historial. No se creó otra.';}}}catch(_){}}
+    finally{if(epoch===sesionCliente.generation()&&view===paymentViewVersion){btn.dataset.busy='0';btn.disabled=paymentExisting;btn.removeAttribute('aria-busy');}}
   });
   document.getElementById('pay-constancia').addEventListener('click', ev=>{
     if(payTarget) descargarConstanciaPDF(payTarget, ev.currentTarget);
@@ -3890,9 +3957,9 @@ async function descargarConstanciaPDF(r, btn){
     const r = payTarget;
     closeModal(payModal);
     if(wasDetail && r) despuesEnSesion(()=>abrirDetalle(r), isReduced() ? 0 : 210);
-    payTarget = null;
+    clearPaymentQr();payTarget = null;
   });
-  ['pay-cancel','pay-close'].forEach(id=>document.getElementById(id).addEventListener('click', ()=>{ closeModal(payModal); payTarget = null; }));
+  ['pay-cancel','pay-close'].forEach(id=>document.getElementById(id).addEventListener('click', ()=>{ closeModal(payModal); clearPaymentQr(); document.getElementById('pay-reference').value='';document.getElementById('pay-proof').value=''; payTarget = null; }));
 
   /* ---------- Obtener copias / Pagar (mismo componente, contexto distinto) ---------- */
   function abrirCopias(soloPendientes, opener){
@@ -3937,7 +4004,7 @@ async function descargarConstanciaPDF(r, btn){
         bPay.addEventListener('click', ev=>{ const op = ev.currentTarget; closeModal(copiesModal); despuesEnSesion(()=>abrirPago(r, op), isReduced() ? 0 : 200); });
         box.appendChild(bPay);
       } else {
-        const bC = mk('Constancia','detail','Constancia de pago de ' + r.etiqueta);
+        const bC = mk('Constancia','detail','Constancia de operación de ' + r.etiqueta);
         bC.addEventListener('click', ev=>descargarConstanciaPDF(r, ev.currentTarget));
         box.appendChild(bC);
       }
@@ -3948,7 +4015,7 @@ async function descargarConstanciaPDF(r, btn){
   document.getElementById('copies-close').addEventListener('click', ()=>closeModal(copiesModal));
   document.getElementById('copies-done').addEventListener('click', ()=>closeModal(copiesModal));
   detModal.addEventListener('click', e=>{ if(e.target===detModal) closeModal(detModal); });
-  payModal.addEventListener('click', e=>{ if(e.target===payModal){ closeModal(payModal); payTarget = null; } });
+  payModal.addEventListener('click', e=>{ if(e.target===payModal){ closeModal(payModal); clearPaymentQr(); document.getElementById('pay-reference').value='';document.getElementById('pay-proof').value=''; payTarget = null; } });
   copiesModal.addEventListener('click', e=>{ if(e.target===copiesModal) closeModal(copiesModal); });
   incModal.addEventListener('click', e=>{ if(e.target===incModal) closeModal(incModal); });
   let fotoObjectUrl=null, fotoController=null, fotoVersion=0;
@@ -3989,6 +4056,7 @@ async function descargarConstanciaPDF(r, btn){
   async function cargarPerfil(){
     let _hmEpoch=sesionCliente.generation();
     mostrarPerfilVacio();
+    interfaz2fa.load();
     try{
       const resp = await conSesion(() => (apiFetch('/api/me/perfil')), _hmEpoch);
       if(!resp.ok) throw new Error('No se pudo cargar el perfil (código ' + resp.status + ')');
@@ -4072,7 +4140,7 @@ async function descargarConstanciaPDF(r, btn){
         return;
       }
       closeModal(passModal);
-      showSuccess('Contraseña actualizada correctamente.');
+      await cerrarSesionCompleta('Contraseña actualizada. Inicia sesión nuevamente.');
     }catch(err){
       if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
       console.error('No se pudo actualizar la contraseña.', err);
@@ -4372,6 +4440,7 @@ async function descargarConstanciaPDF(r, btn){
         box.appendChild(bF);
         d.appendChild(box);
       }
+      const historyButton=document.createElement('button');historyButton.type='button';historyButton.className='btn-sm detail';historyButton.textContent='Ver seguimiento';historyButton.dataset.historyId=inc.id;historyButton.setAttribute('aria-label','Ver seguimiento de '+inc.code);historyButton.addEventListener('click',()=>incidentTimeline.open(inc.id,historyButton));d.append(historyButton);
       list.appendChild(d);
     });
   }
@@ -4841,6 +4910,7 @@ async function descargarConstanciaPDF(r, btn){
     const idx = MESES.findIndex(m=>low.indexOf(m.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')) > -1);
     if(idx >= 0) mes = idx;
     return {
+      raw:api, operacion_id:api.id||null, verificacion:paymentLabel(api),
       id_pago: api.id_pago,
       id_recibo: String(api.id_recibo != null ? api.id_recibo : ''),
       monto: monto,
@@ -4853,16 +4923,36 @@ async function descargarConstanciaPDF(r, btn){
       mes: mes
     };
   }
+  let paymentSync=null;
+  function refrescarPagos(){
+    const epoch=sesionCliente.generation();
+    if(paymentSync?.epoch===epoch){paymentSync.again=true;return paymentSync.task;}
+    const state={epoch,again:false,task:null};paymentSync=state;
+    state.task=(async()=>{do{
+      state.again=false;let data;try{data=await conSesion(()=>cargarPagosDesdeAPI(),epoch);}catch(error){if(state.again&&epoch===sesionCliente.generation())continue;throw error;}
+      // Un evento recibido durante el GET exige otra lectura; no publicar la instantánea antigua.
+      if(state.again)continue;
+      pagos=data;payEstado=pagos.length?'ok':'vacio';renderPagos();actualizarInicio();actualizarConexionCliente(socketTiempoReal?.connected?'online':navigator.onLine?'connecting':'offline');
+      if(payTarget&&payModal.classList.contains('open')){
+        const operation=pagos.find(p=>p.raw.metodo==='yape_manual'&&String(p.id_recibo)===String(payTarget.id_recibo));
+        if(operation){showExistingPayment(operation.raw);if(!document.getElementById('pay-success').hidden)document.getElementById('pay-success-text').textContent=paymentLabel(operation.raw)+'. Consulta el estado e historial. El recibo conserva su estado; esta operación no acredita fondos.';}
+      }
+    }while(state.again);})().finally(()=>{if(paymentSync===state)paymentSync=null;});return state.task;
+  }
   async function cargarPagosDesdeAPI(){
     let _hmEpoch=sesionCliente.generation();
     const resp = await conSesion(() => (apiFetch('/api/me/pagos')), _hmEpoch);
     if(!resp.ok) throw new Error('No se pudieron cargar los pagos (código ' + resp.status + ')');
     const data = await conSesion(() => (resp.json()), _hmEpoch);
     const lista = Array.isArray(data.pagos) ? data.pagos : [];
-    return lista.map(adaptarPagoAPI);
+    const operations=await conSesion(()=>apiFetch('/api/me/operaciones-pago'),_hmEpoch);
+    if(!operations.ok&&operations.status!==404)throw Error('No se pudo consultar la verificación de operaciones.');
+    const extra=operations.ok?await conSesion(()=>operations.json(),_hmEpoch):{operaciones:[]};
+    return [...(extra.operaciones||[]),...lista].map(adaptarPagoAPI).sort((a,b)=>String(b.fechaISO).localeCompare(String(a.fechaISO)));
   }
   function reciboLiteDesdePago(pg){
     return {
+      operacion_id:pg.operacion_id,
       id: pg.id_recibo,
       id_recibo: pg.id_recibo,
       etiqueta: pg.periodo,
@@ -4912,24 +5002,26 @@ async function descargarConstanciaPDF(r, btn){
     filtrados.forEach(pg=>{
       const art = document.createElement('article');
       art.className = 'card';
-      art.dataset.estado = 'Pagado';
+      art.dataset.estado = pg.raw.estado || 'Historico';
       art.setAttribute('role','listitem');
       const pgTop = document.createElement('div'); pgTop.className = 'card-top';
       const pgIzq = document.createElement('span');
       pgIzq.appendChild(nodo('span', 'card-month', pg.periodo));
       pgTop.appendChild(pgIzq);
-      pgTop.appendChild(nodo('span', 'badge Pagado', 'PAGADO'));
+      const stateClass=pg.raw.estado==='verificada_manual'?(pg.raw.piloto_ensayo||pg.raw.entorno==='simulado'?'op-synthetic':'op-manual'):pg.raw.estado==='demostrativa'?'op-demo':'op-pending';
+      pgTop.appendChild(nodo('span', 'badge '+stateClass, pg.verificacion));
       art.appendChild(pgTop);
       const pgMonto = document.createElement('div'); pgMonto.className = 'card-amount';
       pgMonto.appendChild(document.createTextNode(fmt(pg.monto) + ' '));
-      pgMonto.appendChild(nodo('small', null, '/ pago'));
+      pgMonto.appendChild(nodo('small', null, '/ operación registrada'));
       art.appendChild(pgMonto);
       const pgMeta = document.createElement('div'); pgMeta.className = 'card-meta';
-      pgMeta.appendChild(nodo('span', null, pg.metodo + ' · ' + pg.fecha));
+      pgMeta.appendChild(nodo('span', null, (({yape_manual:'Pago con Yape',demostrativo:'Registro directo',proveedor_simulado:'Proveedor de pruebas'})[pg.raw.metodo]||pg.metodo) + ' · ' + pg.fecha));
       art.appendChild(pgMeta);
-      const pgMeta2 = document.createElement('div'); pgMeta2.className = 'card-meta';
+      const pgMeta2 = document.createElement('div'); pgMeta2.className = 'card-meta payment-identifiers';
       const pgCod = document.createElement('span');
-      pgCod.appendChild(document.createTextNode('Código: '));
+      pgCod.appendChild(document.createTextNode('Operación interna: '));
+      if(pg.raw.referencia)pgMeta2.appendChild(nodo('span',null,(pg.raw.metodo==='yape_manual'&&pg.raw.entorno==='piloto_manual'&&pg.raw.piloto_ensayo===false?'Número de operación de Yape: ':'Código de operación: ')+pg.raw.referencia));
       pgCod.appendChild(nodo('b', null, pg.codigo));
       pgMeta2.appendChild(pgCod);
       art.appendChild(pgMeta2);
@@ -4942,6 +5034,14 @@ async function descargarConstanciaPDF(r, btn){
       pgCopy.type = 'button'; pgCopy.className = 'btn-sm detail'; pgCopy.dataset.act = 'copy';
       pgCopy.textContent = 'Copiar código';
       pgAcc.appendChild(pgCopy);
+      if(pg.raw.estado==='pendiente_verificacion'&&pg.raw.metodo==='yape_manual'){
+        const cancel=document.createElement('button');cancel.type='button';cancel.className='btn-sm detail';cancel.textContent='Cancelar declaración';
+        cancel.addEventListener('click',async()=>{const epoch=sesionCliente.generation();if(cancel.disabled)return;cancel.disabled=true;try{const res=await conSesion(()=>apiFetch('/api/me/operaciones-pago/'+encodeURIComponent(pg.operacion_id)+'/cancelar',{method:'POST'}),epoch);if(!res.ok)throw Error('No se pudo cancelar. Actualiza el historial.');await refrescarPagos();}catch(e){if(epoch===sesionCliente.generation()&&!esAbortado(e))showToast(e.message);}finally{cancel.disabled=false;}});pgAcc.appendChild(cancel);
+      }
+      if(pg.operacion_id){
+        const history=document.createElement('button');history.type='button';history.className='btn-sm detail';history.textContent='Ver estado e historial';const box=document.createElement('div');box.setAttribute('role','status');
+        history.addEventListener('click',async()=>{if(history.disabled)return;history.disabled=true;const epoch=sesionCliente.generation();try{const r=await conSesion(()=>apiFetch('/api/me/operaciones-pago/'+encodeURIComponent(pg.operacion_id)),epoch);const d=await conSesion(()=>r.json(),epoch);if(!r.ok)throw Error('No se pudo consultar el historial.');box.replaceChildren();for(const h of d.historial){const line=document.createElement('p');line.textContent=window.HMShared.ui.date(h.fecha,true)+' · '+paymentLabel({...d,...h})+' · '+window.HMShared.ui.paymentAuditMessage(h.motivo);box.append(line);}if(d.estado==='rechazada'||d.estado==='cancelada'){const line=document.createElement('p');line.textContent='No repitas la transferencia. Contacta al responsable del piloto; otra prueba requiere datos independientes.';box.append(line);}}catch(e){if(epoch===sesionCliente.generation()&&!esAbortado(e))box.textContent=e.message;}finally{history.disabled=false;}});pgAcc.append(history);art.append(box);
+      }
       art.appendChild(pgAcc);
       pgConst.addEventListener('click', ev=>descargarConstanciaPDF(reciboLiteDesdePago(pg), ev.currentTarget));
       pgCopy.addEventListener('click', ev=>copiarReferencia(pg.codigo, 'Código de operación copiado.', ev.currentTarget));
@@ -4974,6 +5074,7 @@ async function descargarConstanciaPDF(r, btn){
 
   /* ---------- Login / Logout con skeleton + API real de recibos ---------- */
   function showError(msg){
+    delete formError.dataset.result;formError.setAttribute('role','alert');
     formError.textContent = msg;
     formError.classList.add('show');
   }
@@ -5009,6 +5110,9 @@ async function descargarConstanciaPDF(r, btn){
     regCorreo.focus();
   }
   function mostrarLogin(){
+    recuperacionClave.clear();
+    interfaz2fa.clear();
+    paymentRequests.clear();clearPaymentQr();paymentViewVersion++;paymentPilot=false;paymentPilotSynthetic=true;paymentExisting=false;document.getElementById('pay-existing-state').textContent='';document.getElementById('pay-existing-state').hidden=true;document.getElementById('pay-existing-history').hidden=true;
     verifyForm.hidden = true;
     regForm.hidden = true;
     authToLogin.hidden = true;
@@ -5069,22 +5173,44 @@ async function descargarConstanciaPDF(r, btn){
     if(loginFoot)loginFoot.hidden=true;
     loginTitle.textContent='Verifica tu correo';actualizarReenvio();verifyCode.focus();
   }
-  async function completarVerificacion(suministro){
+  async function completarVerificacion(suministro, sesion){
     try{await limpiarVerificacion();}catch(_){
       mostrarLogin();showError('Correo verificado. No pudimos retirar el estado temporal; reintenta al abrir la aplicación.');return;
+    }
+    regForm.reset();inpPass.value='';
+    // Solo la respuesta directa del OTP puede establecer sesión. El estado público
+    // y los servidores anteriores conservan la recuperación mediante login normal.
+    if(sesion?.token){
+      if(sesion.usuario?.rol!=='usuario' || sesion.suministro?.numero_suministro!==suministro){
+        mostrarLogin();showError('Correo verificado. Inicia sesión para continuar de forma segura.');return;
+      }
+      mostrarEstadoSesion('Preparando tu sesión…');
+      try{
+        const guardado=guardarSesion(sesion.token,sesion.usuario.rol);
+        const epoch=sesionCliente.generation();
+        await conSesion(()=>guardado,epoch);
+        clienteCorreo=sesion.usuario.correo || '';
+        await entrarDashboard(suministro,epoch);
+        if(epoch===sesionCliente.generation() && sesionCliente.isUser())showSuccess('¡Correo verificado! Bienvenido a Hidro-Mejora');
+      }catch(error){
+        if(esAbortado(error))return;
+        await cerrarSesionCompleta('Correo verificado. No pudimos guardar tu sesión de forma segura; inicia sesión nuevamente.');
+      }
+      return;
     }
     mostrarLogin();inpSupply.value=suministro;inpPass.value='';inpPass.focus();
     showSuccess('Correo verificado. Ya puedes iniciar sesión.');
   }
-  async function consultarCorreo(){
-    if(consultandoCorreo || !registroPendiente || verifyForm.hidden || registroPendiente.solicitudHasta<=Date.now())return;
+  async function consultarCorreo(opciones={}){
+    const recuperar=opciones.recuperar===true;
+    if(consultandoCorreo || (verificacionOcupada && !recuperar) || !registroPendiente || verifyForm.hidden || registroPendiente.solicitudHasta<=Date.now())return;
     const pendiente=registroPendiente;consultandoCorreo=true;actualizarReenvio();
     try{
       const resp=await sesionCliente.authFetch('/api/auth/verification-status',{
         method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({registro_id:pendiente.id})
       });
       const data=await resp.json().catch(()=>null);
-      if(registroPendiente!==pendiente)return;
+      if(registroPendiente!==pendiente || (verificacionOcupada && !recuperar))return;
       if(resp.ok && data?.estado==='verificado'){await completarVerificacion(pendiente.suministro);return;}
       if(resp.ok && data?.estado==='cerrado'){
         pendiente.aceptada=true;pendiente.estadoSolicitud='cerrado';pendiente.motivo=data.motivo;pendiente.problemaConsulta='';
@@ -5148,13 +5274,13 @@ async function descargarConstanciaPDF(r, btn){
           persistirVerificacion();
         }
         showVerifyError((data && data.mensaje) || 'No se pudo completar la verificación. Inténtalo nuevamente.');
-        await consultarCorreo();return;
+        await consultarCorreo({recuperar:true});return;
       }
       if(reenviar){
         guardarVerificacion(data,suministro); verifyCode.value='';
         verifyStatus.textContent='Solicitamos un nuevo código. El anterior ya no es válido.';
       }else{
-        await completarVerificacion((data.usuario && data.usuario.numero_suministro) || suministro);
+        await completarVerificacion(suministro,data);
       }
     }catch(error){
       if(version===verificacionVersion && !esAbortado(error)){
@@ -5326,6 +5452,11 @@ async function descargarConstanciaPDF(r, btn){
         return;
       }
       const authData = await conSesion(() => (resp.json()), _hmEpoch);
+      if(resp.status===202 && authData?.estado==='segundo_factor'){
+        if(authData.rol!=='usuario'){showError('Esta aplicación es exclusiva para clientes. Usa el panel administrativo.');btnLogin.disabled=false;btnLoginText.textContent='Iniciar Sesión';return;}
+        interfaz2fa.challenge(authData);
+        btnLogin.disabled=false;btnLoginText.textContent='Iniciar Sesión';return;
+      }
       if(!authData || authData.estado !== 'ok'){
         showError('No se pudo iniciar sesión. Inténtalo nuevamente.');
         btnLogin.disabled = false;
@@ -5439,8 +5570,7 @@ async function descargarConstanciaPDF(r, btn){
     }
     payEstado = 'cargando';
     try{
-      pagos = await conSesion(() => (cargarPagosDesdeAPI()), _hmEpoch);
-      payEstado = pagos.length ? 'ok' : 'vacio';
+      await refrescarPagos();
     }catch(err){
       if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
       console.error('No se pudieron cargar los pagos.', err);
@@ -5465,6 +5595,7 @@ async function descargarConstanciaPDF(r, btn){
         const hsec = Object.keys(HASH_SEC).find(k=>HASH_SEC[k] === loginHash && ['inicio','historial','incidencias','cortes','pagos','perfil','notificaciones','ayuda'].indexOf(k) > -1);
         if(hsec) openDashboardPage(hsec);
         if(!hsec && !hasSeenTutorial()) startTutorial();
+      interfazPush.start(sup);
       cardsEl.classList.add('content-fade');
       chartEl.classList.add('content-fade');
       if(chartSpendEl) chartSpendEl.classList.add('content-fade');
@@ -5485,7 +5616,16 @@ async function descargarConstanciaPDF(r, btn){
   })();
 
   document.getElementById('btn-replay-tutorial').addEventListener('click', startTutorial);
-  document.getElementById('forgot-link').addEventListener('click', e=>{e.preventDefault();showToast('La recuperación automática aún no está disponible. Solicita ayuda por los canales de atención.');});
+  const recuperacionClave=window.createHMPasswordRecovery({container:document.getElementById('password-recovery'),
+    onOpen:()=>{interfaz2fa.clear();form.reset();form.hidden=true;regForm.hidden=true;verifyForm.hidden=true;authToLogin.hidden=true;authToRegister.hidden=true;if(demoBox)demoBox.hidden=true;if(loginFoot)loginFoot.hidden=true;loginTitle.textContent='Seguridad de la cuenta';},
+    onClose:(mensaje,correcto)=>{mostrarLogin();if(mensaje){showError(mensaje);if(correcto){formError.dataset.result='success';formError.setAttribute('role','status');}}}
+  });
+  document.getElementById('forgot-link').addEventListener('click', async e=>{
+    e.preventDefault();
+    // No competir con la lectura asíncrona de Keystore/registro al reabrir Android.
+    if(tareaRestauracion){try{await tareaRestauracion;}catch(_){return;}}
+    if(!sesionCliente.isUser()&&!restauracionBloqueada)recuperacionClave.open();
+  });
   document.getElementById('help-link').addEventListener('click', e=>{e.preventDefault();showToast('Ayuda SEDAPAL: (01) 317-8000.');});
   document.querySelectorAll('[data-call]').forEach(b=>b.addEventListener('click', ()=>showToast('Conectando con (01) 317-8000…')));
   document.querySelectorAll('[data-claim]').forEach(b=>b.addEventListener('click', ()=>openIncidentModal('Facturación')));
@@ -5553,7 +5693,7 @@ async function descargarConstanciaPDF(r, btn){
         clienteCorreo=result.data.usuario.correo || '';
         await entrarDashboard(result.data.suministro.numero_suministro,sesionCliente.generation());
       }else{
-        mostrarLogin();await restaurarRegistroDePagina();
+        await restaurarRegistroDePagina();
         if(result.state==='ended')showError('Tu sesión terminó o la cuenta no está habilitada. Inicia sesión nuevamente.');
       }
     })();

@@ -19,7 +19,7 @@
     const alert=document.getElementById('home-alert');alert.hidden=!unread.length&&!upcoming.length;
     document.getElementById('home-alert-text').textContent=upcoming.length?'Hay '+upcoming.length+' corte(s) próximo(s) o en curso para tu suministro.':'Tienes '+unread.length+' notificación(es) sin leer.';
     alert.dataset.openSection=upcoming.length?'cortes':'notificaciones';
-    fill('home-payment-list',data.payments.slice(0,2).map(p=>row('payment',p.periodo,p.metodo+' · '+p.fecha,ui.money(p.monto),'pagos')),data.paymentError?'No fue posible consultar los pagos.':'Todavía no hay pagos registrados.');
+    fill('home-payment-list',data.payments.slice(0,2).map(p=>row('payment',p.periodo,(p.verificacion||p.metodo)+' · '+p.fecha,ui.money(p.monto),'pagos')),data.paymentError?'No fue posible consultar los pagos.':'Todavía no hay pagos registrados.');
     fill('home-service-list',[
       ...upcoming.slice(0,1).map(c=>row('cut',c.motivo,c.fecha,c.estado,'cortes')),
       ...open.slice(0,2).map(i=>row('incident',i.tipo,i.code+' · '+i.fecha,i.estado,'incidencias'))

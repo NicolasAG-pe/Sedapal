@@ -30,7 +30,7 @@ async function main() {
         const state = {};
         for (const { tablename } of tables) {
             if (excludeEmail && ['registros_correo_pendientes', 'registros_correo_envios', 'correo_outbox'].includes(tablename)) continue;
-            assert.match(tablename, /^[a-z_]+$/);
+            assert.match(tablename, /^[a-z_][a-z0-9_]*$/);
             state[tablename] = (await pool.query(`SELECT to_jsonb(t) AS dato FROM public."${tablename}" t ORDER BY to_jsonb(t)::text`)).rows;
         }
         return state;

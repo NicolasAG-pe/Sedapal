@@ -44,7 +44,8 @@ public class AndroidUpgradeInstrumentedTest {
         assertEquals("pe.edu.hidromejora.app", packageName);
         String version = instrumentation.getTargetContext().getPackageManager()
             .getPackageInfo(packageName, 0).versionName;
-        assertEquals(phase.equals("seed") ? "1.0.0" : "1.1.0", version);
+        assertEquals(phase.equals("seed") ? args.getString("hidroUpgradeOldVersion", "1.0.0") :
+            args.getString("hidroUpgradeNewVersion", "1.1.0"), version);
         Intent intent = new Intent().setClassName(packageName, packageName + ".MainActivity")
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         Activity started = instrumentation.startActivitySync(intent);
