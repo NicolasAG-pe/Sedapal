@@ -6,7 +6,20 @@ source "$(dirname "$0")/env.sh"
 cd "$root"
 umask 077
 mkdir -p "$state"
-for app in web admin backend; do docker image inspect "hidro-avance18-$app:local" >/dev/null; done
+missing_images=()
+for app in web admin backend; do
+  docker image inspect "hidro-avance18-$app:local" >/dev/null 2>&1 || missing_images+=("hidro-avance18-$app:local")
+done
+docker image inspect postgres:18 >/dev/null 2>&1 || missing_images+=("postgres:18")
+if ((${#missing_images[@]})); then
+  echo 'Faltan imágenes requeridas: '"${missing_images[*]}" >&2
+  echo 'Construirlas desde la raíz del checkout antes de arrancar:' >&2
+  echo '  docker build -f Backend/Dockerfile -t hidro-avance18-backend:local Backend' >&2
+  echo '  docker build -f Frontend/Dockerfile -t hidro-avance18-web:local .' >&2
+  echo '  docker build -f Admin/Dockerfile -t hidro-avance18-admin:local .' >&2
+  echo '  docker pull postgres:18' >&2
+  exit 1
+fi
 if ! "$kind_bin" get clusters | grep -qx hidro-avance19; then
   "$kind_bin" create cluster --name hidro-avance19 --config k8s/avance19/kind.yaml --kubeconfig "$KUBECONFIG" --retain --wait 180s
 fi
