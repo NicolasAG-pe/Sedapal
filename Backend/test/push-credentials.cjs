@@ -4,6 +4,16 @@ const fs = require('node:fs'), os = require('node:os'), path = require('node:pat
 const { temporaryAccessToken } = require('../push-credentials');
 const { configuredSender } = require('../push-provider');
 const scope = 'https://www.googleapis.com/auth/firebase.messaging';
+test('validación en Render exige pareja de flags e identificador único; por defecto no limita la cola normal', () => {
+  const { validationConfiguration } = require('../workers/push.cjs');
+  const id = '00000000-0000-4000-8000-000000000001';
+  assert.equal(validationConfiguration({}), null);
+  assert.equal(validationConfiguration({ PUSH_VALIDATION_SINGLE_ATTEMPT: '0' }), null);
+  assert.deepEqual(validationConfiguration({ PUSH_VALIDATION_SINGLE_ATTEMPT: '1', PUSH_VALIDATION_DELIVERY_ID: id }), { deliveryId: id, singleAttempt: true });
+  for (const env of [{ PUSH_VALIDATION_SINGLE_ATTEMPT: '1' }, { PUSH_VALIDATION_DELIVERY_ID: id },
+    { PUSH_VALIDATION_SINGLE_ATTEMPT: '0', PUSH_VALIDATION_DELIVERY_ID: id },
+    { PUSH_VALIDATION_SINGLE_ATTEMPT: '1', PUSH_VALIDATION_DELIVERY_ID: 'invalid' }]) assert.throws(() => validationConfiguration(env));
+});
 function fixture() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hm-fcm-credential-fixture-'));
   fs.chmodSync(dir, 0o700);

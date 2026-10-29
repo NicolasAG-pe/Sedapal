@@ -3,6 +3,7 @@
 ## FCM oficial 1.2.0 — preparación sin publicar
 
 - Prueba real autorizada limitada en el worker a una entrega explícita y un intento, sin reclamar otros mensajes ni reintentar errores transitorios. Clave dedicada autorizada y custodiada fuera del repositorio; la recepción física sigue pendiente.
+- Modo de validación del worker compartido ejecuta esa entrega exclusivamente dentro de Render y queda inactivo después; un reinicio no la repite. Sin endpoint administrativo adicional ni envío desde el equipo local.
 - Identificada la causa de la candidata: Firebase sin configuración privada y flag nativo apagado; registro y entregas del servidor cerrados. Se reutiliza el adaptador HTTP v1 existente.
 - Constructor opt-in de release con Firebase privado, API HTTPS y firma permanente, manteniendo 1.2.0/código6 y las APK anteriores en otros worktrees.
 - Supervisor opcional del worker push en el mismo contenedor; readiness, cierre coordinado y credenciales separadas de API/correo. Validación estricta de cuenta dedicada y copia efímera del secreto de runtime.
