@@ -734,6 +734,7 @@ test("credencial FCM privada: scope mínimo, OAuth simulado, caché, permisos y 
       PUSH_REAL_DELIVERY_ALLOWED: "1",
       PUSH_SERVICE_ACCOUNT_FILE: file,
       PUSH_FIREBASE_PROJECT_ID: "hidro-fixture",
+      PUSH_SENDER_SERVICE_ACCOUNT: "fixture@hidro-fixture.iam.gserviceaccount.com",
     },
     original = global.fetch;
   let grants = 0,

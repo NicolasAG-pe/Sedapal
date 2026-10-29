@@ -65,3 +65,23 @@ test('FCM temporal reutiliza HTTP v1; una credencial vencida no produce ninguna 
     assert.throws(() => configuredSender(f.env), /Credencial temporal/);
   } finally { global.fetch = original; }
 });
+test('identidad permanente dedicada: JSON de runtime pasa a copia privada sin filtrarse al worker', () => {
+  const { preparePushCredentials, validateServiceAccount, readPrivateJson } = require('../push-credentials');
+  const { privateKey } = require('node:crypto').generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const account = { type: 'service_account', project_id: 'hidro-fixture',
+    client_email: 'hm-fcm-pilot@hidro-fixture.iam.gserviceaccount.com',
+    private_key: privateKey.export({ type: 'pkcs8', format: 'pem' }) };
+  const env = { PUSH_FIREBASE_PROJECT_ID: account.project_id, PUSH_SENDER_SERVICE_ACCOUNT: account.client_email,
+    PUSH_SERVICE_ACCOUNT_JSON: JSON.stringify(account) };
+  for (const invalid of [{ project_id: 'otro-fixture' }, { client_email: 'otro-fixture@hidro-fixture.iam.gserviceaccount.com' },
+    { private_key: 'not-a-key' }, { type: 'authorized_user' }]) assert.throws(() => validateServiceAccount({ ...account, ...invalid }, env));
+  assert.throws(() => validateServiceAccount(account, { ...env, PUSH_SENDER_SERVICE_ACCOUNT: undefined }));
+  assert.throws(() => preparePushCredentials({ ...env, PUSH_SERVICE_ACCOUNT_FILE: '/private/other' }));
+  assert.throws(() => preparePushCredentials({ ...env, PUSH_AUTH_MODE: 'access_token_file' }));
+  const prepared = preparePushCredentials(env), file = prepared.env.PUSH_SERVICE_ACCOUNT_FILE;
+  assert.equal(prepared.env.PUSH_SERVICE_ACCOUNT_JSON, undefined);
+  assert.equal(fs.statSync(file).mode & 0o777, 0o600);
+  assert.equal(fs.statSync(path.dirname(file)).mode & 0o777, 0o700);
+  assert.deepEqual(readPrivateJson(file), account);
+  prepared.cleanup(); assert.equal(fs.existsSync(file), false);
+});

@@ -19,7 +19,7 @@ function buildRelease(env = process.env) {
   const version = gradle.match(/\bversionName\s+"([0-9]+\.[0-9]+\.[0-9]+)"/)?.[1];
   if (!Number.isInteger(code) || code < 2 || !version) throw new Error('Versionado release inválido.');
   const output = path.join(root, `artifacts/android/hidro-mejora-v${version}-release.apk`);
-  if (fs.existsSync(output)) throw new Error('La APK de esta versión ya existe. No se sobrescribirá; incrementa la versión para una actualización.');
+  if (fs.existsSync(output)) throw new Error('La APK de esta versión ya existe. No se sobrescribirá; usa otro worktree para conservarla.');
   const generated = path.join(root, 'artifacts/android/builds');
   fs.mkdirSync(generated, { recursive: true });
   const run = fs.mkdtempSync(path.join(generated, `release-${version}-`));

@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## FCM oficial 1.2.0 — preparación sin publicar
+
+- Identificada la causa de la candidata: Firebase sin configuración privada y flag nativo apagado; registro y entregas del servidor cerrados. Se reutiliza el adaptador HTTP v1 existente.
+- Constructor opt-in de release con Firebase privado, API HTTPS y firma permanente, manteniendo 1.2.0/código6 y las APK anteriores en otros worktrees.
+- Supervisor opcional del worker push en el mismo contenedor; readiness, cierre coordinado y credenciales separadas de API/correo. Validación estricta de cuenta dedicada y copia efímera del secreto de runtime.
+- Pruebas dirigidas de credenciales, sesiones, aislamiento y cola; sin migraciones ni cambios en Kubernetes/Admin. APK Firebase release compilada (JUnit4/4, lint sin errores) y reemplazo normal sobre código6 aceptado en POCO Android13, conservando identidad de instalación. Recepción física, credencial continua, revisión y publicación todavía pendientes.
+
 ## Revisión y ventana oficial1.2.0 — aún sin aprobar/publicar
 
 - PR23 preparado para revisión independiente; alcance cerrado de inscripción2FA, cobros/manual, Yape, FCM y recuperación. Se conserva la exigencia de factores ya activos; el backend antiguo se excluye de recuperación y el control externo sigue pendiente antes de activar2FA.

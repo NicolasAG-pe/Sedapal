@@ -54,8 +54,11 @@ async function main(args = process.argv.slice(2), env = process.env) {
       return 0;
     }
     const worker = createPushWorker({ pool, env, send: configuredSender(env) });
+    const schema = await pool.query("SELECT to_regclass('public.push_dispositivos') IS NOT NULL AND to_regclass('public.push_entregas') IS NOT NULL AS ready");
+    if (!schema.rows[0].ready) throw Error();
     process.once("SIGTERM", halt);
     process.once("SIGINT", halt);
+    if (process.send) process.send({ event: 'push_worker_ready' });
     do {
       await retire(pool);
       const r = await worker.processOne();

@@ -15,6 +15,7 @@ function payload(event, category) {
     notification: { title: "Hidro-Mejora", body: bodies[category] },
     data: { hm_event: event },
     android: {
+      priority: "high",
       ttl: "3600s",
       restricted_package_name: "pe.edu.hidromejora.app",
       notification: {

@@ -9,6 +9,7 @@ function fixture(env = {}, resist = false) {
     const calls = [], signals = new EventEmitter(); let cleaned = 0;
     const controller = supervisar({ env, signals, startupMs: 30, shutdownMs: 30, log() {},
         prepare: e => ({ env: { ...e, GMAIL_CREDENTIALS_FILE: '/private/fixture.json' }, cleanup() { cleaned++; } }),
+        preparePush: e => ({ env: { ...e, PUSH_SERVICE_ACCOUNT_FILE: '/private/sender.json' }, cleanup() { cleaned++; } }),
         spawnImpl(command, args, options) {
             const child = new EventEmitter(); child.kills = [];
             child.kill = signal => { child.kills.push(signal); if (!resist || signal === 'SIGKILL') process.nextTick(() => child.emit('close', 0, signal)); return true; };
@@ -21,6 +22,30 @@ test('por defecto conserva solo API; SIGTERM cierra el contenedor sin error', as
     const f = fixture(); assert.equal(f.calls.length, 1); assert.match(f.calls[0].args[0], /server.js$/);
     f.signals.emit('SIGTERM'); assert.equal(await f.done, 0); assert.deepEqual(f.calls[0].child.kills, ['SIGTERM']);
     assert.equal(f.signals.listenerCount('SIGTERM'), 0);
+});
+test('push comparte contenedor con correo: readiness de ambos y secretos separados por proceso', async () => {
+    const f = fixture({ ...enabled, AUTH_TOKEN_SECRET: 'fixture-jwt', PUSH_ENABLED: '1', PUSH_WORKER_ENABLED: '1',
+        PUSH_WORKER_SHARED_CONTAINER: '1', PUSH_TOKEN_KEY: 'fixture-key', PUSH_SERVICE_ACCOUNT_JSON: 'fixture-json',
+        PUSH_DATABASE_URL: 'fixture-db' });
+    const push = f.calls.find(c => c.args[0].endsWith('/push.cjs'));
+    const email = f.calls.find(c => c.args[0].endsWith('/email-outbox.cjs'));
+    assert.equal(f.calls.length, 2);
+    for (const key of ['AUTH_TOKEN_SECRET','GMAIL_CREDENTIALS_JSON','EMAIL_WORKER_DATABASE_URL']) assert.equal(push.options.env[key], undefined);
+    assert.equal(email.options.env.PUSH_TOKEN_KEY, undefined);
+    push.child.emit('message', { event: 'push_worker_ready' }); assert.equal(f.calls.length, 2);
+    email.child.emit('message', { event: 'email_worker_ready' }); assert.equal(f.calls.length, 3);
+    const api = f.calls[2]; assert.equal(api.options.env.PUSH_TOKEN_KEY, 'fixture-key');
+    for (const key of ['PUSH_SERVICE_ACCOUNT_JSON','PUSH_SERVICE_ACCOUNT_FILE','PUSH_DATABASE_URL']) assert.equal(api.options.env[key], undefined);
+    assert.equal(api.options.env.PUSH_WORKER_ENABLED, '0');
+    push.child.emit('close', 1); assert.equal(await f.done, 1);
+    assert.equal(f.cleaned(), 2); assert.equal(f.calls.length, 3);
+});
+test('push opt-in solo: fallo de readiness no abre API; flags incompatibles fallan cerrados', async () => {
+    const f = fixture({ PUSH_ENABLED: '1', PUSH_WORKER_ENABLED: '1', PUSH_WORKER_SHARED_CONTAINER: '1' });
+    assert.equal(f.calls.length, 1); assert.equal(await f.done, 1); assert.equal(f.cleaned(), 1);
+    for (const env of [{ PUSH_WORKER_ENABLED: '1' }, { PUSH_WORKER_ENABLED: '1', PUSH_WORKER_SHARED_CONTAINER: '1' }]) {
+        const invalid = fixture(env); assert.equal(await invalid.done, 1); assert.equal(invalid.calls.length, 0);
+    }
 });
 test('espera readiness del worker y no pasa rutas privadas a la API; cierra ambos una vez', async () => {
     const f = fixture(enabled); assert.equal(f.calls.length, 1); assert.match(f.calls[0].args[0], /email-outbox.cjs$/);
