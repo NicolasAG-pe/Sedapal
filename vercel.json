@@ -16,7 +16,8 @@
       "feature/firebase-fcm-piloto-120": false,
       "feature/auditoria-calidad-ux-120": false,
       "preparation/lanzamiento-oficial-120": false,
-      "feature/fcm-oficial-120": false
+      "feature/fcm-oficial-120": false,
+      "feature/k8s-local-120": false
     }
   },
   "framework": null,

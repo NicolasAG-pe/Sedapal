@@ -1,0 +1,83 @@
+{
+  "spec": {
+    "template": {
+      "spec": {
+        "containers": [
+          {
+            "name": "backend",
+            "env": [
+              {
+                "name": "DATABASE_URL",
+                "value": ""
+              },
+              {
+                "name": "DB_HOST",
+                "value": "db"
+              },
+              {
+                "name": "DB_PORT",
+                "value": "5432"
+              },
+              {
+                "name": "EMAIL_REGISTRATION_ENABLED",
+                "value": "0"
+              },
+              {
+                "name": "EMAIL_WORKER_ENABLED",
+                "value": "0"
+              },
+              {
+                "name": "EMAIL_WORKER_SHARED_CONTAINER",
+                "value": "0"
+              },
+              {
+                "name": "PASSWORD_RECOVERY_ENABLED",
+                "value": "0"
+              },
+              {
+                "name": "PASSWORD_RECOVERY_WORKER_ENABLED",
+                "value": "0"
+              },
+              {
+                "name": "TOTP_ENROLLMENT_ENABLED",
+                "value": "0"
+              },
+              {
+                "name": "TOTP_ADMIN_ENROLLMENT_ENABLED",
+                "value": "0"
+              },
+              {
+                "name": "PAYMENTS_MANUAL_ENABLED",
+                "value": "0"
+              },
+              {
+                "name": "YAPE_PILOT_ENABLED",
+                "value": "0"
+              },
+              {
+                "name": "PUSH_ENABLED",
+                "value": "0"
+              },
+              {
+                "name": "PUSH_WORKER_ENABLED",
+                "value": "0"
+              },
+              {
+                "name": "PUSH_WORKER_SHARED_CONTAINER",
+                "value": "0"
+              },
+              {
+                "name": "PUSH_REAL_DELIVERY_ALLOWED",
+                "value": "0"
+              },
+              {
+                "name": "PUSH_REMINDERS_ENABLED",
+                "value": "0"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

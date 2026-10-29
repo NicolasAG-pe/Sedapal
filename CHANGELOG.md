@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Kubernetes local 1.2.0 — actualización controlada
+
+- Perfil de imágenes exclusivo de avance19 que reutiliza capas locales y copia las fuentes oficiales, incluyendo los módulos compartidos de recuperación y seguimiento que faltaban en la imagen web anterior. No cambia Docker Compose.
+- Configuración local explícita: PostgreSQL interno y registro/correo, recuperación, inscripción2FA, Yape y entregas FCM reales cerrados; operación demostrativa y centro de notificaciones conservados. Sin secretos productivos.
+- Preparación desde main6894b3e en worktree separado; migraciones y despliegue condicionados a respaldo restaurable, recursos suficientes y conservación del PVC.
+- Actualización ejecutada sobre el clúster existente: respaldo restaurado sin red, migraciones007/008/011/012/013/014 y conservación comprobada de las 13 tablas originales y ocho secuencias. Sin009/010 ni reinicialización.
+- Tres imágenes verificadas contra79 archivos oficiales; cuatro deployments1/1. Pruebas API/Socket.IO, Admin, HidroBot, fotografías, seguimiento, PDF y pagos demostrativos aprobadas. Reinicio completo conserva26 tablas/diez secuencias y PVC; guía y controlador persistentes, sin tocar Compose/LAB ni producción.
+
 ## FCM oficial 1.2.0 — recepción física aprobada, publicación condicionada
 
 - Prueba física: un mensaje desde Render Free, Firebase HTTP200, token real cifrado, una entrada Android en bandeja y apertura manual de Incidencias confirmada por el propietario. Cero reintentos y ninguna entrega anterior procesada. Sesión e historial conservados.

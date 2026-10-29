@@ -1,0 +1,26 @@
+# Perfil exclusivo de actualización local; no cambia Docker Compose.
+# build-120 verifica previamente bases locales, dependencias y recursos.
+ARG LOCAL_WEB_BASE=hidro-avance18-web:local
+ARG LOCAL_ADMIN_BASE=hidro-avance18-admin:local
+ARG LOCAL_BACKEND_BASE=hidro-mejora-api:release-120-preparation
+FROM ${LOCAL_WEB_BASE} AS web
+COPY Frontend/index.html Frontend/hm-api-config.js /var/www/html/
+COPY Frontend/assets/ /var/www/html/assets/
+COPY Shared/api.js Shared/ui.js Shared/styles.css Shared/icons.js Shared/two-factor-ui.js Shared/password-recovery-ui.js Shared/incident-timeline.js /var/www/html/shared/
+COPY Shared/assets/ /var/www/html/shared/assets/
+COPY Frontend/nginx/default.conf /etc/nginx/sites-available/default
+CMD ["nginx", "-g", "daemon off;"]
+FROM ${LOCAL_ADMIN_BASE} AS admin
+COPY Admin/index.html Admin/hm-api-config.js /usr/share/nginx/html/
+COPY Admin/assets/ /usr/share/nginx/html/assets/
+COPY Shared/ /usr/share/nginx/html/shared/
+COPY Frontend/assets/vendor/socket.io.min.js /usr/share/nginx/html/assets/vendor/socket.io.min.js
+COPY Admin/nginx/default.conf /etc/nginx/conf.d/default.conf
+CMD ["nginx", "-g", "daemon off;"]
+FROM ${LOCAL_BACKEND_BASE} AS backend
+WORKDIR /app
+COPY Backend/package.json Backend/package-lock.json ./
+COPY Backend/start.cjs Backend/server.js Backend/config.js Backend/auth-contract.js Backend/two-factor.js Backend/totp-crypto.js Backend/email-otp.js Backend/resend-mail.js Backend/gmail-mail.js Backend/email-provider.js Backend/mail-envelope.js Backend/email-registration.js Backend/receipt-transactions.js Backend/payment-operations.js Backend/payment-provider.js Backend/yape-pilot.js Backend/outbox-crypto.js Backend/email-outbox.js ./
+COPY Backend/password-recovery.js Backend/password-recovery-crypto.js Backend/password-recovery-worker.js Backend/push.js Backend/push-credentials.js Backend/push-provider.js Backend/push-worker.js Backend/incident-tracking.js ./
+COPY Backend/workers/ ./workers/
+CMD ["node", "start.cjs"]
