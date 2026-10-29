@@ -41,8 +41,16 @@ Un mensaje recibido en bandeja con la app en segundo plano prueba ese estado. El
 
 ## Puertas abiertas
 
-1. Elección explícita de la credencial continua; no se ha creado una clave real.
+1. El propietario autorizó una única clave dedicada. Creación verificada: una clave USER_MANAGED activa, cuenta con solo envío FCM, archivo0600/directorio0700 fuera del repositorio y permisos del operador para revocación/rotación comprobados. Sin cambios de roles, APIs ni facturación.
 2. APK Firebase firmada verificada: 1.2.0/código6, paquete y certificado permanentes, sin debug ni secretos de servidor. SHA-256 `e2072839b0005e0d4c8835a30a7b693aab6679cfa4e45bdd7e42ea26c5a243a5`.
 3. Reemplazo físico aceptado; falta comprobar sesión/datos visibles y recepción real del único mensaje.
 4. Revisión final del diff/secretos, PR, integración y despliegue exacto; no atribuir una aprobación de colaborador que no exista.
 5. Release v1.2.0 con APK nueva y hash propio solo después de las puertas críticas. Los envíos y recordatorios siguen desactivados durante esta preparación.
+
+## Envío único y recuperación de credencial
+
+El worker admite `deliveryId` explícito y `singleAttempt:true` únicamente con ese identificador válido. En esta modalidad no reclama otras entregas, no reintenta fallos transitorios y una segunda ejecución no vuelve a enviar. Prueba PostgreSQL añadida y 15 regresiones del worker aprobadas; total acumulado49 comprobaciones dirigidas. No cambia el comportamiento normal de la cola.
+
+La prueba usa el mismo adaptador/worker desde el operador controlado, mientras el worker continuo de Render permanece apagado. El envío real se protege además con un marcador persistente creado antes de llamar a HTTP v1. No se usa el CLI global `--once`, que podría reclamar otro trabajo.
+
+Revocación: apagar entregas/worker y desplegar esa configuración, deshabilitar o eliminar exclusivamente el identificador de la clave dedicada con IAM, verificar su estado y conservar la evidencia sin revelar el JSON. Rotación futura: bajo autorización, crear sustituta de la misma cuenta/rol, guardar como secreto privado, desplegar y comprobar OAuth sin enviar avisos; retirar la clave anterior. Nunca rotar JWT/Gmail/PostgreSQL ni reutilizar una identidad administrativa. Los tokens OAuth emitidos pueden permanecer válidos hasta su vencimiento; detener el worker contiene el envío inmediatamente. No se ha ejecutado una rotación ni revocación real de la única clave activa.

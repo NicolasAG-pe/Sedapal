@@ -117,6 +117,20 @@ async function drain(w = worker) {
   }
   throw Error("Fixture push no vacía");
 }
+test('prueba única dirigida no reclama otra entrega ni reintenta un fallo transitorio', async () => {
+  const u = await user(), d = device(); await bind(u, d);
+  const first = await notice(u), second = await notice(u, 'incidencia');
+  const selected = (await ctx.db.query('SELECT id FROM push_entregas WHERE id_notificacion=$1', [second.id_notificacion])).rows[0].id;
+  let calls = 0;
+  const make = () => createPushWorker({ pool: ctx.db, deliveryId: selected, singleAttempt: true,
+    send: async ({ message }) => { calls++; assert.equal(message.data.hm_event, second.push_evento); return { kind: 'transitorio' }; } });
+  assert.throws(() => createPushWorker({ pool: ctx.db, singleAttempt: true, send: mockSender() }));
+  assert.equal((await make().processOne()).estado, 'fallido');
+  assert.equal((await make().processOne()).estado, 'vacio'); assert.equal(calls, 1);
+  const untouched = (await ctx.db.query('SELECT estado,intentos FROM push_entregas WHERE id_notificacion=$1', [first.id_notificacion])).rows[0];
+  assert.deepEqual(untouched, { estado: 'pendiente', intentos: 0 });
+  await drain(); // Solo mock de laboratorio; ninguna entrega externa.
+});
 test("cerrado por defecto, sin autenticación/consentimiento/admin no registra; clave independiente", async () => {
   delete process.env.PUSH_ENABLED;
   assert.equal((await api("/api/push/capabilities")).data.disponible, false);

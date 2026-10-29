@@ -27,7 +27,9 @@ function payload(event, category) {
     },
   };
 }
-function createPushWorker({ pool, send, env = process.env }) {
+function createPushWorker({ pool, send, env = process.env, deliveryId = null, singleAttempt = false }) {
+  if ((deliveryId !== null && !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(deliveryId)) ||
+      (singleAttempt && !deliveryId)) throw Error('Destino de prueba push inválido.');
   const cfg = configuration(env);
   if (!cfg || typeof send !== "function")
     throw Error("Worker push no configurado.");
@@ -40,7 +42,8 @@ function createPushWorker({ pool, send, env = process.env }) {
   }
   async function claim() {
     const { rows: items } = await pool.query(
-      "SELECT id,id_dispositivo FROM push_entregas WHERE (estado IN('pendiente','reintento') AND disponible_en<=clock_timestamp()) OR (estado='procesando' AND bloqueado_hasta<=clock_timestamp()) ORDER BY disponible_en,id LIMIT 20",
+      "SELECT id,id_dispositivo FROM push_entregas WHERE ((estado IN('pendiente','reintento') AND disponible_en<=clock_timestamp()) OR (estado='procesando' AND bloqueado_hasta<=clock_timestamp())) AND ($1::uuid IS NULL OR id=$1) ORDER BY disponible_en,id LIMIT 20",
+      [deliveryId],
     );
     for (const item of items) {
       const result = await tx(pool, async (c) => {
@@ -56,7 +59,7 @@ function createPushWorker({ pool, send, env = process.env }) {
         );
         if (!job) return null;
         if (job.estado === "procesando") return finish(c, job.id, "ambiguo");
-        if (job.intentos >= 3) return finish(c, job.id, "fallido");
+        if (job.intentos >= (singleAttempt ? 1 : 3)) return finish(c, job.id, "fallido");
         const {
           rows: [live],
         } = await c.query(
@@ -130,7 +133,7 @@ function createPushWorker({ pool, send, env = process.env }) {
           );
           return finish(c, job.id, "fallido");
         }
-        if (outcome.kind === "transitorio" && current.intentos < 3) {
+        if (outcome.kind === "transitorio" && current.intentos < 3 && !singleAttempt) {
           const wait = Math.min(
             3600,
             Math.max(
