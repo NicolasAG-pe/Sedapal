@@ -43,7 +43,7 @@ function createFcmSender({ projectId, getAccessToken, fetchImpl = fetch }) {
         },
       );
       const data = await r.json().catch(() => null);
-      if (r.ok) return { kind: typeof data?.name === "string" ? "aceptado" : "ambiguo" };
+      if (r.ok) return { kind: typeof data?.name === "string" ? "aceptado" : "ambiguo", httpStatus: r.status };
       const code = data?.error?.details?.find(
         (d) =>
           d["@type"] === "type.googleapis.com/google.firebase.fcm.v1.FcmError",

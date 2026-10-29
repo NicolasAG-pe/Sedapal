@@ -62,7 +62,13 @@ async function main(args = process.argv.slice(2), env = process.env) {
       console.log(JSON.stringify({ creadas: await reminders(pool, env) }));
       return 0;
     }
-    const worker = createPushWorker({ pool, env, send: configuredSender(env), ...validation });
+    const sender = configuredSender(env);
+    const send = async message => {
+      const result = await sender(message);
+      if (validation) console.log(JSON.stringify({ event: 'push_validation_provider', kind: result.kind, httpStatus: result.httpStatus || null }));
+      return result;
+    };
+    const worker = createPushWorker({ pool, env, send, ...validation });
     const schema = await pool.query("SELECT to_regclass('public.push_dispositivos') IS NOT NULL AND to_regclass('public.push_entregas') IS NOT NULL AS ready");
     if (!schema.rows[0].ready) throw Error();
     process.once("SIGTERM", halt);

@@ -68,7 +68,7 @@ test('FCM temporal reutiliza HTTP v1; una credencial vencida no produce ninguna 
       return Response.json({ name: 'projects/hidro-fixture/messages/fixture' });
     };
     const send = configuredSender(f.env), message = { data: { hm_event: 'fixture' } };
-    assert.equal((await send({ token: 'fixture-device', message })).kind, 'aceptado');
+    assert.deepEqual(await send({ token: 'fixture-device', message }), { kind: 'aceptado', httpStatus: 200 });
     f.write({ expire_time: new Date(f.now - 1000).toISOString() });
     assert.equal((await send({ token: 'fixture-device', message })).kind, 'configuracion');
     assert.equal(calls, 1);
