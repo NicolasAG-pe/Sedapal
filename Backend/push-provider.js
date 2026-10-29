@@ -1,7 +1,6 @@
 "use strict";
-const fs = require("node:fs"),
-  path = require("node:path"),
-  crypto = require("node:crypto");
+const crypto = require("node:crypto");
+const { readPrivateJson, validateServiceAccount } = require('./push-credentials');
 function mockSender(receive = () => {}) {
   return async ({ token, message }) => {
     if (!token || !message?.data?.hm_event)
@@ -44,7 +43,7 @@ function createFcmSender({ projectId, getAccessToken, fetchImpl = fetch }) {
         },
       );
       const data = await r.json().catch(() => null);
-      if (r.ok) return { kind: typeof data?.name === "string" ? "aceptado" : "ambiguo" };
+      if (r.ok) return { kind: typeof data?.name === "string" ? "aceptado" : "ambiguo", httpStatus: r.status };
       const code = data?.error?.details?.find(
         (d) =>
           d["@type"] === "type.googleapis.com/google.firebase.fcm.v1.FcmError",
@@ -77,31 +76,15 @@ function configuredSender(env = process.env) {
     throw Error("FCM real no autorizado.");
   const mode = env.PUSH_AUTH_MODE || "service_account";
   if (mode === "access_token_file") {
-    if (env.PUSH_SERVICE_ACCOUNT_FILE) throw Error("Identidades FCM incompatibles.");
+    if (env.PUSH_SERVICE_ACCOUNT_FILE || env.PUSH_SERVICE_ACCOUNT_JSON) throw Error("Identidades FCM incompatibles.");
     const getAccessToken = require("./push-credentials").temporaryAccessToken(env);
     return createFcmSender({ projectId: env.PUSH_FIREBASE_PROJECT_ID, getAccessToken });
   }
   if (mode !== "service_account" || env.PUSH_ACCESS_TOKEN_FILE)
     throw Error("Modo de autenticación FCM inválido.");
-  const file = path.resolve(env.PUSH_SERVICE_ACCOUNT_FILE || ""),
-    repo = path.resolve(__dirname, ".."),
-    stat = fs.lstatSync(file);
-  if (
-    file.startsWith(repo + path.sep) ||
-    !stat.isFile() ||
-    (stat.mode & 0o077) !== 0 ||
-    stat.uid !== process.getuid()
-  )
-    throw Error("Archivo FCM privado inválido.");
-  const account = JSON.parse(fs.readFileSync(file, "utf8"));
-  if (
-    account.type !== "service_account" ||
-    account.project_id !== env.PUSH_FIREBASE_PROJECT_ID ||
-    typeof account.client_email !== "string" ||
-    !account.client_email.endsWith(".iam.gserviceaccount.com")
-  )
-    throw Error("Identidad FCM inválida.");
-  const key = crypto.createPrivateKey(account.private_key);
+  if (env.PUSH_SERVICE_ACCOUNT_JSON) throw Error('Preparar primero el secreto privado del worker.');
+  const account = readPrivateJson(env.PUSH_SERVICE_ACCOUNT_FILE);
+  const key = validateServiceAccount(account, env);
   let cached = "",
     until = 0;
   const getAccessToken = async () => {

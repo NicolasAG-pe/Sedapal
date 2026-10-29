@@ -25,3 +25,10 @@ backups/
 *.dump.*
 *.apk
 *.aab
+
+# Firebase: solo configuración/secreto de runtime fuera del contexto.
+google-services.json
+*service-account*.json
+*access-token*.json
+*.pem
+*.key

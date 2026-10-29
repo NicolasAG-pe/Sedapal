@@ -15,7 +15,8 @@
       "feature/seguimiento-incidencias-120": false,
       "feature/firebase-fcm-piloto-120": false,
       "feature/auditoria-calidad-ux-120": false,
-      "preparation/lanzamiento-oficial-120": false
+      "preparation/lanzamiento-oficial-120": false,
+      "feature/fcm-oficial-120": false
     }
   }
 }

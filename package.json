@@ -64,7 +64,9 @@
     "test:incidents:native": "node scripts/test/android-session-native.cjs --incidents",
     "android:fcm:lab": "node scripts/build-android-fcm-lab.cjs",
     "test:fcm:lab": "node --test Backend/test/push-credentials.cjs scripts/test/firebase-lab.cjs",
-    "test:fcm:registration:native": "node scripts/test/android-session-native.cjs --fcm-registration"
+    "test:fcm:registration:native": "node scripts/test/android-session-native.cjs --fcm-registration",
+    "android:fcm:release": "node scripts/build-android-fcm-release.cjs",
+    "test:fcm:release": "node --test Backend/test/push-credentials.cjs Backend/test/start.test.cjs scripts/test/firebase-release.cjs"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",

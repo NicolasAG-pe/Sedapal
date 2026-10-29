@@ -117,6 +117,43 @@ async function drain(w = worker) {
   }
   throw Error("Fixture push no vacía");
 }
+test('prueba única dirigida no reclama otra entrega ni reintenta un fallo transitorio', async () => {
+  const u = await user(), d = device(); await bind(u, d);
+  const first = await notice(u), second = await notice(u, 'incidencia');
+  const selected = (await ctx.db.query('SELECT id FROM push_entregas WHERE id_notificacion=$1', [second.id_notificacion])).rows[0].id;
+  let calls = 0;
+  const make = () => createPushWorker({ pool: ctx.db, deliveryId: selected, singleAttempt: true,
+    send: async ({ message }) => { calls++; assert.equal(message.data.hm_event, second.push_evento); return { kind: 'transitorio' }; } });
+  assert.throws(() => createPushWorker({ pool: ctx.db, singleAttempt: true, send: mockSender() }));
+  assert.equal((await make().processOne()).estado, 'fallido');
+  assert.equal((await make().processOne()).estado, 'vacio'); assert.equal(calls, 1);
+  const untouched = (await ctx.db.query('SELECT estado,intentos FROM push_entregas WHERE id_notificacion=$1', [first.id_notificacion])).rows[0];
+  assert.deepEqual(untouched, { estado: 'pendiente', intentos: 0 });
+  await drain(); // Solo mock de laboratorio; ninguna entrega externa.
+});
+test('CLI de validación compartida procesa una entrega, permanece inactivo y no toca el resto', async () => {
+  const { spawn } = require('node:child_process'), path = require('node:path');
+  const u = await user(), d = device(); await bind(u, d);
+  const first = await notice(u), selectedNotice = await notice(u, 'incidencia');
+  const selected = (await ctx.db.query('SELECT id FROM push_entregas WHERE id_notificacion=$1', [selectedNotice.id_notificacion])).rows[0].id;
+  const env = { ...process.env, PUSH_ENABLED: '1', PUSH_WORKER_ENABLED: '1', PUSH_PROVIDER: 'mock', NODE_ENV: 'test',
+    PUSH_DATABASE_URL: `postgres://hm_fixture:fixture-only-not-production@127.0.0.1:${ctx.connection.port}/${ctx.connection.database}`,
+    PUSH_EXPECTED_DATABASE: ctx.connection.database, PUSH_VALIDATION_DELIVERY_ID: selected, PUSH_VALIDATION_SINGLE_ATTEMPT: '1' };
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const child = spawn(process.execPath, [path.join(__dirname, '../workers/push.cjs'), '--run'], { env, stdio: ['ignore','pipe','pipe','ipc'] });
+    let logs = ''; child.stdout.on('data', b => { logs += b; }); child.stderr.resume();
+    const done = new Promise(resolve => child.once('close', resolve));
+    try {
+      const until = Date.now() + 10000;
+      while (!logs.includes('push_validation_result')) { assert.ok(Date.now() < until); await new Promise(r => setTimeout(r, 50)); }
+      await new Promise(r => setTimeout(r, 1100));
+      assert.equal(logs.split('\n').filter(l => l.includes('push_validation_result')).length, 1);
+      assert.deepEqual((await ctx.db.query('SELECT estado,intentos FROM push_entregas WHERE id=$1', [selected])).rows[0], { estado: 'simulado', intentos: 1 });
+      assert.deepEqual((await ctx.db.query('SELECT estado,intentos FROM push_entregas WHERE id_notificacion=$1', [first.id_notificacion])).rows[0], { estado: 'pendiente', intentos: 0 });
+    } finally { child.kill('SIGTERM'); assert.equal(await done, 0); }
+  }
+  await drain();
+});
 test("cerrado por defecto, sin autenticación/consentimiento/admin no registra; clave independiente", async () => {
   delete process.env.PUSH_ENABLED;
   assert.equal((await api("/api/push/capabilities")).data.disponible, false);
@@ -734,6 +771,7 @@ test("credencial FCM privada: scope mínimo, OAuth simulado, caché, permisos y 
       PUSH_REAL_DELIVERY_ALLOWED: "1",
       PUSH_SERVICE_ACCOUNT_FILE: file,
       PUSH_FIREBASE_PROJECT_ID: "hidro-fixture",
+      PUSH_SENDER_SERVICE_ACCOUNT: "fixture@hidro-fixture.iam.gserviceaccount.com",
     },
     original = global.fetch;
   let grants = 0,

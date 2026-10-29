@@ -4,6 +4,16 @@ const fs = require('node:fs'), os = require('node:os'), path = require('node:pat
 const { temporaryAccessToken } = require('../push-credentials');
 const { configuredSender } = require('../push-provider');
 const scope = 'https://www.googleapis.com/auth/firebase.messaging';
+test('validación en Render exige pareja de flags e identificador único; por defecto no limita la cola normal', () => {
+  const { validationConfiguration } = require('../workers/push.cjs');
+  const id = '00000000-0000-4000-8000-000000000001';
+  assert.equal(validationConfiguration({}), null);
+  assert.equal(validationConfiguration({ PUSH_VALIDATION_SINGLE_ATTEMPT: '0' }), null);
+  assert.deepEqual(validationConfiguration({ PUSH_VALIDATION_SINGLE_ATTEMPT: '1', PUSH_VALIDATION_DELIVERY_ID: id }), { deliveryId: id, singleAttempt: true });
+  for (const env of [{ PUSH_VALIDATION_SINGLE_ATTEMPT: '1' }, { PUSH_VALIDATION_DELIVERY_ID: id },
+    { PUSH_VALIDATION_SINGLE_ATTEMPT: '0', PUSH_VALIDATION_DELIVERY_ID: id },
+    { PUSH_VALIDATION_SINGLE_ATTEMPT: '1', PUSH_VALIDATION_DELIVERY_ID: 'invalid' }]) assert.throws(() => validationConfiguration(env));
+});
 function fixture() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hm-fcm-credential-fixture-'));
   fs.chmodSync(dir, 0o700);
@@ -58,10 +68,30 @@ test('FCM temporal reutiliza HTTP v1; una credencial vencida no produce ninguna 
       return Response.json({ name: 'projects/hidro-fixture/messages/fixture' });
     };
     const send = configuredSender(f.env), message = { data: { hm_event: 'fixture' } };
-    assert.equal((await send({ token: 'fixture-device', message })).kind, 'aceptado');
+    assert.deepEqual(await send({ token: 'fixture-device', message }), { kind: 'aceptado', httpStatus: 200 });
     f.write({ expire_time: new Date(f.now - 1000).toISOString() });
     assert.equal((await send({ token: 'fixture-device', message })).kind, 'configuracion');
     assert.equal(calls, 1);
     assert.throws(() => configuredSender(f.env), /Credencial temporal/);
   } finally { global.fetch = original; }
+});
+test('identidad permanente dedicada: JSON de runtime pasa a copia privada sin filtrarse al worker', () => {
+  const { preparePushCredentials, validateServiceAccount, readPrivateJson } = require('../push-credentials');
+  const { privateKey } = require('node:crypto').generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const account = { type: 'service_account', project_id: 'hidro-fixture',
+    client_email: 'hm-fcm-pilot@hidro-fixture.iam.gserviceaccount.com',
+    private_key: privateKey.export({ type: 'pkcs8', format: 'pem' }) };
+  const env = { PUSH_FIREBASE_PROJECT_ID: account.project_id, PUSH_SENDER_SERVICE_ACCOUNT: account.client_email,
+    PUSH_SERVICE_ACCOUNT_JSON: JSON.stringify(account) };
+  for (const invalid of [{ project_id: 'otro-fixture' }, { client_email: 'otro-fixture@hidro-fixture.iam.gserviceaccount.com' },
+    { private_key: 'not-a-key' }, { type: 'authorized_user' }]) assert.throws(() => validateServiceAccount({ ...account, ...invalid }, env));
+  assert.throws(() => validateServiceAccount(account, { ...env, PUSH_SENDER_SERVICE_ACCOUNT: undefined }));
+  assert.throws(() => preparePushCredentials({ ...env, PUSH_SERVICE_ACCOUNT_FILE: '/private/other' }));
+  assert.throws(() => preparePushCredentials({ ...env, PUSH_AUTH_MODE: 'access_token_file' }));
+  const prepared = preparePushCredentials(env), file = prepared.env.PUSH_SERVICE_ACCOUNT_FILE;
+  assert.equal(prepared.env.PUSH_SERVICE_ACCOUNT_JSON, undefined);
+  assert.equal(fs.statSync(file).mode & 0o777, 0o600);
+  assert.equal(fs.statSync(path.dirname(file)).mode & 0o777, 0o700);
+  assert.deepEqual(readPrivateJson(file), account);
+  prepared.cleanup(); assert.equal(fs.existsSync(file), false);
 });

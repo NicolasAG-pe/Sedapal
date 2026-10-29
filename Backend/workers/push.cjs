@@ -4,6 +4,13 @@ const { Pool } = require("pg"),
   { createPushWorker, reminders, retire } = require("../push-worker"),
   { configuredSender } = require("../push-provider");
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+function validationConfiguration(env) {
+  const id = env.PUSH_VALIDATION_DELIVERY_ID || '', enabled = env.PUSH_VALIDATION_SINGLE_ATTEMPT;
+  if (!id && (!enabled || enabled === '0')) return null;
+  if (enabled !== '1' || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id))
+    throw Error('Validación push dirigida inválida.');
+  return { deliveryId: id, singleAttempt: true };
+}
 async function main(args = process.argv.slice(2), env = process.env) {
   if (args[0] === "--help") {
     console.log(
@@ -17,6 +24,8 @@ async function main(args = process.argv.slice(2), env = process.env) {
     stop = true;
   };
   try {
+    const validation = validationConfiguration(env);
+    if (validation && args[0] !== '--run') throw Error();
     if (
       args.length !== 1 ||
       !["--once", "--run", "--reminders"].includes(args[0]) ||
@@ -53,13 +62,29 @@ async function main(args = process.argv.slice(2), env = process.env) {
       console.log(JSON.stringify({ creadas: await reminders(pool, env) }));
       return 0;
     }
-    const worker = createPushWorker({ pool, env, send: configuredSender(env) });
+    const sender = configuredSender(env);
+    const send = async message => {
+      const result = await sender(message);
+      if (validation) console.log(JSON.stringify({ event: 'push_validation_provider', kind: result.kind, httpStatus: result.httpStatus || null }));
+      return result;
+    };
+    const worker = createPushWorker({ pool, env, send, ...validation });
+    const schema = await pool.query("SELECT to_regclass('public.push_dispositivos') IS NOT NULL AND to_regclass('public.push_entregas') IS NOT NULL AS ready");
+    if (!schema.rows[0].ready) throw Error();
     process.once("SIGTERM", halt);
     process.once("SIGINT", halt);
+    if (process.send) process.send({ event: 'push_worker_ready' });
+    let validationFinished = false;
     do {
-      await retire(pool);
+      if (validationFinished) { await delay(1000); continue; }
+      if (!validation) await retire(pool);
       const r = await worker.processOne();
       if (r.estado === "configuracion_incompatible") throw Error();
+      if (validation) {
+        validationFinished = true;
+        console.log(JSON.stringify({ event: 'push_validation_result', estado: r.estado, attemptLimit: 1 }));
+        continue;
+      }
       if (args[0] === "--once") {
         console.log(JSON.stringify(r));
         break;
@@ -86,4 +111,4 @@ if (require.main === module)
     .catch(() => {
       process.exitCode = 1;
     });
-module.exports = { main };
+module.exports = { main, validationConfiguration };

@@ -37,4 +37,48 @@ function temporaryAccessToken(env, now = Date.now) {
   readToken(); // Fallar antes de reclamar un trabajo si no hay credencial válida.
   return async () => readToken();
 }
-module.exports = { readPrivateJson, temporaryAccessToken };
+
+function validateServiceAccount(account, env) {
+  const project = env.PUSH_FIREBASE_PROJECT_ID, sender = env.PUSH_SENDER_SERVICE_ACCOUNT;
+  if (!/^[a-z][a-z0-9-]{4,61}[a-z0-9]$/.test(project || '') ||
+      !new RegExp('^[a-z][a-z0-9-]{4,28}[a-z0-9]@' + project + '\\.iam\\.gserviceaccount\\.com$').test(sender || '') ||
+      sender.startsWith('firebase-adminsdk-') || account.type !== 'service_account' ||
+      account.project_id !== project || account.client_email !== sender ||
+      typeof account.private_key !== 'string') throw Error('Identidad FCM dedicada requerida.');
+  const key = require('node:crypto').createPrivateKey(account.private_key);
+  if (key.asymmetricKeyType !== 'rsa' || key.asymmetricKeyDetails.modulusLength < 2048)
+    throw Error('Clave FCM inválida.');
+  return key;
+}
+
+// Render entrega el JSON como secreto de runtime. Solo el worker recibe una copia
+// efímera 0600, externa al código; no se transforma en build arg ni en un asset.
+function preparePushCredentials(env) {
+  if (env.PUSH_PROVIDER === 'mock' && env.NODE_ENV === 'test') return { env, cleanup() {} };
+  if (env.PUSH_AUTH_MODE === 'access_token_file') {
+    if (env.PUSH_SERVICE_ACCOUNT_JSON) throw Error('Identidades FCM incompatibles.');
+    temporaryAccessToken(env);
+    return { env, cleanup() {} };
+  }
+  if (!env.PUSH_SERVICE_ACCOUNT_JSON) {
+    validateServiceAccount(readPrivateJson(env.PUSH_SERVICE_ACCOUNT_FILE), env);
+    return { env, cleanup() {} };
+  }
+  let directory;
+  try {
+    if (env.PUSH_SERVICE_ACCOUNT_FILE || env.PUSH_ACCESS_TOKEN_FILE ||
+        Buffer.byteLength(env.PUSH_SERVICE_ACCOUNT_JSON) > 65536) throw Error();
+    validateServiceAccount(JSON.parse(env.PUSH_SERVICE_ACCOUNT_JSON), env);
+    directory = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'hidro-fcm-'));
+    fs.chmodSync(directory, 0o700);
+    const file = path.join(directory, 'sender.json');
+    fs.writeFileSync(file, env.PUSH_SERVICE_ACCOUNT_JSON, { flag: 'wx', mode: 0o600 });
+    const childEnv = { ...env, PUSH_SERVICE_ACCOUNT_FILE: file };
+    delete childEnv.PUSH_SERVICE_ACCOUNT_JSON;
+    return { env: childEnv, cleanup() { fs.rmSync(directory, { recursive: true }); } };
+  } catch (_) {
+    if (directory) fs.rmSync(directory, { recursive: true });
+    throw Error('No se pudo preparar la identidad privada FCM.');
+  }
+}
+module.exports = { readPrivateJson, temporaryAccessToken, validateServiceAccount, preparePushCredentials };
