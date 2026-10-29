@@ -1,14 +1,16 @@
 # Historial de versiones
 
-## FCM oficial 1.2.0 — preparación sin publicar
+## FCM oficial 1.2.0 — recepción física aprobada, publicación condicionada
 
-- Prueba real autorizada limitada en el worker a una entrega explícita y un intento, sin reclamar otros mensajes ni reintentar errores transitorios. Clave dedicada autorizada y custodiada fuera del repositorio; la recepción física sigue pendiente.
+- Prueba física: un mensaje desde Render Free, Firebase HTTP200, token real cifrado, una entrada Android en bandeja y apertura manual de Incidencias confirmada por el propietario. Cero reintentos y ninguna entrega anterior procesada. Sesión e historial conservados.
+- Validación acumulada: 51 pruebas dirigidas, JUnit Android4/4 y lint sin errores; APK final con firma permanente y SHA-256 nuevo. Recordatorios automáticos siguen apagados; límite de suspensión Free documentado.
+- Prueba real autorizada limitada en el worker a una entrega explícita y un intento, sin reclamar otros mensajes ni reintentar errores transitorios. Clave dedicada autorizada y custodiada fuera del repositorio; recepción y apertura física comprobadas posteriormente.
 - Modo de validación del worker compartido ejecuta esa entrega exclusivamente dentro de Render y queda inactivo después; un reinicio no la repite. Sin endpoint administrativo adicional ni envío desde el equipo local.
 - Evidencia de validación limitada al estado HTTP y resultado del proveedor, sin registrar tokens, mensajes, claves ni identificadores privados.
 - Identificada la causa de la candidata: Firebase sin configuración privada y flag nativo apagado; registro y entregas del servidor cerrados. Se reutiliza el adaptador HTTP v1 existente.
 - Constructor opt-in de release con Firebase privado, API HTTPS y firma permanente, manteniendo 1.2.0/código6 y las APK anteriores en otros worktrees.
 - Supervisor opcional del worker push en el mismo contenedor; readiness, cierre coordinado y credenciales separadas de API/correo. Validación estricta de cuenta dedicada y copia efímera del secreto de runtime.
-- Pruebas dirigidas de credenciales, sesiones, aislamiento y cola; sin migraciones ni cambios en Kubernetes/Admin. APK Firebase release compilada (JUnit4/4, lint sin errores) y reemplazo normal sobre código6 aceptado en POCO Android13, conservando identidad de instalación. Recepción física, credencial continua, revisión y publicación todavía pendientes.
+- Pruebas dirigidas de credenciales, sesiones, aislamiento y cola; sin migraciones ni cambios en Kubernetes/Admin. APK Firebase release compilada (JUnit4/4, lint sin errores) y reemplazo normal sobre código6 aceptado en POCO Android13, conservando identidad de instalación. Recepción real en segundo plano y apertura en Incidencias confirmadas en el POCO; integración, despliegue final y publicación sujetos a sus controles.
 
 ## Revisión y ventana oficial1.2.0 — aún sin aprobar/publicar
 
