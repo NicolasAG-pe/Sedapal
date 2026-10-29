@@ -1,5 +1,9 @@
 # Kubernetes local integrado — avance 19
 
+**Clúster existente actualizado a 1.2.0:** usar [ACTUALIZACION-120.md](ACTUALIZACION-120.md)
+y `control-120.sh`. El `start.sh` histórico siguiente puede volver a seleccionar
+imágenes anteriores; no usarlo para encender el entorno actualizado.
+
 Entorno **exclusivo**: kind `hidro-avance19`, namespace `hidro-avance19`.
 Deriva de los manifiestos `k8s/local` del equipo; no los sustituye. Usa puertos
 loopback **8084** (cliente) y **8085** (Admin), sin tocar Compose 8080/8081 ni

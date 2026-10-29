@@ -22,4 +22,51 @@ bash k8s/avance19/control-120.sh start
 
 La guía histórica de avance19 sigue disponible para instalaciones anteriores. Para la candidata1.2.0 utilizar este controlador y el estado de su worktree; el start.sh histórico puede seleccionar imágenes antiguas.
 
-Estado de esta primera preparación: políticas de cierre y renderizado local verificados. Respaldo, migraciones, imágenes actualizadas y recorrido funcional deben documentarse con sus resultados reales antes de declarar completa la actualización.
+Actualización ejecutada y comprobada el 29/10/2026. Los cuatro deployments están
+1/1 y el apagado/encendido conservó los hashes de las 26 tablas y diez secuencias.
+Ver [informe y evidencias](../../docs/pruebas/kubernetes-local-120.md).
+
+Imágenes instaladas, con `imagePullPolicy: Never`:
+
+| Deployment | Imagen local |
+| --- | --- |
+| web | `hidro-avance19-web:1.2.0-6894b3e` |
+| admin | `hidro-avance19-admin:1.2.0-6894b3e` |
+| backend | `hidro-avance19-backend:1.2.0-6894b3e` |
+| db | `postgres:18` existente, PostgreSQL18.6 |
+
+Cliente: <http://localhost:8084>. Admin: <http://localhost:8085>.
+API por los mismos proxies: `/api/health`; PostgreSQL permanece interno.
+Usar las cuentas locales existentes; el estado privado conserva los fixtures sin
+publicar sus contraseñas. Este perfil web no habilita recepción FCM nativa.
+
+Desde cualquier directorio de esta laptop:
+
+```bash
+bash /home/nico/.local/share/hidromejora/k8s-120/worktree/k8s/avance19/control-120.sh status
+bash /home/nico/.local/share/hidromejora/k8s-120/worktree/k8s/avance19/control-120.sh stop
+bash /home/nico/.local/share/hidromejora/k8s-120/worktree/k8s/avance19/control-120.sh start
+```
+
+No se reaplicó el overlay completo ni su ConfigMap de inicialización: se
+actualizaron únicamente las imágenes y la política cerrada del backend en los
+deployments existentes. Las migraciones ya están aplicadas; encender no las repite.
+Conservar este worktree y su estado privado. No reemplazar el kubeconfig global ni
+usar `kind create/delete`, `docker compose down`, `prune` o eliminación del PVC.
+
+Pruebas dirigidas reproducibles (crean registros **sintéticos adicionales** y
+necesitan el clúster encendido):
+
+```bash
+# Reutilizar las herramientas ya instaladas; no ejecutar npm ci ni descargar navegadores.
+NODE_PATH=/home/nico/.local/share/hidromejora/release-120/worktree/Backend/node_modules \
+  node k8s/avance19/verify-120.cjs
+HIDRO_PLAYWRIGHT_MODULE=/home/nico/Escritorio/Uni/Cursos/Software/Sedapal/artifacts/vercel-validation/tools/node_modules/playwright \
+PLAYWRIGHT_BROWSERS_PATH=/home/nico/Escritorio/Uni/Cursos/Software/Sedapal/artifacts/vercel-validation/browsers \
+  node k8s/avance19/browser-120.cjs
+```
+
+Si se necesita recuperar datos, conservar el estado actual y examinar primero la
+restauración aislada que quedó detenida. No restaurar encima del PVC ni volver al
+backend anterior automáticamente. El respaldo privado y sus hashes están
+identificados en el informe; ninguna contraseña ni archivo de respaldo está en Git.
