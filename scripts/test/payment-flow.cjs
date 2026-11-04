@@ -4,11 +4,15 @@ const{test,before,after}=require('node:test'),assert=require('node:assert/strict
 const{buildWeb}=require('../build-web'),{iniciar}=require('../../Backend/test/email-api.cjs');
 const{PNG}=require('../../Backend/node_modules/pngjs');
 const{chromium,devices}=require('../../artifacts/vercel-validation/tools/node_modules/playwright');
-const root=path.resolve(__dirname,'../..'),out=path.join(root,'artifacts/pagos-pdf-120'),origin='https://localhost',api='https://api.payment.fixture.test';
+const root=path.resolve(__dirname,'../..'),out=process.env.HIDRO_TEST_ARTIFACT_DIR?path.resolve(process.env.HIDRO_TEST_ARTIFACT_DIR):path.join(root,'artifacts/pagos-pdf-120'),origin='https://localhost',api='https://api.payment.fixture.test';
 let ctx,browser,accounts=[],ip=1,runtimes={};
 before(async()=>{
  fs.mkdirSync(out,{recursive:true});const png=new PNG({width:20,height:20});png.data.fill(255);const qr=path.join(out,'qr-ui-fixture.png');fs.writeFileSync(qr,PNG.sync.write(png),{mode:0o600});
- process.env.PAYMENTS_MANUAL_ENABLED='1';process.env.YAPE_QR_FILE=qr;ctx=await iniciar();
+ process.env.PAYMENTS_MANUAL_ENABLED='1';process.env.YAPE_QR_FILE=qr;
+ const schemaSql=process.env.HIDRO_TEST_SIN_PILOTO==='1'
+  ?require('../../Backend/test/email-schema.cjs').sql('init.sql').split('-- 008:')[0]+'\n'+require('../../Backend/test/email-schema.cjs').sql('migrations/008_operaciones_pago.sql')
+  :undefined;
+ ctx=await iniciar({schemaSql});
  for(let i=0;i<2;i++){
   const a=ctx.registro(8000+i),pending=(await ctx.request('register',a,202)).data,verified=(await ctx.request('verify-email',ctx.verificar(pending.registro_id,ctx.codigo(a.correo)),201)).data;
   if(i===1)await ctx.db.query("UPDATE usuarios SET rol='admin' WHERE id_usuario=$1",[verified.usuario.id_usuario]);

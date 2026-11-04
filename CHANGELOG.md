@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## Integración local — permisos y pruebas de interfaz
+
+- Rol de permisos local sin inicio de sesión ni capacidades administrativas para el backend con 005, 007, 008 y 013; no configura credenciales ni habilita servicios opcionales.
+- Los ensayos de interfaz aceptan un directorio temporal de evidencias y permiten probar pagos sin las estructuras del piloto. Chromium confirmó UUID de reintento y que una demostración no cancela la deuda.
+- El despliegue coordinado sigue pendiente de configurar un proveedor de correo para conservar el registro de usuarios; no se ha reemplazado el backend activo.
+
 ## Integración PostgreSQL local — preparación aislada
 
 - Pagos simulados y gestión de recibos funcionan con 008 sin instalar el piloto Yape; si existe control de piloto, se conserva el bloqueo de recibos asociados y los esquemas parciales fallan de forma cerrada.

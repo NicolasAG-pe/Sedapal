@@ -9,7 +9,7 @@ const {
   } = require("../../artifacts/vercel-validation/tools/node_modules/playwright"),
   { buildWeb } = require("../build-web");
 const root = path.resolve(__dirname, "../.."),
-  out = path.join(root, "artifacts/seguimiento-incidencias-120"),
+  out = process.env.HIDRO_TEST_ARTIFACT_DIR ? path.resolve(process.env.HIDRO_TEST_ARTIFACT_DIR) : path.join(root, "artifacts/seguimiento-incidencias-120"),
   before = process.env.HM_INCIDENT_BEFORE === "1",
   pause = (ms) => new Promise((r) => setTimeout(r, ms));
 async function until(fn, label) {
