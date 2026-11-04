@@ -20,3 +20,7 @@ SHA, fecha, versiones, comando exacto, entorno, código de salida, casos ejecuta
 ## Prerrequisitos pendientes al cierre documental
 
 Verificar versiones y disponibilidad de herramientas antes de ejecutar. Node 22 es la referencia; un runtime distinto se registrará sin afirmar equivalencia. BuildKit requiere daemon accesible y contexto local seguro; navegador y sus dependencias no están garantizados. No instalar herramientas automáticamente. La autorización actual prohíbe iniciar servicios: validación HTTP/navegador con servidor queda pendiente y no puede sustituirse por inspección estática. DB-01 carece de autorización: instancia PostgreSQL nueva, base padre dedicada, permisos y adaptación exacta del harness siguen pendientes. No se ha ejecutado ninguna prueba de aplicación al cerrar PLAN-01.
+
+## Estado vigente
+
+PKG-01 completado mediante autorización posterior para servicios temporales aislados. Node 22, HTTP/MIME y Firefox aprobados; los bloqueos históricos de esta guía quedan resueltos. Ver validation.md. No push ni producción.

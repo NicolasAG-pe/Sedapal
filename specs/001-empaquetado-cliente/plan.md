@@ -33,3 +33,7 @@ Documentos: esta carpeta con spec, research, plan, tasks, quickstart y contracts
 Una prueba que imita la lista puede repetir el error: añadir omisión deliberada y comprobación del artefacto. Una ruta 200 puede servir HTML: validar contenido. Una exclusión histórica puede ser intencional: exigir únicamente dependencias reales. No ampliar Shared por conveniencia. Cierre exige todos los AC comprobados; instalaciones o construcción no autorizadas quedan pendientes.
 
 La sesión actual prohíbe iniciar servicios. PKG-T05 y la parte HTTP de AC-PKG-02 no se ejecutan ni se sustituyen por validación estática. Se conserva el criterio de cierre original.
+
+## Estado vigente
+
+PKG-01 completado mediante autorización posterior para servicios temporales aislados. Node 22, HTTP/MIME y Firefox aprobados; los bloqueos históricos de esta guía quedan resueltos. Ver validation.md. No push ni producción.

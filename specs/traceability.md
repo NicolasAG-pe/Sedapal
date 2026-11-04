@@ -43,3 +43,7 @@ Ninguna referencia SON es una clave de issue real. No vincular PKG/DB con una re
 ## Ejecución PKG-01
 
 [Informe y comandos](001-empaquetado-cliente/validation.md). PKG-T02/PKG-T03/PKG-T04 aprobadas con 9 casos nuevos; 8 regresiones existentes aprobadas. PKG-T01 ejecutada antes/después: ambos builds terminan; el defecto confirmado es el artefacto incompleto previo, no un fallo de build reproducido. AC-PKG-01/04/05 comprobados en el alcance local; AC-PKG-02 parcial (archivos/contenido sí, HTTP/MIME pendiente); AC-PKG-03 y PKG-T05 pendientes por prohibición de servicios. SC-PKG-001 no satisfecho; no cerrar PKG-01. Cambios reales: Dockerfile, su ignore, verificador y test nuevo; sin cambios a build-web ni infraestructura. El commit local de avance se identifica por ser el siguiente commit de PKG-01 después de f7f21e6; hash exacto comprobado en el cierre de sesión, sin autorreferencia dentro del commit.
+
+## Cierre local PKG-01
+
+Sobre 53a9d33: Node 22.23.4, 17/17 pruebas; PKG-T05, 10 comprobaciones HTTP/MIME y Firefox aprobadas. AC-PKG-01..05 y SC satisfechos en alcance local. Todos los PKG-TASK completados con publicación excluida expresamente; ver validation.md para fallos de entorno resueltos y límites de fixtures. DB-01 ahora autorizado condicionalmente, aún sin ejecución al registrar este cierre.

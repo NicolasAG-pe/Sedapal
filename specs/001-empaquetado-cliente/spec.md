@@ -1,7 +1,7 @@
 # Feature Specification: PKG-01 — empaquetado del cliente
 
 Feature Branch: chore/adopcion-sdd-rpi (conservada por instrucción del propietario).
-Created: 2026-11-04. Status: implementación autorizada y aplicada; validación parcial, sin cierre de PKG-01.
+Created: 2026-11-04. Status: completado en validación local; evidencia final en validation.md, sin publicación.
 Input: corregir mínimamente recursos explícitos y exclusiones Docker, conservando arquitectura.
 Base: [baseline](../baseline.md). Constitución: [única](../../.specify/memory/constitution.md).
 

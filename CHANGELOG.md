@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## PKG-01 — validación local completada
+
+- Node 22.23.4: 17/17 pruebas; HTTP/MIME de los tres módulos y diez comprobaciones Firefox con fixtures aprobadas.
+- Prerrequisitos de Git/permisos del directorio temporal resueltos sin modificar el producto; servicios temporales retirados y sin acceso a datos reales.
+- Criterios PKG-01 satisfechos localmente; sin push/despliegue. DB-01 queda habilitado por autorización condicional.
+
+
 ## PKG-01 — corrección local, validación parcial
 
 - Completadas listas explícitas de recursos frontend/ignore y exigencia de recuperación en el verificador de runtime.
