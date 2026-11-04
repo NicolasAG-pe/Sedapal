@@ -26,3 +26,5 @@ CI futura: separar unitarias/contratos sin servicios, integración PostgreSQL ai
 Revisar enlaces, consistencia de IDs, ausencia de tareas IMPLEMENT marcadas, diff documental, git status y git diff --stat. Los archivos nuevos sin preparar no aparecen en diff --stat: complementar con inventario explícito. No instalar, ejecutar pruebas, actualizar runtime ni publicar. CHANGELOG registra el cierre documental. Commit local autorizado; push y PR prohibidos en esta sesión.
 
 Identificadores: PKG-TASK-nnn y DB-TASK-nnn designan tareas; PKG-Tnn y DB-Tnn designan pruebas. Cierre aprobado por el propietario el 2026-11-04.
+
+PKG-01: corrección aplicada y pruebas locales aprobadas; validación parcial, ver [informe](001-empaquetado-cliente/validation.md). No iniciar DB-01 ni publicar.

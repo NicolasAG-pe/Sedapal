@@ -11,6 +11,9 @@
 !Shared/ui.js
 !Shared/styles.css
 !Shared/icons.js
+!Shared/two-factor-ui.js
+!Shared/password-recovery-ui.js
+!Shared/incident-timeline.js
 !Shared/assets/
 !Shared/assets/**
 

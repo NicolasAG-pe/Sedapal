@@ -12,7 +12,7 @@ Para cada recurso requerido: origen existente y permitido por contexto → copia
 
 No publicar código administrativo, .env, credenciales, respaldos ni fuentes privadas. Conservar verify-client-runtime y sus controles funcionales actuales. No cambiar API_BASE_URL ni la configuración de despliegue. No ampliar el alcance a Admin o Kubernetes sin nueva decisión.
 
-## Pruebas propuestas (no creadas)
+## Pruebas y alcance de validación
 
 - PKG-T01: build BuildKit aislado con contexto real; reproduce PKG-01a y luego pasa.
 - PKG-T02: scripts/test/client-packaging.test.cjs, inspección de recursos del artefacto y dependencias inventariadas; detecta omisiones.
@@ -21,3 +21,9 @@ No publicar código administrativo, .env, credenciales, respaldos ni fuentes pri
 - PKG-T05: navegador/servidor temporales autorizados para carga y flujos afectados con API sintética.
 
 Nombres propuestos; acordar su incorporación al inventario antes de ejecutarlos. IDs estables para trazabilidad.
+
+## Inventario revisado en PKG-T02/PKG-T04
+
+Se derivan del HTML los scripts, hojas de estilo e imágenes locales; se verifican en artefactos web/Android y se resuelven url() locales del CSS. Los siete Shared de la lista mínima son explícitos, no se copia Shared completo. Frontend/assets incluye client-home, documents, native-state, registration-state, client-session, push-notifications, sedapal-knowledge y los dos vendors de Socket.IO/jsPDF; Shared/assets contiene los dos SVG referenciados. La búsqueda específica no encontró imports JS de módulos adicionales. No se afirma detección automática universal de URLs construidas dinámicamente; fotos y PDF generados no son dependencias estáticas.
+
+La prueba de allowlist es un guard específico de la decisión de lista explícita, no un emulador de Dockerignore. La inspección del tar Docker es evidencia independiente. Ver [resultados](../validation.md). PKG-T05 no ejecutada; no se debilitan sus criterios de aceptación.

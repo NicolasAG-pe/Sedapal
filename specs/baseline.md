@@ -37,3 +37,7 @@ Faltan exportaciones saneadas de issues y hotspots, reglas, ubicación, estado, 
 ## Pendiente y límites
 
 Reproducción PKG y DB, inventario ejecutable de pruebas, disponibilidad de herramientas, cobertura por archivo, comportamiento HTTP, comparación de perfiles, calidad Sonar y automatizaciones remotas. Neon, contenedores, instalaciones reales y la otra copia no se inspeccionaron ni modificaron. No afirmar incidentes productivos a partir de incompatibilidades estáticas.
+
+## Contraste posterior de PKG-01
+
+La baseline anterior registra lectura, no ejecución. Durante PKG-01 el build original sí terminó en el builder disponible y copió two-factor-ui.js: el fallo de build supuesto no se reprodujo. Sí se comprobaron los dos módulos omitidos del tar y el punto ciego del verificador. Ver [evidencia de implementación](001-empaquetado-cliente/validation.md), sin atribuir esos resultados al estado desplegado.

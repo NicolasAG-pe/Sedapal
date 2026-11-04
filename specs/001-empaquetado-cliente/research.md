@@ -24,3 +24,9 @@ El fallo BuildKit es estáticamente fundamentado, no reproducido. La variante de
 ## Pendiente
 
 Disponibilidad de BuildKit/navegador; inventario de dependencias transitivas y carga dinámica; ubicación de herramientas ya documentadas. Registrar versión del builder y contexto al reproducir. No instalar herramientas ni arrancar servicios en PLAN-01.
+
+## Contraste específico de implementación (2026-11-04)
+
+No se repitió la auditoría general. El build original con Docker 26.1.5+dfsg1/buildx 0.13.1 terminó y exportó two-factor-ui.js; por tanto el fallo de construcción de PKG-01a no se reprodujo en este builder. No atribuir causa sin investigar su selección efectiva de ignores. El tar original sí carecía de password-recovery-ui.js e incident-timeline.js. Tres pruebas fallaron antes del cambio: COPY ausente, allowlist incompleta y verificador sin rechazo de recuperación. Después pasan.
+
+Vercel raíz construye Admin mediante build-web; Android consume build-web('android') y su verificador; Kubernetes avance19 ya lista los siete módulos. Ninguna de estas rutas se modificó. No se probó despliegue, APK ni Kubernetes real.

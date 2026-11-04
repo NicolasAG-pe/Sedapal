@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## PKG-01 — corrección local, validación parcial
+
+- Completadas listas explícitas de recursos frontend/ignore y exigencia de recuperación en el verificador de runtime.
+- Nueve pruebas nuevas y ocho regresiones aprobadas. Build Docker exportado sin iniciar servicios; tar con 22 archivos cliente, sin los dos módulos omitidos previamente.
+- El build anterior también terminó: el fallo de construcción supuesto no se reprodujo en el builder disponible. HTTP/MIME y flujos de navegador pendientes; PKG-01 no cerrado. Sin push, despliegues ni DB-01.
+
 ## PLAN-01 — base documental SDD + RPI
 
 - Constitución única aprobada, baseline vinculada a d3d27d0 y especificaciones PKG-01/DB-01 con contratos, tareas y trazabilidad.

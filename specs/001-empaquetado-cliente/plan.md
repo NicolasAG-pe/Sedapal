@@ -1,7 +1,7 @@
 # Implementation Plan — PKG-01
 
 Branch: chore/adopcion-sdd-rpi | Date: 2026-11-04 | [Spec](spec.md)
-Estado: plan redactado; no autoriza ejecución.
+Estado: implementación PKG-01 autorizada; ver resultados reales en validation.md.
 
 ## Summary
 
@@ -13,7 +13,7 @@ HTML/CSS/JavaScript; Node 22 como referencia del proyecto; scripts Node existent
 
 ## Constitution Check
 
-Antes del diseño: alcance localizado, evidencia E, sin secretos ni cambios de producción: conforme. Después del diseño: no hay migraciones, reorganización ni dependencias nuevas propuestas; validación aislada: conforme documentalmente. Ejecución y resultados pendientes; autorización IMPLEMENT no concedida. No hay excepción constitucional adicional.
+Antes del diseño: alcance localizado, evidencia E, sin secretos ni cambios de producción: conforme. Después del diseño: no hay migraciones, reorganización ni dependencias nuevas propuestas; validación aislada: conforme documentalmente. Implementación autorizada exclusivamente para PKG-01; pruebas locales y build ejecutados, validación HTTP/navegador pendiente. No hay excepción constitucional adicional.
 
 ## Project Structure
 
@@ -31,3 +31,5 @@ Documentos: esta carpeta con spec, research, plan, tasks, quickstart y contracts
 ## Riesgos y cierre
 
 Una prueba que imita la lista puede repetir el error: añadir omisión deliberada y comprobación del artefacto. Una ruta 200 puede servir HTML: validar contenido. Una exclusión histórica puede ser intencional: exigir únicamente dependencias reales. No ampliar Shared por conveniencia. Cierre exige todos los AC comprobados; instalaciones o construcción no autorizadas quedan pendientes.
+
+La sesión actual prohíbe iniciar servicios. PKG-T05 y la parte HTTP de AC-PKG-02 no se ejecutan ni se sustituyen por validación estática. Se conserva el criterio de cierre original.

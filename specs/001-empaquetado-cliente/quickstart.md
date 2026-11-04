@@ -1,6 +1,6 @@
 # Validación futura — PKG-01
 
-No ejecutada. Esta guía no autoriza builds ni servicios en PLAN-01.
+Pruebas locales y builds ejecutados tras aprobación de PKG-01; ver [resultados](validation.md). No iniciar servicios.
 
 ## Preparación
 
@@ -8,14 +8,14 @@ Tras aprobación de IMPLEMENT, comprobar Git y herramientas existentes. Usar sal
 
 ## Ejecución prevista
 
-1. Ejecutar PKG-T02/PKG-T03/PKG-T04 mediante `node --test scripts/test/client-packaging.test.cjs` una vez creado; hoy ese archivo no existe.
+1. Ejecutar PKG-T02/PKG-T03/PKG-T04 mediante `node --test scripts/test/client-packaging.test.cjs` con el archivo ya creado.
 2. Ejecutar PKG-T01 con contexto raíz y Frontend/Dockerfile en entorno de pruebas, registrar builder, error previo y éxito posterior. Inspeccionar archivos de la imagen generada sin reemplazar imágenes o contenedores existentes. El comando concreto dependerá del builder disponible y del aislamiento aprobado.
 3. Ejecutar PKG-T05 con datos sintéticos; revisar carga, tipos de contenido, recuperación y seguimiento sin proveedores reales.
 4. Comparar resultados con AC-PKG-01..05 y conservar verificador de separación administrativa.
 
 ## Registro requerido
 
-SHA, fecha, versiones, comando exacto, entorno, código de salida, casos ejecutados/aprobados/fallidos/omitidos y motivo. No registrar credenciales. Estado actual de todos los casos: pendiente. Registrar cobertura de código modificado si hay herramienta disponible y aprobada; no instalar una durante esta tarea sin revisión ni fijar porcentaje arbitrario.
+SHA, fecha, versiones, comando exacto, entorno, código de salida, casos ejecutados/aprobados/fallidos/omitidos y motivo. No registrar credenciales. Estado actual por caso en validation.md. Registrar cobertura de código modificado si hay herramienta disponible y aprobada; no instalar una durante esta tarea sin revisión ni fijar porcentaje arbitrario.
 
 ## Prerrequisitos pendientes al cierre documental
 

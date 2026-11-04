@@ -1,7 +1,7 @@
 # Matriz de trazabilidad — PLAN-01
 
 Base de código: d3d27d068a53dff8e536d690e615f858722157bb. Fecha: 2026-11-04.
-Estado común: especificado; pruebas/cambios futuros NO ejecutados. No hay commit de corrección ni claves Sonar atribuidas. Tareas PKG-TASK-nnn/DB-TASK-nnn y pruebas PKG-Tnn/DB-Tnn son namespaces diferentes; las pruebas PKG-Txx/DB-Txx son IDs globales propuestos.
+Estado: DB-01 pendiente sin ejecución; PKG-01 implementado con validación parcial según el informe enlazado abajo. Sin claves Sonar atribuidas. Tareas PKG-TASK-nnn/DB-TASK-nnn y pruebas PKG-Tnn/DB-Tnn son namespaces diferentes; las pruebas PKG-Txx/DB-Txx son IDs globales propuestos.
 
 | Hallazgo / evidencia | Requisitos | Aceptación | Pruebas propuestas | Tareas | Modificación futura prevista |
 |---|---|---|---|---|---|
@@ -39,3 +39,7 @@ Especificaciones: [PKG-01](001-empaquetado-cliente/spec.md), [DB-01](002-compati
 | SON-03 | Duplicación 1,3 % | Histórico sin SHA; recuperar análisis atribuible |
 
 Ninguna referencia SON es una clave de issue real. No vincular PKG/DB con una regla Sonar hasta contar con evidencia. En ejecución futura añadir por caso: SHA previo y corregido, comando, entorno, fecha, resultado, ruta de informe saneado, commit/PR cuando estén autorizados y clave Sonar únicamente si existe correspondencia verificada. No versionar exportaciones crudas sensibles.
+
+## Ejecución PKG-01
+
+[Informe y comandos](001-empaquetado-cliente/validation.md). PKG-T02/PKG-T03/PKG-T04 aprobadas con 9 casos nuevos; 8 regresiones existentes aprobadas. PKG-T01 ejecutada antes/después: ambos builds terminan; el defecto confirmado es el artefacto incompleto previo, no un fallo de build reproducido. AC-PKG-01/04/05 comprobados en el alcance local; AC-PKG-02 parcial (archivos/contenido sí, HTTP/MIME pendiente); AC-PKG-03 y PKG-T05 pendientes por prohibición de servicios. SC-PKG-001 no satisfecho; no cerrar PKG-01. Cambios reales: Dockerfile, su ignore, verificador y test nuevo; sin cambios a build-web ni infraestructura. El commit local de avance se identifica por ser el siguiente commit de PKG-01 después de f7f21e6; hash exacto comprobado en el cierre de sesión, sin autorreferencia dentro del commit.
