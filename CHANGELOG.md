@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Integración PostgreSQL local — preparación aislada
+
+- Pagos simulados y gestión de recibos funcionan con 008 sin instalar el piloto Yape; si existe control de piloto, se conserva el bloqueo de recibos asociados y los esquemas parciales fallan de forma cerrada.
+- La imagen del backend incluye los módulos JavaScript locales. Las pruebas de Socket.IO inicializan WebSocket antes de cargar el cliente.
+- Se preparó un ejecutor local con registro transaccional y SHA-256 para 005, 007, 008 y 013. Validado solo con PostgreSQL y datos sintéticos; no aplicado en la base original.
+- Se probaron autenticación, 2FA, pagos, incidencias, recuperación y push con fixtures; la transición de credenciales, roles y despliegue local sigue pendiente de validación completa.
+
 ## Seguimiento de incidencias — cliente, Admin y Android
 
 - Botones «Ver seguimiento»/«Ver historial» y diálogo acuático con eventos reales, fecha/estado, comentarios públicos y aviso explícito para incidencias anteriores; tarjetas, formularios, fotos, filtros y tablas conservados.

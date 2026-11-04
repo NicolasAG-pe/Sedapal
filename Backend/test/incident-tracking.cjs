@@ -350,9 +350,9 @@ test("fallo de notificación revierte el estado y el evento; no queda decisión 
 });
 
 test("Socket.IO después del commit y una sola notificación/entrega push por cambio, sin fotografías", async () => {
+  global.WebSocket = require("ws");
   const { io } = require("../../Frontend/assets/vendor/socket.io.min.js"),
     { once } = require("node:events");
-  global.WebSocket = require("ws");
   const socket = io(c.base, {
     transports: ["websocket"],
     auth: { token: c.accounts.client.token },

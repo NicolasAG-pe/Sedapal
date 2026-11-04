@@ -12,14 +12,21 @@ function pngSeguro(bytes){
  if(!w||!h||w>2048||h>2048||w*h>4000000)fail(400,'La imagen supera las dimensiones permitidas (2048 píxeles).');
  try{const decoded=PNG.sync.read(bytes,{checkCRC:true}),clean=PNG.sync.write(decoded);if(clean.length>1048576)fail(400,'La imagen supera 1 MB.');return clean;}catch(error){if(error instanceof ErrorPago)throw error;fail(400,'No se pudo leer el PNG.');}
 }
-const publicColumns=`o.id,o.id AS codigo_operacion,o.id_recibo,o.monto,o.moneda,o.entorno,o.metodo,o.estado,o.referencia,
- o.piloto_ensayo,o.recibido_en,o.monto_recibido,
+const publicColumns=pilot=>`o.id,o.id AS codigo_operacion,o.id_recibo,o.monto,o.moneda,o.entorno,o.metodo,o.estado,o.referencia,
+ ${pilot?'o.piloto_ensayo,o.recibido_en,o.monto_recibido':'NULL::boolean AS piloto_ensayo,NULL::timestamptz AS recibido_en,NULL::numeric AS monto_recibido'},
  o.creado_en AS fecha_pago,o.actualizado_en,o.revisado_por,o.revisado_en,o.motivo,o.proveedor_id,
  (o.comprobante IS NOT NULL) AS tiene_comprobante,r.periodo,s.numero_suministro,
  false AS acreditacion_financiera`;
 const duplicateColumn=admin=>admin?`EXISTS(SELECT 1 FROM operaciones_pago otra WHERE otra.referencia_hash=o.referencia_hash AND otra.id<>o.id) AS referencia_repetida`:'false AS referencia_repetida';
 function crearOperacionesPago({pool,env=process.env,proveedor=null}){
  const enabled=()=>env.PAYMENTS_MANUAL_ENABLED==='1'&&env.NODE_ENV!=='production';
+ async function pilotSchema(c){
+  const {rows:[s]}=await c.query(`SELECT to_regclass('public.control_piloto_yape') IS NOT NULL AS control,
+   (SELECT count(*)::int FROM pg_attribute WHERE attrelid=to_regclass('public.operaciones_pago') AND NOT attisdropped
+    AND attname=ANY(ARRAY['piloto_id','piloto_ensayo','receptor_huella','recibido_en','monto_recibido','receptor_comprobado'])) AS columnas`);
+  if((s.columnas!==0&&s.columnas!==6)||(env.YAPE_PILOT_ENABLED==='1'&&(!s.control||s.columnas!==6)))throw Error('Esquema de piloto incompleto.');
+  return s.columnas===6;
+ }
  function pilot(){try{const p=loadPilot(env);if(p&&fingerprint(pngSeguro(privateFile(env.YAPE_QR_FILE,1048576)))!==p.qr_hash)throw Error('QR discordante');return p;}catch(_){fail(503,'Piloto local no habilitado o configuración inválida.');}}
  async function guard(c,p,u,a=false,opts){try{return await guardPilot(c,p,u,a,opts);}catch(_){fail(403,'Piloto cerrado o no autorizado para esta cuenta/recibo.');}}
  function config(user){
@@ -32,14 +39,15 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
  async function overview(user){
   const result=config(user);
   if(result.recibo_piloto){
-   const {rows}=await pool.query(`SELECT ${publicColumns},false AS referencia_repetida FROM operaciones_pago o JOIN recibos r USING(id_recibo) JOIN suministros s USING(id_suministro) WHERE o.id_recibo=$1 AND s.id_usuario=$2 AND s.id_suministro=$3 AND o.metodo='yape_manual' ORDER BY o.creado_en DESC LIMIT 1`,[result.recibo_piloto,user.id_usuario,user.id_suministro]);
+   const {rows}=await pool.query(`SELECT ${publicColumns(await pilotSchema(pool))},false AS referencia_repetida FROM operaciones_pago o JOIN recibos r USING(id_recibo) JOIN suministros s USING(id_suministro) WHERE o.id_recibo=$1 AND s.id_usuario=$2 AND s.id_suministro=$3 AND o.metodo='yape_manual' ORDER BY o.creado_en DESC LIMIT 1`,[result.recibo_piloto,user.id_usuario,user.id_suministro]);
    if(rows.length){result.operacion_existente=rows[0];result.yape_manual=false;result.mensaje='Ya existe una declaración. Consulta el estado e historial; no hagas otra transferencia.';}
   }
   return result;
  }
  async function page(user,query){
   const number=Math.max(1,Math.min(100000,Number.parseInt(query.page,10)||1)),size=10;
-  const categories={pendientes:"o.estado='pendiente_verificacion'",confirmadas:"o.estado IN ('verificada_manual','acreditada_proveedor')",rechazadas:"o.estado='rechazada'",simulaciones:"(o.entorno='simulado' OR o.piloto_ensayo IS TRUE)",historial:'true'};
+  const schema=await pilotSchema(pool);
+  const categories={pendientes:"o.estado='pendiente_verificacion'",confirmadas:"o.estado IN ('verificada_manual','acreditada_proveedor')",rechazadas:"o.estado='rechazada'",simulaciones:schema?"(o.entorno='simulado' OR o.piloto_ensayo IS TRUE)":"o.entorno='simulado'",historial:'true'};
   const tab=Object.hasOwn(categories,query.tab)?query.tab:'pendientes';
   const q=String(query.q||'').trim().slice(0,100),method=['yape_manual','demostrativo','proveedor_simulado'].includes(query.metodo)?query.metodo:'';
   const from='FROM operaciones_pago o JOIN recibos r USING(id_recibo) JOIN suministros s USING(id_suministro)';
@@ -49,7 +57,7 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
    await c.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
    const counts=(await c.query(`SELECT ${Object.entries(categories).map(([k,v])=>`count(*) FILTER (WHERE ${v})::int AS ${k}`).join(',')} ${from} WHERE ${search}`,[q,method])).rows[0];
    const total=counts[tab],pages=Math.max(1,Math.ceil(total/size)),current=Math.min(number,pages);
-   const {rows}=await c.query(`SELECT ${publicColumns},${duplicateColumn(true)} ${from} WHERE ${search} AND ${categories[tab]} ORDER BY o.creado_en DESC,o.id DESC LIMIT $3 OFFSET $4`,[q,method,size,(current-1)*size]);
+   const {rows}=await c.query(`SELECT ${publicColumns(schema)},${duplicateColumn(true)} ${from} WHERE ${search} AND ${categories[tab]} ORDER BY o.creado_en DESC,o.id DESC LIMIT $3 OFFSET $4`,[q,method,size,(current-1)*size]);
    return{operaciones:rows,contadores:counts,total,pagina:current,paginas:pages};
   });
  }
@@ -57,7 +65,7 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
  async function audit(c,id,estado,actor,motivo){await c.query('INSERT INTO operaciones_pago_historial(operacion_id,estado,actor_id,motivo) VALUES($1,$2,$3,$4)',[id,estado,actor,motivo]);}
  async function get(c,id,user,admin=false){
   if(!uuid(id))fail(404,'Operación no encontrada.');
-  const{rows:[r]}=await c.query(`SELECT ${publicColumns},${duplicateColumn(admin)} FROM operaciones_pago o JOIN recibos r USING(id_recibo)
+  const{rows:[r]}=await c.query(`SELECT ${publicColumns(await pilotSchema(c))},${duplicateColumn(admin)} FROM operaciones_pago o JOIN recibos r USING(id_recibo)
    JOIN suministros s USING(id_suministro) WHERE o.id=$1 AND ($2::boolean OR (s.id_usuario=$3 AND s.id_suministro=$4))`,[id,admin,user.id_usuario,user.id_suministro||null]);
   if(!r)fail(404,'Operación no encontrada.');return r;
  }
@@ -102,8 +110,10 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
    if(Number(r.monto)<=0)fail(409,'Importe no válido para esta operación.');
    if(p&&Number(r.monto)>Number(p.max_amount))fail(409,'El importe supera el límite de este piloto.');
    const state=method==='demostrativo'?'demostrativa':'declarada';
-   await c.query(`INSERT INTO operaciones_pago(id,solicitud_id,id_usuario,id_recibo,monto,metodo,estado,referencia,referencia_hash,payload_hash,comprobante,comprobante_hash,entorno,piloto_id,piloto_ensayo,receptor_huella)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`,[opid,key,user.id_usuario,id,r.monto,method,state,reference,reference?digest((p?'piloto:'+p.qr_hash:'simulado')+':yape:'+reference.replace(/[ -]/g,'')):null,payloadHash,proof,proof?digest(proof):null,p?'piloto_manual':'simulado',p?.id||null,p?p.synthetic:null,p?.qr_hash||null]);
+   const schema=await pilotSchema(c);
+   const values=[opid,key,user.id_usuario,id,r.monto,method,state,reference,reference?digest((p?'piloto:'+p.qr_hash:'simulado')+':yape:'+reference.replace(/[ -]/g,'')):null,payloadHash,proof,proof?digest(proof):null,p?'piloto_manual':'simulado'];
+   if(schema)values.push(p?.id||null,p?p.synthetic:null,p?.qr_hash||null);
+   await c.query(`INSERT INTO operaciones_pago(id,solicitud_id,id_usuario,id_recibo,monto,metodo,estado,referencia,referencia_hash,payload_hash,comprobante,comprobante_hash,entorno${schema?',piloto_id,piloto_ensayo,receptor_huella':''}) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13${schema?',$14,$15,$16':''})`,values);
    await audit(c,opid,state,user.id_usuario,method==='demostrativo'?'Operación demostrativa sin acreditación financiera':'Transferencia declarada; recepción sin comprobar');
    if(state==='declarada'){
     await c.query("UPDATE operaciones_pago SET estado='pendiente_verificacion',actualizado_en=clock_timestamp() WHERE id=$1",[opid]);
@@ -118,7 +128,7 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
   });
  }
  async function list(user,admin=false){
-  const{rows}=await pool.query(`SELECT ${publicColumns},${duplicateColumn(admin)} FROM operaciones_pago o JOIN recibos r USING(id_recibo) JOIN suministros s USING(id_suministro)
+  const{rows}=await pool.query(`SELECT ${publicColumns(await pilotSchema(pool))},${duplicateColumn(admin)} FROM operaciones_pago o JOIN recibos r USING(id_recibo) JOIN suministros s USING(id_suministro)
    WHERE ($1::boolean OR (s.id_usuario=$2 AND s.id_suministro=$3)) ORDER BY CASE WHEN $1 AND o.estado='pendiente_verificacion' THEN 0 ELSE 1 END,o.creado_en DESC,o.id DESC LIMIT 200`,[admin,user.id_usuario,user.id_suministro||null]);return rows;
  }
  async function review(id,body,user){
@@ -146,7 +156,9 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
    if((await c.query('SELECT 1 FROM operaciones_pago WHERE id=$1 AND id_usuario=$2',[id,user.id_usuario])).rowCount)fail(403,'Otra persona administradora debe revisar su propia operación.');
    const{rows:[receipt]}=await c.query('SELECT monto,estado FROM recibos WHERE id_recibo=$1',[r.id_recibo]);
    if(receipt.monto!==r.monto||['Pagado','Anulado'].includes(receipt.estado))fail(409,'El recibo cambió. Se requiere conciliación.');
-   await c.query('UPDATE operaciones_pago SET estado=$2,motivo=$3,revisado_por=$4,revisado_en=clock_timestamp(),actualizado_en=clock_timestamp(),recibido_en=$5,monto_recibido=$6,receptor_comprobado=$7 WHERE id=$1',[id,state,reason,user.id_usuario,received,verifiedAmount,verifiedAmount?true:null]);
+   const schema=await pilotSchema(c);
+   const args=[id,state,reason,user.id_usuario];if(schema)args.push(received,verifiedAmount,verifiedAmount?true:null);
+   await c.query(`UPDATE operaciones_pago SET estado=$2,motivo=$3,revisado_por=$4,revisado_en=clock_timestamp(),actualizado_en=clock_timestamp()${schema?',recibido_en=$5,monto_recibido=$6,receptor_comprobado=$7':''} WHERE id=$1`,args);
    await audit(c,id,state,user.id_usuario,reason);return get(c,id,user,true);
   });
  }
