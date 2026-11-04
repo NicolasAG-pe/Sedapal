@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## Integración Gmail local — preparación segura
+
+- Se amplió el ejecutor de migraciones para registrar 003, 004 y 006 sin repetir las migraciones existentes, con rechazo de esquemas parciales.
+- API y worker de correo tienen grupos de permisos separados; una prueba sintética comprobó el registro OTP y la denegación de acceso del worker a contraseñas.
+- Se preparó un comando Compose local que descifra credenciales solo en memoria y verifica el destino, puerto y volumen antes de operar. Gmail se probó con consentimiento explícito.
+
 ## Integración local — permisos y pruebas de interfaz
 
 - Rol de permisos local sin inicio de sesión ni capacidades administrativas para el backend con 005, 007, 008 y 013; no configura credenciales ni habilita servicios opcionales.

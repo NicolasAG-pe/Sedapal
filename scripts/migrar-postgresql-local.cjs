@@ -3,7 +3,10 @@
 const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const {Client}=require('../Backend/node_modules/pg');
 const migrations=[
+ ['003','003_verificacion_correo.sql',['registros_correo_pendientes','registros_correo_envios']],
+ ['004','004_retencion_correo.sql',['idx_registro_vencimiento']],
  ['005','005_integridad_recibos.sql',[]],
+ ['006','006_correo_outbox.sql',['correo_outbox']],
  ['007','007_usuario_2fa.sql',['usuario_2fa','usuario_2fa_recuperacion','desafios_2fa']],
  ['008','008_operaciones_pago.sql',['operaciones_pago','operaciones_pago_historial','eventos_pago_proveedor']],
  ['013','013_seguimiento_incidencias.sql',['incidencia_eventos','incidencia_cambios']]
@@ -33,6 +36,10 @@ async function run(){
      await c.query('COMMIT');console.log(id+': ya registrada, checksum correcto');continue;
     }
     for(const table of expectedAbsent){const exists=await c.query('SELECT to_regclass($1) IS NOT NULL AS existe',['public.'+table]);if(exists.rows[0].existe)throw Error('Objeto previo sin registro; requiere revisión: '+table);}
+    if(id==='003'){
+     const col=await c.query("SELECT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='usuarios' AND column_name='correo_verificado_en') AS existe");
+     if(col.rows[0].existe)throw Error('Columna previa sin registro; requiere revisión: usuarios.correo_verificado_en');
+    }
     await c.query(body);
     await c.query('INSERT INTO public.hidro_migraciones_locales(version,archivo,sha256) VALUES ($1,$2,$3)',[id,name,hash]);
     await c.query('COMMIT');console.log(id+': aplicada y registrada');
