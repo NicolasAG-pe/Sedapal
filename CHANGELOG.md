@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## PLAN-01 — base documental SDD + RPI
+
+- Constitución única aprobada, baseline vinculada a d3d27d0 y especificaciones PKG-01/DB-01 con contratos, tareas y trazabilidad.
+- Diferenciadas redacción y aprobación; IDs de tareas y pruebas separados y prerrequisitos de validación explícitos.
+- SonarQube histórico sin atribución al commit actual. Sin cambios funcionales ni pruebas de aplicación en este avance; solo commit local autorizado.
+
+
 ## Kubernetes local 1.2.0 — actualización controlada
 
 - Perfil de imágenes exclusivo de avance19 que reutiliza capas locales y copia las fuentes oficiales, incluyendo los módulos compartidos de recuperación y seguimiento que faltaban en la imagen web anterior. No cambia Docker Compose.
