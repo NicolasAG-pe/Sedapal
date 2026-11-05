@@ -62,3 +62,14 @@ PKG-01 cerrado previamente en 4931f2f; DB-01 implementado y validado después, c
 | FR-TEST-004 / AC-TEST-06 | cobertura/reportes V8 y JUnit nativos | baseline47,72% líneas/82,66% ramas/62,92% funciones, solo fuentes cargadas de suite segura | Medido |
 
 NFR-TEST-001/002: diff sin producto/migraciones/dependencias nuevas, código read-only y recursos sintéticos; guard es defensa adicional, no sandbox. [Inventario](003-pruebas-automatizadas/test-inventory.md), [evidencia y límites](003-pruebas-automatizadas/validation.md). CI aún no ejecutado remotamente.
+
+## CI-01
+
+| Criterio | Cambio / comprobación | Estado |
+|---|---|---|
+| AC-CI-01 / FR-CI-003 | ci.yml con Node22/npm ci Backend, acciones por SHA; YAML parser real y comparación151 versiones lock | Aprobado localmente |
+| AC-CI-02 / FR-CI-002 | jobs safe→integration; comandos acreditados por TEST-01, PKG-01/DB-01 incluidos | Aprobado diseño/scripts; service remoto pendiente |
+| AC-CI-03/04 | contents:read, checkout sin credenciales, eventos no privilegiados, fixtures PG18/tmpfs y reportes acotados | Revisión local/checker aprobados |
+| AC-CI-05 / NFR-CI-001/002 | colaboración sin cambios en ramas ajenas, sin cambios funcionales/deploy; validation.md distingue ejecución local/remota | Aprobado localmente |
+
+Cinco tareas CI locales verificadas; CI-TASK-006 (run real GitHub) pendiente hasta autorización de publicación y revisión de automatizaciones externas. [Diseño](004-integracion-continua/spec.md), [evidencia](004-integracion-continua/validation.md). No hay ejecución remota ni green de GitHub acreditado.

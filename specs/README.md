@@ -34,3 +34,5 @@ Actualización de sesión: PKG-01 completado localmente (Node 22, HTTP/MIME y Fi
 Estado final de esta sesión: PKG-01 y DB-01 completados localmente, evidencia en sus validation.md; solo commits locales. TEST-01, CI-01 y SonarQube pendientes de autorización y planificación detallada, sin iniciar módulos adicionales.
 
 TEST-01 completado localmente: [especificación](003-pruebas-automatizadas/spec.md), [inventario](003-pruebas-automatizadas/test-inventory.md), [comandos](003-pruebas-automatizadas/quickstart.md) y [validación](003-pruebas-automatizadas/validation.md). CI-01 autorizado solo después de este cierre; no otros avances.
+
+CI-01 implementado y validado localmente: [workflow/spec](004-integracion-continua/spec.md) y [límites/validación pendiente](004-integracion-continua/validation.md). No publicado ni ejecutado en GitHub. No activar otros avances.

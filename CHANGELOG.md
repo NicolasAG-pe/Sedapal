@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## CI-01 — workflow preparado, ejecución remota pendiente
+
+- Workflow mínimo Node22 con unitarias/contratos y PostgreSQL18 efímero para integración; dependencias Backend por lock, acciones oficiales por SHA y contents:read.
+- YAML y políticas locales aprobadas en Node22, ocho controles negativos, reportes limitados a JUnit/metadatos; sin deploy ni secretos reales. Puerto dinámico situado en steps.env según contexto válido.
+- Reutilizada evidencia TEST-01; no push ni run de GitHub. Verificación de service, políticas/acciones/uploads remotos y bloqueo de previews pendiente antes de publicación autorizada.
+
+
 ## TEST-01 — entrada segura e inventario reproducible
 
 - Catálogo de101 archivos, grupos explícitos y comandos npm separados sin eliminar pruebas anteriores. Entorno limpio, guard de red loopback y rechazo de prerrequisitos ausentes.

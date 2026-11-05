@@ -1,7 +1,7 @@
 # Constitución de Hidro-Mejora
 
 Versión: 1.0.3 | Redacción: 2026-11-04 | Aprobación del propietario: 2026-11-04 | Última modificación: 2026-11-05
-Estado: PLAN-01 aprobado para cierre documental y commit local. Validación final de PKG-01 autorizada; DB-01 autorizado únicamente tras cumplir todos los criterios de PKG-01.
+Estado: PLAN-01, PKG-01, DB-01 y TEST-01 cerrados localmente; CI-01 implementado y validado localmente, pendiente de ejecución remota autorizada. Sin push/PR/despliegues.
 
 ## Principios fundamentales
 
