@@ -1,7 +1,7 @@
 # Constitución de Hidro-Mejora
 
-Versión: 1.0.3 | Redacción: 2026-11-04 | Aprobación del propietario: 2026-11-04 | Última modificación: 2026-11-05
-Estado: PLAN-01, PKG-01, DB-01 y TEST-01 cerrados localmente; CI-01 implementado y validado localmente, pendiente de ejecución remota autorizada. Sin push/PR/despliegues.
+Versión: 1.0.4 | Redacción: 2026-11-04 | Aprobación del propietario: 2026-11-04 | Última modificación: 2026-11-05
+Estado: PLAN-01, PKG-01, DB-01 y TEST-01 cerrados localmente; CI-01 implementado y validado localmente, pendiente de ejecución remota autorizada. DOC-01 autorizado como actualización documental y auditoría de prepublicación, sin cambios remotos. Sin push/PR/despliegues.
 
 ## Principios fundamentales
 
@@ -42,3 +42,5 @@ Enmienda 1.0.1: distingue redacción/aprobación y registra el alcance autorizad
 Enmienda 1.0.2: registra autorización expresa de validación aislada y DB-01 condicionado, sin modificar los principios de integridad ni autorizar producción.
 
 Enmienda1.0.3 (2026-11-05): autorización vigente TEST-01 y CI-01 condicionado a su validación, con commits locales, recursos sintéticos nuevos identificados y sin push/PR/despliegues. No se autorizan otros avances. Esta instrucción posterior prevalece sobre las referencias de alcance de las sesiones anteriores.
+
+Enmienda 1.0.4 (2026-11-05): registra autorización explícita del propietario para auditoría de CI-01 en lectura y DOC-01, con commit local documental. No autoriza aplicar exclusiones de despliegue, modificar servicios remotos ni publicar. Los principios se conservan y esta autorización posterior sustituye el alcance de sesiones anteriores. CI remoto sigue pendiente hasta controles completos y permiso de publicación; el análisis de otro compañero permanece fuera de alcance.

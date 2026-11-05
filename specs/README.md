@@ -1,38 +1,22 @@
-# PLAN-01 — SDD y RPI
+# SDD + RPI — estado actual
 
-Fecha: 2026-11-04. Estado: cierre documental aprobado; IMPLEMENT autorizado exclusivamente para PKG-01, sin push ni servicios nuevos.
+Actualizado2026-11-05. Rama chore/adopcion-sdd-rpi, base histórica d3d27d0. Solo commits locales; no push/PR/despliegues autorizados en esta sesión.
+
+| Avance | Estado / evidencia |
+|---|---|
+| PLAN-01 | Cerrado documentalmente, commit f7f21e6 |
+| [PKG-01](001-empaquetado-cliente/spec.md) | Completado localmente, [validación](001-empaquetado-cliente/validation.md) |
+| [DB-01](002-compatibilidad-recibos/spec.md) | Completado localmente, [validación](002-compatibilidad-recibos/validation.md) |
+| [TEST-01](003-pruebas-automatizadas/spec.md) | Completado localmente, [inventario](003-pruebas-automatizadas/test-inventory.md) y [validación](003-pruebas-automatizadas/validation.md) |
+| [CI-01](004-integracion-continua/spec.md) |5/6 tareas, remoto pendiente; [auditoría de publicación](004-integracion-continua/prepublication.md) incompleta |
+| [DOC-01](005-documentacion-tecnica/spec.md) | Documentación actualizada, [validación](005-documentacion-tecnica/validation.md) |
 
 - [Constitución única](../.specify/memory/constitution.md)
-- [Baseline técnica](baseline.md)
-- [Integración futura de Spec Kit](spec-kit-integration.md)
+- [Baseline histórica](baseline.md): evidencia vinculada a d3d27d0, no resultados posteriores atribuidos a ese SHA.
 - [Trazabilidad](traceability.md)
-- [PKG-01](001-empaquetado-cliente/spec.md)
-- [DB-01](002-compatibilidad-recibos/spec.md)
+- [Integración prevista de Spec Kit](spec-kit-integration.md): convenciones adoptadas manualmente, sin CLI instalada.
+- [Guía SDD + RPI](../docs/SDD-RPI.md)
 
-## Organización
+Cada avance mantiene spec/research/plan/tasks/validation; contratos, quickstart y modelo de datos según necesidad. Los números identifican carpetas, los IDs PKG/DB/TEST/CI/DOC identifican hallazgos/avances. TASK y T son namespaces separados de tareas y verificaciones. No generar ramas ni implementación con herramientas sin autorización.
 
-Cada carpeta numerada contiene spec.md (qué y aceptación), research.md (evidencia y decisiones), plan.md (cómo y puertas), tasks.md (trabajo futuro sin ejecutar), contracts/ (interfaces e invariantes) y quickstart.md (validación futura). DB-01 añade data-model.md porque involucra entidades persistidas; PKG-01 no cambia modelo de datos.
-
-Se adaptan las secciones de las plantillas oficiales de Spec Kit, redactadas manualmente, sin instalar su CLI ni generar integraciones. Los números identifican especificaciones y no sustituyen los IDs PKG-01/DB-01. Se conserva la rama chore/adopcion-sdd-rpi como excepción explícita al nombre habitual de rama por especificación. No se afirma compatibilidad de ejecución automática hasta integrar y validar la herramienta.
-
-## Orden y alcance
-
-PLAN-01 → revisión del propietario → IMPLEMENT de PKG-01 → DB-01 → inventario de pruebas → CI → Sonar atribuible → documentación afectada. Recuperar metadatos históricos de Sonar puede hacerse antes con autorización, sin bloquear las correcciones.
-
-CI futura: separar unitarias/contratos sin servicios, integración PostgreSQL aislada, navegador y Android según alcance. Nada de envíos live, dispositivos, credenciales reales ni despliegues automáticos. Primero inventariar comandos y dependencias existentes; no adoptar node --test sobre todos los archivos. Cobertura y herramientas se decidirán con medición y aprobación posterior.
-
-## Cierre de esta fase
-
-Revisar enlaces, consistencia de IDs, ausencia de tareas IMPLEMENT marcadas, diff documental, git status y git diff --stat. Los archivos nuevos sin preparar no aparecen en diff --stat: complementar con inventario explícito. No instalar, ejecutar pruebas, actualizar runtime ni publicar. CHANGELOG registra el cierre documental. Commit local autorizado; push y PR prohibidos en esta sesión.
-
-Identificadores: PKG-TASK-nnn y DB-TASK-nnn designan tareas; PKG-Tnn y DB-Tnn designan pruebas. Cierre aprobado por el propietario el 2026-11-04.
-
-PKG-01: corrección aplicada y pruebas locales aprobadas; validación parcial, ver [informe](001-empaquetado-cliente/validation.md). No iniciar DB-01 ni publicar.
-
-Actualización de sesión: PKG-01 completado localmente (Node 22, HTTP/MIME y Firefox). DB-01 autorizado después de este cierre; no publicar ni ejecutar otros módulos.
-
-Estado final de esta sesión: PKG-01 y DB-01 completados localmente, evidencia en sus validation.md; solo commits locales. TEST-01, CI-01 y SonarQube pendientes de autorización y planificación detallada, sin iniciar módulos adicionales.
-
-TEST-01 completado localmente: [especificación](003-pruebas-automatizadas/spec.md), [inventario](003-pruebas-automatizadas/test-inventory.md), [comandos](003-pruebas-automatizadas/quickstart.md) y [validación](003-pruebas-automatizadas/validation.md). CI-01 autorizado solo después de este cierre; no otros avances.
-
-CI-01 implementado y validado localmente: [workflow/spec](004-integracion-continua/spec.md) y [límites/validación pendiente](004-integracion-continua/validation.md). No publicado ni ejecutado en GitHub. No activar otros avances.
+El estado de la tabla prevalece sobre descripciones históricas de sesiones anteriores, que se conservan en sus informes. El análisis de calidad pertenece a otro compañero y queda fuera de este avance.

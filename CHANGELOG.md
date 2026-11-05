@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## DOC-01 — guías 1.2.0 y auditoría previa a publicación
+
+- Actualizadas portada, arquitectura, Docker aislado, perfiles PostgreSQL, pruebas, seguridad e índices SDD; API y antecedentes Android delimitados como históricos. Versiones fuente y npm diferenciadas.
+- CI-01 conserva5/6 tareas: workflow revisado localmente, sin ejecución GitHub. Documentada exclusión Vercel específica propuesta, no aplicada, y controles remotos pendientes de Vercel/Render/Apps/hooks; publicación no habilitada.
+- Solo documentación y commit local; sin cambios funcionales, SQL, proveedores, despliegues, push/PR ni intervención en el análisis de otro compañero.
+
 ## CI-01 — workflow preparado, ejecución remota pendiente
 
 - Workflow mínimo Node22 con unitarias/contratos y PostgreSQL18 efímero para integración; dependencias Backend por lock, acciones oficiales por SHA y contents:read.

@@ -24,3 +24,7 @@ Consulta ls-remote de solo lectura: main remoto d3d27d0, rama local no publicada
 No push/PR/merge: no existe URL de run remoto que se pueda afirmar. No se inspeccionaron settings de Actions ni políticas de la organización; podrían restringir versiones/acciones/permisos. Antes de publicar es obligatorio revisar previews y automatizaciones conectadas. La rama actual no figura expresamente bloqueada en ambos vercel.json y no se autoriza cambiarlos en este trabajo: permanece como precondición de publicación futura, no una afirmación de despliegues deshabilitados en proveedores.
 
 AC-CI-01..05 comprobados en el alcance local (diseño, sintaxis, políticas y scripts); CI-TASK-006 permanece pendiente y sin autorizar. Implementación preparada y commit local independiente; no CI verde en GitHub. No cambios de otros avances ni configuraciones de otros compañeros.
+
+## Auditoría posterior2026-11-05
+
+[Prepublicación](prepublication.md) registra consultas de solo lectura, riesgos de solapamiento con PR26, propuesta de exclusión exacta y límites del acceso remoto. Publicación no habilitada; CI-TASK-006 sigue pendiente. El checker local y sus ocho controles negativos se vuelven a verificar como parte de DOC-01; no se repiten suites de producto ni se afirma run remoto.

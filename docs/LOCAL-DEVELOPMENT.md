@@ -1,96 +1,43 @@
-# Instalación y desarrollo local
+# Desarrollo local aislado
 
-Guía vigente para el Compose de v1.0.0. Ejecutar comandos desde la raíz `Sedapal/`, salvo indicación contraria. No utilizar las credenciales de producción para desarrollo.
+Requisitos: Git, Docker Engine/Compose v2; Node22/npm para pruebas y generadores. Java21/Android SDK solo para tareas Android. No instalar herramientas nativas para ejecutar la suite segura.
 
-## Requisitos
+## Antes de iniciar servicios
 
-- Git, Docker Engine y Docker Compose v2.
-- Node 22 y npm para herramientas, configuración y pruebas; los contenedores no utilizan `node_modules` del host.
-- Poppler (`pdfinfo`, `pdftotext`) para las pruebas PDF.
-- Java 21, Android SDK 35 y herramientas Android solo al compilar; ver [ANDROID](ANDROID.md).
-- Chromium para integración visual; Playwright para la regresión específica de Perfil; ver [TESTING](TESTING.md).
+Esta guía describe una instalación **nueva**; los comandos no se ejecutaron durante DOC-01. No usar la copia original ni reutilizar sus `.env`, identidad Compose, contenedores, volúmenes, respaldos o datos. Dos carpetas llamadas Sedapal pueden compartir el proyecto Compose por defecto. Inspeccionar recursos y puertos actuales en modo lectura antes de elegir identidad y puertos nuevos.
 
-## Variables y dependencias
+En esta copia, crear una configuración local desde [.env.example](../.env.example) solo si no existe; completar valores **sintéticos/locales**, secretos locales nuevos y los orígenes CORS que correspondan. Nunca copiar credenciales productivas ni versionar `.env`. No imprimir su contenido. Si ya hay una configuración/instalación, no sobrescribir ni ejecutar esta receta sobre ella.
 
-En un clon nuevo:
+Ejemplo para laboratorio nuevo, solo después de verificar que proyecto y puertos están libres y que el `.env` es local:
 
 ```bash
 cp -n .env.example .env
-npm ci
-npm ci --prefix Backend
+# Completar .env de forma privada antes de continuar.
+WEB_PORT=18080 ADMIN_PORT=18081 CORS_ALLOWED_ORIGINS=http://localhost:18080,http://localhost:18081 docker compose --project-name hidro-sdd-lab up -d --build
+WEB_PORT=18080 ADMIN_PORT=18081 CORS_ALLOWED_ORIGINS=http://localhost:18080,http://localhost:18081 docker compose --project-name hidro-sdd-lab ps
+curl --fail http://localhost:18080/api/health
 ```
 
-Completar la configuración privada local sin registrarla en Git. No sobrescribir un `.env` existente ni mostrar su contenido en logs. Los ejemplos son plantillas, no cuentas de producción.
+Conservar exactamente identidad/variables para las operaciones futuras de ese laboratorio. Si `hidro-sdd-lab` o esos puertos existen, detenerse y elegir otros **antes** de ejecutar. La identidad nueva evita compartir el volumen lógico postgres_data con el proyecto original; comprobar el nombre real resultante antes de arrancar. No confiar solo en el nombre.
 
-| Nombres | Uso |
-|---|---|
-| `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` | Base local y credenciales utilizadas por Compose. |
-| `DB_HOST`, `DB_PORT` | Conexión PostgreSQL cuando se ejecuta Node directamente; Compose fija su red interna. |
-| `AUTH_TOKEN_SECRET` | Firma JWT; obligatorio para autenticación funcional. |
-| `NODE_ENV`, `CORS_ALLOWED_ORIGINS` | Modo y lista explícita de orígenes. |
-| `WEB_PORT`, `ADMIN_PORT` | Puertos publicados por Compose. |
-| `PORT` | Puerto Node al ejecutar el backend fuera del Compose actual. |
-| `DATABASE_URL` | Conexión alternativa con prioridad en Node; **Compose no la inyecta** al backend local. |
-| `API_BASE_URL` | Configuración pública de cada runtime estático/Android. |
+Cliente18080 y Admin18081 sirven Nginx. Backend3000 y PostgreSQL5432 quedan en red interna, sin puerto host según [Compose](../compose.yaml). No introducir un override de la otra copia ni abrir DB al exterior. Para detener únicamente el laboratorio identificado, usar `docker compose --project-name hidro-sdd-lab stop` con la misma configuración. Nunca eliminar volúmenes ni ejecutar limpiezas globales.
 
-El backend no carga `.env` por sí solo. Docker inyecta las variables declaradas. Para ejecutar Node fuera de Docker hay que proporcionar el entorno expresamente; no suponer que todos los nombres de la plantilla son utilizados por Compose.
+## Inicialización y capacidades
 
-`.env.frontend.example`, `.env.admin.example` y `.env.android.example` contienen la variable pública de sus respectivos destinos. Los archivos privados correspondientes son independientes. El generador prioriza el entorno del proceso sobre esos archivos. `.env.production.example` corresponde a la alternativa VPS histórica, no configura por sí sola Render o Vercel.
+Postgres18 monta su almacenamiento en `/var/lib/postgresql`. Ejecuta [init.sql](../Base-de-Datos/init.sql) únicamente al inicializar un volumen vacío. No carga cuentas automáticamente ni aplica todas las migraciones posteriores. Volúmenes existentes no se actualizan al reconstruir imágenes.
 
-## Servicios y puertos
+`init.sql` incluye el piloto local y seguimiento de incidencias; no incluye recuperación011 ni push012. No aplicar014 a este perfil. El mapa y prerrequisitos están en [DATABASE](DATABASE.md). Tampoco `health=200` valida todas las capacidades.
+
+Compose no transmite automáticamente cada variable de `.env` al backend: solo las declaradas en environment. En particular, no habilita por sí mismo los flags/proveedores avanzados de correo, recuperación o push. No añadir credenciales reales para probarlos. Cualquier ampliación opt-in exige un avance autorizado y recursos de prueba aislados.
+
+## Herramientas sin iniciar Docker
+
+Con Node22:
 
 ```bash
-docker compose up -d
-docker compose ps
+npm ci --prefix Backend --ignore-scripts --no-audit --no-fund
+npm run test:inventory
+npm test
 ```
 
-| Servicio | Acceso | Función |
-|---|---|---|
-| `web` | <http://localhost:8080> por defecto | Cliente de desarrollo servido por Nginx. |
-| `admin` | <http://localhost:8081> por defecto | Panel administrativo servido por Nginx. |
-| `backend` | Red interna `backend:3000` | API y Socket.IO. |
-| `db` | Red interna `db:5432` | PostgreSQL 18 persistente. |
-
-En local, ambas fuentes usan rutas relativas: `/api/*` y `/socket.io/`. No requieren Render, Neon ni un túnel. Para reconstruir fuentes modificadas, ejecutar `docker compose up -d --build web admin backend`; no necesita reinicializar `db`.
-
-Una base nueva ejecuta `init.sql` y comienza sin cuentas cargadas automáticamente. El registro crea cuentas `usuario`; no existe una ruta pública que asigne `admin`. El acceso administrativo inicial requiere provisión controlada por el responsable de la base, separada de las pruebas y de esta guía. Las migraciones no se ejecutan automáticamente; ver [DATABASE](DATABASE.md).
-
-## Comprobaciones básicas
-
-```bash
-curl --fail http://localhost:8080/
-curl --fail http://localhost:8081/
-curl --fail http://localhost:8080/api/health
-curl --fail http://localhost:8081/api/health
-docker compose logs --tail=50 backend
-```
-
-Los cuatro servicios deben mostrar `healthy` tras su período de inicio. Health ejecuta una consulta SQL; un HTML cargado por sí solo no prueba conectividad con la base. Revisar los logs localmente sin publicarlos sin redacción.
-
-Las comprobaciones automatizadas están centralizadas en [TESTING](TESTING.md). No ejecutar pruebas que escriban contra la base original.
-
-## Acceso PostgreSQL de lectura
-
-Usar las credenciales ya presentes dentro del contenedor, sin imprimirlas:
-
-```bash
-docker compose exec db sh -c 'exec psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-```
-
-Para una revisión:
-
-```sql
-BEGIN READ ONLY;
-SELECT tablename FROM pg_tables WHERE schemaname = 'public' ORDER BY tablename;
-COMMIT;
-```
-
-No volcar usuarios, fotografías ni hashes en documentación o terminales compartidas. Respaldo y verificación: [MAINTENANCE](MAINTENANCE.md).
-
-## Parada segura
-
-```bash
-docker compose stop
-```
-
-Reanudar con `docker compose up -d`. **No ejecutar `docker compose down -v`, borrar `sedapal_postgres_data` ni cambiar el nombre del proyecto Compose para una instalación existente.** Nunca utilizar `init.sql` como mecanismo de reinicialización sobre datos existentes. Ver [mantenimiento](MAINTENANCE.md) antes de restaurar o limpiar.
+El lock raíz y `npm ci` se reservan para herramientas Capacitor cuando se necesiten. `npm run build:web` y `npm run build:admin` escriben artefactos locales, no despliegan; revisar siempre su configuración pública de API antes de pruebas de navegador. [TESTING](TESTING.md) separa integración, navegador, Android y pruebas live. No ejecutar scripts históricos de restauración/correo/live como parte del arranque.

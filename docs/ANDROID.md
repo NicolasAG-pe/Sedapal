@@ -1,6 +1,9 @@
 # Android y Capacitor
 
-Configuración de **v1.0.0**, contrastada con [capacitor.config.js](../capacitor.config.js), [Gradle app](../android/app/build.gradle), [variables Gradle](../android/variables.gradle) y [manifiesto](../android/app/src/main/AndroidManifest.xml).
+> Estado documental DOC-01 (2026-11-05): el fuente android/app/build.gradle declara **1.2.0 / versionCode 6**. Las menciones a1.0.0,1.1.0 y otras candidatas inferiores son antecedentes con alcance propio, no la versión actual del fuente ni confirmación de una publicación reciente. No se compiló, firmó ni publicó APK en este avance. [Pruebas actuales](TESTING.md) y [SDD](SDD-RPI.md).
+
+
+Referencia histórica de configuración **v1.0.0**, con diferencias posteriores; contrastar valores actuales en [capacitor.config.js](../capacitor.config.js), [Gradle app](../android/app/build.gradle), [variables Gradle](../android/variables.gradle) y [manifiesto](../android/app/src/main/AndroidManifest.xml).
 
 ## Desarrollo posterior — avance 15
 

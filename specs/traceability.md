@@ -1,7 +1,7 @@
 # Matriz de trazabilidad — PLAN-01
 
 Base de código: d3d27d068a53dff8e536d690e615f858722157bb. Fecha: 2026-11-04.
-Estado: DB-01 pendiente sin ejecución; PKG-01 implementado con validación parcial según el informe enlazado abajo. Sin claves Sonar atribuidas. Tareas PKG-TASK-nnn/DB-TASK-nnn y pruebas PKG-Tnn/DB-Tnn son namespaces diferentes; las pruebas PKG-Txx/DB-Txx son IDs globales propuestos.
+Estado actual2026-11-05: PKG-01, DB-01 y TEST-01 completados localmente; CI-01 implementado5/6, remoto pendiente; DOC-01 actualizado con validación documental. Las secciones de ejecución parcial son historia de cada avance, no el estado actual. Sin claves de análisis atribuidas. TASK identifica tareas; T identifica verificaciones. Tabla inicial conservada como planificación de PLAN-01.
 
 | Hallazgo / evidencia | Requisitos | Aceptación | Pruebas propuestas | Tareas | Modificación futura prevista |
 |---|---|---|---|---|---|
@@ -25,8 +25,8 @@ Especificaciones: [PKG-01](001-empaquetado-cliente/spec.md), [DB-01](002-compati
 | DB-02 / paridad init | E: perfiles distintos; defecto funcional no establecido | Especificar instalación/capacidades antes de cambiar init.sql |
 | DB-03 / migraciones sin pagos | E: tabla en base; no prueba defecto | Documentar prerrequisito de base; no construir perfil ficticio solo con migraciones |
 | HEALTH-01 | E: health limitado a conexión | Nueva especificación de readiness si se aprueba |
-| TEST-01 / CI-01 | Inventario y automatización pendientes | Clasificar ejecutables/fixtures, luego jobs aislados; no agregar todos los archivos |
-| DOC-01 / DEBT-* | Deuda contextual | Actualizar documentos afectados; sin refactor/archivo de activos aquí |
+| TEST-01 / CI-01 | Inventario y suites completados; CI remoto pendiente | Ver cierres y auditoría de publicación |
+| DOC-01 / DEBT-* | Guías actualizadas por DOC-01; refactor fuera de alcance | Ver trazabilidad DOC-01; no archivar activos |
 | SEC-01 del informe | Campo tiene_pago del listado solo consulta pagos | Revisar semántica y UX por separado; no elevar a vulnerabilidad sin evidencia |
 
 ## SonarQube — sin atribución actual
@@ -73,3 +73,14 @@ NFR-TEST-001/002: diff sin producto/migraciones/dependencias nuevas, código rea
 | AC-CI-05 / NFR-CI-001/002 | colaboración sin cambios en ramas ajenas, sin cambios funcionales/deploy; validation.md distingue ejecución local/remota | Aprobado localmente |
 
 Cinco tareas CI locales verificadas; CI-TASK-006 (run real GitHub) pendiente hasta autorización de publicación y revisión de automatizaciones externas. [Diseño](004-integracion-continua/spec.md), [evidencia](004-integracion-continua/validation.md). No hay ejecución remota ni green de GitHub acreditado.
+
+## DOC-01 y auditoría previa
+
+| Requisito / aceptación | Documentos / cambio | Verificación | Estado |
+|---|---|---|---|
+| FR-DOC-001/002; AC-DOC-01 | README, docs/ARCHITECTURE, Android, API y SECURITY | DOC-T01 fuentes/alcance histórico | Documentado |
+| FR-DOC-003; AC-DOC-02 | docs/LOCAL-DEVELOPMENT, DATABASE | DOC-T02 Compose/init/migraciones/fixtures | Documentado; sin SQL ejecutado |
+| FR-DOC-004; AC-DOC-03 | docs/TESTING, CI | DOC-T03 catálogo y checker; resultados previos enlazados | Local; run remoto pendiente |
+| FR-DOC-005; AC-DOC-04/05 | docs/SDD-RPI, specs/README, prepublication, constitución única | DOC-T04/05 enlaces, diff y simulación | Ver validación DOC-01 |
+
+[Especificación](005-documentacion-tecnica/spec.md), [tareas](005-documentacion-tecnica/tasks.md), [validación](005-documentacion-tecnica/validation.md). [Auditoría CI](004-integracion-continua/prepublication.md): Vercel sin exclusión de esta rama, detalles de raíces/hooks incompletos; Render/settings Apps no comprobados. No habilita publicación ni cierra CI-TASK-006. No se cambió configuración de proveedores ni el trabajo de otro compañero.

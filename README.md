@@ -1,97 +1,38 @@
-# Hidro-Mejora
+# Hidro-Mejora 1.2.0
 
-Hidro-Mejora es un proyecto universitario de gestión y consulta de servicios de agua. Centraliza recibos, consumo, registros de pago, incidencias, cortes y atención, con una aplicación Android para clientes y un panel web independiente para administradores.
+Proyecto universitario de gestión de servicios de agua: cliente web de desarrollo/Android y panel administrativo independiente sobre una API compartida. No es un sistema oficial de SEDAPAL ni una pasarela bancaria.
 
-Su objetivo es facilitar el seguimiento del suministro y la comunicación entre el cliente y el administrador. No es un sistema oficial de SEDAPAL ni una pasarela bancaria.
+## Estado del código y del trabajo
 
-## Versión y acceso
+Android declara **1.2.0 / versionCode 6**; los manifiestos npm raíz y Backend conservan **1.0.0**. Esa diferencia no se corrige modificando versiones en este avance documental. El [historial](CHANGELOG.md) y las [reglas Android](docs/ANDROID-RELEASE.md) distinguen candidatos y releases históricas; no se afirma una nueva APK publicada ni un despliegue actual validado.
 
-Versión distribuida: **v1.0.0**, Android 6.0 o superior.
+PLAN-01, PKG-01, DB-01 y TEST-01 completados localmente. CI-01 implementado, 5/6 tareas: ejecución en GitHub pendiente. DOC-01 documenta el árbol de esta rama; base histórica `d3d27d0`, referencia de entrada `6399d44`. [Especificaciones y evidencia](specs/README.md).
 
-- [Panel administrativo](https://hidro-mehora-admin.vercel.app).
-- [API pública / estado del servicio](https://hidro-mejora-api.onrender.com/api/health).
-- [GitHub Release v1.0.0](https://github.com/NicolasAG-pe/Sedapal/releases/tag/v1.0.0).
-- [Descargar APK firmada](https://github.com/NicolasAG-pe/Sedapal/releases/download/v1.0.0/hidro-mejora-v1.0.0-release.apk).
-- [Historial de versiones](CHANGELOG.md) y [firma, checksum y actualizaciones](docs/ANDROID-RELEASE.md).
+## Funcionalidades y arquitectura
 
-## Funcionalidades
+- Cliente: cuenta, recibos/consumo, documentos referenciales, operaciones de pago, incidencias con seguimiento, cortes, atención, perfil e HidroBot local.
+- Admin: gestión de usuarios/suministros, recibos, pagos, incidencias, cortes y atención, con permisos administrativos.
+- Backend Node22/Express5, PostgreSQL18 y Socket.IO; frontend HTML/CSS/JavaScript y Shared; Android Capacitor7/Java21.
+- OTP/outbox, 2FA, recuperación de clave y push están implementados con configuración y habilitación específicas. Su presencia en código no significa que estén activos en Docker o producción. Los pagos demostrativos no realizan cargos bancarios.
 
-- Cliente: registro e inicio de sesión, dashboard, recibos/consumo, copias PDF, pagos y constancias, incidencias con fotografía/ubicación, cortes, atención, notificaciones, perfil, contraseña, tutorial e HidroBot.
-- Admin: resumen, usuarios, ubicación del suministro desde el detalle del usuario, recibos, pagos, incidencias/fotografías, cortes, atención y cuenta administrativa.
-- API compartida: autenticación JWT, roles `usuario`/`admin`, aislamiento por suministro y avisos Socket.IO.
+Docker: cliente Nginx y Admin Nginx → Backend interno → PostgreSQL local. Android empaqueta el cliente; Admin tiene una ruta de build independiente. Render/Vercel/Neon son destinos documentados, cuyo estado efectivo no se certifica desde el código. [Arquitectura](docs/ARCHITECTURE.md), [seguridad](docs/SECURITY.md) y [prepublicación](specs/004-integracion-continua/prepublication.md).
 
-Los pagos registran operaciones del prototipo sin cargos bancarios. Los PDF son referenciales. HidroBot utiliza reglas locales; las notificaciones no son push. Más detalles en la [guía del producto](docs/MEJORA-PROFESIONAL.md).
+## Desarrollo local y pruebas
 
-## Verificación de correo en desarrollo
+Consulta [desarrollo local](docs/LOCAL-DEVELOPMENT.md) antes de iniciar Docker: las dos copias del repositorio pueden compartir nombre Compose, puertos y volúmenes. Usa identidad y configuración nuevas para un laboratorio aislado; conserva la instalación original. `init.sql` es perfil laboratorio, no una receta de producción.
 
-La rama `feature/verificacion-correo` incorpora códigos OTP mediante Resend para
-confirmar el correo antes de crear cuentas nuevas. El proceso incremental se
-revisa en el [Draft PR #1](https://github.com/NicolasAG-pe/Sedapal/pull/1), con
-commits por avance y registro en [CHANGELOG.md](CHANGELOG.md).
-
-Consulta la [configuración, contrato y pruebas](docs/verificacion-correo.md).
-El avance 14 incorpora una [outbox transaccional cifrada](docs/correo-outbox.md);
-el trabajador permanece desactivado y requiere habilitación posterior autorizada.
-Esta mejora requiere las migraciones pendientes 003–006 y variables privadas
-de API/trabajador, según la guía, antes de
-habilitar nuevos registros; su publicación en producción queda pendiente de
-autorización. Las cuentas anteriores conservan su acceso.
-
-## Arquitectura y tecnologías
-
-Producción: **Android → Render → Neon** y **Admin Vercel → Render → Neon**. El frontend de cliente se empaqueta en Android y no se publica como web de usuarios.
-
-Desarrollo: dos clientes Nginx en Docker → backend compartido → PostgreSQL local. La base local y Neon son independientes, sin sincronización automática.
-
-HTML, CSS y JavaScript sin framework; Node 22, Express 5, Socket.IO 4, PostgreSQL 18, jsPDF, Capacitor 7, Java 21 y Docker Compose. Consulta [arquitectura](docs/ARCHITECTURE.md) y [despliegue](docs/DEPLOYMENT.md).
-
-## Estructura
-
-```text
-Sedapal/
-├── Frontend/         # Cliente y fuente Android
-├── Admin/            # Panel administrativo HTML/CSS/JS
-├── Backend/          # API, tiempo real y pruebas
-├── Shared/           # Utilidades, iconos y estilos
-├── Base-de-Datos/    # init.sql y migraciones
-├── android/          # Proyecto nativo Capacitor
-├── scripts/          # Build, respaldo y verificaciones
-├── artifacts/        # Salidas locales ignoradas
-├── backups/          # Respaldos privados ignorados
-├── docs/             # Documentación técnica
-├── compose.yaml
-├── capacitor.config.js
-├── vercel.json
-├── package.json
-└── package-lock.json
-```
-
-## Inicio rápido local
-
-Requisitos mínimos: Git, Docker Engine y Docker Compose v2. Node 22/npm para herramientas y pruebas; Java 21/Android SDK solamente para compilar Android.
-
-En un clon nuevo, crea la configuración local a partir del ejemplo y completa las variables privadas antes de levantar servicios. En una instalación existente, conserva su `.env`.
+Para las suites seguras, con Node22 y sin cargar variables productivas:
 
 ```bash
-cp -n .env.example .env
-docker compose up -d
-docker compose ps
-curl --fail http://localhost:8080/api/health
+npm ci --prefix Backend --ignore-scripts --no-audit --no-fund
+npm run test:inventory
+npm test
 ```
 
-- Cliente de desarrollo: <http://localhost:8080>.
-- Admin de desarrollo: <http://localhost:8081>.
-- Parada segura: `docker compose stop`.
-- Dependencias para herramientas: `npm ci` y `npm ci --prefix Backend`.
+`npm run test:unit`, `npm run test:contract`, `npm run test:coverage` y `npm test -- --report` usan selección explícita. Integración PostgreSQL y E2E requieren recursos aislados y opt-in: [comandos y límites](docs/TESTING.md). Los scripts históricos no heredan automáticamente los controles nuevos.
 
-**No elimines el volumen PostgreSQL ni ejecutes `docker compose down -v`.** Una base nueva se inicializa con el esquema, sin cargar automáticamente cuentas ni respaldos. Las instrucciones completas están en [desarrollo local](docs/LOCAL-DEVELOPMENT.md).
+## Organización
 
-## Documentación
+`Frontend/`, `Admin/` y `Shared/` contienen clientes/recursos; `Backend/` API, workers y pruebas; `Base-de-Datos/` esquema y migraciones; `android/` proyecto nativo; `scripts/` builds y validación. `artifacts/` son salidas locales ignoradas. La constitución única está en `.specify/memory/constitution.md` y el ciclo SDD + RPI en `specs/`.
 
-El [índice oficial](docs/README.md) organiza la documentación por lector. Referencias principales:
-
-- [API REST y Socket.IO](docs/API.md), [base de datos](docs/DATABASE.md) y [seguridad](docs/SECURITY.md).
-- [Android](docs/ANDROID.md) y [release permanente](docs/ANDROID-RELEASE.md).
-- [Pruebas](docs/TESTING.md) y [mantenimiento](docs/MAINTENANCE.md).
-
-Los antecedentes VPS, de limpieza y del modelo Java académico están identificados como históricos; no sustituyen las guías vigentes.
+[Índice técnico](docs/README.md), [API](docs/API.md), [PostgreSQL](docs/DATABASE.md), [Android](docs/ANDROID.md), [SDD + RPI](docs/SDD-RPI.md) y [CI](docs/CI.md). No publicar esta rama hasta completar la auditoría de automatizaciones; no se hizo push, PR ni despliegue en DOC-01.
