@@ -52,6 +52,16 @@ test('Fallo de almacenamiento seguro rechaza login; web mantiene solo memoria',a
  assert.equal(f.session.isUser(),false);assert.equal(f.durable(),null);assert.equal(f.store.size,0);
  const web=fixture({native:false});await web.session.establish('memory-only','usuario');assert.equal(web.session.token(),'memory-only');assert.equal(web.store.size,0);assert.deepEqual(web.calls,[]);
 });
+test('Rechazos sin objeto de error cierran la sesión de forma segura y permiten reintentar',async()=>{
+ let attempts=0;
+ const f=fixture({read:async()=>{if(++attempts===1)throw null;}});
+ assert.equal((await f.session.restore()).state,'unavailable');
+ assert.equal(f.session.isUser(),false);
+ assert.equal((await f.session.restore()).state,'authenticated');
+ const failedWrite=fixture({write:async()=>{throw null;}});
+ await assert.rejects(failedWrite.session.establish('new.header.signature','usuario'),e=>e.code==='SECURE_STATE_UNAVAILABLE');
+ assert.equal(failedWrite.session.isUser(),false);
+});
 test('Plugin ausente y respuesta incompatible fallan cerrados sin fallback persistente',async()=>{
  const missing=fixture({available:false});assert.equal((await missing.session.restore()).state,'unavailable');await assert.rejects(missing.session.establish('new.header.signature','usuario'));
  const old=fixture({fetch:async()=>new Response('<html>404</html>',{status:404})});assert.equal((await old.session.restore()).state,'unavailable');assert.equal(old.session.isUser(),false);assert.equal(old.durable(),'fixture.header.signature');

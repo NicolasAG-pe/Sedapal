@@ -2,6 +2,8 @@
 
 ## Revisión local de SonarQube — 1.2.0
 
+- La sesión Android trata los rechazos sin objeto de error como fallos de almacenamiento, sin autorizar la sesión y permitiendo reintentar.
+- La limpieza de eventos push gestiona también los rechazos inesperados sin generar promesas huérfanas y permite volver a consultar el evento.
 - Configuración reproducible del análisis sobre el repositorio, con JavaScript propio y exclusión precisa de los archivos de contexto Docker que no son Dockerfiles.
 - Actualización de dependencias transitivas de desarrollo en el lockfile y reutilización del generador seguro de estado push Android, sin cambiar la identidad de la aplicación.
 - Pruebas de actualización Android compatibles con saltos de línea de Windows y referencias explícitas al estado del navegador en las pruebas de segundo factor.

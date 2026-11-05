@@ -40,7 +40,7 @@
           if(epoch!==generation)throw new DOMException('Sesión cancelada.','AbortError');
           await secure.writeSession(value);
         }catch(error){
-          if(epoch!==generation || error.name==='AbortError')throw new DOMException('Sesión cancelada.','AbortError');
+          if(epoch!==generation || error?.name==='AbortError')throw new DOMException('Sesión cancelada.','AbortError');
           const failure=new Error('No se pudo guardar la sesión de forma segura. Reintenta.');
           failure.code='SECURE_STATE_UNAVAILABLE';throw failure;
         }
@@ -64,13 +64,14 @@
           set(saved.token,'usuario');
           return {state:'authenticated',data};
         }catch(error){
-          if(error.name==='AbortError')return {state:'cancelled'};
+          if(error?.name==='AbortError')return {state:'cancelled'};
           // Sin red/5xx/almacén inaccesible: no mostrar datos ni borrar una credencial aún no validada.
           return {state:'unavailable'};
         }
       })();
       restoration=operation;
-      operation.finally(()=>{if(restoration===operation)restoration=null;});
+      const release=()=>{if(restoration===operation)restoration=null;};
+      operation.then(release,release);
       return operation;
     }
     async function authFetch(path, options = {}) {
