@@ -35,3 +35,7 @@ Reporte final local: /tmp/hidro-test01-artifacts/tests/safe-jGIPiO/ con junit.xm
 AC-TEST-01..06 cumplidos en alcance declarado. TEST-01 completado, CI-01 habilitado condicionalmente. Publicación prohibida; no ejecución de otros avances.
 
 Retirada verificada:0 conexiones cliente, stop/rm solo del ID/label de PG creado; ningún recurso con label hidro.sdd.test restante. No se eliminaron volúmenes. 63 scripts npm anteriores conservados sin cambios; git diff de pruebas anteriores vacío.
+
+Precisión final del inventario: los helpers close-native-fixture no requieren Android SDK; solo los ejecutables Android nativos se marcan así. Se explicitan imports literales de Backend/node_modules en los requisitos. No cambian grupos ni suites; baseline de cobertura anterior se conserva como medición histórica identificada por sus huellas, no se recalcula ni se altera.
+
+Tras esa precisión: cinco pruebas específicas del catálogo/runner aprobadas con Node22,0 fallidas/omitidas; checker CI sigue aprobando sus ocho controles negativos. No se repitieron suites funcionales sin cambios.

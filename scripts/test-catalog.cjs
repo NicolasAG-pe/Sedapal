@@ -50,7 +50,8 @@ function inventory() {
         if (/nuevaBase|email-api|HIDRO_EMAIL_TEST_DB_PORT/.test(source)) tools.push('PostgreSQL sintetico/fixture');
         if (/playwright|chromium/.test(source)) tools.push('Playwright/Chromium externo al lockfile');
         if (/firefox/.test(source)) tools.push('Firefox y origen Nginx aislado');
-        if (/adb|native/.test(name)) tools.push('Android SDK/dispositivo/fixture');
+        if (name.startsWith('scripts/test/android-') && /native|pdf-viewer/.test(name)) tools.push('Android SDK/dispositivo/fixture');
+        if (dependencies.some(d => d.includes('Backend/node_modules/'))) tools.push('dependencias Backend instaladas (rutas literales)');
         if (/execFileSync\(['"]git/.test(source)) tools.push('historial Git y tags');
         if (/pdftotext|pdfinfo/.test(source)) tools.push('Poppler');
         if (/docker|kubectl|pg_dump|pg_restore/.test(source)) tools.push('herramientas opt-in indicadas en fuente');

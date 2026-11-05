@@ -9,6 +9,8 @@
 
 ## TEST-01 — entrada segura e inventario reproducible
 
+- Inventario afinado: helpers de cierre HTTP sin requisito Android SDK e imports literales de Backend/node_modules explícitos.
+
 - Catálogo de101 archivos, grupos explícitos y comandos npm separados sin eliminar pruebas anteriores. Entorno limpio, guard de red loopback y rechazo de prerrequisitos ausentes.
 - Node22:128 pruebas seguras aprobadas; PG18 sintético:62 aprobadas/0 fallidas/1 omisión condicional ya acreditada en DB-01. Guard nuevo corregido tras fallo de su propia prueba, sin modificar producto.
 - Reportes JUnit/metadatos y cobertura nativa limitada a fuentes cargadas:47,72% líneas,82,66% ramas,62,92% funciones; sin umbral ni atribución global. Sin dependencias nuevas/publicación.
