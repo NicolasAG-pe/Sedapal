@@ -1421,7 +1421,7 @@
     });
   }
   function iniciarTiempoReal(){
-    try{ detenerTiempoReal(true); }catch(e){}
+    try{ detenerTiempoReal(); }catch(e){}
     let token = '';
     try{ token = obtenerToken(); }catch(e){}
     if(!token) return;

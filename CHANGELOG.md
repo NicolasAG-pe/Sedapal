@@ -6,6 +6,7 @@
 - Actualización de dependencias transitivas de desarrollo en el lockfile y reutilización del generador seguro de estado push Android, sin cambiar la identidad de la aplicación.
 - Pruebas de actualización Android compatibles con saltos de línea de Windows y referencias explícitas al estado del navegador en las pruebas de segundo factor.
 - El contexto y la imagen Docker del frontend incluyen los módulos compartidos que la página necesita para 2FA, recuperación e incidencias.
+- El reinicio de Socket.IO deja de enviar un argumento que la función de limpieza no utiliza.
 
 ## Kubernetes local 1.2.0 — actualización controlada
 
