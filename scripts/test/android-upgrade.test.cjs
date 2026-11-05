@@ -6,7 +6,8 @@ const {buildWeb}=require('../build-web');
 const {verifyClientRuntime}=require('../verify-client-runtime');
 const root=path.resolve(__dirname,'../..');
 const old=file=>execFileSync('git',['show','v1.0.0:'+file],{cwd:root,encoding:'utf8'});
-const current=file=>fs.readFileSync(path.join(root,file),'utf8');
+// Git devuelve LF, mientras un checkout de Windows puede usar CRLF.
+const current=file=>fs.readFileSync(path.join(root,file),'utf8').replace(/\r\n/g,'\n');
 const field=(source,name)=>source.match(new RegExp('\\b'+name+'\\s+(?:"([^"]+)"|(\\d+))'))?.slice(1).find(Boolean);
 test('Candidato conserva identidad/certificado y solo añade el manifiesto FCM aprobado',()=>{
  const file='android/app/build.gradle',previous=old(file),next=current(file);
