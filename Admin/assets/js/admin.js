@@ -296,7 +296,7 @@
   function limaInputValor(iso){
     try{
       const d = new Date(iso);
-      if(isNaN(d)) return '';
+      if(Number.isNaN(d.getTime())) return '';
       const partes = new Intl.DateTimeFormat('en-CA', {
         timeZone: 'America/Lima',
         year: 'numeric', month: '2-digit', day: '2-digit',
@@ -307,9 +307,11 @@
     }catch(e){ return ''; }
   }
   function limaISODesdeInput(valor){
-    if(!valor) return null;
+    if(typeof valor !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(valor)) return null;
     const d = new Date(valor + ':00-05:00');
-    if(isNaN(d)) return null;
+    if(Number.isNaN(d.getTime())) return null;
+    // Date normaliza fechas imposibles; validar que no haya cambiado el día o la hora.
+    if(new Date(d.getTime() - 5 * 60 * 60 * 1000).toISOString().slice(0,16) !== valor) return null;
     return d.toISOString();
   }
   function mostrarFormCorte(editar){
@@ -579,7 +581,7 @@
   function fmtFechaLarga(iso){
     try{
       const d = new Date(iso);
-      if(isNaN(d)) return '—';
+      if(Number.isNaN(d.getTime())) return '—';
       return new Intl.DateTimeFormat('es-PE', {timeZone:'America/Lima', day:'2-digit', month:'2-digit', year:'numeric'}).format(d);
     }catch(e){ return '—'; }
   }
@@ -771,7 +773,7 @@
   function formatearFechaHoraInc(iso){
     try{
       const d = new Date(iso);
-      if(isNaN(d)) return '—';
+      if(Number.isNaN(d.getTime())) return '—';
       return new Intl.DateTimeFormat('es-PE', {
         timeZone: 'America/Lima',
         day: '2-digit', month: '2-digit', year: 'numeric',

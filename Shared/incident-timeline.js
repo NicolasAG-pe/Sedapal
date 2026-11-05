@@ -32,7 +32,7 @@
     const date = (v) => {
       if (!v) return "Fecha no disponible";
       const d = new Date(v);
-      return isNaN(d)
+      return Number.isNaN(d.getTime())
         ? "Fecha no disponible"
         : new Intl.DateTimeFormat("es-PE", {
             timeZone: "America/Lima",
