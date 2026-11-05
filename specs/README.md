@@ -32,3 +32,5 @@ PKG-01: corrección aplicada y pruebas locales aprobadas; validación parcial, v
 Actualización de sesión: PKG-01 completado localmente (Node 22, HTTP/MIME y Firefox). DB-01 autorizado después de este cierre; no publicar ni ejecutar otros módulos.
 
 Estado final de esta sesión: PKG-01 y DB-01 completados localmente, evidencia en sus validation.md; solo commits locales. TEST-01, CI-01 y SonarQube pendientes de autorización y planificación detallada, sin iniciar módulos adicionales.
+
+TEST-01 completado localmente: [especificación](003-pruebas-automatizadas/spec.md), [inventario](003-pruebas-automatizadas/test-inventory.md), [comandos](003-pruebas-automatizadas/quickstart.md) y [validación](003-pruebas-automatizadas/validation.md). CI-01 autorizado solo después de este cierre; no otros avances.

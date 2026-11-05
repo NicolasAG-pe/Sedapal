@@ -1,0 +1,3162 @@
+{
+  "schemaVersion": 1,
+  "base": "162e2d8",
+  "groups": {
+    "unit": [
+      "Backend/test/config.test.js",
+      "Backend/test/email-cleanup.test.js",
+      "Backend/test/email-gmail.test.js",
+      "Backend/test/email-live.test.js",
+      "Backend/test/email-otp.test.js",
+      "Backend/test/email-outbox.test.js",
+      "Backend/test/email-resend.test.js",
+      "Backend/test/receipt-date.test.js",
+      "Backend/test/start.test.cjs",
+      "Backend/test/totp-crypto.test.js",
+      "Backend/test/push-credentials.cjs",
+      "scripts/test/client-session.test.cjs",
+      "scripts/test/realtime.test.cjs",
+      "scripts/test/registration-state.test.cjs",
+      "scripts/test/secure-session.test.cjs",
+      "scripts/test/ui-money.test.cjs",
+      "scripts/test/hidrobot.test.cjs",
+      "scripts/test/identity-palette.test.cjs",
+      "scripts/test/android-release-signing.test.cjs",
+      "scripts/test/firebase-lab.cjs",
+      "scripts/test/firebase-release.cjs",
+      "scripts/test/test-runner.test.cjs"
+    ],
+    "contract": [
+      "scripts/test/public-api-config.test.js",
+      "scripts/test/android-upgrade.test.cjs",
+      "scripts/test/client-packaging.test.cjs"
+    ],
+    "integration": [
+      "Backend/test/receipt-profile-compat.cjs",
+      "Backend/test/payment-production-compat.cjs",
+      "Backend/test/quality-migrations.cjs",
+      "Backend/test/receipt-concurrency.cjs",
+      "Backend/test/receipt-schema.cjs"
+    ],
+    "e2e": [
+      "scripts/test/client-packaging-browser.cjs"
+    ]
+  },
+  "entries": [
+    {
+      "path": "Backend/test/android-session.cjs",
+      "sha256": "a0f0c1d13256a1724ff09e72a280f6d740988a5921775449cc697d2162afeba6",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "jsonwebtoken",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "./email-api.cjs",
+        "jsonwebtoken"
+      ],
+      "environmentNames": [
+        "AUTH_TOKEN_SECRET"
+      ],
+      "legacyNpm": [
+        "test:android:session"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/config.test.js",
+      "sha256": "94e291d7136352e7a5d2ac7c7f9929889fabcea42f048399143c6ab7e02a1e56",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "pg"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "pg",
+        "../config"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:config"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/email-api.cjs",
+      "sha256": "2bad2e3a37be0f78953a9935104a4183c4527c4456f164d2954af506c237ffbe",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:crypto",
+        "./email-schema.cjs",
+        "../email-registration",
+        "../email-outbox",
+        "../resend-mail",
+        "../server",
+        "../email-otp"
+      ],
+      "environmentNames": [
+        "EMAIL_OTP_SECRET",
+        "EMAIL_OUTBOX_KEY",
+        "EMAIL_REGISTRATION_ENABLED"
+      ],
+      "legacyNpm": [
+        "test:email:api"
+      ],
+      "referencedBy": [
+        "Backend/test/android-session.cjs",
+        "Backend/test/email-contract.cjs",
+        "Backend/test/email-outbox-api.cjs",
+        "Backend/test/email-registration-gate.cjs",
+        "Backend/test/incident-tracking-fixture.cjs",
+        "Backend/test/otp-auto-session.cjs",
+        "Backend/test/password-recovery.cjs",
+        "Backend/test/payment-operations.cjs",
+        "Backend/test/push.cjs",
+        "Backend/test/receipt-concurrency.cjs",
+        "Backend/test/receipt-profile-compat.cjs",
+        "Backend/test/totp-key-rotation.cjs",
+        "Backend/test/two-factor-admin.cjs",
+        "Backend/test/two-factor-audit.cjs",
+        "Backend/test/two-factor.cjs",
+        "Backend/test/yape-pilot.cjs",
+        "scripts/test/android-session-native.cjs",
+        "scripts/test/android-transition.cjs",
+        "scripts/test/k8s-integration.test.cjs",
+        "scripts/test/password-recovery-flow.cjs",
+        "scripts/test/payment-flow.cjs",
+        "scripts/test/push-flow.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/email-cleanup-cli.cjs",
+      "sha256": "c203b5fb2e2c7748d6474d127e015be70b00ee24f74904f28fa6776407b98e1f",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:crypto",
+        "node:path",
+        "node:child_process",
+        "node:util",
+        "./email-schema.cjs",
+        "../maintenance/email-cleanup.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:email:cleanup:cli"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/email-cleanup.cjs",
+      "sha256": "db24334589b3ab36ae6357ac767cee97d985751ab216b54c2e09ae87bf3c0f86",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:crypto",
+        "./email-schema.cjs",
+        "../email-cleanup",
+        "../email-registration",
+        "../email-outbox"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:email:cleanup"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/email-cleanup.test.js",
+      "sha256": "6b039cd20e0f1d9b5c30180ad2ec81a10ceccfb183a5b59fccb116471fe334a1",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "../email-cleanup",
+        "../maintenance/email-cleanup.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:email"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/email-contract.cjs",
+      "sha256": "2dd20a3ad977378d597c24bd27e20ee5896262cda11827599385f4641bcae845",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "./email-api.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:email:contract"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/email-gmail-worker.cjs",
+      "sha256": "472cb36dc6ce9f1953ddb75fc63f1d343d769fbb077cd1d001c89a8198cf94cb",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:crypto",
+        "node:child_process",
+        "./email-schema.cjs",
+        "../gmail-mail",
+        "../email-provider",
+        "../email-registration",
+        "../mail-envelope",
+        "../outbox-crypto"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/email-gmail.test.js",
+      "sha256": "1126dd501df579ba80abb5f5e770ee5a7f0c8479aac9c421dcf67e305c9cfdd3",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:crypto",
+        "../gmail-mail",
+        "../email-provider",
+        "../resend-mail",
+        "../mail-envelope",
+        "../../scripts/gmail-oauth.cjs",
+        "../email-registration"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:email",
+        "test:email:gmail"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/email-h03-baseline.cjs",
+      "sha256": "31e236bacb041b75710ae90ce700426646d6c1d2e1b7940827c2cd7763ac43b7",
+      "type": "manual/historica",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture",
+        "historial Git y tags"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:crypto",
+        "node:path",
+        "node:module",
+        "node:child_process",
+        "./email-schema.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/email-live.cjs",
+      "sha256": "cc6148633bfcccdb43d687401113ab917f10faab5593e77ea22e2c82feb748ed",
+      "type": "live",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture",
+        "herramientas opt-in indicadas en fuente"
+      ],
+      "dependencies": [
+        "node:crypto",
+        "node:fs",
+        "node:path",
+        "node:child_process",
+        "node:timers/promises",
+        "./email-schema.cjs",
+        "../email-otp",
+        "../email-outbox",
+        "../resend-mail",
+        "../server"
+      ],
+      "environmentNames": [
+        "EMAIL_OUTBOX_KEY",
+        "HIDRO_EMAIL_TEST_CONTAINER",
+        "HIDRO_EMAIL_TEST_DB_PORT",
+        "HIDRO_LIVE_EMAIL_TO",
+        "RESEND_API_KEY"
+      ],
+      "legacyNpm": [
+        "test:email:live"
+      ],
+      "referencedBy": [
+        "Backend/test/email-live.test.js"
+      ],
+      "risk": "ALTO: puede enviar correo real; fuera de runner"
+    },
+    {
+      "path": "Backend/test/email-live.test.js",
+      "sha256": "78feac3e148c33891813a75e60dec65732fd01b31c144ffb0da938b4807d332b",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:stream",
+        "./email-live.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:email"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/email-otp.test.js",
+      "sha256": "70271b1d08f4cad8f371894adff9887f6d603678ce11ff624c041a5adf604b4d",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "../email-otp"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:email"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/email-outbox-api.cjs",
+      "sha256": "ff943fa6e8ad2d7d8c759c423d5e1b8f4af3ecab9668fb4363a95f19bebf59b6",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "pg",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:child_process",
+        "pg",
+        "./email-api.cjs",
+        "./email-schema.cjs",
+        "../email-outbox",
+        "../email-otp",
+        "../email-cleanup",
+        "../email-registration"
+      ],
+      "environmentNames": [
+        "AUTH_TOKEN_SECRET",
+        "EMAIL_OTP_SECRET",
+        "EMAIL_OUTBOX_KEY",
+        "RESEND_API_KEY"
+      ],
+      "legacyNpm": [
+        "test:email:outbox"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/email-outbox-postgres.cjs",
+      "sha256": "e35abc55ea0a499aa6391dac0dec93c9aede622c8c34d1b2b73cce744dff9b51",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "./email-schema.cjs",
+        "../email-otp",
+        "../email-outbox",
+        "../outbox-crypto"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:email:outbox"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/email-outbox.test.js",
+      "sha256": "167a74885f068c3d2bbe22b5d44a8c4af9e143dbf335f4334eb85d57723a9ef5",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "../outbox-crypto",
+        "../workers/email-outbox.cjs",
+        "../resend-mail"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:email"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/email-registration-gate.cjs",
+      "sha256": "5cab5919761b89ea4357c14e9f403709ed5baf420caafb97d1aa32a730635c51",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "./email-api.cjs"
+      ],
+      "environmentNames": [
+        "EMAIL_REGISTRATION_ENABLED"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/email-resend.test.js",
+      "sha256": "f53bd2fc2183dddea0ef7f2c6423d939f38ee112dff62d578d5fa44ba2f1962a",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "../resend-mail"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:email"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/email-schema.cjs",
+      "sha256": "1b6e8e44cf3d64edeb92611ddfa21b77c4e34db6d0eae4a78440c60a4eb7cad0",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "pg",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:crypto",
+        "pg"
+      ],
+      "environmentNames": [
+        "HIDRO_EMAIL_TEST_DB_PORT"
+      ],
+      "legacyNpm": [
+        "test:email:schema"
+      ],
+      "referencedBy": [
+        "Backend/test/email-api.cjs",
+        "Backend/test/email-cleanup-cli.cjs",
+        "Backend/test/email-cleanup.cjs",
+        "Backend/test/email-gmail-worker.cjs",
+        "Backend/test/email-h03-baseline.cjs",
+        "Backend/test/email-live.cjs",
+        "Backend/test/email-outbox-api.cjs",
+        "Backend/test/email-outbox-postgres.cjs",
+        "Backend/test/incident-tracking-fixture.cjs",
+        "Backend/test/incident-tracking.cjs",
+        "Backend/test/password-recovery-fixture.cjs",
+        "Backend/test/password-recovery-schema.cjs",
+        "Backend/test/password-recovery.cjs",
+        "Backend/test/payment-operations.cjs",
+        "Backend/test/payment-production-compat.cjs",
+        "Backend/test/push-fixture.cjs",
+        "Backend/test/push-schema.cjs",
+        "Backend/test/push-start-postgres.cjs",
+        "Backend/test/push.cjs",
+        "Backend/test/quality-migrations.cjs",
+        "Backend/test/receipt-profile-compat.cjs",
+        "Backend/test/receipt-schema.cjs",
+        "Backend/test/start-postgres.cjs",
+        "Backend/test/two-factor.cjs",
+        "Backend/test/yape-pilot.cjs",
+        "scripts/test/android-session-native.cjs",
+        "scripts/test/downgrade-lab.cjs",
+        "scripts/test/k8s-integration.test.cjs",
+        "scripts/test/totp-restore-lab.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/gmail-fixture.cjs",
+      "sha256": "62867f454a3683a1cd30aa0b392ac4b104324dcbd467a47c5511c0fce0f871c8",
+      "type": "helper",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:fs",
+        "../gmail-mail"
+      ],
+      "environmentNames": [
+        "HIDRO_GMAIL_TEST_CODE_FILE",
+        "HIDRO_GMAIL_TEST_MAILBOX"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/incident-tracking-fixture.cjs",
+      "sha256": "d7ab24c93aaba6a05c53bb9db6ea6964dfea458cdafe51f59144f38a5a6bf370",
+      "type": "helper",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "pngjs",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "./email-api.cjs",
+        "./email-schema.cjs",
+        "node:crypto",
+        "pngjs"
+      ],
+      "environmentNames": [
+        "EMAIL_PROVIDER",
+        "EMAIL_REGISTRATION_ALLOWED_EMAIL",
+        "PUSH_ENABLED",
+        "PUSH_PROVIDER",
+        "PUSH_TOKEN_KEY"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [
+        "Backend/test/incident-tracking.cjs",
+        "scripts/test/incident-tracking-flow.cjs",
+        "scripts/test/quality-audit-flow.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/incident-tracking.cjs",
+      "sha256": "61d78656c9f3b42cd2a48b9381bdcc6efd3124664399debbf89622bc76e0df4e",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "ws"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "./email-schema.cjs",
+        "./incident-tracking-fixture.cjs",
+        "../../Frontend/assets/vendor/socket.io.min.js",
+        "node:events",
+        "ws",
+        "../push-worker",
+        "../push-provider"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:incidents"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/otp-auto-session.cjs",
+      "sha256": "88cf41aacfbadc545a19032f7b35f31999f39d34e6038319d036bc05aa5b9643",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "jsonwebtoken",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "jsonwebtoken",
+        "./email-api.cjs",
+        "../email-registration"
+      ],
+      "environmentNames": [
+        "AUTH_TOKEN_SECRET",
+        "EMAIL_OTP_SECRET",
+        "EMAIL_OUTBOX_KEY"
+      ],
+      "legacyNpm": [
+        "test:email:auto-session"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/password-recovery-fixture.cjs",
+      "sha256": "8bb05805cb454459f809e41c626ed2f4017aa71b6218ece768e803b2382aa6bf",
+      "type": "helper",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:crypto",
+        "node:assert/strict",
+        "./email-schema.cjs",
+        "../password-recovery-worker",
+        "../resend-mail"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs",
+        "scripts/test/password-recovery-flow.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/password-recovery-schema.cjs",
+      "sha256": "0dedb621361fda045c3c36a92393931de5fe1fe5340eb8d7ea316213b75f9820",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "./email-schema.cjs",
+        "../password-recovery-crypto",
+        "node:child_process"
+      ],
+      "environmentNames": [
+        "PATH"
+      ],
+      "legacyNpm": [
+        "test:password-recovery"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/password-recovery.cjs",
+      "sha256": "83ce907d9e0f9f4ce5831c9c83ba5d14e53c88e2cbd0d5a150b9fd8f4bfd1ee3",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "jsonwebtoken",
+        "otpauth",
+        "ws",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "node:events",
+        "./email-api.cjs",
+        "./email-schema.cjs",
+        "../password-recovery-worker",
+        "../resend-mail",
+        "../password-recovery-crypto",
+        "jsonwebtoken",
+        "otpauth",
+        "../../Frontend/assets/vendor/socket.io.min.js",
+        "ws",
+        "../totp-crypto"
+      ],
+      "environmentNames": [
+        "AUTH_TOKEN_SECRET",
+        "EMAIL_OUTBOX_KEY",
+        "EMAIL_PROVIDER",
+        "PASSWORD_RECOVERY_ALLOWED_EMAIL",
+        "PASSWORD_RECOVERY_ENABLED",
+        "PASSWORD_RECOVERY_OUTBOX_KEY",
+        "PASSWORD_RECOVERY_SECRET",
+        "TOTP_ADMIN_ENROLLMENT_ENABLED",
+        "TOTP_ENCRYPTION_KEY",
+        "TOTP_ENROLLMENT_ENABLED"
+      ],
+      "legacyNpm": [
+        "test:password-recovery"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/payment-operations.cjs",
+      "sha256": "f714619d5e1e95479b0991e14e8a1894bff1d67091a9b8872903b4d3da5dc312",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "pngjs",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "node:fs",
+        "node:path",
+        "pngjs",
+        "./email-api.cjs",
+        "../payment-operations",
+        "../payment-provider",
+        "./email-schema.cjs"
+      ],
+      "environmentNames": [
+        "PAYMENTS_MANUAL_ENABLED",
+        "YAPE_QR_FILE"
+      ],
+      "legacyNpm": [
+        "test:payments"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/payment-production-compat.cjs",
+      "sha256": "8f28211ac555b8a2b1f697180a89b394fdac0d54b4f1143c3819a9d7861fb06e",
+      "type": "integracion",
+      "group": "integration",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "./email-schema.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "opt-in: crea bases hijas y modifica exclusivamente fixtures PG18"
+    },
+    {
+      "path": "Backend/test/push-credentials.cjs",
+      "sha256": "be46845c215ec3a329d08c320f9d9777166821604ce3aabf8fe6cb106fdd6789",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "../push-credentials",
+        "../push-provider",
+        "../workers/push.cjs",
+        "node:crypto"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:fcm:lab",
+        "test:fcm:release"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/push-fixture.cjs",
+      "sha256": "c2af04673dde9b034978db11af354ed5142c11bdde0ad1fc129461dd1a8386af",
+      "type": "helper",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:crypto",
+        "./email-schema.cjs",
+        "../push-worker",
+        "../push-provider"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs",
+        "scripts/test/push-flow.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/push-schema.cjs",
+      "sha256": "c7fa1391afab00fe1265f01d0c9f0e12df7335cd3fc7e166aceaae47e11b7341",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "./email-schema.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:push"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/push-start-postgres.cjs",
+      "sha256": "8abe0236a79bf3efb9559ca7c1d82d81b56db230b307b797f2a5e93fd8edcb54",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:child_process",
+        "node:crypto",
+        "node:net",
+        "node:path",
+        "./email-schema.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/push.cjs",
+      "sha256": "afb19916c26caced0e2283added50f833c8aaa86b465953b242e1e9d37745440",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "jsonwebtoken",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "./email-api.cjs",
+        "./email-schema.cjs",
+        "../push-worker",
+        "../push-provider",
+        "../push",
+        "node:child_process",
+        "node:path",
+        "jsonwebtoken",
+        "node:fs",
+        "node:os"
+      ],
+      "environmentNames": [
+        "AUTH_TOKEN_SECRET",
+        "EMAIL_PROVIDER",
+        "EMAIL_REGISTRATION_ALLOWED_EMAIL",
+        "PUSH_ENABLED",
+        "PUSH_PROVIDER",
+        "PUSH_REMINDERS_ENABLED",
+        "PUSH_TOKEN_KEY"
+      ],
+      "legacyNpm": [
+        "test:push"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/quality-migrations.cjs",
+      "sha256": "4a4990db96440c2f79f7ea3de0a15a53aedfc8c0909d690cb36ae2166f9c513d",
+      "type": "integracion",
+      "group": "integration",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "./email-schema.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "opt-in: crea bases hijas y modifica exclusivamente fixtures PG18"
+    },
+    {
+      "path": "Backend/test/receipt-concurrency.cjs",
+      "sha256": "168c7fd6d884b6ba2270139881ba8991a7c22c7f20d73119e0aa1ce1bdc6fe2f",
+      "type": "integracion",
+      "group": "integration",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "./email-api.cjs",
+        "node:child_process",
+        "./Backend/server",
+        "node:path"
+      ],
+      "environmentNames": [
+        "HIDRO_RECEIPT_TEST_LEGACY"
+      ],
+      "legacyNpm": [
+        "test:receipts",
+        "test:payments"
+      ],
+      "referencedBy": [],
+      "risk": "opt-in: crea bases hijas y modifica exclusivamente fixtures PG18"
+    },
+    {
+      "path": "Backend/test/receipt-date.test.js",
+      "sha256": "1b91a7a16b3107d2b72570a9b421fa6ab3a108c4db049d21e85c94cd34df5cdd",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "pg/lib/utils"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:vm",
+        "pg/lib/utils"
+      ],
+      "environmentNames": [
+        "TZ"
+      ],
+      "legacyNpm": [
+        "test:config"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/receipt-profile-compat.cjs",
+      "sha256": "bc0e598466e392c27d899f2d1b44222da978c126901b2d87c3608afc014792ea",
+      "type": "integracion",
+      "group": "integration",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "pg",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "pg",
+        "./email-schema.cjs",
+        "../receipt-transactions",
+        "./email-api.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "opt-in: crea bases hijas y modifica exclusivamente fixtures PG18"
+    },
+    {
+      "path": "Backend/test/receipt-schema.cjs",
+      "sha256": "b9a96ebdda539db8610a5ac0e9515d315d8fed9d6266056c94a4d38fe7e7e7da",
+      "type": "integracion",
+      "group": "integration",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "./email-schema.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:receipts",
+        "test:payments"
+      ],
+      "referencedBy": [],
+      "risk": "opt-in: crea bases hijas y modifica exclusivamente fixtures PG18"
+    },
+    {
+      "path": "Backend/test/resend-fixture.cjs",
+      "sha256": "475d69ca1650874eae22ec594e98c01be6aea820568f80194a4943935158dd10",
+      "type": "helper",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:fs",
+        "node:crypto"
+      ],
+      "environmentNames": [
+        "HIDRO_TEST_MAILBOX",
+        "HIDRO_TEST_PROVIDER_DELAY_MS"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/start-postgres.cjs",
+      "sha256": "025d076265fc40874d5080e614fec051dafd9b2a51d4d385369a232b67460ebb",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:crypto",
+        "node:child_process",
+        "node:net",
+        "./email-schema.cjs",
+        "../gmail-mail"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/start.test.cjs",
+      "sha256": "a18cf256f863ae2d4b7f377d2e81089b86a20adc34bf2cdf0e76ea5070007246",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:events",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "../start.cjs",
+        "../gmail-mail"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:fcm:release"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/totp-crypto.test.js",
+      "sha256": "db8c4c991e073f7a774dba1c6161bb2f89d486b8b3b5c1c31645b9e905b5d61e",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "../totp-crypto"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/totp-key-rotation.cjs",
+      "sha256": "91a6d9dd9ef801b13d00baf2893ad22a842f7af504f37bddbf1b26042de45415",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "./email-api.cjs",
+        "../totp-crypto",
+        "../maintenance/two-factor.cjs",
+        "../maintenance/totp-keys.cjs"
+      ],
+      "environmentNames": [
+        "TOTP_ENCRYPTION_KEY",
+        "TOTP_ENROLLMENT_ENABLED"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/two-factor-admin.cjs",
+      "sha256": "074058bc0ef911fd40b698589b1c177da8811fe5e2fb33c47dbd287d483bc0ad",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "otpauth",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "otpauth",
+        "./email-api.cjs",
+        "../totp-crypto",
+        "../../scripts/check-auth-candidate.cjs"
+      ],
+      "environmentNames": [
+        "TOTP_ADMIN_ENROLLMENT_ENABLED",
+        "TOTP_ENCRYPTION_KEY",
+        "TOTP_ENROLLMENT_ENABLED"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/two-factor-audit.cjs",
+      "sha256": "71e50783e274a1196968481be5036ec2720c57e04f2283936c728473c4254834",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "otpauth",
+        "ws",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "./email-api.cjs",
+        "otpauth",
+        "ws",
+        "../../Frontend/assets/vendor/socket.io.min.js",
+        "../totp-crypto",
+        "../maintenance/two-factor.cjs"
+      ],
+      "environmentNames": [
+        "TOTP_ENCRYPTION_KEY",
+        "TOTP_ENROLLMENT_ENABLED"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/two-factor.cjs",
+      "sha256": "71b32de4dd7ea4d4e365c796476a37a65f4a0daccb425bf05459dba857179f85",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "otpauth",
+        "jsonwebtoken",
+        "ws",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "otpauth",
+        "jsonwebtoken",
+        "./email-api.cjs",
+        "./email-schema.cjs",
+        "ws",
+        "../../Frontend/assets/vendor/socket.io.min.js",
+        "../totp-crypto"
+      ],
+      "environmentNames": [
+        "AUTH_TOKEN_SECRET",
+        "TOTP_ENCRYPTION_KEY",
+        "TOTP_ENROLLMENT_ENABLED"
+      ],
+      "legacyNpm": [
+        "test:2fa"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/yape-pilot.cjs",
+      "sha256": "658d3cf5cf39e64e5e0823df3a0b92f00b8bee2ea1f2963330558ef95e3ae755",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "qrcode",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "node:fs",
+        "node:path",
+        "qrcode",
+        "./email-api.cjs",
+        "../payment-operations",
+        "../yape-pilot",
+        "./email-schema.cjs"
+      ],
+      "environmentNames": [
+        "YAPE_PILOT_CONFIG_FILE",
+        "YAPE_QR_FILE"
+      ],
+      "legacyNpm": [
+        "test:yape:pilot"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/admin-e2e.cjs",
+      "sha256": "5282efbf48df5f912b7162524c3a7a442b190416ac86acfee7c17e5f70cb6bbb",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:os",
+        "node:http",
+        "node:crypto",
+        "node:child_process",
+        "node:module",
+        "./visual-checks.cjs",
+        "./client-checks.cjs"
+      ],
+      "environmentNames": [
+        "HIDRO_EMAIL_TEST_DB_PORT",
+        "HIDRO_TEST_CHROME",
+        "HIDRO_TEST_DB_PORT",
+        "HIDRO_TEST_DOUBLE_SUBMIT",
+        "HIDRO_TEST_REPORT_DIR"
+      ],
+      "legacyNpm": [
+        "test:email:e2e"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/android-fcm-registration-native.cjs",
+      "sha256": "eda4d4d3dc18d5e3dbaf798371fe13f3cf75518987989a28887a86d448e8b719",
+      "type": "Android/dispositivo",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "Android SDK/dispositivo/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "../../Backend/push"
+      ],
+      "environmentNames": [
+        "PUSH_REAL_DELIVERY_ALLOWED",
+        "PUSH_TOKEN_KEY",
+        "PUSH_WORKER_ENABLED"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/android-incident-tracking-native.cjs",
+      "sha256": "ff3a91cf0abda82d7078a7894612b157d0bc6dabde2c476c37da3c85a459b95f",
+      "type": "Android/dispositivo",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "Android SDK/dispositivo/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "../../Backend/node_modules/pngjs",
+        "node:crypto"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/android-location-native.cjs",
+      "sha256": "6168b6cf5a25387fef8a6a4559fde4bd225bce0708dd24aa94809e7de6da00e4",
+      "type": "Android/dispositivo",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "Android SDK/dispositivo/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:path"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/android-otp-native.cjs",
+      "sha256": "09b3bbbd285c4f3ff9d44dbb55d49bcfbb4cdb0743fd70adb4adca6623932f44",
+      "type": "Android/dispositivo",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "Android SDK/dispositivo/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "../../Backend/outbox-crypto"
+      ],
+      "environmentNames": [
+        "EMAIL_OUTBOX_KEY"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/android-password-recovery-native.cjs",
+      "sha256": "4a4fcf720e18451bb598f670480a19087d106787475ac6e3ce3950fccf00df24",
+      "type": "Android/dispositivo",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "Android SDK/dispositivo/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:crypto",
+        "node:fs",
+        "node:path"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/android-payments-native.cjs",
+      "sha256": "b60d79662d80a1b8250dad8af9b342e31201bf4bc0e34d96cc6316a656c65563",
+      "type": "Android/dispositivo",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "Android SDK/dispositivo/fixture",
+        "Poppler"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:child_process",
+        "node:crypto",
+        "../../Backend/yape-pilot",
+        "../../Backend/payment-operations",
+        "./android-pdf-viewer.cjs"
+      ],
+      "environmentNames": [
+        "YAPE_PILOT_CONFIG_FILE",
+        "YAPE_PILOT_ENABLED",
+        "YAPE_QR_FILE"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/android-pdf-viewer.cjs",
+      "sha256": "cb464b62aa881a495db66983fa4729ba977ce134786fdebb0bd798832fbc16da",
+      "type": "Android/dispositivo",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "../../Backend/node_modules/pngjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-payments-native.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/android-push-native.cjs",
+      "sha256": "ccca1710cd7bb6cc7020bc49f4cfa248484d2cba72508f9ddf26fa6c1a002b31",
+      "type": "Android/dispositivo",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "Android SDK/dispositivo/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:path"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/android-release-signing.test.cjs",
+      "sha256": "6b8ef58cb78c6e61f24fffc8b54ca95cbd41acc27a330f24ea01bf72f93abcd9",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "../android-release-signing.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/android-session-native.cjs",
+      "sha256": "802130ac1e20ba81b3b1e8ffb83632969722edceff33cf0bbfe4c996fd26c7d7",
+      "type": "Android/dispositivo",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture",
+        "Playwright/Chromium externo al lockfile",
+        "Android SDK/dispositivo/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:os",
+        "node:child_process",
+        "../../Backend/test/email-api.cjs",
+        "../../Backend/test/push-fixture.cjs",
+        "../../Backend/test/password-recovery-fixture.cjs",
+        "node:crypto",
+        "../../Backend/node_modules/pngjs",
+        "../../Backend/test/email-schema.cjs",
+        "./android-fcm-registration-native.cjs",
+        "./android-incident-tracking-native.cjs",
+        "./android-push-native.cjs",
+        "./android-password-recovery-native.cjs",
+        "./android-payments-native.cjs",
+        "./android-otp-native.cjs",
+        "./android-two-factor-native.cjs",
+        "./android-location-native.cjs",
+        "./chatbot-ui-checks.cjs",
+        "./close-native-fixture.cjs"
+      ],
+      "environmentNames": [
+        "ANDROID_HOME",
+        "AUTH_TOKEN_SECRET",
+        "HIDRO_ADB",
+        "HIDRO_FCM_LAB_BUILD",
+        "HIDRO_NATIVE_SERIAL",
+        "HIDRO_PLAYWRIGHT_MODULE",
+        "PAYMENTS_MANUAL_ENABLED",
+        "PUSH_REAL_DELIVERY_ALLOWED",
+        "PUSH_REMINDERS_ENABLED",
+        "PUSH_WORKER_ENABLED",
+        "TOTP_ENCRYPTION_KEY",
+        "TOTP_ENROLLMENT_ENABLED",
+        "YAPE_QR_FILE"
+      ],
+      "legacyNpm": [
+        "test:android:native",
+        "test:2fa:native",
+        "test:android:otp:native",
+        "test:android:location:native",
+        "test:payments:native",
+        "test:yape:pilot:native",
+        "test:password-recovery:native",
+        "test:push:native",
+        "test:incidents:native",
+        "test:fcm:registration:native"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/android-transition.cjs",
+      "sha256": "d4057500772ce7f7d018059bee4750e4c635728543d44b366c9e08ff2fbe0226",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture",
+        "Playwright/Chromium externo al lockfile",
+        "historial Git y tags"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:os",
+        "node:crypto",
+        "node:child_process",
+        "../build-web",
+        "../../Backend/test/email-api.cjs",
+        "../../Backend/email-outbox",
+        "../../Backend/outbox-crypto",
+        "../../Backend/totp-crypto",
+        "../../Backend/node_modules/otpauth"
+      ],
+      "environmentNames": [
+        "EMAIL_OUTBOX_KEY",
+        "HIDRO_2FA_SCREENSHOT",
+        "HIDRO_PLAYWRIGHT_MODULE",
+        "TOTP_ADMIN_ENROLLMENT_ENABLED",
+        "TOTP_ENCRYPTION_KEY",
+        "TOTP_ENROLLMENT_ENABLED"
+      ],
+      "legacyNpm": [
+        "test:android:transition",
+        "test:android:otp"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/android-two-factor-native.cjs",
+      "sha256": "4a76c317af6719b33edfef43f1d4b74012465ccfb94efb8829cce298f3ca0d85",
+      "type": "Android/dispositivo",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "Android SDK/dispositivo/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:crypto",
+        "../../Backend/node_modules/otpauth",
+        "../../Backend/totp-crypto"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/android-upgrade.test.cjs",
+      "sha256": "b9869b0a801ba742c677e272946bbb8d972c3487fd75b93aa94a61fffbb8dbfd",
+      "type": "contrato",
+      "group": "contract",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "historial Git y tags"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:os",
+        "node:child_process",
+        "../build-web",
+        "../verify-client-runtime",
+        "./capacitor.config"
+      ],
+      "environmentNames": [
+        "API_BASE_URL"
+      ],
+      "legacyNpm": [
+        "test:android:upgrade"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/backend-docker23.cjs",
+      "sha256": "374bf80fb0b7386858af5fa06ce8f1f2a647db28ca6be5a3d19f8c1e95420654",
+      "type": "manual/historica",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "herramientas opt-in indicadas en fuente"
+      ],
+      "dependencies": [
+        "node:fs",
+        "node:path",
+        "node:assert/strict",
+        "node:crypto",
+        "node:child_process",
+        "../../Backend/node_modules/jsonwebtoken"
+      ],
+      "environmentNames": [
+        "HIDRO_BACKEND23_API_CONTAINER"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner"
+    },
+    {
+      "path": "scripts/test/backend-history23.cjs",
+      "sha256": "2cac2126314dd73855532e9bee93c071274738616be20a8e9344503d0ebcb586",
+      "type": "manual/historica",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:fs",
+        "node:path",
+        "node:assert/strict",
+        "node:crypto",
+        "../../Backend/node_modules/pg"
+      ],
+      "environmentNames": [
+        "HIDRO_EMAIL_TEST_DB_PORT"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/chatbot-ui-checks.cjs",
+      "sha256": "bc640324d926a1ac7cbf2f65d3d2a763fcab09d8d6b8cc16e22374b52c84a29e",
+      "type": "helper",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:assert/strict"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs",
+        "scripts/test/client-checks.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/client-checks.cjs",
+      "sha256": "e83d2bd321b28a28eca26bb8b8450769856dd46f65ccb8bf64cc89d59947cd18",
+      "type": "helper",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "./visual-checks.cjs",
+        "./chatbot-ui-checks.cjs"
+      ],
+      "environmentNames": [
+        "HIDRO_TEST_FULL_TUTORIAL"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/admin-e2e.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/client-packaging-browser.cjs",
+      "sha256": "f8cffb224ad149f482042d36215022d22deb123a4b9b0a4b2d64266c68e2618d",
+      "type": "E2E/navegador",
+      "group": "e2e",
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "Firefox y origen Nginx aislado"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:http",
+        "node:child_process"
+      ],
+      "environmentNames": [
+        "HIDRO_PKG01_STATIC_ORIGIN",
+        "HIDRO_TEST_FIREFOX"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "opt-in: HTTP local/Firefox con API sintetica"
+    },
+    {
+      "path": "scripts/test/client-packaging.test.cjs",
+      "sha256": "d72f496712f895132dd7a0d046dcf5982074ad768c91a993f11fb31d70de528c",
+      "type": "contrato",
+      "group": "contract",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "herramientas opt-in indicadas en fuente"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "../build-web",
+        "../verify-client-runtime"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/client-session.test.cjs",
+      "sha256": "a545f1d2526f2ce11db786952c9b0cb609c05a1a8d2e332cc4f6b5a4908143b1",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:vm",
+        "node:crypto"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:android:transition"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/close-native-fixture.cjs",
+      "sha256": "e4869119c9a52197a609d609224a2b484df354276bed9188866db80c7ba87cea",
+      "type": "helper",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "Android SDK/dispositivo/fixture"
+      ],
+      "dependencies": [],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs",
+        "scripts/test/close-native-fixture.test.cjs",
+        "scripts/test/incident-tracking-flow.cjs",
+        "scripts/test/password-recovery-flow.cjs",
+        "scripts/test/push-flow.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/close-native-fixture.test.cjs",
+      "sha256": "6bf3ac950af345a84d903a97f063511f9cc4f2e525d77ff60814ee328002cc8a",
+      "type": "integracion/loopback",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "Android SDK/dispositivo/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:http",
+        "node:net",
+        "node:events",
+        "../../Backend/node_modules/socket.io",
+        "./close-native-fixture.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/documents.test.cjs",
+      "sha256": "53900352a7a913c967c4ae357dfb80378bfba55550273fe1e5132b98b5732fc8",
+      "type": "unitaria/suplementaria",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "Poppler"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:vm",
+        "node:child_process",
+        "../../Frontend/assets/vendor/jspdf.umd.min.js"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:documents"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/downgrade-lab.cjs",
+      "sha256": "a5dcaff247af43b2350f7f7e6b0df54631789ef3551d539aaf489fa9dfa24c0d",
+      "type": "manual/historica",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:fs",
+        "node:path",
+        "node:crypto",
+        "node:assert/strict",
+        "../../Backend/test/email-schema.cjs",
+        "../../Backend/totp-crypto",
+        "../check-auth-candidate.cjs",
+        "../../Backend/node_modules/otpauth"
+      ],
+      "environmentNames": [
+        "HIDRO_TOTP_LAB_DIR"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/firebase-lab.cjs",
+      "sha256": "c40baa129e50c32e2537c9d5e0f588b5f49c57b7dc497604bc5ffb024b5435de",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "../build-android-fcm-lab.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:fcm:lab"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/firebase-release.cjs",
+      "sha256": "ef3f3ee4cc1fca37e338a6ed884598bff3360dbe74e3dd1dd6215c31b80775bf",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:os",
+        "../build-android-fcm-release.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:fcm:release"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/hidrobot.test.cjs",
+      "sha256": "e9a278935516447d2926c7dbb7423a35d718dfd15afe8b5d006796a18628266e",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:vm"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:chatbot"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/identity-palette.test.cjs",
+      "sha256": "0bd0228ccf58b9231fa65f79eb0b6b11a19da15978f5fcc8e4b6086b87d41638",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/identity-visual.cjs",
+      "sha256": "4a6196e6f958da51a9769851a8eebd3e0824147ad1ad6b4297367fb439c1c33c",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "Playwright/Chromium externo al lockfile",
+        "herramientas opt-in indicadas en fuente"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:child_process",
+        "../../artifacts/vercel-validation/tools/node_modules/playwright",
+        "../yape-pilot.cjs"
+      ],
+      "environmentNames": [
+        "HM_VISUAL_OUTPUT",
+        "HM_VISUAL_PHASE"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/incident-tracking-flow.cjs",
+      "sha256": "f664e17ca5037bdcabd81db713a20fdf250420f8719f0dd40797e1e756ae0177",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "Playwright/Chromium externo al lockfile"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:http",
+        "../../artifacts/vercel-validation/tools/node_modules/playwright",
+        "../build-web",
+        "../../Backend/test/incident-tracking-fixture.cjs",
+        "./close-native-fixture.cjs"
+      ],
+      "environmentNames": [
+        "HM_INCIDENT_BEFORE"
+      ],
+      "legacyNpm": [
+        "test:incidents:e2e"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/k8s-integration.test.cjs",
+      "sha256": "f86435049fecc2da551a36474cc451cb84ad7ae6f2802d6f239a6c6ee247b7d6",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture",
+        "herramientas opt-in indicadas en fuente"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:child_process",
+        "../../Backend/test/email-schema.cjs",
+        "../../Backend/test/email-api.cjs",
+        "../../Backend/email-registration"
+      ],
+      "environmentNames": [
+        "EMAIL_OTP_SECRET",
+        "EMAIL_OUTBOX_KEY",
+        "EMAIL_REGISTRATION_ENABLED",
+        "HIDRO_KUBECTL",
+        "HIDRO_YAML_MODULE",
+        "RESEND_FROM"
+      ],
+      "legacyNpm": [
+        "test:k8s"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/password-recovery-flow.cjs",
+      "sha256": "97baac03cedb81377b2ce7dbf840bfcb30462e1c313b25226eead2447ecfd0b8",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture",
+        "Playwright/Chromium externo al lockfile"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:http",
+        "../../artifacts/vercel-validation/tools/node_modules/playwright",
+        "../../Backend/test/email-api.cjs",
+        "../../Backend/test/password-recovery-fixture.cjs",
+        "../build-web",
+        "../../Backend/totp-crypto",
+        "../../Backend/node_modules/otpauth",
+        "./close-native-fixture.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:password-recovery:e2e"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/payment-audit-flow.cjs",
+      "sha256": "4cc90c68a3b744461ec40b3fa22587b9c3bae50554fd8b0eae87976e040ceb10",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "Playwright/Chromium externo al lockfile",
+        "Poppler",
+        "herramientas opt-in indicadas en fuente"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:child_process",
+        "../../artifacts/vercel-validation/tools/node_modules/playwright",
+        "../../Backend/node_modules/pg",
+        "../yape-pilot.cjs"
+      ],
+      "environmentNames": [
+        "HM_PAYMENT_AUDIT_OUTPUT"
+      ],
+      "legacyNpm": [
+        "test:payments:audit"
+      ],
+      "referencedBy": [
+        "scripts/test/yape-pilot-flow.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/payment-flow.cjs",
+      "sha256": "c8517d2bc21130402ef39fd382838450fcb420540cda01daac0f2ed5d7b49c00",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture",
+        "Playwright/Chromium externo al lockfile"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:crypto",
+        "../build-web",
+        "../../Backend/test/email-api.cjs",
+        "../../Backend/node_modules/pngjs",
+        "../../artifacts/vercel-validation/tools/node_modules/playwright"
+      ],
+      "environmentNames": [
+        "PAYMENTS_MANUAL_ENABLED",
+        "YAPE_QR_FILE"
+      ],
+      "legacyNpm": [
+        "test:payments:e2e"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/payment-production-browser.cjs",
+      "sha256": "fd9d86f31a64197e1d4d1e0951521c75871be791dcf5f7681a18cf65797a742f",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "Playwright/Chromium externo al lockfile"
+      ],
+      "dependencies": [
+        "node:fs",
+        "node:path",
+        "node:http",
+        "node:assert/strict",
+        "../build-web"
+      ],
+      "environmentNames": [
+        "HIDRO_PLAYWRIGHT_MODULE"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/payment-production-restore.cjs",
+      "sha256": "89fb45fbeb38bcc4f425310f42c0c2f8967a6cd0096429b1438a46208c467990",
+      "type": "manual/historica",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "herramientas opt-in indicadas en fuente"
+      ],
+      "dependencies": [
+        "node:fs",
+        "node:path",
+        "node:crypto",
+        "node:assert/strict",
+        "node:child_process"
+      ],
+      "environmentNames": [
+        "HIDRO_COMPAT_BACKUP_DIR",
+        "HIDRO_COMPAT_IMAGE",
+        "HIDRO_COMPAT_PG_CONTAINER",
+        "HIDRO_COMPAT_PG_ENV"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner"
+    },
+    {
+      "path": "scripts/test/payment-production-runtime.cjs",
+      "sha256": "2214b9e063dd8202192946df78a08c74ecb733f5f1fe194dcd8b0ba375760f01",
+      "type": "manual/revision",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:crypto",
+        "/app/server",
+        "node:http"
+      ],
+      "environmentNames": [
+        "DB_HOST",
+        "HIDRO_PAYMENT_SOURCE_SHA256",
+        "HIDRO_PRODUCTION_COMPAT_FIXTURE",
+        "POSTGRES_DB"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner"
+    },
+    {
+      "path": "scripts/test/payment-realtime-flow.cjs",
+      "sha256": "287a6a670906861a4573f43bfb8afe90b8b439b39f17451d4b4b00705ad998ff",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "Playwright/Chromium externo al lockfile",
+        "herramientas opt-in indicadas en fuente"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:child_process",
+        "../../artifacts/vercel-validation/tools/node_modules/playwright",
+        "../yape-pilot.cjs"
+      ],
+      "environmentNames": [
+        "HM_PAYMENT_REALTIME_OUTPUT"
+      ],
+      "legacyNpm": [
+        "test:payments:realtime"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/preproduccion24.cjs",
+      "sha256": "2eb6692ab2bcb3fee2e5730965a7625aaffd6df97ba336ccb615d608d2205330",
+      "type": "manual/historica",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "historial Git y tags",
+        "herramientas opt-in indicadas en fuente"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:crypto",
+        "node:child_process"
+      ],
+      "environmentNames": [
+        "HIDRO_PREPRODUCCION_TEST_CONTAINER"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner"
+    },
+    {
+      "path": "scripts/test/profile-navigation.test.cjs",
+      "sha256": "f9e233798268ce0164ecd4a2ccddad496156a280393cc5474602f0436a520d96",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "Playwright/Chromium externo al lockfile"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "../build-web"
+      ],
+      "environmentNames": [
+        "HIDRO_PLAYWRIGHT_MODULE"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/public-api-config.test.js",
+      "sha256": "711b4e257911b724b9acca877314f6ebff0a491636a77a07a819eb2cdf16a2c7",
+      "type": "contrato",
+      "group": "contract",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:vm",
+        "../public-api-config",
+        "../build-web",
+        "../verify-client-runtime"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:config"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/push-flow.cjs",
+      "sha256": "94a0a9fbbff77767572abaadf61c1652fb83c4d503200a92d5a8a583e8e147bf",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture",
+        "Playwright/Chromium externo al lockfile"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:http",
+        "node:crypto",
+        "../../artifacts/vercel-validation/tools/node_modules/playwright",
+        "../build-web",
+        "../../Backend/test/email-api.cjs",
+        "../../Backend/test/push-fixture.cjs",
+        "./close-native-fixture.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:push:e2e"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/quality-audit-flow.cjs",
+      "sha256": "cdc3a6c0d16da601bf4b39cb1ce105b8c903e19b17912579ffc95d2ad9595f6f",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "Playwright/Chromium externo al lockfile"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:http",
+        "../build-web",
+        "../../Backend/test/incident-tracking-fixture.cjs",
+        "node:crypto"
+      ],
+      "environmentNames": [
+        "HIDRO_PLAYWRIGHT_MODULE",
+        "HIDRO_QUALITY_EMPTY",
+        "HIDRO_QUALITY_REFERENCE",
+        "HIDRO_QUALITY_STATISTICS",
+        "PUSH_REAL_DELIVERY_ALLOWED"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/realtime.test.cjs",
+      "sha256": "f4dc49088470678ce4e7a76dd280eaedd7093f6b74e68e2d2b3bfc9ddd1b14d5",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:vm",
+        "node:fs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:payments:realtime"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/registration-state.test.cjs",
+      "sha256": "7ab7eafec2cb1febd820df5c9c3869cc77430f3226db016a84a99a36f497307e",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:vm",
+        "node:fs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:android:otp"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/release-image.test.cjs",
+      "sha256": "9538aab690438fa6ffea1c2bfc6dd1f8d7ac48f217b0a0c9e82bc17a331d08f6",
+      "type": "manual/historica",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "herramientas opt-in indicadas en fuente"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:child_process",
+        "./server",
+        "./two-factor"
+      ],
+      "environmentNames": [
+        "HIDRO_RELEASE_IMAGE_TEST"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/secure-session.test.cjs",
+      "sha256": "bb80b8c2f58982fa80c72dec8b81ccfb261420a327c33a8d61a4e916a3554dfe",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:vm",
+        "node:crypto"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:android:session"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/test-runner.test.cjs",
+      "sha256": "807ca59c60fa5fc2d56140d179f6984fc9bc296476fa3aaed0c2eeab0bce56bd",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:child_process",
+        "../test-runner.cjs",
+        "../test-catalog.cjs",
+        "net"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/totp-restore-lab.cjs",
+      "sha256": "ac43cf8af8a00fe068c888eda1ee5a2d4d9233e92b39c87e841cb56bbd315b97",
+      "type": "manual/historica",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture",
+        "herramientas opt-in indicadas en fuente"
+      ],
+      "dependencies": [
+        "node:fs",
+        "node:path",
+        "node:crypto",
+        "node:assert/strict",
+        "../../Backend/test/email-schema.cjs",
+        "../../Backend/node_modules/pg",
+        "../../Backend/totp-crypto",
+        "../../Backend/maintenance/two-factor.cjs",
+        "../../Backend/node_modules/otpauth"
+      ],
+      "environmentNames": [
+        "HIDRO_EMAIL_TEST_DB_PORT",
+        "HIDRO_TOTP_LAB_DIR"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner"
+    },
+    {
+      "path": "scripts/test/two-factor-ui.test.cjs",
+      "sha256": "8bb003672e5745b37639e8682d85c919b2995c42c06eb0fdddbebf036e5fbfa6",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "Playwright/Chromium externo al lockfile"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path"
+      ],
+      "environmentNames": [
+        "HIDRO_PLAYWRIGHT_MODULE"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/ui-money.test.cjs",
+      "sha256": "6d1020f1499613c034dafcd8c7e14ce175ce4085d048fa0325e1fc07a188c220",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:vm"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:ui"
+      ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "scripts/test/visual-checks.cjs",
+      "sha256": "5c887cd44a541c67f43d23728afa41e6fac98b8c706b6a2ba426e11048dbbd21",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:fs",
+        "node:path"
+      ],
+      "environmentNames": [
+        "HIDRO_TEST_VISUAL_CAPTURE",
+        "HIDRO_TEST_VISUAL_CLIENT_ONLY",
+        "HIDRO_TEST_VISUAL_MATRIX"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [
+        "scripts/test/admin-e2e.cjs",
+        "scripts/test/client-checks.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/yape-pilot-flow.cjs",
+      "sha256": "63241e4d62a31ab6399cb861012956d6d2b32322f0d57b05e0455668ddffc8f0",
+      "type": "E2E/navegador",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "./payment-audit-flow.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [
+        "test:yape:pilot:e2e"
+      ],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    }
+  ],
+  "exactDuplicates": [],
+  "alias": {
+    "scripts/test/yape-pilot-flow.cjs": "scripts/test/payment-audit-flow.cjs"
+  },
+  "overlappingLegacy": [
+    {
+      "path": "Backend/test/email-gmail.test.js",
+      "scripts": [
+        "test:email",
+        "test:email:gmail"
+      ]
+    },
+    {
+      "path": "Backend/test/push-credentials.cjs",
+      "scripts": [
+        "test:fcm:lab",
+        "test:fcm:release"
+      ]
+    },
+    {
+      "path": "Backend/test/receipt-concurrency.cjs",
+      "scripts": [
+        "test:receipts",
+        "test:payments"
+      ]
+    },
+    {
+      "path": "Backend/test/receipt-schema.cjs",
+      "scripts": [
+        "test:receipts",
+        "test:payments"
+      ]
+    },
+    {
+      "path": "scripts/test/android-session-native.cjs",
+      "scripts": [
+        "test:android:native",
+        "test:2fa:native",
+        "test:android:otp:native",
+        "test:android:location:native",
+        "test:payments:native",
+        "test:yape:pilot:native",
+        "test:password-recovery:native",
+        "test:push:native",
+        "test:incidents:native",
+        "test:fcm:registration:native"
+      ]
+    },
+    {
+      "path": "scripts/test/android-transition.cjs",
+      "scripts": [
+        "test:android:transition",
+        "test:android:otp"
+      ]
+    }
+  ],
+  "noDirectLegacyNpm": [
+    {
+      "path": "Backend/test/email-gmail-worker.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/email-h03-baseline.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/email-registration-gate.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/gmail-fixture.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/incident-tracking-fixture.cjs",
+      "referencedBy": [
+        "Backend/test/incident-tracking.cjs",
+        "scripts/test/incident-tracking-flow.cjs",
+        "scripts/test/quality-audit-flow.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/password-recovery-fixture.cjs",
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs",
+        "scripts/test/password-recovery-flow.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/payment-production-compat.cjs",
+      "referencedBy": [],
+      "managedGroup": "integration"
+    },
+    {
+      "path": "Backend/test/push-fixture.cjs",
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs",
+        "scripts/test/push-flow.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/push-start-postgres.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/quality-migrations.cjs",
+      "referencedBy": [],
+      "managedGroup": "integration"
+    },
+    {
+      "path": "Backend/test/receipt-profile-compat.cjs",
+      "referencedBy": [],
+      "managedGroup": "integration"
+    },
+    {
+      "path": "Backend/test/resend-fixture.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/start-postgres.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/totp-crypto.test.js",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
+      "path": "Backend/test/totp-key-rotation.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/two-factor-admin.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/two-factor-audit.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/android-fcm-registration-native.cjs",
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/android-incident-tracking-native.cjs",
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/android-location-native.cjs",
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/android-otp-native.cjs",
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/android-password-recovery-native.cjs",
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/android-payments-native.cjs",
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/android-pdf-viewer.cjs",
+      "referencedBy": [
+        "scripts/test/android-payments-native.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/android-push-native.cjs",
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/android-release-signing.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
+      "path": "scripts/test/android-two-factor-native.cjs",
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/backend-docker23.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/backend-history23.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/chatbot-ui-checks.cjs",
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs",
+        "scripts/test/client-checks.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/client-checks.cjs",
+      "referencedBy": [
+        "scripts/test/admin-e2e.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/client-packaging-browser.cjs",
+      "referencedBy": [],
+      "managedGroup": "e2e"
+    },
+    {
+      "path": "scripts/test/client-packaging.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "contract"
+    },
+    {
+      "path": "scripts/test/close-native-fixture.cjs",
+      "referencedBy": [
+        "scripts/test/android-session-native.cjs",
+        "scripts/test/close-native-fixture.test.cjs",
+        "scripts/test/incident-tracking-flow.cjs",
+        "scripts/test/password-recovery-flow.cjs",
+        "scripts/test/push-flow.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/close-native-fixture.test.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/downgrade-lab.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/identity-palette.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
+      "path": "scripts/test/identity-visual.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/payment-production-browser.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/payment-production-restore.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/payment-production-runtime.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/preproduccion24.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/profile-navigation.test.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/quality-audit-flow.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/release-image.test.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/test-runner.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
+      "path": "scripts/test/totp-restore-lab.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/two-factor-ui.test.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "scripts/test/visual-checks.cjs",
+      "referencedBy": [
+        "scripts/test/admin-e2e.cjs",
+        "scripts/test/client-checks.cjs"
+      ],
+      "managedGroup": null
+    }
+  ]
+}

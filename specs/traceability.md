@@ -51,3 +51,14 @@ Sobre 53a9d33: Node 22.23.4, 17/17 pruebas; PKG-T05, 10 comprobaciones HTTP/MIME
 ## Cierre local DB-01
 
 PKG-01 cerrado previamente en 4931f2f; DB-01 implementado y validado después, con autorización condicional cumplida. Requisitos FR-DB-001..005 y NFR-DB-001..004: nuevo Backend/test/receipt-profile-compat.cjs + suites existentes; todos AC-DB-01..07 aprobados. Único cambio funcional: tres líneas en tienePago; sin cambios SQL/infraestructura. Suite principal: 54 casos, 53 aprobados/0 fallidos/1 condicional; el caso alternativo se ejecutó aparte con 1 aprobado. Diez DB-TASK verificados en cierre local sin publicación. [Evidencia, entorno y límites](002-compatibilidad-recibos/validation.md). No hay issue Sonar atribuido todavía.
+
+## TEST-01
+
+| Requisito / aceptación | Cambio | Verificación | Estado |
+|---|---|---|---|
+| FR-TEST-001 / AC-TEST-02 | test-catalog + test-inventory.json/md | TEST-T01, npm run test:inventory, conservación100 archivos anteriores | Aprobado |
+| FR-TEST-002 / AC-TEST-01/03/05 | package.json, runner, guard | 128 suite segura; 62 integración y1 omisión condicional acreditada antes; selección/guards de comandos | Aprobado en alcance |
+| FR-TEST-003 / AC-TEST-04 | test-runner.test.cjs | TEST-T02..05: entorno, destino externo, fallo real y salida no cero | Aprobado |
+| FR-TEST-004 / AC-TEST-06 | cobertura/reportes V8 y JUnit nativos | baseline47,72% líneas/82,66% ramas/62,92% funciones, solo fuentes cargadas de suite segura | Medido |
+
+NFR-TEST-001/002: diff sin producto/migraciones/dependencias nuevas, código read-only y recursos sintéticos; guard es defensa adicional, no sandbox. [Inventario](003-pruebas-automatizadas/test-inventory.md), [evidencia y límites](003-pruebas-automatizadas/validation.md). CI aún no ejecutado remotamente.

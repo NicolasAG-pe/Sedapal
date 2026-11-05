@@ -1,6 +1,6 @@
 # Constitución de Hidro-Mejora
 
-Versión: 1.0.2 | Redacción: 2026-11-04 | Aprobación del propietario: 2026-11-04 | Última modificación: 2026-11-04
+Versión: 1.0.3 | Redacción: 2026-11-04 | Aprobación del propietario: 2026-11-04 | Última modificación: 2026-11-05
 Estado: PLAN-01 aprobado para cierre documental y commit local. Validación final de PKG-01 autorizada; DB-01 autorizado únicamente tras cumplir todos los criterios de PKG-01.
 
 ## Principios fundamentales
@@ -40,3 +40,5 @@ Las enmiendas deben explicar motivo, impacto, versión y especificaciones afecta
 Enmienda 1.0.1: distingue redacción/aprobación y registra el alcance autorizado; no cambia los principios técnicos.
 
 Enmienda 1.0.2: registra autorización expresa de validación aislada y DB-01 condicionado, sin modificar los principios de integridad ni autorizar producción.
+
+Enmienda1.0.3 (2026-11-05): autorización vigente TEST-01 y CI-01 condicionado a su validación, con commits locales, recursos sintéticos nuevos identificados y sin push/PR/despliegues. No se autorizan otros avances. Esta instrucción posterior prevalece sobre las referencias de alcance de las sesiones anteriores.
