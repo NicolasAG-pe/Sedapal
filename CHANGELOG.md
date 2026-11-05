@@ -3,7 +3,7 @@
 ## Revisión local de SonarQube — 1.2.0
 
 - Las validaciones de fechas comprueban explícitamente el valor numérico de cada fecha en cliente y servidor.
-- El panel rechaza fechas y horas inválidas en lugar de permitir que JavaScript las normalice silenciosamente.
+- El panel rechaza fechas y horas inválidas en lugar de permitir que JavaScript las normalice silenciosamente; la prueba verifica la conversión a hora de Lima y las entradas incorrectas.
 - SonarQube identifica los directorios de pruebas JavaScript como pruebas para no contarlos como código de producción en las métricas de cobertura.
 - La sesión Android trata los rechazos sin objeto de error como fallos de almacenamiento, sin autorizar la sesión y permitiendo reintentar.
 - La limpieza de eventos push gestiona también los rechazos inesperados sin generar promesas huérfanas y permite volver a consultar el evento.
