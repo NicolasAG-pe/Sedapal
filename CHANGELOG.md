@@ -5,6 +5,7 @@
 - Configuración reproducible del análisis sobre el repositorio, con JavaScript propio y exclusión precisa de los archivos de contexto Docker que no son Dockerfiles.
 - Actualización de dependencias transitivas de desarrollo en el lockfile y reutilización del generador seguro de estado push Android, sin cambiar la identidad de la aplicación.
 - Pruebas de actualización Android compatibles con saltos de línea de Windows y referencias explícitas al estado del navegador en las pruebas de segundo factor.
+- El contexto y la imagen Docker del frontend incluyen los módulos compartidos que la página necesita para 2FA, recuperación e incidencias.
 
 ## Kubernetes local 1.2.0 — actualización controlada
 
