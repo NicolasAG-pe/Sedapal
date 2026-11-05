@@ -23,3 +23,7 @@ Se rechaza consultar y capturar 42P01: aborta la transacción. No añadir SAVEPO
 ## Riesgos pendientes
 
 Confirmar privilegios del rol de prueba y alcance de catálogo; respetar schema public. Mantener locks y sentencias después del lock. Medir consultas añadidas y conservar timeouts. DDL concurrente no está soportado por esta corrección y debe gestionarse operativamente por separado.
+
+## Contraste específico autorizado
+
+No se repitió la investigación general. Lectura de 008/009/010/014 y servicio confirmó el camino opcional; reproducción posterior acreditó 42P01 y HTTP 500 exclusivamente en rutas sin bloqueo temprano del perfil sin piloto. La solución prevista de catálogo pasó ambos perfiles y permisos. Detalles y fallos de entorno resueltos en validation.md.

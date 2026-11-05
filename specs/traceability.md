@@ -47,3 +47,7 @@ Ninguna referencia SON es una clave de issue real. No vincular PKG/DB con una re
 ## Cierre local PKG-01
 
 Sobre 53a9d33: Node 22.23.4, 17/17 pruebas; PKG-T05, 10 comprobaciones HTTP/MIME y Firefox aprobadas. AC-PKG-01..05 y SC satisfechos en alcance local. Todos los PKG-TASK completados con publicación excluida expresamente; ver validation.md para fallos de entorno resueltos y límites de fixtures. DB-01 ahora autorizado condicionalmente, aún sin ejecución al registrar este cierre.
+
+## Cierre local DB-01
+
+PKG-01 cerrado previamente en 4931f2f; DB-01 implementado y validado después, con autorización condicional cumplida. Requisitos FR-DB-001..005 y NFR-DB-001..004: nuevo Backend/test/receipt-profile-compat.cjs + suites existentes; todos AC-DB-01..07 aprobados. Único cambio funcional: tres líneas en tienePago; sin cambios SQL/infraestructura. Suite principal: 54 casos, 53 aprobados/0 fallidos/1 condicional; el caso alternativo se ejecutó aparte con 1 aprobado. Diez DB-TASK verificados en cierre local sin publicación. [Evidencia, entorno y límites](002-compatibilidad-recibos/validation.md). No hay issue Sonar atribuido todavía.

@@ -21,3 +21,7 @@ SHA, fecha, Node/PostgreSQL, comando, variables no sensibles, perfil/orden de SQ
 ## Prerrequisitos pendientes al cierre documental
 
 DB-01 no está autorizado. Siguen pendientes: instancia PostgreSQL nueva y dedicada, versión registrada (18 de referencia), base padre y rol de fixtures, permisos de creación, variables de prueba sin .env y adaptación exacta del harness HTTP para cada perfil. Verificar las guardas de identidad/vacío y el marcador del esquema previo; fallar si faltan. No reutilizar bases existentes. Ninguna prueba de DB-01 se ha ejecutado en esta fase.
+
+## Ejecución y estado vigente
+
+DB-01 autorizado después del cierre PKG-01 y completado en PostgreSQL 18.6/Node 22.23.4. Los prerrequisitos históricos arriba fueron resueltos con imagen local, tmpfs de datos/informes y red none compartida solo por fixtures. La selección exacta de esquemas y comandos está en [validation.md](validation.md); no reutilizar por su nombre ninguna base o contenedor que ya exista. La instancia temporal de esta ejecución fue retirada; no intentar reutilizarla.

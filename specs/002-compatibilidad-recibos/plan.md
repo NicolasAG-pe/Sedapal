@@ -1,7 +1,7 @@
 # Implementation Plan — DB-01
 
 Branch: chore/adopcion-sdd-rpi | Date: 2026-11-04 | [Spec](spec.md)
-Estado: plan; ejecución bloqueada hasta aprobación explícita.
+Estado: implementación autorizada tras 4931f2f y validada; ver validation.md.
 
 ## Summary
 
@@ -13,7 +13,7 @@ Node 22, CommonJS, pg, Express; PostgreSQL 18 como entorno de referencia documen
 
 ## Constitution Check
 
-Antes del diseño: evidencia estática, separación de perfiles, cambio localizado: conforme. Después: sin DDL/migraciones, sin modificación de API ni habilitación de servicios, pruebas aisladas: conforme documentalmente. Pendientes autorización y verificación ejecutada. No hay excepción constitucional adicional.
+Antes del diseño: evidencia estática, separación de perfiles, cambio localizado: conforme. Después: sin DDL/migraciones, sin modificación de API ni habilitación de servicios, pruebas aisladas: conforme documentalmente. Autorización condicional satisfecha; verificación ejecutada en Node 22/PostgreSQL 18 aislado. No hay excepción constitucional adicional.
 
 ## Project Structure
 
@@ -35,3 +35,7 @@ Validar que el rol puede consultar catálogo sin confundir permiso denegado con 
 ## Cierre
 
 Todos los AC comprobados; diff sin SQL ni infraestructura; datos e historial sintéticos conservados. Actualizar trazabilidad y CHANGELOG al cierre autorizado. Antes de publicar cumplir automatizaciones/secretos de AGENTS.md. No implementar health ni campo tiene_pago del listado en este avance.
+
+## Resultado del diseño
+
+Consulta to_regclass en mismo client, sin capturas ni cambios de locks/migraciones. Nuevo test Backend/test/receipt-profile-compat.cjs; helpers y suites anteriores sin cambios. Los prerrequisitos de UID/tmpfs se resolvieron en el entorno, no relajando tests. Criterios aprobados en validation.md.

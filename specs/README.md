@@ -30,3 +30,5 @@ Identificadores: PKG-TASK-nnn y DB-TASK-nnn designan tareas; PKG-Tnn y DB-Tnn de
 PKG-01: corrección aplicada y pruebas locales aprobadas; validación parcial, ver [informe](001-empaquetado-cliente/validation.md). No iniciar DB-01 ni publicar.
 
 Actualización de sesión: PKG-01 completado localmente (Node 22, HTTP/MIME y Firefox). DB-01 autorizado después de este cierre; no publicar ni ejecutar otros módulos.
+
+Estado final de esta sesión: PKG-01 y DB-01 completados localmente, evidencia en sus validation.md; solo commits locales. TEST-01, CI-01 y SonarQube pendientes de autorización y planificación detallada, sin iniciar módulos adicionales.

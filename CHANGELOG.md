@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## DB-01 — recibos compatibles con esquema sin piloto
+
+- Comprobación de tabla opcional en la conexión transaccional, sin cambiar locks, errores públicos ni migraciones.
+- Defecto reproducido antes de corregir (42P01/HTTP 500). PostgreSQL 18.6 y Node 22: suite principal 53 aprobadas/0 fallidas/1 condicional, caso histórico alternativo aprobado aparte.
+- Matriz de pagos/pilotos, dependencias obligatorias, permisos, escritura/rollback, API y concurrencia verificadas en bases sintéticas nuevas; recursos temporales retirados sin acceso a datos reales. Sin push/despliegue/SonarQube.
+
+
 ## PKG-01 — validación local completada
 
 - Node 22.23.4: 17/17 pruebas; HTTP/MIME de los tres módulos y diez comprobaciones Firefox con fixtures aprobadas.

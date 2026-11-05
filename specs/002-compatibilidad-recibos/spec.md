@@ -1,7 +1,7 @@
 # Feature Specification: DB-01 — compatibilidad de recibos
 
 Feature Branch: chore/adopcion-sdd-rpi. Created: 2026-11-04.
-Status: Draft / PLAN-01; implementación no autorizada.
+Status: DB-01 completado localmente tras cierre PKG-01; ver validation.md.
 Input: conservar migraciones, transacciones y pruebas productivas; corregir dependencia opcional de piloto.
 Base: [baseline](../baseline.md). Constitución: [única](../../.specify/memory/constitution.md).
 

@@ -12,7 +12,7 @@ Se bloquea si existe pago legacy O operación en los cuatro estados bloqueantes 
 
 La comprobación y consulta opcional deben usar el mismo client que mantiene los locks. Conservar BEGIN, bloqueos, revalidación, timeouts, COMMIT/ROLLBACK y release. No recuperarse de relación inexistente continuando una transacción abortada. Errores de acceso no equivalen a ausencia legítima.
 
-## Pruebas futuras
+## Pruebas implementadas y reutilizadas
 
 - DB-T01: Backend/test/receipt-profile-compat.cjs (nuevo propuesto), edición y anulación exitosas en P-PROD-MIN sin piloto; reproducir fallo antes del cambio.
 - DB-T02: mismo archivo, matriz legacy/Pagado/operaciones bloqueantes/no bloqueantes, sin violar constraints de fixtures.
@@ -23,3 +23,5 @@ La comprobación y consulta opcional deben usar el mismo client que mantiene los
 - DB-T07: pruebas HTTP con harness aislado adaptado, ambos PATCH en perfil sin piloto, incluyendo 401/403/404 y ausencia de filtración de SQL.
 
 IDs no son resultados. Implementar primero DB-T01 para caracterización; no es suficiente simular todas las consultas para acreditar compatibilidad PostgreSQL.
+
+Resultados DB-T01..DB-T07 aprobados en [validation.md](../validation.md). DB-T04 distingue ausencia opcional, dependencias obligatorias y permisos; errores SQL no capturados para permitir operaciones.
