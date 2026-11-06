@@ -10,6 +10,10 @@ COPY start.cjs server.js config.js auth-contract.js two-factor.js totp-crypto.js
 COPY password-recovery.js password-recovery-crypto.js password-recovery-worker.js push.js push-credentials.js push-provider.js push-worker.js incident-tracking.js ./
 COPY workers/ ./workers/
 
+# La API y los workers solo necesitan escribir en /tmp; los secretos montados
+# deben ser legibles por UID 1000 sin conceder acceso a otros usuarios.
+USER node
+
 EXPOSE 3000
 
 CMD ["node", "start.cjs"]

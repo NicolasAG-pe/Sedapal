@@ -18,3 +18,9 @@ test('Docker del frontend incluye los recursos compartidos solicitados por su pÃ
         assert.ok(dockerfile.split(/\r?\n/).some(line => /^COPY\s/.test(line) && line.split(/\s+/).includes(`Shared/${name}`)), `La imagen no copia Shared/${name}`);
     }
 });
+
+test('Docker backend declara usuario no privilegiado para API y workers', () => {
+    const text = fs.readFileSync(path.resolve(__dirname, '../../Backend/Dockerfile'), 'utf8');
+    assert.match(text, /^USER node\s*$/m);
+    assert.ok(text.indexOf('USER node') < text.indexOf('CMD ["node", "start.cjs"]'));
+});

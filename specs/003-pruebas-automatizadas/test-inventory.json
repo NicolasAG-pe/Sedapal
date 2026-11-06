@@ -2092,7 +2092,7 @@
     },
     {
       "path": "scripts/test/docker-context.test.cjs",
-      "sha256": "fd05e73de953a3b4bbe2175c94d1df14ce89e319becc33fa6010b937ab328abb",
+      "sha256": "ec0bc03f5a9bbc77c499ecda84d0e95f3ed989279981a41d168fc547ec2ce80f",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,

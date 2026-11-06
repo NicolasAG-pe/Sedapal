@@ -2,6 +2,8 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- El backend Docker se ejecuta como usuario no privilegiado; los secretos montados deben ser legibles por UID 1000.
+
 - Las utilidades locales Debian de pruebas, Gmail y piloto Yape invocan Git o Docker de `/usr/bin` sin depender de PATH.
 
 - La operación local de Gmail invoca Docker y systemd-creds desde rutas del sistema, sin resolver ejecutables mediante PATH.
