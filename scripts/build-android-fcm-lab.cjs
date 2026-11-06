@@ -17,14 +17,14 @@ function validateConfig(file) {
 }
 function localApi(value) {
   const u = new URL(value);
-  if (u.protocol !== 'http:' || !['127.0.0.1', 'localhost', '10.0.2.2'].includes(u.hostname) ||
+  if (u.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(u.hostname) ||
       u.username || u.password || u.search || u.hash || u.pathname !== '/')
     throw Error('El piloto requiere una API local explícita.');
   return u.origin;
 }
 function main(args = process.argv.slice(2)) {
   if (args.length === 1 && args[0] === '--help') {
-    console.log('node scripts/build-android-fcm-lab.cjs --config /privado/google-services.json --api http://10.0.2.2:PUERTO\nRequiere worktree independiente; conserva APK oficiales. No instala ni envía.');
+    console.log('node scripts/build-android-fcm-lab.cjs --config /privado/google-services.json --api http://127.0.0.1:PUERTO\nRequiere worktree independiente; conserva APK oficiales. No instala ni envía.');
     return;
   }
   if (args.length !== 4 || args[0] !== '--config' || args[2] !== '--api') throw Error('Argumentos de laboratorio inválidos.');

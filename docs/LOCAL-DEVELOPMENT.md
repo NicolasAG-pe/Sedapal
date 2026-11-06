@@ -66,3 +66,7 @@ que cada fuente capturada coincide exactamente con su archivo y rechaza
 orígenes no locales. El script inline de HTML se omite de la importación de
 cobertura hasta disponer de mapeo de offsets validado; no se excluye del análisis.
 El LCOV generado refleja solo los escenarios realmente ejecutados.
+
+### API Android de desarrollo
+
+En un emulador dedicado, usa una API sintética local y configura `API_BASE_URL=http://127.0.0.1:8080`. Antes de abrir la aplicación debug, comprueba que el puerto no tenga otro reenvío y ejecuta `adb -s <serial-del-emulador> reverse tcp:8080 tcp:8080`; al terminar retira únicamente ese reenvío con `adb -s <serial-del-emulador> reverse --remove tcp:8080`. HTTP de debug no es adecuado para cuentas ni datos reales. Las conexiones externas requieren HTTPS y la configuración release no habilita tráfico claro.

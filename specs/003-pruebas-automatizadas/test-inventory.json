@@ -1716,7 +1716,7 @@
     },
     {
       "path": "scripts/test/android-session-native.cjs",
-      "sha256": "802130ac1e20ba81b3b1e8ffb83632969722edceff33cf0bbfe4c996fd26c7d7",
+      "sha256": "ca65e748ecabcddf52aeaf8fc95fc36f6c14b9e0876bb7575d9283a2e61fa910",
       "type": "Android/dispositivo",
       "group": null,
       "nodeTest": false,
@@ -2191,7 +2191,7 @@
     },
     {
       "path": "scripts/test/firebase-lab.cjs",
-      "sha256": "c40baa129e50c32e2537c9d5e0f588b5f49c57b7dc497604bc5ffb024b5435de",
+      "sha256": "737f693447ab6941185e6deb70a763b58a84c746159fe0795e1823603ea507f1",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2632,7 +2632,7 @@
     },
     {
       "path": "scripts/test/public-api-config.test.js",
-      "sha256": "dc43a228adbeef4ad48cfdcf4b3e3143f951fee420aabafe07b3a8d50add5334",
+      "sha256": "40e9b1f823990d5d6ae1eec8d8f09fbcc09a28d4db49030a4cfd0c7892fcbf8b",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,

@@ -2,6 +2,8 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- El desarrollo Android usa loopback mediante adb reverse y rechaza destinos HTTP remotos.
+
 - La integración continua instala las dependencias de prueba desde el lockfile sin ejecutar scripts.
 
 - Pruebas de los controles de procedencia de la cobertura de navegador y dependencia local reproducible para generar LCOV.
