@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## DD-01 — diccionario de datos, perfiles, DER y Excel
+
+- Documentados init y14 migraciones en cuatro perfiles: hasta27 tablas,254 columnas,38 FK y64 índices (incluye PK/UNIQUE derivados); secuencias, restricciones y rutinas con fuente/línea.
+- Generador Python sin dependencias y Excel de nueve hojas reproducibles;9/9 verificaciones estáticas y23/23 regresiones Node20 aprobadas. Comparación PG18 y apertura/render de escritorio pendientes por entorno.
+- Sin cambios SQL/producto, datos reales ni publicación; CAT-01 conserva sus bloqueos de validación.
+
 ## CAT-01 — diagnóstico de validación pendiente
 
 - Reproducidos los dos fallos del runner y EPERM con subproceso trivial sin aplicación: restricción de captura del entorno; controles intactos.

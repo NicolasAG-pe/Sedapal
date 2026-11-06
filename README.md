@@ -36,3 +36,5 @@ npm test
 `Frontend/`, `Admin/` y `Shared/` contienen clientes/recursos; `Backend/` API, workers y pruebas; `Base-de-Datos/` esquema y migraciones; `android/` proyecto nativo; `scripts/` builds y validación. `artifacts/` son salidas locales ignoradas. La constitución única está en `.specify/memory/constitution.md` y el ciclo SDD + RPI en `specs/`.
 
 [Índice técnico](docs/README.md), [API](docs/API.md), [PostgreSQL](docs/DATABASE.md), [Android](docs/ANDROID.md), [SDD + RPI](docs/SDD-RPI.md) y [CI](docs/CI.md). No publicar esta rama hasta completar la auditoría de automatizaciones; no se hizo push, PR ni despliegue en DOC-01.
+
+Diccionario de datos DD-01: [metadatos completos](docs/base-de-datos/diccionario-de-datos.md), [DER Mermaid](docs/base-de-datos/diagrama-entidad-relacion.md), [perfiles](docs/base-de-datos/perfiles-esquema.md) y [Excel](docs/base-de-datos/diccionario-de-datos.xlsx). Generación estática verificable desde SQL versionado; sin validación nueva contra PostgreSQL.

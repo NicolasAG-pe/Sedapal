@@ -42,3 +42,7 @@ Para una instalación existente: primero inventario de tablas/columnas/restricci
 Editar/anular recibos conserva transacción, locks y comprobaciones de pagos/estado. En el perfil sin piloto, solo control_piloto_yape es opcional; no ignorar pagos, operaciones_pago ni errores SQL. No capturar 42P01 para permitir escrituras. [Contrato DB-01](../specs/002-compatibilidad-recibos/contracts/receipts.md).
 
 `GET /api/health` comprueba conectividad, no compatibilidad integral. Ejecutar regresiones únicamente con PostgreSQL18 temporal, sintético y verificado como nuevo. [Comandos y restricciones](TESTING.md), [evidencia DB-01](../specs/002-compatibilidad-recibos/validation.md). Preservar migraciones ya aplicadas, datos y volúmenes; no mezclar laboratorio y producción.
+
+## Diccionario y DER — DD-01
+
+[Diccionario](base-de-datos/diccionario-de-datos.md), [DER](base-de-datos/diagrama-entidad-relacion.md), [perfiles](base-de-datos/perfiles-esquema.md) y [Excel](base-de-datos/diccionario-de-datos.xlsx). Cuatro perfiles documentados separadamente; no describen el esquema real desplegado de Neon. Regeneración: `python3 scripts/data-dictionary.py`; comprobación: `python3 scripts/data-dictionary.py --check` y `python3 scripts/test-data-dictionary.py`. Extracción estática de init y14 migraciones; nombres implícitos derivados pendientes de pg_catalog. [Evidencia y pendientes](../specs/007-diccionario-datos/validation.md).
