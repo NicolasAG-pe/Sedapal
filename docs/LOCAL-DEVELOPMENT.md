@@ -41,3 +41,10 @@ npm test
 ```
 
 El lock raíz y `npm ci` se reservan para herramientas Capacitor cuando se necesiten. `npm run build:web` y `npm run build:admin` escriben artefactos locales, no despliegan; revisar siempre su configuración pública de API antes de pruebas de navegador. [TESTING](TESTING.md) separa integración, navegador, Android y pruebas live. No ejecutar scripts históricos de restauración/correo/live como parte del arranque.
+
+
+Las imágenes Docker web y administrativa escuchan como usuarios sin privilegios
+en el puerto interno 8080. Compose conserva los puertos publicados configurados
+por `WEB_PORT` y `ADMIN_PORT`; los Services Kubernetes conservan puerto 80 y
+apuntan al puerto nombrado del contenedor. Nginx escribe PID y temporales en
+`/tmp`, que debe permanecer escribible por el usuario del contenedor.

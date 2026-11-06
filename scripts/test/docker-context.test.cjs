@@ -24,3 +24,17 @@ test('Docker backend declara usuario no privilegiado para API y workers', () => 
     assert.match(text, /^USER node\s*$/m);
     assert.ok(text.indexOf('USER node') < text.indexOf('CMD ["node", "start.cjs"]'));
 });
+
+
+test('Nginx de web y administración usa usuario sin privilegios y puerto interno coherente', () => {
+    const root = path.resolve(__dirname, '../..');
+    for (const [folder, user] of [['Frontend', 'www-data'], ['Admin', 'nginx']]) {
+        const read = file => fs.readFileSync(path.join(root, folder, file), 'utf8');
+        const dockerfile = read('Dockerfile'), main = read('nginx/nginx.conf'), server = read('nginx/default.conf');
+        assert.match(dockerfile, new RegExp('^USER ' + user + '$', 'm'));
+        assert.match(server, /listen 8080;/);
+        assert.match(main, /pid \/tmp\//);
+        assert.match(main, /proxy_temp_path \/tmp\//);
+        assert.match(dockerfile, /EXPOSE 8080/);
+    }
+});

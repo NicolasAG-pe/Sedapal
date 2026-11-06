@@ -14,6 +14,8 @@ COPY Shared/assets/ /var/www/html/shared/assets/
 
 COPY Frontend/nginx/default.conf /etc/nginx/sites-available/default
 
-EXPOSE 80
+COPY Frontend/nginx/nginx.conf /etc/nginx/hidro.conf
+USER www-data
+EXPOSE 8080
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["nginx", "-c", "/etc/nginx/hidro.conf", "-g", "daemon off;"]

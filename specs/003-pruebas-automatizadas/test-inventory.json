@@ -2092,7 +2092,7 @@
     },
     {
       "path": "scripts/test/docker-context.test.cjs",
-      "sha256": "ec0bc03f5a9bbc77c499ecda84d0e95f3ed989279981a41d168fc547ec2ce80f",
+      "sha256": "b395d4fcb08bde6cb54c203b6f85c6cdde0b7a3fd1cedb5b24f6df42df35d4bc",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2316,7 +2316,7 @@
     },
     {
       "path": "scripts/test/k8s-integration.test.cjs",
-      "sha256": "f86435049fecc2da551a36474cc451cb84ad7ae6f2802d6f239a6c6ee247b7d6",
+      "sha256": "52f826b00faa4ae4e4144a2c0eed63e2617b3a7cb20495cd2c2c62c08aac462d",
       "type": "integracion",
       "group": null,
       "nodeTest": true,

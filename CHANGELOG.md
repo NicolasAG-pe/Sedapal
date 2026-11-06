@@ -2,6 +2,10 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- Instrumentación local de cobertura de navegador y fusión con Node que verifica el contenido de cada fuente antes de atribuir líneas.
+
+- Las imágenes web y administrativa usan Nginx sin root en el puerto interno 8080, con puertos publicados conservados y temporales privados.
+
 - El backend Docker se ejecuta como usuario no privilegiado; los secretos montados deben ser legibles por UID 1000.
 
 - Las utilidades locales Debian de pruebas, Gmail y piloto Yape invocan Git o Docker de `/usr/bin` sin depender de PATH.

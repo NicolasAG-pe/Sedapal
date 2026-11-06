@@ -4,4 +4,8 @@ COPY Admin/assets/ /usr/share/nginx/html/assets/
 COPY Shared/ /usr/share/nginx/html/shared/
 COPY Frontend/assets/vendor/socket.io.min.js /usr/share/nginx/html/assets/vendor/socket.io.min.js
 COPY Admin/nginx/default.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+COPY Admin/nginx/nginx.conf /etc/nginx/hidro.conf
+USER nginx
+EXPOSE 8080
+ENTRYPOINT []
+CMD ["nginx", "-c", "/etc/nginx/hidro.conf", "-g", "daemon off;"]
