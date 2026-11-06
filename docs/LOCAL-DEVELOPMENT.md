@@ -70,3 +70,18 @@ El LCOV generado refleja solo los escenarios realmente ejecutados.
 ### API Android de desarrollo
 
 En un emulador dedicado, usa una API sintética local y configura `API_BASE_URL=http://127.0.0.1:8080`. Antes de abrir la aplicación debug, comprueba que el puerto no tenga otro reenvío y ejecuta `adb -s <serial-del-emulador> reverse tcp:8080 tcp:8080`; al terminar retira únicamente ese reenvío con `adb -s <serial-del-emulador> reverse --remove tcp:8080`. HTTP de debug no es adecuado para cuentas ni datos reales. Las conexiones externas requieren HTTPS y la configuración release no habilita tráfico claro.
+
+### Chequeos autenticados aislados
+
+`scripts/check-local.cjs` y `scripts/check-admin-local.cjs` se limitan a un backend de desarrollo con `POSTGRES_DB=hm_rootless_test`, `POSTGRES_USER=hm_fixture`, `DB_HOST=db` o `hm-rootless-sonar-db` y el secreto de fixture indicado en `Backend/local-check-transport.js`. La conexión consulta además la identidad efectiva de base y rol. No conectar a datos reales; ambos scripts se detienen ante configuración diferente, URL de base alternativa o cuentas con 2FA activo. Son herramientas de prueba y no sustituyen una verificación completa de 2FA.
+
+El servicio de pruebas debe disponer de destinos `TEST_WEB_BASE` y, para administración, `TEST_ADMIN_BASE`, con HTTPS y nombres autorizados (`web-tls` y `admin-tls`, respectivamente), certificados válidos para esos nombres y CA privada de pruebas montada en el contenedor. Arrancar Node con `NODE_EXTRA_CA_CERTS` apuntando a la CA; no desactivar la validación TLS. Si se emplea un proxy, también debe proteger el tramo posterior o estar limitado a una red de fixtures sin datos ni credenciales reales. Los servicios de Compose existentes sirven HTTP y no satisfacen estos requisitos por sí solos; no reutilizarlos para esta prueba sin preparar un entorno sintético separado.
+
+Ejemplo dentro del contenedor de backend del entorno aislado ya preparado:
+
+```sh
+docker exec -e NODE_EXTRA_CA_CERTS=/cert/ca.crt -e TEST_WEB_BASE=https://web-tls:8443 -i <backend-fixture> node < scripts/check-local.cjs
+docker exec -e NODE_EXTRA_CA_CERTS=/cert/ca.crt -e TEST_WEB_BASE=https://web-tls:8443 -e TEST_ADMIN_BASE=https://admin-tls:8443 -i <backend-fixture> node < scripts/check-admin-local.cjs
+```
+
+La instancia secundaria escucha en la red aislada de fixtures. El cliente la consulta por loopback con un secreto nuevo aleatorio y un JWT efímero propio; no envía el JWT del servicio existente por esa conexión. No se deben montar secretos reales en este entorno.

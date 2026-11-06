@@ -2,7 +2,7 @@
 
 Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada para listas explícitas; señales estáticas fuera de ellas no acreditan ejecución.
 
-108 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 56. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
+109 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 57. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
 
 | Archivo | Tipo | Grupo nuevo | Requisitos | Riesgo |
 |---|---|---|---|---|
@@ -90,6 +90,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `scripts/test/identity-visual.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile, herramientas opt-in indicadas en fuente | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/incident-tracking-flow.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/k8s-integration.test.cjs` | integracion | fuera por defecto | Node22, PostgreSQL sintetico/fixture, herramientas opt-in indicadas en fuente | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `scripts/test/local-check-transport.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/password-recovery-flow.cjs` | E2E/navegador | fuera por defecto | Node22, PostgreSQL sintetico/fixture, Playwright/Chromium externo al lockfile, dependencias Backend instaladas (rutas literales) | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/payment-audit-flow.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile, dependencias Backend instaladas (rutas literales), Poppler, herramientas opt-in indicadas en fuente | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/payment-flow.cjs` | E2E/navegador | fuera por defecto | Node22, PostgreSQL sintetico/fixture, Playwright/Chromium externo al lockfile, dependencias Backend instaladas (rutas literales) | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |

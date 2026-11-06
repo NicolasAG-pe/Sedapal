@@ -2,6 +2,8 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- Los chequeos locales autenticados solo aceptan fixtures sintéticos y destinos HTTPS con certificado validado; la instancia de loopback usa un JWT efímero propio.
+
 - El desarrollo Android usa loopback mediante adb reverse y rechaza destinos HTTP remotos.
 
 - La integración continua instala las dependencias de prueba desde el lockfile sin ejecutar scripts.
