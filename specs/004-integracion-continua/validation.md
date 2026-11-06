@@ -28,3 +28,5 @@ AC-CI-01..05 comprobados en el alcance local (diseño, sintaxis, políticas y sc
 ## Auditoría posterior2026-11-05
 
 [Prepublicación](prepublication.md) registra consultas de solo lectura, riesgos de solapamiento con PR26, propuesta de exclusión exacta y límites del acceso remoto. Publicación no habilitada; CI-TASK-006 sigue pendiente. El checker local y sus ocho controles negativos se vuelven a verificar como parte de DOC-01; no se repiten suites de producto ni se afirma run remoto.
+
+Consolidación402990c: checker YAML y ocho negativos aprobados nuevamente; suite Node22 y PG18 bloqueadas localmente, CI-TASK-006 sin ejecución remota. [Informe y controles actuales](../../docs/pruebas/cierre-sdd-120.md).

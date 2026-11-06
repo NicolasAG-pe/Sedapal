@@ -61,3 +61,7 @@ Consultas nuevas en lectura: PR26 abierto, head 34b5ca901208e07d6f440022bb9eeceb
 Vercel get_git_deployment_context/get_project confirma proyectos hidro-mehora-admin y sedapal vinculados al repo, Node24 remoto; respuesta sin raíces, hooks ni reglas efectivas. La exclusión local no acredita un bloqueo completo del proveedor. Render list_workspaces descubre un workspace; get_selected_workspace devuelve INVALID_ARGUMENT, sin workspace seleccionado. La skill render-monitor/references/render-access.md exige identificación por el usuario antes de consultar servicios; no se infiere ni cambia contexto. Auto-deploy, previews y hooks siguen N. Apps/webhooks y políticas Actions siguen pendientes de acceso adecuado. No se consultaron secretos.
 
 CI-TASK-006 permanece pendiente: no push, run remoto ni cierre de CI-01. No pedir permisos entre tareas locales; resolver contexto Render/configuración remota y autorización de publicación en un avance futuro.
+
+## Consolidación final sobre402990c
+
+[Delta de integración y controles](../../docs/pruebas/cierre-sdd-120.md): main sin avance; PR26 mismo head. Simulación temporal de tres vías: ambos archivos Docker idénticos/sin conflicto, CHANGELOG con un bloque de conflicto. Vercel conserva exclusión local exacta; contexto Render aún ausente y configuración efectiva de proveedores incompleta. No publicar. CI-TASK-006 pendiente, sin run remoto ni autorizaciones nuevas.

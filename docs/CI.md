@@ -11,3 +11,5 @@ El checker local `node scripts/check-ci.cjs --self-test` necesita un parser yaml
 La primera publicación sigue bloqueada por auditoría incompleta de Vercel/Render/apps/hooks y falta de exclusión exacta de esta rama en ambos vercel.json. Revisar [prepublication.md](../specs/004-integracion-continua/prepublication.md), que contiene evidencia, propuesta de parche **no aplicada**, puertas de autorización y procedimiento futuro. No iniciar push/PR desde esta guía.
 
 Después de autorización y controles satisfechos, el evento push de la rama es la vía prevista para el primer run. workflow_dispatch requiere archivo presente en rama por defecto: [GitHub oficial](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow?tool=webui). No mergear para sortear este prerrequisito. Registrar run/SHA/resultados y comprobar ausencia de despliegues externos antes de cerrar CI-TASK-006.
+
+Consolidación final: [estado y procedimiento restante](pruebas/cierre-sdd-120.md). CI-01 sigue pendiente de run remoto; entorno Node22/PG18 y automatizaciones efectivas aún bloquean publicación.

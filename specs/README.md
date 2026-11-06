@@ -22,3 +22,5 @@ Actualizado2026-11-05. Rama chore/adopcion-sdd-rpi, base histórica d3d27d0. Sol
 Cada avance mantiene spec/research/plan/tasks/validation; contratos, quickstart y modelo de datos según necesidad. Los números identifican carpetas, los IDs PKG/DB/TEST/CI/DOC identifican hallazgos/avances. TASK y T son namespaces separados de tareas y verificaciones. No generar ramas ni implementación con herramientas sin autorización.
 
 El estado de la tabla prevalece sobre descripciones históricas de sesiones anteriores, que se conservan en sus informes. El análisis de calidad pertenece a otro compañero y queda fuera de este avance.
+
+Consolidación final sobre402990c: **BLOQUEADO para publicación**. CAT-TASK-06 y DD-TASK-06 bloqueados por entorno; CI-TASK-006 remoto pendiente. PR26: Docker idéntico y conflicto editorial demostrado en CHANGELOG. [Informe de cierre y procedimiento restante](../docs/pruebas/cierre-sdd-120.md). No hay cierre global Node22/PG18 acreditado.

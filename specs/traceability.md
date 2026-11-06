@@ -111,3 +111,15 @@ CAT-01 seguimiento e404499: EPERM reproducido con console.log independiente; TES
 | FR-DD-004 / AC-DD-04 | test-data-dictionary.py |9/9 estáticas; PG18 no disponible, explícitamente pendiente |
 
 NFR-DD-001: sin producto/SQL/dependencias/servicios reales. DD-01 documental estático cerrado; tarea condicional pg_catalog abierta. CAT-01 sigue pendiente;23 pruebas Node20 específicas aprobadas, no suite Node22. [Validación DD](007-diccionario-datos/validation.md).
+
+## Consolidación final — entrada402990c
+
+| Alcance | Evidencia nueva | Estado |
+|---|---|---|
+| CAT-TASK-06 | CAT9/9 Node20, runner3/5; EPERM con stdout trivial | Bloqueado por entorno, sin cierre ampliado |
+| DD-TASK-06 | DD9/9 estáticas, cinco artefactos reproducibles; cero perfiles PG reconstruidos | Estático cerrado; comparación PG18 bloqueada |
+| CI-TASK-006 | checker y ocho negativos; main/PR en lectura | Ejecución remota pendiente |
+| PKG/DB/TEST | PKG/config23 casos incluye CAT; SQL/Node22 no disponibles | Cierres históricos preservados, sin nueva integración acreditada |
+| Integración PR26 | Docker finales idénticos; simulación CHANGELOG con un conflicto | Resolver editorial y regenerar inventario tras integración |
+
+Decisión **BLOQUEADO para publicación** por Node22/PG18/subprocesos y configuración efectiva de despliegues sin acreditar. [Resultados, procedimiento y límites](../docs/pruebas/cierre-sdd-120.md). No se modifica constitución ni Sonar ni se publica.

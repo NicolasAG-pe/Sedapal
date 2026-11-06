@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## Consolidación final SDD — publicación bloqueada
+
+- Verificados DD estático9/9, regresiones específicas Node20 23/23 y checker CI; runner mantiene3 aprobadas/2 fallidas por captura EPERM, sin alterar controles. Node22/PG18 no ejecutables en el sandbox actual.
+- Confirmado main sin avance y PR26 mismo head: Docker finales idénticos, conflicto editorial real de CHANGELOG en simulación temporal. Procedimiento de integración y publicación preparado, sin ejecutarlo.
+- CAT bloqueado por entorno, DD comparación SQL bloqueada y CI remoto pendiente; exclusiones Vercel locales conservadas, configuración efectiva Vercel/Render no acreditada. Sin nuevas funcionalidades ni publicación.
+
 ## DD-01 — diccionario de datos, perfiles, DER y Excel
 
 - Documentados init y14 migraciones en cuatro perfiles: hasta27 tablas,254 columnas,38 FK y64 índices (incluye PK/UNIQUE derivados); secuencias, restricciones y rutinas con fuente/línea.

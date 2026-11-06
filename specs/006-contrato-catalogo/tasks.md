@@ -7,3 +7,5 @@
 - [x] CAT-TASK-05 Trazabilidad, revisión y commit local.
 
 - [ ] CAT-TASK-06 Cierre ampliado: suite Node22, resolver/revalidar TEST-T03/T04 y regresión PG18 en entorno aislado disponible. No bloquea conservar implementación en commit local; impide declarar consolidación completa.
+
+Consolidación402990c: CAT-TASK-06 **BLOQUEADA POR ENTORNO**, sin marcar completada; [evidencia actual](../../docs/pruebas/cierre-sdd-120.md).

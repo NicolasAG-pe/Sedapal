@@ -32,3 +32,7 @@ En docs/base-de-datos: diccionario-de-datos.md (columnas, restricciones, índice
 - LibreOffice --headless con perfil temporal independiente y salida /tmp intentado dos veces: salida1, dconf /run/user/1000/dconf/user de solo lectura (incluso con HOME/XDG_CONFIG_HOME temporales y DCONF_BACKEND=memory). No pudo acreditarse apertura/conversión de escritorio, no se modifica configuración existente. Mermaid sin renderizador disponible: aristas/campos verificados estáticamente, render visual pendiente.
 
 AC-DD-01..04 satisfechos en modalidad estática explícitamente permitida; DD-01 documental completo. DD-TASK-06 condicional sigue abierto para pg_catalog. No cerrar CAT/CI por este resultado. PR26/Sonar sin cambios; solo conflicto editorial futuro posible en README/CHANGELOG. Sin push/merge/despliegue/conexiones Neon.
+
+## Consolidación final sobre402990c
+
+[Informe unificado](../../docs/pruebas/cierre-sdd-120.md): limitaciones persisten. No nueva validación Node22/PG18. CAT9/9, PKG9/9 y configuración API5/5 en Node20; runner3/5 con dos fallos de captura. DD9/9 estáticas y artefactos reproducibles. DD conserva cierre estático, comparación SQL pendiente; CAT permanece bloqueado para cierre ampliado. Sin cambios de código ni relajación de pruebas.
