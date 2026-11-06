@@ -1,5 +1,118 @@
 # Historial de versiones
 
+## Integración conjunta PostgreSQL, SDD y SonarQube — 1.2.0
+
+- Integrados los historiales PostgreSQL/Gmail y SonarQube sobre la base SDD/RPI sin reactivar el piloto de pagos.
+- Incorporadas al catálogo las pruebas de SonarQube y de roles Gmail, 2FA, pagos e incidencias; actualizado el inventario reproducible.
+- Documentadas las diferencias confirmadas entre el diccionario por perfiles y la instancia PostgreSQL local; las pruebas de navegador pueden reutilizar un Playwright existente.
+- La integración sintética amplía el tmpfs de CI para acomodar las bases de prueba; excluida esta rama de los despliegues Git en ambas configuraciones Vercel.
+
+## Revisión local de SonarQube — 1.2.0
+
+- Las validaciones de fechas comprueban explícitamente el valor numérico de cada fecha en cliente y servidor.
+- El panel rechaza fechas y horas inválidas en lugar de permitir que JavaScript las normalice silenciosamente; la prueba verifica la conversión a hora de Lima y las entradas incorrectas.
+- SonarQube identifica los directorios de pruebas JavaScript como pruebas para no contarlos como código de producción en las métricas de cobertura.
+- La sesión Android trata los rechazos sin objeto de error como fallos de almacenamiento, sin autorizar la sesión y permitiendo reintentar.
+- La limpieza de eventos push gestiona también los rechazos inesperados sin generar promesas huérfanas y permite volver a consultar el evento.
+- Configuración reproducible del análisis sobre el repositorio, con JavaScript propio y exclusión precisa de los archivos de contexto Docker que no son Dockerfiles.
+- Actualización de dependencias transitivas de desarrollo en el lockfile y reutilización del generador seguro de estado push Android, sin cambiar la identidad de la aplicación.
+- Pruebas de actualización Android compatibles con saltos de línea de Windows y referencias explícitas al estado del navegador en las pruebas de segundo factor.
+- El contexto y la imagen Docker del frontend incluyen los módulos compartidos que la página necesita para 2FA, recuperación e incidencias.
+- El reinicio de Socket.IO deja de enviar un argumento que la función de limpieza no utiliza.
+
+## Integración Gmail local — preparación segura
+
+- Se amplió el ejecutor de migraciones para registrar 003, 004 y 006 sin repetir las migraciones existentes, con rechazo de esquemas parciales.
+- API y worker de correo tienen grupos de permisos separados; una prueba sintética comprobó el registro OTP y la denegación de acceso del worker a contraseñas.
+- Se preparó un comando Compose local que descifra credenciales solo en memoria y verifica el destino, puerto y volumen antes de operar. Gmail se probó con consentimiento explícito.
+
+## Integración local — permisos y pruebas de interfaz
+
+- Rol de permisos local sin inicio de sesión ni capacidades administrativas para el backend con 005, 007, 008 y 013; no configura credenciales ni habilita servicios opcionales.
+- Los ensayos de interfaz aceptan un directorio temporal de evidencias y permiten probar pagos sin las estructuras del piloto. Chromium confirmó UUID de reintento y que una demostración no cancela la deuda.
+- El despliegue coordinado sigue pendiente de configurar un proveedor de correo para conservar el registro de usuarios; no se ha reemplazado el backend activo.
+
+## Integración PostgreSQL local — preparación aislada
+
+- Pagos simulados y gestión de recibos funcionan con 008 sin instalar el piloto Yape; si existe control de piloto, se conserva el bloqueo de recibos asociados y los esquemas parciales fallan de forma cerrada.
+- La imagen del backend incluye los módulos JavaScript locales. Las pruebas de Socket.IO inicializan WebSocket antes de cargar el cliente.
+- Se preparó un ejecutor local con registro transaccional y SHA-256 para 005, 007, 008 y 013. Validado solo con PostgreSQL y datos sintéticos; no aplicado en la base original.
+- Se probaron autenticación, 2FA, pagos, incidencias, recuperación y push con fixtures; la transición de credenciales, roles y despliegue local sigue pendiente de validación completa.
+
+## Consolidación final SDD — publicación bloqueada
+
+- Verificados DD estático9/9, regresiones específicas Node20 23/23 y checker CI; runner mantiene3 aprobadas/2 fallidas por captura EPERM, sin alterar controles. Node22/PG18 no ejecutables en el sandbox actual.
+- Confirmado main sin avance y PR26 mismo head: Docker finales idénticos, conflicto editorial real de CHANGELOG en simulación temporal. Procedimiento de integración y publicación preparado, sin ejecutarlo.
+- CAT bloqueado por entorno, DD comparación SQL bloqueada y CI remoto pendiente; exclusiones Vercel locales conservadas, configuración efectiva Vercel/Render no acreditada. Sin nuevas funcionalidades ni publicación.
+
+## DD-01 — diccionario de datos, perfiles, DER y Excel
+
+- Documentados init y14 migraciones en cuatro perfiles: hasta27 tablas,254 columnas,38 FK y64 índices (incluye PK/UNIQUE derivados); secuencias, restricciones y rutinas con fuente/línea.
+- Generador Python sin dependencias y Excel de nueve hojas reproducibles;9/9 verificaciones estáticas y23/23 regresiones Node20 aprobadas. Comparación PG18 y apertura/render de escritorio pendientes por entorno.
+- Sin cambios SQL/producto, datos reales ni publicación; CAT-01 conserva sus bloqueos de validación.
+
+## CAT-01 — diagnóstico de validación pendiente
+
+- Reproducidos los dos fallos del runner y EPERM con subproceso trivial sin aplicación: restricción de captura del entorno; controles intactos.
+- Node22/PG18 no disponibles y Docker denegado; cierre ampliado pendiente, sin sustituir runtimes ni usar bases reales.
+
+## CAT-01 — contrato del catálogo de pruebas
+
+- Validación de suites/rutas y pertenencia única antes de generar inventario; nueve pruebas nuevas, sin cambios funcionales ni dependencias.
+- 23/23 pruebas específicas/empaquetado/configuración aprobadas en Node20; inventario y checker CI aprobados. Consolidación pendiente de Node22/PG18 y de dos fallos suplementarios del runner con subprocesos en este entorno. Sin push ni despliegue.
+
+## CI-01 — exclusión local de publicación accidental
+
+- Excluida únicamente chore/adopcion-sdd-rpi en ambos vercel.json; preservadas todas las otras claves.
+- Actualizados controles en lectura de Vercel y PR26; Render sin contexto confirmado. CI remoto continúa pendiente, sin push ni cambios remotos.
+
+## DOC-01 — guías 1.2.0 y auditoría previa a publicación
+
+- Actualizadas portada, arquitectura, Docker aislado, perfiles PostgreSQL, pruebas, seguridad e índices SDD; API y antecedentes Android delimitados como históricos. Versiones fuente y npm diferenciadas.
+- CI-01 conserva5/6 tareas: workflow revisado localmente, sin ejecución GitHub. Documentada exclusión Vercel específica propuesta, no aplicada, y controles remotos pendientes de Vercel/Render/Apps/hooks; publicación no habilitada.
+- Solo documentación y commit local; sin cambios funcionales, SQL, proveedores, despliegues, push/PR ni intervención en el análisis de otro compañero.
+
+## CI-01 — workflow preparado, ejecución remota pendiente
+
+- Workflow mínimo Node22 con unitarias/contratos y PostgreSQL18 efímero para integración; dependencias Backend por lock, acciones oficiales por SHA y contents:read.
+- YAML y políticas locales aprobadas en Node22, ocho controles negativos, reportes limitados a JUnit/metadatos; sin deploy ni secretos reales. Puerto dinámico situado en steps.env según contexto válido.
+- Reutilizada evidencia TEST-01; no push ni run de GitHub. Verificación de service, políticas/acciones/uploads remotos y bloqueo de previews pendiente antes de publicación autorizada.
+
+
+## TEST-01 — entrada segura e inventario reproducible
+
+- Inventario afinado: helpers de cierre HTTP sin requisito Android SDK e imports literales de Backend/node_modules explícitos.
+
+- Catálogo de101 archivos, grupos explícitos y comandos npm separados sin eliminar pruebas anteriores. Entorno limpio, guard de red loopback y rechazo de prerrequisitos ausentes.
+- Node22:128 pruebas seguras aprobadas; PG18 sintético:62 aprobadas/0 fallidas/1 omisión condicional ya acreditada en DB-01. Guard nuevo corregido tras fallo de su propia prueba, sin modificar producto.
+- Reportes JUnit/metadatos y cobertura nativa limitada a fuentes cargadas:47,72% líneas,82,66% ramas,62,92% funciones; sin umbral ni atribución global. Sin dependencias nuevas/publicación.
+
+
+## DB-01 — recibos compatibles con esquema sin piloto
+
+- Comprobación de tabla opcional en la conexión transaccional, sin cambiar locks, errores públicos ni migraciones.
+- Defecto reproducido antes de corregir (42P01/HTTP 500). PostgreSQL 18.6 y Node 22: suite principal 53 aprobadas/0 fallidas/1 condicional, caso histórico alternativo aprobado aparte.
+- Matriz de pagos/pilotos, dependencias obligatorias, permisos, escritura/rollback, API y concurrencia verificadas en bases sintéticas nuevas; recursos temporales retirados sin acceso a datos reales. Sin push/despliegue/SonarQube.
+
+
+## PKG-01 — validación local completada
+
+- Node 22.23.4: 17/17 pruebas; HTTP/MIME de los tres módulos y diez comprobaciones Firefox con fixtures aprobadas.
+- Prerrequisitos de Git/permisos del directorio temporal resueltos sin modificar el producto; servicios temporales retirados y sin acceso a datos reales.
+- Criterios PKG-01 satisfechos localmente; sin push/despliegue. DB-01 queda habilitado por autorización condicional.
+
+
+## PKG-01 — corrección local, validación parcial
+
+- Completadas listas explícitas de recursos frontend/ignore y exigencia de recuperación en el verificador de runtime.
+- Nueve pruebas nuevas y ocho regresiones aprobadas. Build Docker exportado sin iniciar servicios; tar con 22 archivos cliente, sin los dos módulos omitidos previamente.
+- El build anterior también terminó: el fallo de construcción supuesto no se reprodujo en el builder disponible. HTTP/MIME y flujos de navegador pendientes; PKG-01 no cerrado. Sin push, despliegues ni DB-01.
+
+## PLAN-01 — base documental SDD + RPI
+
+- Constitución única aprobada, baseline vinculada a d3d27d0 y especificaciones PKG-01/DB-01 con contratos, tareas y trazabilidad.
+- Diferenciadas redacción y aprobación; IDs de tareas y pruebas separados y prerrequisitos de validación explícitos.
+- SonarQube histórico sin atribución al commit actual. Sin cambios funcionales ni pruebas de aplicación en este avance; solo commit local autorizado.
 
 
 ## Kubernetes local 1.2.0 — actualización controlada

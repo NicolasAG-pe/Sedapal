@@ -2,7 +2,7 @@
 
 Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada para listas explícitas; señales estáticas fuera de ellas no acreditan ejecución.
 
-102 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 50. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
+107 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 55. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
 
 | Archivo | Tipo | Grupo nuevo | Requisitos | Riesgo |
 |---|---|---|---|---|
@@ -26,9 +26,11 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `Backend/test/email-resend.test.js` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `Backend/test/email-schema.cjs` | integracion | fuera por defecto | Node22, pg, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/gmail-fixture.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `Backend/test/gmail-roles-local.cjs` | integracion | integration | Node22, pg, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/incident-tracking-fixture.cjs` | helper | fuera por defecto | Node22, pngjs, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
-| `Backend/test/incident-tracking.cjs` | integracion | fuera por defecto | Node22, ws | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `Backend/test/incident-tracking.cjs` | integracion | integration | Node22, ws | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/otp-auto-session.cjs` | integracion | fuera por defecto | Node22, jsonwebtoken, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `Backend/test/pagos-sin-piloto.cjs` | integracion | integration | Node22, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/password-recovery-fixture.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/password-recovery-schema.cjs` | integracion | fuera por defecto | Node22, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/password-recovery.cjs` | integracion | fuera por defecto | Node22, jsonwebtoken, otpauth, ws, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
@@ -51,8 +53,9 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `Backend/test/totp-key-rotation.cjs` | integracion | fuera por defecto | Node22, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/two-factor-admin.cjs` | integracion | fuera por defecto | Node22, otpauth, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/two-factor-audit.cjs` | integracion | fuera por defecto | Node22, otpauth, ws, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
-| `Backend/test/two-factor.cjs` | integracion | fuera por defecto | Node22, otpauth, jsonwebtoken, ws, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `Backend/test/two-factor.cjs` | integracion | integration | Node22, otpauth, jsonwebtoken, ws, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/yape-pilot.cjs` | integracion | fuera por defecto | Node22, qrcode, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `scripts/test/admin-date-validation.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/admin-e2e.cjs` | E2E/navegador | fuera por defecto | Node22, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/android-fcm-registration-native.cjs` | Android/dispositivo | fuera por defecto | Node22, Android SDK/dispositivo/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/android-incident-tracking-native.cjs` | Android/dispositivo | fuera por defecto | Node22, Android SDK/dispositivo/fixture, dependencias Backend instaladas (rutas literales) | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
@@ -76,6 +79,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `scripts/test/client-session.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/close-native-fixture.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/close-native-fixture.test.cjs` | integracion/loopback | fuera por defecto | Node22, dependencias Backend instaladas (rutas literales) | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `scripts/test/docker-context.test.cjs` | unitaria | unit | Node22, herramientas opt-in indicadas en fuente | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/documents.test.cjs` | unitaria/suplementaria | fuera por defecto | Node22, Poppler | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/downgrade-lab.cjs` | manual/historica | fuera por defecto | Node22, PostgreSQL sintetico/fixture, dependencias Backend instaladas (rutas literales) | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/firebase-lab.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
@@ -95,6 +99,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `scripts/test/preproduccion24.cjs` | manual/historica | fuera por defecto | Node22, historial Git y tags, herramientas opt-in indicadas en fuente | ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner |
 | `scripts/test/profile-navigation.test.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/public-api-config.test.js` | contrato | contract | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
+| `scripts/test/push-event-errors.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/push-flow.cjs` | E2E/navegador | fuera por defecto | Node22, PostgreSQL sintetico/fixture, Playwright/Chromium externo al lockfile | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/quality-audit-flow.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/realtime.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |

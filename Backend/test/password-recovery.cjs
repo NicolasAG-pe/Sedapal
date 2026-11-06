@@ -10,8 +10,8 @@ const { crearRemitente } = require("../resend-mail");
 const C = require("../password-recovery-crypto");
 const jwt = require("jsonwebtoken"),
   OTPAuth = require("otpauth");
-const { io } = require("../../Frontend/assets/vendor/socket.io.min.js");
 global.WebSocket = require("ws");
+const { io } = require("../../Frontend/assets/vendor/socket.io.min.js");
 let ctx,
   worker,
   n = 3000,
