@@ -27,27 +27,27 @@ test('Logout durante el establecimiento de sesión no repuebla códigos privados
 });
 test('Doble submit solo envía un segundo factor y no persiste el desafío',async t=>{
  const page=await fixture(t);await page.evaluate(()=>{
-  window.calls=0;window.ui=createHMTwoFactorUI({session:{token:()=>'',authFetch:async()=>{calls++;return new Promise(resolve=>{window.respond=()=>resolve({ok:true,json:async()=>({token:'synthetic'})});});}},apiFetch(){},showLogin(){},showChallenge(){},showProfile(){},authenticated:async()=>{}});
+  window.calls=0;window.ui=createHMTwoFactorUI({session:{token:()=>'',authFetch:async()=>{window.calls++;return new Promise(resolve=>{window.respond=()=>resolve({ok:true,json:async()=>({token:'synthetic'})});});}},apiFetch(){},showLogin(){},showChallenge(){},showProfile(){},authenticated:async()=>{}});
   ui.challenge({desafio:'A'.repeat(43),vence_en:new Date(Date.now()+300000).toISOString()});document.getElementById('two-factor-login-code').value='123456';
   const form=document.getElementById('two-factor-login');form.dispatchEvent(new Event('submit',{cancelable:true}));form.dispatchEvent(new Event('submit',{cancelable:true}));
  });
- assert.equal(await page.evaluate(()=>calls),1);await page.evaluate(()=>respond());await page.waitForFunction(()=>document.getElementById('two-factor-login').hidden);
+ assert.equal(await page.evaluate(()=>window.calls),1);await page.evaluate(()=>window.respond());await page.waitForFunction(()=>document.getElementById('two-factor-login').hidden);
  assert.equal(await page.locator('#two-factor-login-code').inputValue(),'');
 });
 for(const mode of ['lost-response','timeout','server-error'])test('Confirmación incierta '+mode+' limpia secretos y exige login sin reenviar',async t=>{
  const page=await fixture(t);await page.evaluate(mode=>{
-  window.calls=0;window.message='';window.ui=createHMTwoFactorUI({session:{token:()=> 'synthetic',authFetch:async()=>{calls++;if(mode==='server-error')return{ok:false,status:503,json:async()=>({mensaje:'No disponible'})};if(mode==='timeout')throw new DOMException('synthetic','AbortError');throw new TypeError('synthetic');}},apiFetch(){},showLogin:m=>{message=m;},showChallenge(){},showProfile(){},authenticated:async()=>{throw Error('No establecer sesión');}});
+  window.calls=0;window.message='';window.ui=createHMTwoFactorUI({session:{token:()=> 'synthetic',authFetch:async()=>{window.calls++;if(mode==='server-error')return{ok:false,status:503,json:async()=>({mensaje:'No disponible'})};if(mode==='timeout')throw new DOMException('synthetic','AbortError');throw new TypeError('synthetic');}},apiFetch(){},showLogin:m=>{window.message=m;},showChallenge(){},showProfile(){},authenticated:async()=>{throw Error('No establecer sesión');}});
   document.getElementById('two-factor-controls').hidden=false;document.getElementById('two-factor-confirm').hidden=false;
   document.getElementById('two-factor-qr').src='data:image/png;base64,fixture';document.getElementById('two-factor-codes-list').textContent='SYNTHETIC-PRIVATE';
  },mode);
- await page.locator('#two-factor-confirm-code').fill('123456');await page.locator('#two-factor-confirm button').click();await page.waitForFunction(()=>message.includes('Vuelve a iniciar sesión'));
- assert.equal(await page.evaluate(()=>calls),1);assert.equal(await page.locator('#two-factor-qr').getAttribute('src'),null);assert.equal(await page.locator('#two-factor-codes-list').textContent(),'');
+ await page.locator('#two-factor-confirm-code').fill('123456');await page.locator('#two-factor-confirm button').click();await page.waitForFunction(()=>window.message.includes('Vuelve a iniciar sesión'));
+ assert.equal(await page.evaluate(()=>window.calls),1);assert.equal(await page.locator('#two-factor-qr').getAttribute('src'),null);assert.equal(await page.locator('#two-factor-codes-list').textContent(),'');
 });
 test('Un desafío caducado no envía códigos y anuncia recuperación por login',async t=>{
  const page=await fixture(t);await page.clock.install();await page.evaluate(()=>{
-  window.calls=0;window.ui=createHMTwoFactorUI({session:{token:()=>'',authFetch:async()=>{calls++;}},apiFetch(){},showLogin(){},showChallenge(){},showProfile(){},authenticated:async()=>{}});
+  window.calls=0;window.ui=createHMTwoFactorUI({session:{token:()=>'',authFetch:async()=>{window.calls++;}},apiFetch(){},showLogin(){},showChallenge(){},showProfile(){},authenticated:async()=>{}});
   ui.challenge({desafio:'A'.repeat(43),vence_en:new Date(Date.now()+300000).toISOString()});
  });
- await page.clock.fastForward(300001);assert.equal(await page.evaluate(()=>calls),0);assert.match(await page.locator('#two-factor-login-error').textContent(),/venció/);
+ await page.clock.fastForward(300001);assert.equal(await page.evaluate(()=>window.calls),0);assert.match(await page.locator('#two-factor-login-error').textContent(),/venció/);
  assert.equal(await page.locator('#two-factor-login-code').getAttribute('aria-describedby'),'two-factor-login-error');
 });

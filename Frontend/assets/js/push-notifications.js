@@ -150,7 +150,8 @@
       if (resolving.has(key)) return resolving.get(key);
       const task = handleEvent(id, tap);
       resolving.set(key, task);
-      task.finally(() => resolving.delete(key));
+      const release = () => resolving.delete(key);
+      task.then(release, release);
       return task;
     }
     async function listeners() {

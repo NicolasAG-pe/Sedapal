@@ -1339,7 +1339,7 @@ function validarCorteAdmin(body){
         return { error: 'El motivo es obligatorio (máximo 200 caracteres).' };
     }
 
-    if (isNaN(inicio.getTime()) || isNaN(fin.getTime())) {
+    if (Number.isNaN(inicio.getTime()) || Number.isNaN(fin.getTime())) {
         return { error: 'Fechas de inicio y fin inválidas.' };
     }
 
@@ -1718,7 +1718,7 @@ function validarReciboAdmin(body){
         return { error: 'El periodo es obligatorio (máximo 20 caracteres).' };
     }
 
-    if (isNaN(emision.getTime()) || isNaN(vencimiento.getTime())) {
+    if (Number.isNaN(emision.getTime()) || Number.isNaN(vencimiento.getTime())) {
         return { error: 'Fechas de emisión y vencimiento inválidas.' };
     }
 

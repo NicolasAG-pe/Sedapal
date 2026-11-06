@@ -10,10 +10,11 @@ import java.util.UUID;
 @CapacitorPlugin(name="HidroPushState")
 public class HidroPushStatePlugin extends Plugin {
     private static final Object LOCK=new Object();
+    private static final SecureRandom RANDOM=new SecureRandom();
     private JSObject state(EncryptedStateStore store) throws Exception {
         String raw=store.read("push");
         if(raw!=null)return new JSObject(raw);
-        byte[] random=new byte[32];new SecureRandom().nextBytes(random);
+        byte[] random=new byte[32];RANDOM.nextBytes(random);
         JSObject value=new JSObject();value.put("installation_id",UUID.randomUUID().toString());
         value.put("proof",Base64.encodeToString(random,Base64.URL_SAFE|Base64.NO_WRAP|Base64.NO_PADDING));
         JSObject categories=new JSObject();for(String k:new String[]{"recibos","vencimientos","incidencias","cortes"})categories.put(k,true);value.put("categories",categories);

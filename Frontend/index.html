@@ -1421,7 +1421,7 @@
     });
   }
   function iniciarTiempoReal(){
-    try{ detenerTiempoReal(true); }catch(e){}
+    try{ detenerTiempoReal(); }catch(e){}
     let token = '';
     try{ token = obtenerToken(); }catch(e){}
     if(!token) return;
@@ -1997,10 +1997,10 @@
     const consumoM3 = Number.isFinite(consumoNum) ? consumoNum : 0;
     let fechaEmi = null;
     try{ fechaEmi = api.fecha_emision ? new Date(api.fecha_emision) : null; }catch(e){ fechaEmi = null; }
-    const emiValida = fechaEmi && !isNaN(fechaEmi);
+    const emiValida = fechaEmi && !Number.isNaN(fechaEmi.getTime());
     let fechaVen = null;
     try{ fechaVen = api.fecha_vencimiento ? new Date(api.fecha_vencimiento) : null; }catch(e){ fechaVen = null; }
-    const venValida = fechaVen && !isNaN(fechaVen);
+    const venValida = fechaVen && !Number.isNaN(fechaVen.getTime());
     // Año/mes para filtros y gráficos: desde fecha_emision real (YYYY-MM-DD
     // directo del ISO para evitar desfase por zona horaria), con respaldo
     // en periodo ("Octubre 2026").
@@ -3338,7 +3338,7 @@
       cortes.forEach(c=>{
         try{
           const f = new Date(c.fechaFinISO);
-          if(isNaN(f)) return;
+          if(Number.isNaN(f.getTime())) return;
           if(!prox || f < new Date(prox.fechaFinISO)) prox = c;
         }catch(e){}
       });
@@ -4374,7 +4374,7 @@ async function descargarConstanciaPDF(r, btn){
     let anio = '2026';
     try{
       const f = new Date(fechaRegistro);
-      if(!isNaN(f.getTime())) anio = String(f.getFullYear());
+      if(!Number.isNaN(f.getTime())) anio = String(f.getFullYear());
     }catch(e){}
     return 'INC-' + anio + '-' + String(idIncidencia).padStart(6, '0');
   }
@@ -4624,7 +4624,7 @@ async function descargarConstanciaPDF(r, btn){
   function formatearFechaHoraCorte(iso){
     try{
       const d = new Date(iso);
-      if(isNaN(d)) return '—';
+      if(Number.isNaN(d.getTime())) return '—';
       return new Intl.DateTimeFormat('es-PE', {
         timeZone: 'America/Lima',
         day: '2-digit', month: '2-digit', year: 'numeric',
