@@ -23,7 +23,7 @@ const groups = {
 };
 function files() {
     return ['Backend/test', 'scripts/test'].flatMap(folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true })
-        .filter(entry => entry.isFile()).map(entry => folder + '/' + entry.name)).sort();
+        .filter(entry => entry.isFile()).map(entry => folder + '/' + entry.name)).sort((a, b) => a.localeCompare(b, 'en'));
 }
 // Validar antes de clasificar: find() no debe ocultar pertenencias ambiguas.
 function validateGroups(catalog, discovered) {
@@ -83,7 +83,7 @@ function inventory() {
                             : 'NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso';
         return { path: name, sha256: crypto.createHash('sha256').update(source).digest('hex'), type, group,
             nodeTest: source.includes('node:test'), requirements: tools, dependencies,
-            environmentNames: [...new Set([...source.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)/g)].map(m => m[1]))].sort(),
+            environmentNames: [...new Set([...source.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)/g)].map(m => m[1]))].sort((a, b) => a.localeCompare(b, 'en')),
             legacyNpm: legacy.filter(([, c]) => matches(c, name)).map(([key]) => key),
             referencedBy: names.filter(other => other !== name && [...sources[other].matchAll(/require\(["']([^"']+)["']/g)].some(m => {
                 if (!m[1].startsWith('.')) return false;

@@ -5306,7 +5306,7 @@ async function descargarConstanciaPDF(r, btn){
   });
 
   function validarRegistro(correo, suministro, pass, pass2){
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)){
+    if(!/^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(correo)){
       return 'Ingresa un correo electrónico válido.';
     }
     if(!/^\d{9}$/.test(suministro)){

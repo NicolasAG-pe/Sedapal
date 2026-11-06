@@ -147,7 +147,7 @@ function createPasswordRecovery({
       if (
         !uuid(body.solicitud_id) ||
         email.length > 120 ||
-        !/^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/.test(email)
+        !/^[^\s<>@]+@[^\s<>@.]+(?:\.[^\s<>@.]+)+$/.test(email)
       )
         return {
           error: {

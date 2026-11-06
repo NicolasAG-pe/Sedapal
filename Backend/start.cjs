@@ -135,5 +135,5 @@ function supervisar({ env = process.env, spawnImpl = spawn, signals = process,
     }
     return { done, stop };
 }
-if (require.main === module) supervisar().done.then(code => { process.exitCode = code; });
+if (require.main === module) supervisar().done.then(code => { process.exitCode = code; }).catch(() => { process.exitCode = 1; });
 module.exports = { prepararCredenciales, supervisar };

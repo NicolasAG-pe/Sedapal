@@ -12,13 +12,13 @@ function parse(source) {
     return doc.toJS();
 }
 function validate(workflow) {
-    assert.deepEqual(Object.keys(workflow.on).sort(), ['pull_request', 'push', 'workflow_dispatch']);
+    assert.deepEqual(Object.keys(workflow.on).sort((a, b) => a.localeCompare(b, 'en')), ['pull_request', 'push', 'workflow_dispatch']);
     assert.deepEqual(workflow.on.pull_request.branches, ['main']);
     assert.deepEqual(workflow.on.push.branches, ['chore/**', 'feature/**', 'fix/**', 'integration/**']);
     assert.deepEqual(workflow.permissions, { contents: 'read' });
     assert.equal(workflow.env, undefined); assert.equal(workflow.jobs.safe.env, undefined);
     assert.equal(workflow.concurrency['cancel-in-progress'], true);
-    assert.deepEqual(Object.keys(workflow.jobs).sort(), ['integration', 'safe']);
+    assert.deepEqual(Object.keys(workflow.jobs).sort((a, b) => a.localeCompare(b, 'en')), ['integration', 'safe']);
     const actions = {
         'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1': 'checkout',
         'actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1': 'node',
@@ -49,7 +49,7 @@ function validate(workflow) {
                 assert.deepEqual(step.with.path.trim().split('\n'), [`artifacts/tests/${id}-*/junit.xml`, `artifacts/tests/${id}-*/run.json`]);
             }
         }
-        assert.deepEqual([...seen].sort(), ['artifact', 'checkout', 'node']);
+        assert.deepEqual([...seen].sort((a, b) => a.localeCompare(b, 'en')), ['artifact', 'checkout', 'node']);
     }
     assert.equal(workflow.jobs.safe.steps[0].with['fetch-depth'], 0);
     assert.equal(workflow.jobs.integration.needs, 'safe');

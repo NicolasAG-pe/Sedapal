@@ -601,7 +601,7 @@ registerPush(app,{service:createPush({pool}),auth:requiereAuth,limit:limitadorGe
     expiry:req=>Number(jwt.decode(req.headers.authorization.split(' ')[1])?.exp)*1000});
 
 function requiereAdmin(req, res, next){
-    requiereAuth(req, res, () => {
+    return requiereAuth(req, res, () => {
         if (!req.user || req.user.rol !== 'admin') {
             return res.status(403).json({
                 estado: "error",
@@ -610,7 +610,7 @@ function requiereAdmin(req, res, next){
         }
 
         return next();
-    });
+    }).catch(next);
 }
 
 

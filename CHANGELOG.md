@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Correcciones SonarQube — 1.2.0
+
+- El análisis incluye explícitamente frontend, backend, administrador, código compartido y Android con la clave del proyecto local.
+- El panel gestiona rechazos de consultas y ordena filtros por idioma; el middleware administrativo propaga errores de autenticación.
+- Las validaciones de correo evitan retrocesos excesivos y las operaciones de registro y correo conservan el orden determinista de sus bloqueos.
+- Deshabilitados los despliegues Git para esta rama en ambas configuraciones del repositorio.
+
 ## Integración conjunta PostgreSQL, SDD y SonarQube — 1.2.0
 
 - Integrados los historiales PostgreSQL/Gmail y SonarQube sobre la base SDD/RPI sin reactivar el piloto de pagos.
