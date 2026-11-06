@@ -1930,7 +1930,7 @@
     },
     {
       "path": "scripts/test/browser-coverage.test.cjs",
-      "sha256": "065fbaa9d15dc2f621df938d0e2f1fd53dc8c7dc3f2976f9cc60c580e748c8f6",
+      "sha256": "1ff4b987a108fa33289773f29a000d8dee7e86bd25afcb1c6042ced6333df899",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,

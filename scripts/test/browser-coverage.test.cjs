@@ -25,6 +25,8 @@ test('fusiona únicamente fuentes locales idénticas y omite HTML inline', t => 
     assert.match(result.stdout, /1 scripts con fuente verificada; 1 inline sin mapear; 1 sin coincidencia/);
     assert.match(fs.readFileSync(path.join(dir, 'lcov.info'), 'utf8'), /SF:.*Shared\/ui\.js/);
     entry.url = 'https://example.com/shared/ui.js'; fs.writeFileSync(client, JSON.stringify([entry]));
+    const usage = run(merge, []);
+    assert.notEqual(usage.status, 0); assert.match(usage.stderr, /Uso:/);
     const rejected = run(merge, [node, client, admin, dir, c8]);
     assert.notEqual(rejected.status, 0); assert.match(rejected.stderr, /origen no local rechazada/);
 });
@@ -33,6 +35,8 @@ test('captura exige entorno sintético y rechaza orígenes externos antes de ini
     assert.notEqual(withoutFlag.status, 0); assert.match(withoutFlag.stderr, /entorno sintético aislado/);
     const external = run(capture, [], { HM_COVERAGE_SYNTHETIC: '1', HM_COVERAGE_CLIENT_ORIGIN: 'https://example.com' });
     assert.notEqual(external.status, 0); assert.match(external.stderr, /orígenes loopback/);
+    const badAdmin = run(capture, [], { HM_COVERAGE_SYNTHETIC: '1', HM_COVERAGE_CLIENT_ORIGIN: 'http://127.0.0.1:1234', HM_COVERAGE_ADMIN_ORIGIN: 'http://127.0.0.1:1235/path' });
+    assert.notEqual(badAdmin.status, 0); assert.match(badAdmin.stderr, /orígenes loopback/);
     const noCredentials = run(capture, [], { HM_COVERAGE_SYNTHETIC: '1', HM_COVERAGE_CLIENT_ORIGIN: 'http://127.0.0.1:1234', HM_COVERAGE_ADMIN_ORIGIN: 'http://127.0.0.1:1235' });
     assert.notEqual(noCredentials.status, 0); assert.match(noCredentials.stderr, /Faltan cuentas sintéticas/);
 });
