@@ -22,6 +22,7 @@
       "scripts/test/hidrobot.test.cjs",
       "scripts/test/identity-palette.test.cjs",
       "scripts/test/android-release-signing.test.cjs",
+      "scripts/test/test-catalog.test.cjs",
       "scripts/test/firebase-lab.cjs",
       "scripts/test/firebase-release.cjs",
       "scripts/test/test-runner.test.cjs"
@@ -2679,6 +2680,25 @@
       "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
+      "path": "scripts/test/test-catalog.test.cjs",
+      "sha256": "d869b500c67e2b5524aca9209284fa3688be3d1792c4786dbcafd0da36ff1b4a",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "../test-catalog.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
       "path": "scripts/test/test-runner.test.cjs",
       "sha256": "807ca59c60fa5fc2d56140d179f6984fc9bc296476fa3aaed0c2eeab0bce56bd",
       "type": "unitaria",
@@ -3146,6 +3166,11 @@
       "path": "scripts/test/release-image.test.cjs",
       "referencedBy": [],
       "managedGroup": null
+    },
+    {
+      "path": "scripts/test/test-catalog.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
     },
     {
       "path": "scripts/test/test-runner.test.cjs",

@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## CAT-01 — contrato del catálogo de pruebas
+
+- Validación de suites/rutas y pertenencia única antes de generar inventario; nueve pruebas nuevas, sin cambios funcionales ni dependencias.
+- 23/23 pruebas específicas/empaquetado/configuración aprobadas en Node20; inventario y checker CI aprobados. Consolidación pendiente de Node22/PG18 y de dos fallos suplementarios del runner con subprocesos en este entorno. Sin push ni despliegue.
+
 ## CI-01 — exclusión local de publicación accidental
 
 - Excluida únicamente chore/adopcion-sdd-rpi en ambos vercel.json; preservadas todas las otras claves.

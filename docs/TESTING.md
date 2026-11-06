@@ -36,3 +36,7 @@ El runner limpia entorno y limita conexiones Node a loopback; no es sandbox de c
 ## CI
 
 [Workflow](../.github/workflows/ci.yml): safe→integration en Node22, PostgreSQL18 efímero, sin secrets ni deploy. Validación local aprobada, ejecución remota pendiente. [Controles antes de publicar](../specs/004-integracion-continua/prepublication.md). No se exige repetir128/62 pruebas por un cambio exclusivamente documental.
+
+### Integridad del catálogo
+
+`test-catalog.cjs --write` y `--check` rechazan suites vacías, rutas fuera del inventario y pertenencias duplicadas antes de clasificar. Al agregar pruebas, elegir una única suite revisada o conservarlas fuera por defecto; regenerar el inventario después. CAT-01 añade nueve casos al grupo unit (23 archivos unitarios y3 de contrato). [Validación y límites actuales](../specs/006-contrato-catalogo/validation.md).

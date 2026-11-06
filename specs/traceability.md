@@ -88,3 +88,13 @@ Cinco tareas CI locales verificadas; CI-TASK-006 (run real GitHub) pendiente has
 ## CI-01 — seguimiento acelerado
 
 AC-CI-05: exclusiones locales exactas en vercel.json y Backend/vercel.json verificadas por comparación JSON. PR26 head34b5ca9: solapamiento acumulado en tres archivos ya identificados. CI-TASK-006 pendiente; raíces/hooks Vercel, contexto/auto-deploy Render y Apps aún no acreditados. Ver prepublication.md.
+
+## CAT-01 — contrato del catálogo
+
+| Requisito / aceptación | Implementación | Prueba / estado |
+|---|---|---|
+| FR-CAT-001 / AC-CAT-01 | validateGroups: estructura/rutas descubiertas | CAT-T01..05, aprobadas Node20 |
+| FR-CAT-002 / AC-CAT-02 | mapa de pertenencia única | CAT-T06/07, aprobadas |
+| FR-CAT-003 / AC-CAT-03 | validación previa inventory; nueva prueba unit | CAT-T08/09 + inventario/checker aprobados |
+
+NFR-CAT-001: diff sin producto, dependencias ni acceso real. Research/Spec/Plan/Implement/Document realizados; validación específica aprobada23/23 incluidos PKG/configuración. Consolidación ampliada pendiente: Node22, PG18/Docker y TEST-T03/T04 (3/5 suplementarias en Node20). No cierre total ni CI remoto verde. [Resultados reales](006-contrato-catalogo/validation.md).

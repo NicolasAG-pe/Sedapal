@@ -12,7 +12,7 @@ const groups = {
         'scripts/test/client-session.test.cjs', 'scripts/test/realtime.test.cjs', 'scripts/test/registration-state.test.cjs',
         'scripts/test/secure-session.test.cjs', 'scripts/test/ui-money.test.cjs', 'scripts/test/hidrobot.test.cjs',
         'scripts/test/identity-palette.test.cjs', 'scripts/test/android-release-signing.test.cjs',
-        'scripts/test/firebase-lab.cjs', 'scripts/test/firebase-release.cjs', 'scripts/test/test-runner.test.cjs'
+        'scripts/test/test-catalog.test.cjs', 'scripts/test/firebase-lab.cjs', 'scripts/test/firebase-release.cjs', 'scripts/test/test-runner.test.cjs'
     ],
     contract: ['scripts/test/public-api-config.test.js', 'scripts/test/android-upgrade.test.cjs', 'scripts/test/client-packaging.test.cjs'],
     integration: ['Backend/test/receipt-profile-compat.cjs', 'Backend/test/payment-production-compat.cjs',
@@ -23,8 +23,26 @@ function files() {
     return ['Backend/test', 'scripts/test'].flatMap(folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true })
         .filter(entry => entry.isFile()).map(entry => folder + '/' + entry.name)).sort();
 }
+// Validar antes de clasificar: find() no debe ocultar pertenencias ambiguas.
+function validateGroups(catalog, discovered) {
+    if (!catalog || typeof catalog !== 'object' || Array.isArray(catalog) || !Object.keys(catalog).length) {
+        throw Error('Catálogo inválido');
+    }
+    const available = new Set(discovered), owners = new Map();
+    for (const [group, entries] of Object.entries(catalog)) {
+        if (!Array.isArray(entries) || !entries.length) throw Error('Suite inválida: ' + group);
+        for (const file of entries) {
+            if (typeof file !== 'string') throw Error('Ruta inválida en suite: ' + group);
+            if (!available.has(file)) throw Error('Ruta no inventariada: ' + file);
+            if (owners.has(file)) throw Error(`Ruta duplicada: ${file} (${owners.get(file)}, ${group})`);
+            owners.set(file, group);
+        }
+    }
+}
 function inventory() {
-    const names = files(), sources = Object.fromEntries(names.map(name => [name, fs.readFileSync(path.join(root, name), 'utf8')]));
+    const names = files();
+    validateGroups(groups, names);
+    const sources = Object.fromEntries(names.map(name => [name, fs.readFileSync(path.join(root, name), 'utf8')]));
     const scripts = require('../package.json').scripts;
     const legacy = Object.entries(scripts).filter(([, command]) => !command.includes('test-runner.cjs') && !command.includes('test-catalog.cjs'));
     function matches(command, name) {
@@ -98,4 +116,4 @@ if (require.main === module) {
         else throw Error('Uso: test-catalog.cjs [--check|--write]');
     } catch (error) { console.error(error.message); process.exitCode = 1; }
 }
-module.exports = { root, groups, inventory, check };
+module.exports = { root, groups, inventory, check, validateGroups };

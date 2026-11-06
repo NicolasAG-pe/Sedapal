@@ -8,6 +8,7 @@ Actualizado2026-11-05. Rama chore/adopcion-sdd-rpi, base histórica d3d27d0. Sol
 | [PKG-01](001-empaquetado-cliente/spec.md) | Completado localmente, [validación](001-empaquetado-cliente/validation.md) |
 | [DB-01](002-compatibilidad-recibos/spec.md) | Completado localmente, [validación](002-compatibilidad-recibos/validation.md) |
 | [TEST-01](003-pruebas-automatizadas/spec.md) | Completado localmente, [inventario](003-pruebas-automatizadas/test-inventory.md) y [validación](003-pruebas-automatizadas/validation.md) |
+| [CAT-01](006-contrato-catalogo/spec.md) | Implementado, 9/9 contrato local; consolidación Node22/PG18 pendiente, [validación](006-contrato-catalogo/validation.md) |
 | [CI-01](004-integracion-continua/spec.md) |5/6 tareas, remoto pendiente; [auditoría de publicación](004-integracion-continua/prepublication.md) incompleta |
 | [DOC-01](005-documentacion-tecnica/spec.md) | Documentación actualizada, [validación](005-documentacion-tecnica/validation.md) |
 
