@@ -28,7 +28,7 @@ test('Docker backend declara usuario no privilegiado para API y workers', () => 
 
 test('Nginx de web y administración usa usuario sin privilegios y puerto interno coherente', () => {
     const root = path.resolve(__dirname, '../..');
-    for (const [folder, user] of [['Frontend', 'www-data'], ['Admin', 'nginx']]) {
+    for (const [folder, user] of [['Frontend', 'www-data'], ['Admin', 'www-data']]) {
         const read = file => fs.readFileSync(path.join(root, folder, file), 'utf8');
         const dockerfile = read('Dockerfile'), main = read('nginx/nginx.conf'), server = read('nginx/default.conf');
         assert.match(dockerfile, new RegExp('^USER ' + user + '$', 'm'));

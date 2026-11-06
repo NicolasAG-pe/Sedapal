@@ -2116,7 +2116,7 @@
     },
     {
       "path": "scripts/test/docker-context.test.cjs",
-      "sha256": "b395d4fcb08bde6cb54c203b6f85c6cdde0b7a3fd1cedb5b24f6df42df35d4bc",
+      "sha256": "b5fd14b0ec53f2353a47e54146e205f19ad776aa32f9ef6eaa1f3f8f7fb0b263",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
