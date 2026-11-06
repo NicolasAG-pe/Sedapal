@@ -2,6 +2,8 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- La operación local de Gmail invoca Docker y systemd-creds desde rutas del sistema, sin resolver ejecutables mediante PATH.
+
 - La dirección HTTP reservada al emulador Android no se acepta como destino web o administrativo remoto.
 
 - Las pruebas de recuperación verifican remitentes válidos, dominios malformados e intentos de inyección de cabeceras.
