@@ -47,6 +47,9 @@
       try{await task();}catch(error){if(error.name!=='AbortError'&&epoch===generation)el(errorId).textContent=error.message;}
       finally{if(epoch===generation){busy=false;region.removeAttribute('aria-busy');for(const b of document.querySelectorAll('#two-factor-login button,#two-factor-controls button'))b.disabled=false;}}
     }
+    function runSafely(errorId,task){
+      run(errorId,task).catch(()=>{el(errorId).textContent="No se pudo completar la operación. Inténtalo nuevamente.";});
+    }
     function render(){
       el('existing').hidden=!active;el('setup').hidden=active;el('recovery').hidden=!active;el('disable').hidden=!active;
     }
@@ -63,7 +66,7 @@
     }
     el('open').addEventListener('click',()=>{hidePrivate();render();el('controls').hidden=false;el('password').focus();});
     el('close').addEventListener('click',()=>{if(!busy)hidePrivate();});
-    el('manage').addEventListener('submit',event=>{event.preventDefault();run('settings-error',async()=>{
+    el('manage').addEventListener('submit',event=>{event.preventDefault();runSafely('settings-error',async()=>{
       const password=el('password').value;el('password').value='';
       const data=await request('/api/auth/2fa/setup',{password},true);
       if(typeof data.qr!=='string'||!data.qr.startsWith('data:image/png;base64,'))throw new Error('No se pudo preparar el QR.');
@@ -77,15 +80,15 @@
       if(data.codigos_recuperacion){el('codes-list').textContent=data.codigos_recuperacion.join('\n');el('codes').hidden=false;}
       await load();
     }
-    el('confirm').addEventListener('submit',event=>{event.preventDefault();run('settings-error',async()=>{
+    el('confirm').addEventListener('submit',event=>{event.preventDefault();runSafely('settings-error',async()=>{
       const codigo=el('confirm-code').value;el('confirm-code').value='';
       await changed(await request('/api/auth/2fa/confirm',{codigo},true));
     });});
-    for(const [button,path]of [['disable','disable'],['recovery','recovery']])el(button).addEventListener('click',()=>run('settings-error',async()=>{
+    for(const [button,path]of [['disable','disable'],['recovery','recovery']])el(button).addEventListener('click',()=>runSafely('settings-error',async()=>{
       const body={password:el('password').value,codigo:el('existing-code').value};el('password').value='';el('existing-code').value='';
       await changed(await request('/api/auth/2fa/'+path,body,true));
     }));
-    el('login').addEventListener('submit',event=>{event.preventDefault();run('login-error',async()=>{
+    el('login').addEventListener('submit',event=>{event.preventDefault();runSafely('login-error',async()=>{
       if(!pending || Date.parse(pending.vence_en)<=Date.now())throw new Error('El desafío venció. Vuelve a iniciar sesión.');
       const codigo=el('login-code').value;el('login-code').value='';
       const data=await request('/api/auth/2fa/login',{desafio:pending.desafio,codigo},false);

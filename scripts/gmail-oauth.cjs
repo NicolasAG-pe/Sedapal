@@ -95,7 +95,7 @@ async function autorizar({ clientFile, output, sender, onUrl = value => process.
     for (const file of [clientFile, output]) {
         const relative = path.relative(root, path.resolve(file));
         if (relative !== '..' && !relative.startsWith('..' + path.sep) && !path.isAbsolute(relative)) {
-            try { execFileSync('git', ['check-ignore', '--quiet', '--', relative], { cwd: root, stdio: 'ignore' }); }
+            try { execFileSync('/usr/bin/git', ['check-ignore', '--quiet', '--', relative], { cwd: root, stdio: 'ignore' }); }
             catch (_) { throw new Error('El archivo OAuth dentro del repositorio debe estar ignorado por Git.'); }
         }
     }

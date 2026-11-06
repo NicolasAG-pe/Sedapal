@@ -1,6 +1,6 @@
 > **Documento histórico. No representa la infraestructura actual de producción.** La infraestructura vigente es Android/Admin Vercel → Render → Neon; consultar [DEPLOYMENT](DEPLOYMENT.md).
 >
-> El cuerpo conserva la alternativa VPS original, no un procedimiento validado para v1.0.0. Sus cifras/checklists y afirmaciones de objetivo corresponden a esa alternativa. No ejecutar estos comandos sobre los servicios actuales. En particular, revisar el conflicto de puerto 80 entre proxy y web, el comportamiento real de variables del Compose y la restauración con `--clean`, que puede destruir datos. Los tres servicios citados en la guía no representan los cuatro del Compose vigente. Respaldos/restauración: [MAINTENANCE](MAINTENANCE.md).
+> El cuerpo conserva la alternativa VPS original, no un procedimiento validado para v1.0.0. Sus cifras/checklists y afirmaciones de objetivo corresponden a esa alternativa. No ejecutar estos comandos sobre los servicios actuales. En particular, verificar los puertos publicados por el proxy y web, el comportamiento real de variables del Compose y la restauración con `--clean`, que puede destruir datos. Los tres servicios citados en la guía no representan los cuatro del Compose vigente. Respaldos/restauración: [MAINTENANCE](MAINTENANCE.md).
 
 > Guía histórica de VPS conservada. No es el objetivo actual Render/Neon/Vercel y no se ejecutó ningún despliegue durante la organización. Los comandos parten de la raíz Sedapal.
 
@@ -9,7 +9,7 @@
 Guía propia, en orden. Sin secretos. Arquitectura objetivo:
 
 ```
-Internet → HTTPS (443) → Proxy TLS → web:80 → /api → backend:3000 → db:5432
+Internet → HTTPS (443) → Proxy TLS → web:8080 → /api → backend:3000 → db:5432
 ```
 
 Puertos públicos del VPS: **22, 80, 443**. Nunca públicos: **3000, 5432**.
@@ -82,7 +82,7 @@ git status   # rama main, árbol limpio
 ```bash
 cp .env.production.example .env
 chmod 600 .env
-nano .env   # completar POSTGRES_* (ver paso 8 para el secreto JWT)
+nano .env   # completar POSTGRES_* y fijar WEB_PORT=8080 para el proxy del host
 ```
 
 ## 8. Generar `AUTH_TOKEN_SECRET` nuevo y exclusivo de producción
@@ -108,8 +108,10 @@ docker compose ps
 # db healthy, backend healthy, web healthy
 ```
 
-`docs/historical/compose.prod.yaml` solo ajusta: web en `80:80`, `NODE_ENV=production`
-(vía `.env`) y rotación de logs. No reexpone 3000 ni 5432.
+`docs/historical/compose.prod.yaml` ajusta la rotación de logs. Con `WEB_PORT=8080`
+en `.env`, Compose publica `8080:8080`; `NODE_ENV=production` también viene de
+`.env`. El puerto 8080 no debe exponerse a Internet cuando Caddy está delante;
+limitar su acceso en el host. No se publican 3000 ni 5432.
 
 ## 11. HTTPS (recomendación: **opción A, Caddy**)
 
@@ -120,7 +122,7 @@ Emisión y renovación Let's Encrypt automáticas, ~5 líneas de config:
 sudo apt install -y caddy
 sudo tee /etc/caddy/Caddyfile >/dev/null <<'EOF'
 DOMINIO_EJEMPLO {
-    reverse_proxy 127.0.0.1:80
+    reverse_proxy 127.0.0.1:8080
 }
 EOF
 sudo systemctl reload caddy

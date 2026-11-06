@@ -6,6 +6,7 @@
 !Frontend/assets/**
 !Frontend/nginx/
 !Frontend/nginx/default.conf
+!Frontend/nginx/nginx.conf
 !Shared/
 !Shared/api.js
 !Shared/ui.js

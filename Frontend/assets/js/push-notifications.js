@@ -358,7 +358,7 @@
     );
     window.addEventListener("online", () => {
       if (active && session.isUser())
-        run(() => serialize(() => initialize(epoch)));
+        run(() => serialize(() => initialize(epoch))).catch(() => status("No se pudo actualizar las notificaciones."));
       else if (native)
         serialize(async () => {
           state = await store.read();
@@ -370,7 +370,7 @@
         Promise.resolve(
           platform.Plugins.App.addListener("appStateChange", (event) => {
             if (event.isActive && active && session.isUser())
-              run(() => serialize(() => initialize(epoch)));
+              run(() => serialize(() => initialize(epoch))).catch(() => status("No se pudo actualizar las notificaciones."));
           }),
         ).catch(() => {});
     } catch (_) {}

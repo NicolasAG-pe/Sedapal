@@ -5,8 +5,8 @@ const {leerJsonPrivado,validarCredenciales}=require('../Backend/gmail-mail');
 const root=path.resolve(__dirname,'..'),home=process.env.HOME,privateDir=path.join(home,'.config/hidro-mejora/gmail');
 const dbOverride=path.join(home,'hidro-dbeaver/compose.dbeaver.yaml'),gmailOverride=path.join(home,'hidro-dbeaver/compose.gmail.preparado.yaml');
 const base=['compose','--project-directory',root,'-p','sedapal','-f',path.join(root,'compose.yaml'),'-f',dbOverride];
-function run(args,options={}){const r=spawnSync('docker',args,{cwd:root,encoding:'utf8',...options});if(r.error||r.status!==0)throw Error('Docker Compose no pudo completar la operación.');return r.stdout}
-function decrypt(name){const f=path.join(privateDir,name+'.cred'),st=fs.lstatSync(f);if(!st.isFile()||st.uid!==process.getuid()||(st.mode&0o077))throw Error('Credencial cifrada no protegida.');const r=spawnSync('systemd-creds',['decrypt','--user','--name='+name,f,'-'],{encoding:'utf8',stdio:['ignore','pipe','pipe']});if(r.error||r.status!==0||!r.stdout)throw Error('No se pudo descifrar una credencial local.');return r.stdout}
+function run(args,options={}){const r=spawnSync('/usr/bin/docker',args,{cwd:root,encoding:'utf8',...options});if(r.error||r.status!==0)throw Error('Docker Compose no pudo completar la operación.');return r.stdout}
+function decrypt(name){const f=path.join(privateDir,name+'.cred'),st=fs.lstatSync(f);if(!st.isFile()||st.uid!==process.getuid()||(st.mode&0o077))throw Error('Credencial cifrada no protegida.');const r=spawnSync('/usr/bin/systemd-creds',['decrypt','--user','--name='+name,f,'-'],{encoding:'utf8',stdio:['ignore','pipe','pipe']});if(r.error||r.status!==0||!r.stdout)throw Error('No se pudo descifrar una credencial local.');return r.stdout}
 function environment(){
  const credentialsPath=path.join(privateDir,'credentials-renovada-20261104.json'),creds=leerJsonPrivado(credentialsPath),pin=leerJsonPrivado(path.join(privateDir,'authorized-sender.json'));
  validarCredenciales(creds,creds.sender);if(pin.sender!==creds.sender)throw Error('Remitente OAuth no coincide.');
@@ -30,4 +30,5 @@ function main(){
  const args=action==='up'?['up','-d','--no-deps','--no-build','--wait','--wait-timeout','90','backend','web','admin']:['start','backend','web','admin'];
  run([...base,'-f',gmailOverride,...args],{env,stdio:'inherit'});
 }
-try{main()}catch(e){console.error('Operación local detenida: '+e.message);process.exitCode=1}
+if(require.main===module){try{main()}catch(e){console.error('Operación local detenida: '+e.message);process.exitCode=1}}
+module.exports={run};

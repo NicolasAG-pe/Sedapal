@@ -1,12 +1,15 @@
-// Solo lecturas de datos reales. Los POST/PATCH se envían exclusivamente con
-// JWT de usuario normal y deben quedar bloqueados por requiereAdmin antes de SQL.
-// docker compose exec -T backend node < scripts/check-admin-local.cjs
+// Solo fixture sintético aislado; POST/PATCH deben quedar bloqueados por requiereAdmin.
+// Requiere destinos HTTPS y CA confiable; ver docs/LOCAL-DEVELOPMENT.md.
 'use strict';
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const WebSocket = require('ws');
+const { secureCheckEndpoint, requireSyntheticFixture, verifyFixtureDatabase } = require('./local-check-transport');
+requireSyntheticFixture();
+const webBase = secureCheckEndpoint(process.env.TEST_WEB_BASE, 'web');
+const adminBase = secureCheckEndpoint(process.env.TEST_ADMIN_BASE, 'admin');
 const webOrigin = process.env.TEST_WEB_ORIGIN || 'http://localhost:8080';
 const adminOrigin = process.env.TEST_ADMIN_ORIGIN || 'http://localhost:8081';
 async function socket(base, origin, token) {
@@ -30,16 +33,17 @@ async function socket(base, origin, token) {
     database: process.env.POSTGRES_DB, user: process.env.POSTGRES_USER, password: process.env.POSTGRES_PASSWORD,
     options: '-c default_transaction_read_only=on' });
   try {
-    const rows = (await pool.query("SELECT u.id_usuario,u.rol,s.id_suministro FROM usuarios u LEFT JOIN suministros s ON s.id_usuario=u.id_usuario WHERE u.activo=true ORDER BY u.id_usuario")).rows;
+    await verifyFixtureDatabase(pool);
+    const rows = (await pool.query("SELECT u.id_usuario,u.rol,s.id_suministro,COALESCE(m.version,0) AS mfa_version FROM usuarios u LEFT JOIN suministros s ON s.id_usuario=u.id_usuario LEFT JOIN usuario_2fa m ON m.id_usuario=u.id_usuario WHERE u.activo=true AND NOT COALESCE(m.activo,false) ORDER BY u.id_usuario")).rows;
     const admin = rows.find(row => row.rol === 'admin'), user = rows.find(row => row.rol === 'usuario');
-    assert.ok(admin && user, 'Se necesitan cuentas existentes activas de ambos roles.');
-    const sign = account => jwt.sign({ id_usuario: Number(account.id_usuario) }, process.env.AUTH_TOKEN_SECRET, { expiresIn: '2m' });
-    const adminToken = sign(admin), userToken = sign(user), base = 'http://admin';
+    assert.ok(admin && user, 'Se necesitan cuentas activas sin 2FA de ambos roles; el chequeo no suplanta un segundo factor.');
+    const sign = account => jwt.sign({ id_usuario: Number(account.id_usuario), rol: account.rol, mfa_version: Number(account.mfa_version) }, process.env.AUTH_TOKEN_SECRET, { expiresIn: '2m' });
+    const adminToken = sign(admin), userToken = sign(user), base = adminBase;
     async function request(endpoint, method = 'GET', token, body) {
       return fetch(base + endpoint, { method, headers: { Origin: adminOrigin, ...(token ? { Authorization: 'Bearer ' + token } : {}), ...(body ? { 'Content-Type': 'application/json' } : {}) },
         ...(body ? { body: JSON.stringify(body) } : {}), signal: AbortSignal.timeout(10000) });
     }
-    for (const client of ['http://web', base]) {
+    for (const client of [webBase, base]) {
       assert.equal((await fetch(client + '/')).status, 200);
       const health = await fetch(client + '/api/health'); assert.equal(health.status, 200);
       assert.equal((await health.json()).estado, 'ok');
@@ -50,7 +54,7 @@ async function socket(base, origin, token) {
       const type = asset.endsWith('.svg') ? 'image/svg+xml' : asset.endsWith('.css') ? 'text/css' : 'javascript';
       assert.ok(response.headers.get('content-type')?.includes(type), asset + ': debe servir el recurso, no un fallback HTML.');
     }
-    console.log('OK: web y admin; assets, proxies y health con PostgreSQL real.');
+    console.log('OK: web y admin; assets, proxies y health con PostgreSQL sintético.');
     const source = fs.readFileSync('/app/server.js','utf8');
     const routes = [...source.matchAll(/app\.(get|post|patch)\(["'](\/api\/admin\/[^"']+)["'], requiereAdmin/g)];
     assert.equal(routes.length, 19);
@@ -66,13 +70,13 @@ async function socket(base, origin, token) {
     }
     const photo = (await pool.query('SELECT id_incidencia FROM incidencias WHERE foto IS NOT NULL LIMIT 1')).rows[0];
     if(photo) assert.equal((await request('/api/admin/incidencias/'+photo.id_incidencia+'/foto','GET',adminToken)).status,200);
-    console.log('OK: resumen, usuarios/detalle, recibos, cortes, incidencias, pagos, atención y cuenta reales.');
+    console.log('OK: resumen, usuarios/detalle, recibos, cortes, incidencias, pagos, atención y cuenta sintéticos.');
     const cors = await fetch(base+'/api/auth/login', { method:'OPTIONS', headers:{Origin:adminOrigin,'Access-Control-Request-Method':'POST','Access-Control-Request-Headers':'content-type,authorization'} });
     assert.equal(cors.headers.get('access-control-allow-origin'),adminOrigin);
     const polling = await request('/socket.io/?EIO=4&transport=polling'); assert.equal(polling.status,200);
     assert.equal(polling.headers.get('access-control-allow-origin'),adminOrigin);
     await socket(base,adminOrigin,adminToken);
-    await socket('http://web',webOrigin,userToken);
+    await socket(webBase,webOrigin,userToken);
     console.log('OK: CORS administrativo y Socket.IO autenticado por ambos proxies, sin escrituras aceptadas.');
   } finally { await pool.end(); }
 })().catch(error => { console.error(error.message); process.exitCode=1; });

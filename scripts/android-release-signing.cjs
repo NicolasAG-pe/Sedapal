@@ -23,11 +23,11 @@ function parseSigningFile(text) {
   const parsed = {};
   for (const line of text.split(/\r?\n/)) {
     if (!line.trim() || line.trim().startsWith('#')) continue;
-    const match = line.match(/^\s*([A-Z_]+)\s*=\s*(.*?)\s*$/);
+    const match = line.trim().match(/^([A-Z_]+)\s*=([^\r\n]*)$/);
     if (!match || !names.includes(match[1]) || Object.hasOwn(parsed, match[1])) {
       throw new Error('Formato de configuración de firma inválido; valores ocultos.');
     }
-    let value = match[2];
+    let value = match[2].trim();
     if (/^(['"]).*\1$/.test(value)) value = value.slice(1, -1);
     parsed[match[1]] = value;
   }

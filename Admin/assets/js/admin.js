@@ -810,7 +810,7 @@
     const tipoActual = selTipo.value || 'Todos';
     const tipos = [];
     adminIncidencias.forEach(i=>{ if(i.tipo && tipos.indexOf(i.tipo) < 0) tipos.push(i.tipo); });
-    tipos.sort();
+    tipos.sort((a, b) => a.localeCompare(b, 'es'));
     selTipo.innerHTML = '<option value="Todos">Todos los tipos</option>';
     tipos.forEach(t=>{
       const o = document.createElement('option');
@@ -1216,7 +1216,7 @@
     const actual = sel.value || 'Todos';
     const mets = [];
     adminPagos.forEach(p=>{ if(p.metodo && mets.indexOf(p.metodo) < 0) mets.push(p.metodo); });
-    mets.sort();
+    mets.sort((a, b) => a.localeCompare(b, 'es'));
     sel.innerHTML = '<option value="Todos">Todos los métodos</option>';
     mets.forEach(m=>{ const o = document.createElement('option'); o.value = m; o.textContent = m; sel.appendChild(o); });
     sel.value = (actual === 'Todos' || mets.indexOf(actual) >= 0) ? actual : 'Todos';
@@ -1263,8 +1263,8 @@
   let admAteSum = '';
   let adminAteSel = null;
   let cacheResumenAte = { ts: 0, todas: null };
-  const cargarAdminPagosDebounced = debounce(function(){ cargarAdminPagos(); }, 300);
-  const cargarAdminAtencionDebounced = debounce(function(){ cargarAdminAtencion(); }, 300);
+  const cargarAdminPagosDebounced = debounce(function(){ cargarAdminPagos().catch(()=>showToast('No se pudieron consultar los pagos.')); }, 300);
+  const cargarAdminAtencionDebounced = debounce(function(){ cargarAdminAtencion().catch(()=>showToast('No se pudo consultar la atención.')); }, 300);
   async function cargarAdminAtencion(){
     if(!esAdmin()) return;
     const list = document.getElementById('admin-ate-list');
@@ -1397,8 +1397,8 @@
 
     }finally{_releaseForm();}
   });
-  document.getElementById('adm-ate-estado').addEventListener('change', ev=>{ admAteEstado = ev.target.value; cargarAdminAtencion(); });
-  document.getElementById('adm-ate-cat').addEventListener('change', ev=>{ admAteCat = ev.target.value; cargarAdminAtencion(); });
+  document.getElementById('adm-ate-estado').addEventListener('change', ev=>{ admAteEstado = ev.target.value; cargarAdminAtencion().catch(()=>showToast('No se pudo consultar la atención.')); });
+  document.getElementById('adm-ate-cat').addEventListener('change', ev=>{ admAteCat = ev.target.value; cargarAdminAtencion().catch(()=>showToast('No se pudo consultar la atención.')); });
   document.getElementById('adm-ate-sum').addEventListener('input', ev=>{ admAteSum = ev.target.value; cargarAdminAtencionDebounced(); });
 
 

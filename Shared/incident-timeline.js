@@ -172,14 +172,17 @@
           el("refresh").disabled = el("more").disabled = false;
           if (refreshPending) {
             refreshPending = false;
-            load();
+            loadSafely();
           }
         }
       }
     }
+    function loadSafely() {
+      load().catch(() => { if (id && isActive()) el("loading").textContent = "No se pudo actualizar el seguimiento."; });
+    }
     el("close").addEventListener("click", hide);
-    el("refresh").addEventListener("click", load);
-    el("more").addEventListener("click", load);
+    el("refresh").addEventListener("click", loadSafely);
+    el("more").addEventListener("click", loadSafely);
     modal.addEventListener("click", (e) => {
       if (e.target === modal) hide();
     });
@@ -196,7 +199,7 @@
       }
     });
     const reconnect = () => {
-      if (id) load();
+      if (id) loadSafely();
     };
     global.addEventListener("online", reconnect);
     return {
@@ -209,7 +212,7 @@
         id = String(value);
         el("title").textContent = "Seguimiento · Incidencia #" + id;
         openDialog(modal, opener);
-        load();
+        loadSafely();
       },
       refresh: load,
       clear() {

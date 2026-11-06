@@ -38,6 +38,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  }
  const ctx=await iniciar({autoDrain:false,databasePrefix:fcmRegistration?'fcm_registration':process.argv.includes('--yape-pilot')?'yape_pilot':'api',port:fcmRegistration?45679:0});let device,page;
  let baselineRuntimeBackup=null;
+ let reversePort=null;
  let sessionRequests=0;
  ctx.httpServer.on('request',req=>{if(req.method==='GET'&&req.url==='/api/auth/session')sessionRequests++;});
  const supplyA='900000711',supplyB='900000712',password=ctx.registro(711).password;
@@ -100,7 +101,11 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  async function logout(){await page.evaluate(()=>document.getElementById('btn-logout').click());await loginScreen();assert.ok(!(await saved()).token,'Credencial retirada');await noPlainToken();}
  try{
   report.database=ctx.connection.database;
-  const env={...process.env,API_BASE_URL:ctx.base.replace('127.0.0.1','10.0.2.2')};
+  const port=Number(new URL(ctx.base).port); assert.ok(Number.isInteger(port)&&port>0);
+  const socket='tcp:'+port;
+  assert.ok(!android('reverse','--list').split(/\r?\n/).some(line=>line.trim().split(/\s+/).includes(socket)), 'Ya existe un reenvío para el puerto del fixture; no se reemplazará.');
+  android('reverse',socket,socket); reversePort=socket;
+  const env={...process.env,API_BASE_URL:ctx.base};
   for(const [command,args,name]of (fcmRegistration?[]:[[process.execPath,['scripts/sync-android.cjs'],'sync.log'],['bash',['scripts/android-gradle.sh','--no-daemon','--console=plain','-PhidroBuildDir='+path.join(output,'app'),':app:assembleDebug',':app:assembleDebugAndroidTest',...((process.argv.includes('--password-recovery')||process.argv.includes('--push')||process.argv.includes('--incidents'))?[':app:testDebugUnitTest',':app:lintDebug']:[])],'build.log']])){
    const r=spawnSync(command,args,{cwd:root,env,encoding:'utf8',maxBuffer:32*1024*1024});fs.writeFileSync(path.join(output,name),(r.stdout||'')+(r.stderr||''),{mode:0o600});assert.equal(r.status,0,'Compilación '+name);
    if(name==='sync.log'&&process.argv.includes('--incident-before')){
@@ -214,6 +219,7 @@ async function until(fn,label,timeout=25000){const end=Date.now()+timeout;while(
  }
  finally{
   try{android('shell','svc','wifi','enable');}catch(_){}
+  if(reversePort)try{android('reverse','--remove',reversePort);}catch(_){}
   // Al terminar, detener solo la app del AVD dedicado: su reconexión puede impedir
   // cerrar el servidor HTTP del fixture. No borrar datos ni modificar otros procesos.
   try{android('shell','am','force-stop',pkg);}catch(_){}

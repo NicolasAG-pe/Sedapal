@@ -13,6 +13,9 @@ test('configuración ausente deshabilita el envío; rechaza secreto compartido o
     assert.throws(() => obtenerConfigCorreo({ ...env, EMAIL_OTP_SECRET: 'corto' }));
     assert.throws(() => obtenerConfigCorreo({ ...env, AUTH_TOKEN_SECRET: env.EMAIL_OTP_SECRET }));
     assert.throws(() => obtenerConfigCorreo({ ...env, RESEND_FROM: 'correo@example.invalid\r\nBcc: otro@example.invalid' }));
+    assert.throws(() => obtenerConfigCorreo({ ...env, RESEND_FROM: 'correo@example..invalid' }));
+    assert.throws(() => obtenerConfigCorreo({ ...env, RESEND_FROM: 'x'.repeat(20000) + '@example.invalid' }));
+    assert.ok(obtenerConfigCorreo({ ...env, RESEND_FROM: 'correo@example.invalid' }));
 });
 
 test('envía texto y HTML accesible por HTTPS; reintento conserva cuerpo e idempotencia', async () => {
@@ -63,5 +66,25 @@ test('timeout, red y cuota limitan reintentos y generan error seguro', async () 
             } });
         await assert.rejects(enviar(datos), { code: 'EMAIL_DELIVERY_FAILED' });
         assert.equal(calls, fallo === 'invalid-json' ? 1 : 2);
+    }
+});
+
+
+test('validación de remitente exige estructura coherente sin aceptar encabezados', () => {
+    const { remitenteValido } = require('../mail-address');
+    for (const input of ['persona@example.invalid', 'Equipo <persona@example.invalid>']) assert.equal(remitenteValido(input), true);
+    for (const input of [null, '', 'x'.repeat(321), 'A <persona@example.invalid', '<persona@example.invalid>', 'A<persona@example.invalid>', 'A <persona@example.invalid>>', 'A <persona@example..invalid>', 'a@example.invalid\nBcc: b@example.invalid']) {
+        assert.equal(remitenteValido(input), false, String(input));
+    }
+});
+
+test('recuperación acepta remitente válido y rechaza cabeceras y dominios malformados', () => {
+    const { config } = require('../password-recovery-crypto');
+    const recovery = { PASSWORD_RECOVERY_ENABLED: '1', PASSWORD_RECOVERY_SECRET: crypto.randomBytes(32).toString('hex'),
+        PASSWORD_RECOVERY_OUTBOX_KEY: crypto.randomBytes(32).toString('base64'), EMAIL_PROVIDER: 'resend',
+        RESEND_FROM: 'Equipo <correo@example.invalid>' };
+    assert.equal(config(recovery).from, recovery.RESEND_FROM);
+    for (const sender of ['correo@example..invalid', 'Equipo <correo@example.invalid', 'correo@example.invalid\r\nBcc: otra@example.invalid']) {
+        assert.throws(() => config({ ...recovery, RESEND_FROM: sender }), /Remitente/);
     }
 });

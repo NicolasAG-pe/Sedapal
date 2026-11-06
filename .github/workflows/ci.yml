@@ -33,6 +33,8 @@ jobs:
         with:
           node-version: '22'
           package-manager-cache: false
+      - name: Dependencias de cobertura desde lockfile, sin scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Dependencias Backend desde lockfile, sin scripts
         run: npm ci --prefix Backend --ignore-scripts --no-audit --no-fund
       - name: Inventario completo

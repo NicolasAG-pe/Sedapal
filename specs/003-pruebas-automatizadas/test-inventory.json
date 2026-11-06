@@ -26,6 +26,8 @@
       "scripts/test/docker-context.test.cjs",
       "scripts/test/push-event-errors.test.cjs",
       "scripts/test/test-catalog.test.cjs",
+      "scripts/test/local-check-transport.test.cjs",
+      "scripts/test/browser-coverage.test.cjs",
       "scripts/test/firebase-lab.cjs",
       "scripts/test/firebase-release.cjs",
       "scripts/test/test-runner.test.cjs"
@@ -530,7 +532,7 @@
     },
     {
       "path": "Backend/test/email-resend.test.js",
-      "sha256": "f53bd2fc2183dddea0ef7f2c6423d939f38ee112dff62d578d5fa44ba2f1962a",
+      "sha256": "de649042a36862b477334a1ee03174874fe6c63f3f96b49b21ce78822015c0b0",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -541,7 +543,9 @@
         "node:test",
         "node:assert/strict",
         "node:crypto",
-        "../resend-mail"
+        "../resend-mail",
+        "../mail-address",
+        "../password-recovery-crypto"
       ],
       "environmentNames": [],
       "legacyNpm": [
@@ -1264,7 +1268,7 @@
     },
     {
       "path": "Backend/test/totp-crypto.test.js",
-      "sha256": "db8c4c991e073f7a774dba1c6161bb2f89d486b8b3b5c1c31645b9e905b5d61e",
+      "sha256": "60499dae1970ae7e01317bb780e106cb0f84f8d7da553636b0280a797f2a3068",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -1464,7 +1468,7 @@
     },
     {
       "path": "scripts/test/admin-e2e.cjs",
-      "sha256": "5282efbf48df5f912b7162524c3a7a442b190416ac86acfee7c17e5f70cb6bbb",
+      "sha256": "2f91873251d134a68e357aa60058bc8cb6c2476f8a0f190fb071219202d91c76",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": false,
@@ -1713,7 +1717,7 @@
     },
     {
       "path": "scripts/test/android-session-native.cjs",
-      "sha256": "802130ac1e20ba81b3b1e8ffb83632969722edceff33cf0bbfe4c996fd26c7d7",
+      "sha256": "ca65e748ecabcddf52aeaf8fc95fc36f6c14b9e0876bb7575d9283a2e61fa910",
       "type": "Android/dispositivo",
       "group": null,
       "nodeTest": false,
@@ -1846,7 +1850,7 @@
     },
     {
       "path": "scripts/test/android-upgrade.test.cjs",
-      "sha256": "62fdf352ce6a18ee6dec9cc40470ff378443568c96c60c2c12683f65b8f7f9da",
+      "sha256": "f083259a3e85555e785c52f3c7b3958eb1632afd75dfd624cf6a570309ced535",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -1924,6 +1928,28 @@
       "legacyNpm": [],
       "referencedBy": [],
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/browser-coverage.test.cjs",
+      "sha256": "1ff4b987a108fa33289773f29a000d8dee7e86bd25afcb1c6042ced6333df899",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:child_process"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
       "path": "scripts/test/chatbot-ui-checks.cjs",
@@ -2090,7 +2116,7 @@
     },
     {
       "path": "scripts/test/docker-context.test.cjs",
-      "sha256": "fd05e73de953a3b4bbe2175c94d1df14ce89e319becc33fa6010b937ab328abb",
+      "sha256": "b5fd14b0ec53f2353a47e54146e205f19ad776aa32f9ef6eaa1f3f8f7fb0b263",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2166,7 +2192,7 @@
     },
     {
       "path": "scripts/test/firebase-lab.cjs",
-      "sha256": "c40baa129e50c32e2537c9d5e0f588b5f49c57b7dc497604bc5ffb024b5435de",
+      "sha256": "737f693447ab6941185e6deb70a763b58a84c746159fe0795e1823603ea507f1",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2314,7 +2340,7 @@
     },
     {
       "path": "scripts/test/k8s-integration.test.cjs",
-      "sha256": "f86435049fecc2da551a36474cc451cb84ad7ae6f2802d6f239a6c6ee247b7d6",
+      "sha256": "52f826b00faa4ae4e4144a2c0eed63e2617b3a7cb20495cd2c2c62c08aac462d",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -2346,6 +2372,25 @@
       ],
       "referencedBy": [],
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/local-check-transport.test.cjs",
+      "sha256": "264fb6e54885045a673faca9b9cbccc581ca7834989b3e5a51f53edbbf24ce6a",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "../../Backend/local-check-transport"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
       "path": "scripts/test/password-recovery-flow.cjs",
@@ -2607,7 +2652,7 @@
     },
     {
       "path": "scripts/test/public-api-config.test.js",
-      "sha256": "711b4e257911b724b9acca877314f6ebff0a491636a77a07a819eb2cdf16a2c7",
+      "sha256": "40e9b1f823990d5d6ae1eec8d8f09fbcc09a28d4db49030a4cfd0c7892fcbf8b",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -3217,6 +3262,11 @@
       "managedGroup": null
     },
     {
+      "path": "scripts/test/browser-coverage.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
       "path": "scripts/test/chatbot-ui-checks.cjs",
       "referencedBy": [
         "scripts/test/android-session-native.cjs",
@@ -3276,6 +3326,11 @@
       "path": "scripts/test/identity-visual.cjs",
       "referencedBy": [],
       "managedGroup": null
+    },
+    {
+      "path": "scripts/test/local-check-transport.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
     },
     {
       "path": "scripts/test/payment-production-browser.cjs",

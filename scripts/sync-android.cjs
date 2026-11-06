@@ -15,7 +15,11 @@ fs.chmodSync(backup, 0o700);
 const previous = path.join(backup, 'public');
 if (fs.existsSync(publicDirectory)) fs.renameSync(publicDirectory, previous);
 try {
-    const result = spawnSync('npx', ['--no-install', 'cap', 'sync', 'android'], { cwd: root, stdio: 'inherit' });
+    // Invoca el CLI local del proyecto con el ejecutable Node activo; no busca
+    // un binario llamado npx mediante PATH, que podría estar manipulado.
+    const capCli = path.join(root, 'node_modules', '@capacitor', 'cli', 'bin', 'capacitor');
+    if (!fs.existsSync(capCli)) throw new Error('Falta @capacitor/cli local; ejecuta npm ci con dependencias de desarrollo.');
+    const result = spawnSync(process.execPath, [capCli, 'sync', 'android'], { cwd: root, stdio: 'inherit' });
     if (result.error) throw result.error;
     if (result.status !== 0) throw new Error('Capacitor sync terminó con error.');
     console.log('Android cliente:', JSON.stringify(verifyClientRuntime(publicDirectory)));

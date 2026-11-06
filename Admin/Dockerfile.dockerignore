@@ -6,6 +6,7 @@
 !Admin/assets/**
 !Admin/nginx/
 !Admin/nginx/default.conf
+!Admin/nginx/nginx.conf
 !Shared/
 !Shared/**
 !Frontend/

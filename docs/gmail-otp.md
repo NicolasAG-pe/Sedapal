@@ -243,3 +243,14 @@ efímero 0600 y retira el JSON del entorno de API y worker hijos. No se declara 
 ARG/ENV de Docker ni se copia al contexto/imagen. El secret file anterior se conserva.
 La alternativa cuenta con pruebas de JSON/alcance inválidos, tamaño, permisos y
 retirada de ambos entornos; el lector normal sigue rechazando enlaces inseguros.
+
+### Permisos de secretos para la imagen Docker sin root
+
+La imagen `Backend/Dockerfile` ejecuta el supervisor, API y workers como UID/GID
+1000 (`node`). Un archivo montado como `GMAIL_CREDENTIALS_FILE` debe ser legible
+por ese UID, manteniendo sus permisos privados y el montaje de solo lectura. Un
+secreto proyectado solo para root puede impedir el arranque: verificar propiedad y
+permisos antes de adoptar esta imagen; no conceder lectura global. Cuando el
+proveedor suministra `GMAIL_CREDENTIALS_JSON` como secreto privado, el supervisor
+crea una copia temporal 0600 del UID del proceso y la retira al terminar. La
+compatibilidad de cada proyección externa debe verificarse en su entorno aislado.
