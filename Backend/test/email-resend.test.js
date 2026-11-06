@@ -68,3 +68,12 @@ test('timeout, red y cuota limitan reintentos y generan error seguro', async () 
         assert.equal(calls, fallo === 'invalid-json' ? 1 : 2);
     }
 });
+
+
+test('validación de remitente exige estructura coherente sin aceptar encabezados', () => {
+    const { remitenteValido } = require('../mail-address');
+    for (const input of ['persona@example.invalid', 'Equipo <persona@example.invalid>']) assert.equal(remitenteValido(input), true);
+    for (const input of [null, '', 'x'.repeat(321), 'A <persona@example.invalid', '<persona@example.invalid>', 'A<persona@example.invalid>', 'A <persona@example.invalid>>', 'A <persona@example..invalid>', 'a@example.invalid\nBcc: b@example.invalid']) {
+        assert.equal(remitenteValido(input), false, String(input));
+    }
+});

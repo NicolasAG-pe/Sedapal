@@ -530,7 +530,7 @@
     },
     {
       "path": "Backend/test/email-resend.test.js",
-      "sha256": "4bb3f2ee6fd7a8dc8899418093da7fd4ed35b1e34f2fe7de9c9e20f4b234826b",
+      "sha256": "bdb720121de0e8b370791d6ab741859e81fed8fb8ecdcb78b2a6ba70842ba8c5",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -541,7 +541,8 @@
         "node:test",
         "node:assert/strict",
         "node:crypto",
-        "../resend-mail"
+        "../resend-mail",
+        "../mail-address"
       ],
       "environmentNames": [],
       "legacyNpm": [
