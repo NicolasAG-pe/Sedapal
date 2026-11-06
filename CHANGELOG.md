@@ -2,6 +2,8 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- La integración continua instala las dependencias de prueba desde el lockfile sin ejecutar scripts.
+
 - Pruebas de los controles de procedencia de la cobertura de navegador y dependencia local reproducible para generar LCOV.
 
 - Instrumentación local de cobertura de navegador y fusión con Node que verifica el contenido de cada fuente antes de atribuir líneas.
