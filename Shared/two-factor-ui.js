@@ -48,7 +48,7 @@
       finally{if(epoch===generation){busy=false;region.removeAttribute('aria-busy');for(const b of document.querySelectorAll('#two-factor-login button,#two-factor-controls button'))b.disabled=false;}}
     }
     function runSafely(errorId,task){
-      return run(errorId,task).catch(()=>{el(errorId).textContent="No se pudo completar la operación. Inténtalo nuevamente.";});
+      run(errorId,task).catch(()=>{el(errorId).textContent="No se pudo completar la operación. Inténtalo nuevamente.";});
     }
     function render(){
       el('existing').hidden=!active;el('setup').hidden=active;el('recovery').hidden=!active;el('disable').hidden=!active;

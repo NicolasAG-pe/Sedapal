@@ -2,6 +2,10 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- La prueba de cifrado altera siempre el texto cifrado, incluso cuando su primer carácter aleatorio coincide con el sustituto.
+
+- La imagen backend incluye el validador de remitentes y la navegación desde notificaciones deja de esperar indefinidamente.
+
 - Recuperación de cuenta, 2FA, seguimiento y notificaciones gestionan rechazos inesperados en acciones de interfaz.
 
 - Android restringe el respaldo de aplicación y el tráfico sin cifrar en producción; la excepción de red local permanece solo en depuración.

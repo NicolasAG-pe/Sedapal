@@ -1043,7 +1043,9 @@
   const interfazPush=window.createHMPush({session:sesionCliente,
     navigate:async section=>{
       const epoch=sesionCliente.generation();
-      while(navLock&&sesionCliente.isUser()&&epoch===sesionCliente.generation())await new Promise(resolve=>setTimeout(resolve,40));
+      let intentos=0;
+      while(navLock&&sesionCliente.isUser()&&epoch===sesionCliente.generation()&&intentos++<125)await new Promise(resolve=>setTimeout(resolve,40));
+      if(navLock)throw new Error("No se pudo abrir la sección. Inténtalo nuevamente.");
       if(sesionCliente.isUser()&&epoch===sesionCliente.generation())return openDashboardPage(section);
     },
     refresh:()=>sincronizarUsuarioPorEvento('notificacion'),notice:mensaje=>showToast(mensaje)
