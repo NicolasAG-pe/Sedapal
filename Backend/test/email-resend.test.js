@@ -13,6 +13,9 @@ test('configuración ausente deshabilita el envío; rechaza secreto compartido o
     assert.throws(() => obtenerConfigCorreo({ ...env, EMAIL_OTP_SECRET: 'corto' }));
     assert.throws(() => obtenerConfigCorreo({ ...env, AUTH_TOKEN_SECRET: env.EMAIL_OTP_SECRET }));
     assert.throws(() => obtenerConfigCorreo({ ...env, RESEND_FROM: 'correo@example.invalid\r\nBcc: otro@example.invalid' }));
+    assert.throws(() => obtenerConfigCorreo({ ...env, RESEND_FROM: 'correo@example..invalid' }));
+    assert.throws(() => obtenerConfigCorreo({ ...env, RESEND_FROM: 'x'.repeat(20000) + '@example.invalid' }));
+    assert.ok(obtenerConfigCorreo({ ...env, RESEND_FROM: 'correo@example.invalid' }));
 });
 
 test('envía texto y HTML accesible por HTTPS; reintento conserva cuerpo e idempotencia', async () => {

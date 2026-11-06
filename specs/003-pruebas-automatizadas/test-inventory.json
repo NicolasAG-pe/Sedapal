@@ -530,7 +530,7 @@
     },
     {
       "path": "Backend/test/email-resend.test.js",
-      "sha256": "f53bd2fc2183dddea0ef7f2c6423d939f38ee112dff62d578d5fa44ba2f1962a",
+      "sha256": "4bb3f2ee6fd7a8dc8899418093da7fd4ed35b1e34f2fe7de9c9e20f4b234826b",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -1846,7 +1846,7 @@
     },
     {
       "path": "scripts/test/android-upgrade.test.cjs",
-      "sha256": "62fdf352ce6a18ee6dec9cc40470ff378443568c96c60c2c12683f65b8f7f9da",
+      "sha256": "f083259a3e85555e785c52f3c7b3958eb1632afd75dfd624cf6a570309ced535",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,

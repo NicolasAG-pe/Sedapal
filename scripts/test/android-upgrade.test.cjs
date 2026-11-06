@@ -18,7 +18,7 @@ test('Candidato conserva identidad/certificado y solo añade el manifiesto FCM a
  for(const name of ['applicationId','namespace'])assert.equal(field(next,name),field(previous,name));
  assert.equal(current('android/release-certificate.sha256').trim(),old('android/release-certificate.sha256').trim());
  // PR #17 añadió únicamente permiso voluntario y metadatos FCM. No aceptar
- // otros permisos, componentes exportados ni cambios de respaldo por esta excepción.
+ // otros permisos ni componentes exportados; el respaldo y cleartext se endurecen.
  const manifest=current('android/app/src/main/AndroidManifest.xml');
  const additions=new Set([
   '<meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />',
@@ -27,7 +27,13 @@ test('Candidato conserva identidad/certificado y solo añade el manifiesto FCM a
   '<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />'
  ]);
  for(const line of additions)assert.equal(manifest.split('\n').filter(value=>value.trim()===line).length,1,'Adición FCM exacta y única: '+line);
- assert.equal(manifest.split('\n').filter(line=>!additions.has(line.trim())).join('\n'),old('android/app/src/main/AndroidManifest.xml'));
+ assert.match(manifest, /android:allowBackup="false"/);
+ assert.match(manifest, /android:usesCleartextTraffic="false"/);
+ const normalized=manifest.replace('android:allowBackup="false"','android:allowBackup="true"').replace('        android:usesCleartextTraffic="false"\n','');
+ assert.equal(normalized.split('\n').filter(line=>!additions.has(line.trim())).join('\n'),old('android/app/src/main/AndroidManifest.xml'));
+ const debug=current('android/app/src/debug/AndroidManifest.xml');
+ assert.match(debug, /android:usesCleartextTraffic="true"/);
+ assert.match(debug, /network_security_debug/);
  assert.equal(current('android/variables.gradle'),old('android/variables.gradle'));
 });
 test('Capacitor conserva contenido empaquetado, esquema seguro y sin servidor remoto/OTA',()=>{

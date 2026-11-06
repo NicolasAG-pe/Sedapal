@@ -2,6 +2,11 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- Recuperación de cuenta, 2FA, seguimiento y notificaciones gestionan rechazos inesperados en acciones de interfaz.
+
+- Android restringe el respaldo de aplicación y el tráfico sin cifrar en producción; la excepción de red local permanece solo en depuración.
+- La validación del remitente divide el nombre y el correo para evitar retrocesos excesivos, conservando el formato de envío admitido.
+
 - El análisis incluye explícitamente frontend, backend, administrador, código compartido y Android con la clave del proyecto local.
 - El panel gestiona rechazos de consultas y ordena filtros por idioma; el middleware administrativo propaga errores de autenticación.
 - Las validaciones de correo evitan retrocesos excesivos y las operaciones de registro y correo conservan el orden determinista de sus bloqueos.

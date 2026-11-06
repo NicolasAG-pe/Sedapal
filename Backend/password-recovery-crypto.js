@@ -2,6 +2,7 @@
 const crypto = require("node:crypto");
 const { proveedor } = require("./email-provider");
 const { validarRemitente } = require("./gmail-mail");
+const { remitenteValido } = require("./mail-address");
 function config(env = process.env) {
   if (env.PASSWORD_RECOVERY_ENABLED !== "1") return null;
   const secret = env.PASSWORD_RECOVERY_SECRET,
@@ -39,8 +40,7 @@ function config(env = process.env) {
         ? validarRemitente(env.GMAIL_SENDER)
         : String(env.RESEND_FROM || "").trim();
   if (
-    /[\r\n]/.test(from) ||
-    !/^(?:[^<>]+ <)?[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+>?$/.test(from)
+    !remitenteValido(from)
   )
     throw Error("Remitente de recuperación inválido.");
   return {

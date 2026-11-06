@@ -834,7 +834,7 @@
           <img id="inc-foto-prev" class="foto-prev" alt="Vista previa de la fotografía adjunta" hidden />
         </div>
         <div class="field">
-          <label>Ubicación (opcional)</label>
+          <span class="field-label">Ubicación (opcional)</span>
           <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
             <button class="btn btn-ghost" id="inc-geo" type="button" style="padding:.55rem .9rem;font-size:.84rem">Usar mi ubicación</button>
             <span class="coords" id="inc-coords">Sin ubicación compartida.</span>
@@ -1621,7 +1621,7 @@
     try{ document.removeEventListener('touchmove', bloquearTouchDrawer); }catch(e){}
     if(!isDrawerLocked()) { document.body.classList.remove('drawer-open'); try{ syncHidroBotVisibility(); }catch(e){} return; }
     const doRestore = restore !== false;
-    const y = parseInt(document.body.dataset.drawerScrollY || '0', 10) || 0;
+    const y = Number.parseInt(document.body.dataset.drawerScrollY || '0', 10) || 0;
     document.body.dataset.drawerLocked = '';
     document.body.classList.remove('drawer-open');
     document.documentElement.style.overflow = '';
@@ -3914,7 +3914,7 @@ async function descargarConstanciaPDF(r, btn){
     document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
     const manual=document.querySelector('input[name="pay-method"]:checked').value==='yape_manual';
     document.getElementById('pay-voluntary-label').hidden=!(manual&&paymentPilot&&!paymentPilotSynthetic);
-    document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual?(paymentPilotSynthetic?'Registrar pago':'Enviar a verificación manual'):'Registrar pago';
+    document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual&&!paymentPilotSynthetic?'Enviar a verificación manual':'Registrar pago';
   }));
   document.getElementById('pay-confirm').addEventListener('click',async ev=>{
     const btn=ev.currentTarget,epoch=sesionCliente.generation(),target=payTarget,view=paymentViewVersion;
