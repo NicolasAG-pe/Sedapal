@@ -1,47 +1,23 @@
-# Índice oficial de documentación
+# Documentación técnica
 
-Documentación en español de Hidro-Mejora **v1.0.0**, contrastada con el código del tag. Los informes anteriores tienen su fecha y alcance propios.
+Guías actualizadas para el código 1.2.0 de la rama chore/adopcion-sdd-rpi, referencia de entrada 6399d44 (2026-11-05), sin certificar el estado productivo. Las evidencias anteriores conservan su fecha, SHA y alcance; no son resultados ejecutados nuevamente.
 
-## Visión general y producto
+| Tema | Referencia |
+|---|---|
+| Producto y estado | [README](../README.md), [CHANGELOG](../CHANGELOG.md) |
+| Arquitectura y clientes | [Arquitectura](ARCHITECTURE.md), [Android](ANDROID.md) |
+| Docker aislado | [Desarrollo local](LOCAL-DEVELOPMENT.md) |
+| Datos y perfiles | [PostgreSQL](DATABASE.md), [diccionario](base-de-datos/diccionario-de-datos.md), [DER](base-de-datos/diagrama-entidad-relacion.md), [Excel](base-de-datos/diccionario-de-datos.xlsx) |
+| API y contratos por dominio | [API](API.md) |
+| Seguridad y capacidades opt-in | [Seguridad](SECURITY.md) |
+| Pruebas y evidencia | [Pruebas](TESTING.md) |
+| Especificaciones y proceso | [SDD + RPI](SDD-RPI.md), [specs](../specs/README.md) |
+| CI local/remoto pendiente | [CI](CI.md), [auditoría previa](../specs/004-integracion-continua/prepublication.md) |
+| Destinos y publicación restringida | [Despliegue](DEPLOYMENT.md), [firma Android](ANDROID-RELEASE.md) |
+| Mantenimiento | [Guía](MAINTENANCE.md), revisar sus prerrequisitos antes de operaciones manuales |
 
-- [Portada del repositorio](../README.md).
-- [Historial de versiones](../CHANGELOG.md).
-- [Arquitectura y estructura](ARCHITECTURE.md).
-- [Uso del cliente y Admin, PDF y limitaciones](MEJORA-PROFESIONAL.md).
+## Referencias especializadas e históricas
 
-## Desarrollo
+[Correo](verificacion-correo.md), [outbox](correo-outbox.md), [recuperación](../Backend/password-recovery.js), [push](android-push-firebase.md), [incidencias](../Backend/incident-tracking.js) y [recibos](integridad-recibos.md) describen sus avances y contratos con alcance propio. Los informes en `docs/pruebas/`, la [auditoría anterior](auditoria-produccion.md), [lanzamiento 1.2.0](LANZAMIENTO-OFICIAL-120.md), [guía de producto v1.0.0](MEJORA-PROFESIONAL.md) y [VPS histórico](DEPLOY-VPS-HISTORICO.md) son antecedentes, no una constatación del despliegue actual. No se alteraron esos informes ni el trabajo de análisis de otro compañero.
 
-- [Instalación y desarrollo local](LOCAL-DEVELOPMENT.md).
-- [API REST y contrato Socket.IO](API.md).
-- [Esquema y migraciones PostgreSQL](DATABASE.md).
-
-## Infraestructura
-
-- [Producción: Vercel, Render, Neon y distribución APK](DEPLOYMENT.md).
-- [Kubernetes local integrado en `main`](../k8s/README.md) y su
-  [guía de arranque, parada y recuperación](../k8s/avance19/README.md).
-
-## Android
-
-- [Entorno Android, Capacitor y desarrollo debug](ANDROID.md).
-- [Firma permanente, build release, verificación y futuras actualizaciones](ANDROID-RELEASE.md).
-
-## Seguridad
-
-- [Autenticación, autorización, secretos y limitaciones](SECURITY.md).
-
-## Pruebas
-
-- [Automatización, integración, pruebas físicas y evidencia histórica](TESTING.md).
-
-## Mantenimiento
-
-- [Respaldo, restauración controlada, limpieza y diagnóstico](MAINTENANCE.md).
-
-## Antecedentes históricos y académicos
-
-- [Informe de limpieza del 7 de octubre de 2026](LIMPIEZA-SEDAPAL.md).
-- [Alternativa VPS histórica](DEPLOY-VPS-HISTORICO.md).
-- [Modelo Java académico](../Backend/documentacion/java-docs/README.md), independiente del backend Node y del proyecto Android.
-
-Cada documento mantiene un tema principal. Los contratos REST y eventos se definen en API; las reglas de firma y publicación Android, en ANDROID-RELEASE. Los demás documentos enlazan a esas referencias.
+[Kubernetes local](../k8s/README.md) conserva su configuración existente; DOC-01 no inicia ni modifica ese entorno.

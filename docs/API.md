@@ -1,5 +1,15 @@
 # API REST y tiempo real
 
+## Estado de la referencia
+
+DOC-01, 2026-11-05: la tabla inferior describe **v1.0.0**, no el inventario completo de1.2.0. No usar su total de41 rutas como conteo actual. Las rutas efectivas están en [server.js](../Backend/server.js) y módulos existentes; no se generó OpenAPI ni snapshot exhaustivo nuevo.
+
+Contratos posteriores: [OTP/outbox](verificacion-correo.md), [2FA](seguridad-despliegue-2fa.md), [recuperación](../Backend/password-recovery.js), [push](android-push-firebase.md), [incidencias](../Backend/incident-tracking.js) y [recibos transaccionales](integridad-recibos.md). DB-01 conserva URLs/permisos/locks y permite el perfil sin tabla piloto; rechaza dependencias obligatorias ausentes. [Contrato verificado](../specs/002-compatibilidad-recibos/contracts/receipts.md).
+
+En Docker, usar el origen local y proxy `/api`; las URLs públicas siguientes son referencias históricas, no destinos de pruebas automáticas. `GET /api/health` solo verifica conexión, no esquema completo. [Pruebas seguras](TESTING.md).
+
+## Referencia histórica v1.0.0 y notas de avances
+
 Contrato de [Backend/server.js](../Backend/server.js) en **v1.0.0**, commit `135cb54`: **41 rutas**, 24 GET, 8 POST y 9 PATCH; 19 son administrativas. No existe una API de generación PDF ni un endpoint REST de logout.
 
 Base pública: `https://hidro-mejora-api.onrender.com`. En Docker se usa `/api` desde el origen de cada cliente mediante Nginx. No concatenar `/api` dos veces.

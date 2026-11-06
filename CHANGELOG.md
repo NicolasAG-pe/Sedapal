@@ -1,5 +1,81 @@
 # Historial de versiones
 
+## Consolidación final SDD — publicación bloqueada
+
+- Verificados DD estático9/9, regresiones específicas Node20 23/23 y checker CI; runner mantiene3 aprobadas/2 fallidas por captura EPERM, sin alterar controles. Node22/PG18 no ejecutables en el sandbox actual.
+- Confirmado main sin avance y PR26 mismo head: Docker finales idénticos, conflicto editorial real de CHANGELOG en simulación temporal. Procedimiento de integración y publicación preparado, sin ejecutarlo.
+- CAT bloqueado por entorno, DD comparación SQL bloqueada y CI remoto pendiente; exclusiones Vercel locales conservadas, configuración efectiva Vercel/Render no acreditada. Sin nuevas funcionalidades ni publicación.
+
+## DD-01 — diccionario de datos, perfiles, DER y Excel
+
+- Documentados init y14 migraciones en cuatro perfiles: hasta27 tablas,254 columnas,38 FK y64 índices (incluye PK/UNIQUE derivados); secuencias, restricciones y rutinas con fuente/línea.
+- Generador Python sin dependencias y Excel de nueve hojas reproducibles;9/9 verificaciones estáticas y23/23 regresiones Node20 aprobadas. Comparación PG18 y apertura/render de escritorio pendientes por entorno.
+- Sin cambios SQL/producto, datos reales ni publicación; CAT-01 conserva sus bloqueos de validación.
+
+## CAT-01 — diagnóstico de validación pendiente
+
+- Reproducidos los dos fallos del runner y EPERM con subproceso trivial sin aplicación: restricción de captura del entorno; controles intactos.
+- Node22/PG18 no disponibles y Docker denegado; cierre ampliado pendiente, sin sustituir runtimes ni usar bases reales.
+
+## CAT-01 — contrato del catálogo de pruebas
+
+- Validación de suites/rutas y pertenencia única antes de generar inventario; nueve pruebas nuevas, sin cambios funcionales ni dependencias.
+- 23/23 pruebas específicas/empaquetado/configuración aprobadas en Node20; inventario y checker CI aprobados. Consolidación pendiente de Node22/PG18 y de dos fallos suplementarios del runner con subprocesos en este entorno. Sin push ni despliegue.
+
+## CI-01 — exclusión local de publicación accidental
+
+- Excluida únicamente chore/adopcion-sdd-rpi en ambos vercel.json; preservadas todas las otras claves.
+- Actualizados controles en lectura de Vercel y PR26; Render sin contexto confirmado. CI remoto continúa pendiente, sin push ni cambios remotos.
+
+## DOC-01 — guías 1.2.0 y auditoría previa a publicación
+
+- Actualizadas portada, arquitectura, Docker aislado, perfiles PostgreSQL, pruebas, seguridad e índices SDD; API y antecedentes Android delimitados como históricos. Versiones fuente y npm diferenciadas.
+- CI-01 conserva5/6 tareas: workflow revisado localmente, sin ejecución GitHub. Documentada exclusión Vercel específica propuesta, no aplicada, y controles remotos pendientes de Vercel/Render/Apps/hooks; publicación no habilitada.
+- Solo documentación y commit local; sin cambios funcionales, SQL, proveedores, despliegues, push/PR ni intervención en el análisis de otro compañero.
+
+## CI-01 — workflow preparado, ejecución remota pendiente
+
+- Workflow mínimo Node22 con unitarias/contratos y PostgreSQL18 efímero para integración; dependencias Backend por lock, acciones oficiales por SHA y contents:read.
+- YAML y políticas locales aprobadas en Node22, ocho controles negativos, reportes limitados a JUnit/metadatos; sin deploy ni secretos reales. Puerto dinámico situado en steps.env según contexto válido.
+- Reutilizada evidencia TEST-01; no push ni run de GitHub. Verificación de service, políticas/acciones/uploads remotos y bloqueo de previews pendiente antes de publicación autorizada.
+
+
+## TEST-01 — entrada segura e inventario reproducible
+
+- Inventario afinado: helpers de cierre HTTP sin requisito Android SDK e imports literales de Backend/node_modules explícitos.
+
+- Catálogo de101 archivos, grupos explícitos y comandos npm separados sin eliminar pruebas anteriores. Entorno limpio, guard de red loopback y rechazo de prerrequisitos ausentes.
+- Node22:128 pruebas seguras aprobadas; PG18 sintético:62 aprobadas/0 fallidas/1 omisión condicional ya acreditada en DB-01. Guard nuevo corregido tras fallo de su propia prueba, sin modificar producto.
+- Reportes JUnit/metadatos y cobertura nativa limitada a fuentes cargadas:47,72% líneas,82,66% ramas,62,92% funciones; sin umbral ni atribución global. Sin dependencias nuevas/publicación.
+
+
+## DB-01 — recibos compatibles con esquema sin piloto
+
+- Comprobación de tabla opcional en la conexión transaccional, sin cambiar locks, errores públicos ni migraciones.
+- Defecto reproducido antes de corregir (42P01/HTTP 500). PostgreSQL 18.6 y Node 22: suite principal 53 aprobadas/0 fallidas/1 condicional, caso histórico alternativo aprobado aparte.
+- Matriz de pagos/pilotos, dependencias obligatorias, permisos, escritura/rollback, API y concurrencia verificadas en bases sintéticas nuevas; recursos temporales retirados sin acceso a datos reales. Sin push/despliegue/SonarQube.
+
+
+## PKG-01 — validación local completada
+
+- Node 22.23.4: 17/17 pruebas; HTTP/MIME de los tres módulos y diez comprobaciones Firefox con fixtures aprobadas.
+- Prerrequisitos de Git/permisos del directorio temporal resueltos sin modificar el producto; servicios temporales retirados y sin acceso a datos reales.
+- Criterios PKG-01 satisfechos localmente; sin push/despliegue. DB-01 queda habilitado por autorización condicional.
+
+
+## PKG-01 — corrección local, validación parcial
+
+- Completadas listas explícitas de recursos frontend/ignore y exigencia de recuperación en el verificador de runtime.
+- Nueve pruebas nuevas y ocho regresiones aprobadas. Build Docker exportado sin iniciar servicios; tar con 22 archivos cliente, sin los dos módulos omitidos previamente.
+- El build anterior también terminó: el fallo de construcción supuesto no se reprodujo en el builder disponible. HTTP/MIME y flujos de navegador pendientes; PKG-01 no cerrado. Sin push, despliegues ni DB-01.
+
+## PLAN-01 — base documental SDD + RPI
+
+- Constitución única aprobada, baseline vinculada a d3d27d0 y especificaciones PKG-01/DB-01 con contratos, tareas y trazabilidad.
+- Diferenciadas redacción y aprobación; IDs de tareas y pruebas separados y prerrequisitos de validación explícitos.
+- SonarQube histórico sin atribución al commit actual. Sin cambios funcionales ni pruebas de aplicación en este avance; solo commit local autorizado.
+
+
 ## Kubernetes local 1.2.0 — actualización controlada
 
 - Perfil de imágenes exclusivo de avance19 que reutiliza capas locales y copia las fuentes oficiales, incluyendo los módulos compartidos de recuperación y seguimiento que faltaban en la imagen web anterior. No cambia Docker Compose.

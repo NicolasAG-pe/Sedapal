@@ -1,9 +1,12 @@
 # APK release de Hidro-Mejora
 
+> Estado documental DOC-01 (2026-11-05): el fuente android/app/build.gradle declara **1.2.0 / versionCode 6**. Las menciones a1.0.0,1.1.0 y otras candidatas inferiores son antecedentes con alcance propio, no la versión actual del fuente ni confirmación de una publicación reciente. No se compiló, firmó ni publicó APK en este avance. [Pruebas actuales](TESTING.md) y [SDD](SDD-RPI.md).
+
+
 Distribución directa por APK. No se genera AAB ni se publica en Google Play.
 Se conserva Capacitor 7, Java 21 y `pe.edu.hidromejora.app`.
 La primera release distribuida es `versionCode 2`, `versionName 1.0.0`.
-La rama tiene un **candidato 1.1.0 / versionCode 3 compilado localmente**,
+En ese avance histórico se compiló un **candidato 1.1.0 / versionCode 3**,
 sin publicar. La [validación nativa del avance 16](pruebas/android-1.1.0-nativo.md)
 comprobó firma, instalación sobre la APK oficial y conservación de localStorage
 en un AVD Android 15. [Transición OTP y pendientes productivos](android-transicion.md).

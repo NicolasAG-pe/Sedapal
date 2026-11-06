@@ -1,69 +1,39 @@
-# Arquitectura de Hidro-Mejora
+# Arquitectura del código 1.2.0
 
-Referencia: código de **v1.0.0**, commit `135cb54`. La descripción no presupone sincronización de datos ni servicios adicionales.
-
-## Desarrollo local
+Revisión documental: 2026-11-05, entrada6399d44; base histórica d3d27d0. Se conserva la arquitectura existente; no hay extracción de módulos ni cambio de tecnología en DOC-01.
 
 ```mermaid
 flowchart LR
-    U[Cliente de desarrollo] --> W[Frontend / Nginx :8080]
-    A[Administrador] --> N[Admin / Nginx :8081]
-    W -->|REST y Socket.IO| B[Backend Express :3000]
-    N -->|REST y Socket.IO| B
-    B --> D[PostgreSQL Docker :5432]
-    D --- V[(Volumen postgres_data)]
+  W[Frontend Nginx local] --> API[Backend Express / Socket.IO]
+  A[Admin Nginx o artefacto estático] --> API
+  M[Android Capacitor / runtime cliente] --> API
+  API --> DB[(PostgreSQL)]
 ```
 
-[compose.yaml](../compose.yaml) define `web`, `admin`, `backend` y `db`, con health checks y dependencias de salud. Nginx sirve archivos estáticos y proxy de `/api/` y `/socket.io/`, incluyendo el upgrade WebSocket. Los puertos backend y PostgreSQL no se publican al host.
+El dibujo representa dependencias lógicas, no servicios remotos comprobados. En Compose, ambos Nginx hacen proxy de `/api` y Socket.IO al backend; backend3000 y db5432 son internos. Solo los puertos cliente/Admin se publican al host. Ver [Compose](../compose.yaml) y [desarrollo local](LOCAL-DEVELOPMENT.md).
 
-El volumen lógico `postgres_data` se monta en `/var/lib/postgresql`, como requiere esta configuración PostgreSQL 18. En la instalación del proyecto Compose `sedapal` su nombre es `sedapal_postgres_data`. No cambiar la identidad del proyecto al operar un volumen existente.
+## Responsabilidades y límites
 
-## Producción
-
-```mermaid
-flowchart LR
-    C[Android Hidro-Mejora / usuario] -->|HTTPS REST y Socket.IO| R[Backend Docker / Render]
-    A[Admin estático / Vercel] -->|HTTPS REST y Socket.IO| R
-    R -->|PostgreSQL con TLS| N[(Neon PostgreSQL)]
-    G[GitHub Release / APK firmada] -. instalación manual .-> C
-```
-
-Admin se publica en Vercel; Render ejecuta el backend Node 22 y Neon conserva los datos. Android y Admin comparten la API y la base de producción. Los nombres y URLs vigentes están en [DEPLOYMENT](DEPLOYMENT.md).
-
-PostgreSQL Docker y Neon son **bases independientes**. El código no implementa replicación ni sincronización automática; cambiar la base de API cambia el conjunto de datos consultado.
-
-## Responsabilidades y fuentes
-
-| Elemento | Responsabilidad |
+| Componente | Responsabilidad y fuente |
 |---|---|
-| [Frontend](../Frontend/) | Interfaz del cliente, navegación, HidroBot, tutorial, gráficos y PDF. Fuente exclusiva del runtime Android. |
-| [Admin](../Admin/) | Login administrativo, módulos de gestión y presentación de datos protegidos. |
-| [Backend](../Backend/) | REST, validaciones, autenticación, autorización, persistencia y avisos Socket.IO. |
-| [Shared](../Shared/) | Fetch con JWT/cancelación, sesiones administrativas, tiempo real reutilizable, UI, SVG y estilos. El cliente conserva su adaptador de sesión propio. |
-| [Base-de-Datos](../Base-de-Datos/) | Esquema de inicialización y migraciones explícitas. |
-| [android](../android/) | Contenedor Capacitor y puente propio de documentos. |
-| [scripts](../scripts/) | Build, sincronización, pruebas, respaldo y diagnóstico. |
-| `artifacts/` | Runtimes, APK, PDF, reportes y cachés generados, no versionados. |
-| `backups/` | Recuperación privada local, no publicada. |
+| Frontend | SPA HTML/JS, recibos, pagos, incidencias y cuenta; [index](../Frontend/index.html) |
+| Admin | Consola independiente, usa la misma API con rol admin; [fuentes](../Admin/) |
+| Shared | API, UI, estilos, iconos, 2FA, recuperación y timeline compartidos; [fuentes](../Shared/) |
+| Backend | Rutas y composición en [server.js](../Backend/server.js); servicios de dominio existentes como [receipt-transactions](../Backend/receipt-transactions.js), pagos, correo, push e incidencias |
+| Workers | Correo, recuperación y push con flags y proveedores explícitos; [start.cjs](../Backend/start.cjs) supervisa procesos según configuración |
+| Datos | Esquema base y migraciones inmutables; [perfiles](DATABASE.md) |
+| Android | Capacitor7 y plugins nativos, sesión protegida por Keystore; runtime generado, no copia de Admin; [guía](ANDROID.md) |
 
-El modelo Java en `Backend/documentacion/java-docs/` es académico; no se ejecuta como API ni forma parte de Android.
+REST usa JSON/JWT y autorización por rol/suministro. Socket.IO comunica cambios; no sustituye la validación de acceso en el servidor. [Contratos de API](API.md). `GET /api/health` comprueba conexión con `SELECT NOW()`; un 200 no demuestra tablas/capacidades completas.
 
-## Comunicación y sesiones
+## Contratos de artefacto
 
-REST es la fuente de lectura y modificación de datos. JWT se transmite en `Authorization: Bearer` y el backend reconstruye usuario, rol y suministro desde PostgreSQL. El cliente admite `usuario` y Admin admite `admin`; la protección efectiva está en la API.
+[scripts/build-web.js](../scripts/build-web.js) genera cliente web, Admin o staging Android. Frontend Docker conserva lista explícita mínima de siete módulos Shared: api.js, ui.js, styles.css, icons.js, two-factor-ui.js, password-recovery-ui.js e incident-timeline.js, además de assets. [PKG-01](../specs/001-empaquetado-cliente/spec.md) verifica presencia, HTTP/MIME y flujos con fixtures. [Verificador](../scripts/verify-client-runtime.js) rechaza runtime incompleto; build-web y configuración Kubernetes se conservaron.
 
-Socket.IO comparte el servidor HTTP, usa `/socket.io/` y permite polling y WebSocket. Tras un evento o reconexión, el cliente vuelve a consultar REST. No existe Redis, historial persistente de eventos ni coordinación entre instancias: se mantiene una sola instancia. Contrato: [API](API.md); controles y límites: [SECURITY](SECURITY.md).
+No todo módulo presente implica capacidad habilitada: recuperación/2FA/push requieren esquema, flags y configuración propios. El cliente Android y el Admin no deben incluir secretos del backend ni archivos privados.
 
-## Generación de runtimes
+## Perfiles y evolución
 
-[scripts/build-web.js](../scripts/build-web.js) selecciona fuentes y genera `hm-api-config.js` desde la variable pública `API_BASE_URL`:
+Laboratorio con piloto y perfil compatible sin piloto son distintos. DB-01 consulta existencia de la tabla opcional usando la misma conexión transaccional; conserva bloqueos y errores de tablas obligatorias. [Contrato](../specs/002-compatibilidad-recibos/contracts/receipts.md). No hay sincronización automática entre PostgreSQL local y Neon.
 
-| Destino | Fuente | Salida predeterminada |
-|---|---|---|
-| `web` | Frontend y subconjunto Shared | `artifacts/web/client` |
-| `admin` | Admin, Shared y cliente Socket.IO local | `artifacts/web/admin` |
-| `android` | Frontend y subconjunto Shared | `artifacts/android/web-runtime` |
-
-Las fuentes locales mantienen base vacía para usar rutas relativas vía Nginx. El runtime Android se genera en staging vacío y se comprueba antes del reemplazo. `sync-android.cjs` sincroniza Capacitor conservando rollback de recursos hasta verificar el resultado. No copia Admin, archivos privados, Dockerfiles ni SQL.
-
-Las dependencias exactas se fijan en ambos `package-lock.json`; sus manifiestos utilizan rangos. Capacitor mantiene una única configuración fuente, [capacitor.config.js](../capacitor.config.js); los JSON nativos son generados. Firma y versión publicada: [ANDROID-RELEASE](ANDROID-RELEASE.md).
+Los destinos históricos Android→Render→Neon y Admin→Vercel→Render están descritos en [despliegue](DEPLOYMENT.md). Su configuración activa y todos los disparadores externos siguen pendientes de auditoría completa. [SDD/RPI](SDD-RPI.md) gobierna futuras modificaciones.
