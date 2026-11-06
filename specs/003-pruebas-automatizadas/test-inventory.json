@@ -2609,7 +2609,7 @@
     },
     {
       "path": "scripts/test/public-api-config.test.js",
-      "sha256": "711b4e257911b724b9acca877314f6ebff0a491636a77a07a819eb2cdf16a2c7",
+      "sha256": "dc43a228adbeef4ad48cfdcf4b3e3143f951fee420aabafe07b3a8d50add5334",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,

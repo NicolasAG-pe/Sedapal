@@ -66,3 +66,11 @@ test('build publica solo runtime y no modifica la configuración fuente', () => 
     assert.equal(fs.readFileSync(path.join(root, 'Frontend/hm-api-config.js'), 'utf8'), source);
     assert.equal(fs.readFileSync(path.join(output, 'index.html'), 'utf8'), fs.readFileSync(path.join(root, 'Frontend/index.html'), 'utf8'));
 });
+
+
+test('la dirección del emulador solo permite HTTP para Android', () => {
+    const emulator = { API_BASE_URL: 'http://10.0.2.2:8080' };
+    assert.equal(readApiBase('android', emulator), emulator.API_BASE_URL);
+    for (const target of ['web', 'admin']) assert.throws(() => readApiBase(target, emulator), /HTTPS/);
+    assert.equal(readApiBase('web', { API_BASE_URL: 'http://127.0.0.1:8080' }), 'http://127.0.0.1:8080');
+});

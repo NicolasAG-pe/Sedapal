@@ -24,7 +24,9 @@ function readApiBase(target, env = process.env) {
     }
     let url;
     try { url = new URL(value); } catch (_) { throw new Error('API_BASE_URL debe ser un origen HTTP(S) válido.'); }
-    const localHttp = url.protocol === 'http:' && ['localhost', '127.0.0.1', '10.0.2.2'].includes(url.hostname);
+    // 10.0.2.2 es el host del emulador Android; en web/admin puede ser un equipo remoto.
+    const localHttp = url.protocol === 'http:' && (['localhost', '127.0.0.1'].includes(url.hostname) ||
+        (target === 'android' && url.hostname === '10.0.2.2'));
     if (url.protocol !== 'https:' && !localHttp) throw new Error('API_BASE_URL externo requiere HTTPS. HTTP se permite solo para desarrollo local.');
     if (url.username || url.password || url.search || url.hash || !['', '/'].includes(url.pathname)) {
         throw new Error('API_BASE_URL debe contener solo protocolo, host y puerto; sin secretos, rutas ni parámetros.');
