@@ -1,5 +1,24 @@
 # Historial de versiones
 
+## Integración Gmail local — preparación segura
+
+- Se amplió el ejecutor de migraciones para registrar 003, 004 y 006 sin repetir las migraciones existentes, con rechazo de esquemas parciales.
+- API y worker de correo tienen grupos de permisos separados; una prueba sintética comprobó el registro OTP y la denegación de acceso del worker a contraseñas.
+- Se preparó un comando Compose local que descifra credenciales solo en memoria y verifica el destino, puerto y volumen antes de operar. Gmail se probó con consentimiento explícito.
+
+## Integración local — permisos y pruebas de interfaz
+
+- Rol de permisos local sin inicio de sesión ni capacidades administrativas para el backend con 005, 007, 008 y 013; no configura credenciales ni habilita servicios opcionales.
+- Los ensayos de interfaz aceptan un directorio temporal de evidencias y permiten probar pagos sin las estructuras del piloto. Chromium confirmó UUID de reintento y que una demostración no cancela la deuda.
+- El despliegue coordinado sigue pendiente de configurar un proveedor de correo para conservar el registro de usuarios; no se ha reemplazado el backend activo.
+
+## Integración PostgreSQL local — preparación aislada
+
+- Pagos simulados y gestión de recibos funcionan con 008 sin instalar el piloto Yape; si existe control de piloto, se conserva el bloqueo de recibos asociados y los esquemas parciales fallan de forma cerrada.
+- La imagen del backend incluye los módulos JavaScript locales. Las pruebas de Socket.IO inicializan WebSocket antes de cargar el cliente.
+- Se preparó un ejecutor local con registro transaccional y SHA-256 para 005, 007, 008 y 013. Validado solo con PostgreSQL y datos sintéticos; no aplicado en la base original.
+- Se probaron autenticación, 2FA, pagos, incidencias, recuperación y push con fixtures; la transición de credenciales, roles y despliegue local sigue pendiente de validación completa.
+
 ## Consolidación final SDD — publicación bloqueada
 
 - Verificados DD estático9/9, regresiones específicas Node20 23/23 y checker CI; runner mantiene3 aprobadas/2 fallidas por captura EPERM, sin alterar controles. Node22/PG18 no ejecutables en el sandbox actual.
