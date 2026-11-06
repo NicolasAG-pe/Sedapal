@@ -6,7 +6,7 @@ const { test } = require("node:test"),
   http = require("node:http");
 const {
     chromium,
-  } = require("../../artifacts/vercel-validation/tools/node_modules/playwright"),
+  } = require(process.env.HIDRO_PLAYWRIGHT_MODULE || "../../artifacts/vercel-validation/tools/node_modules/playwright"),
   { buildWeb } = require("../build-web");
 const root = path.resolve(__dirname, "../.."),
   out = process.env.HIDRO_TEST_ARTIFACT_DIR ? path.resolve(process.env.HIDRO_TEST_ARTIFACT_DIR) : path.join(root, "artifacts/seguimiento-incidencias-120"),

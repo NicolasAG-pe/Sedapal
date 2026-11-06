@@ -3,7 +3,7 @@
 const{test,before,after}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const{buildWeb}=require('../build-web'),{iniciar}=require('../../Backend/test/email-api.cjs');
 const{PNG}=require('../../Backend/node_modules/pngjs');
-const{chromium,devices}=require('../../artifacts/vercel-validation/tools/node_modules/playwright');
+const{chromium,devices}=require(process.env.HIDRO_PLAYWRIGHT_MODULE || '../../artifacts/vercel-validation/tools/node_modules/playwright');
 const root=path.resolve(__dirname,'../..'),out=process.env.HIDRO_TEST_ARTIFACT_DIR?path.resolve(process.env.HIDRO_TEST_ARTIFACT_DIR):path.join(root,'artifacts/pagos-pdf-120'),origin='https://localhost',api='https://api.payment.fixture.test';
 let ctx,browser,accounts=[],ip=1,runtimes={};
 before(async()=>{

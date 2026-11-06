@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Integración conjunta PostgreSQL, SDD y SonarQube — 1.2.0
+
+- Integrados los historiales PostgreSQL/Gmail y SonarQube sobre la base SDD/RPI sin reactivar el piloto de pagos.
+- Incorporadas al catálogo las pruebas de SonarQube y de roles Gmail, 2FA, pagos e incidencias; actualizado el inventario reproducible.
+- Documentadas las diferencias confirmadas entre el diccionario por perfiles y la instancia PostgreSQL local; las pruebas de navegador pueden reutilizar un Playwright existente.
+- La integración sintética amplía el tmpfs de CI para acomodar las bases de prueba; excluida esta rama de los despliegues Git en ambas configuraciones Vercel.
+
 ## Revisión local de SonarQube — 1.2.0
 
 - Las validaciones de fechas comprueban explícitamente el valor numérico de cada fecha en cliente y servidor.

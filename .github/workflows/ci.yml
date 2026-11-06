@@ -67,7 +67,7 @@ jobs:
           - '127.0.0.1::5432'
         options: >-
           --label hidro.sdd.test=ci01
-          --tmpfs /var/lib/postgresql:rw,nosuid,size=512m
+          --tmpfs /var/lib/postgresql:rw,nosuid,size=2048m
           --health-cmd "pg_isready -U hm_fixture -d hm_email_test"
           --health-interval 5s
           --health-timeout 5s
