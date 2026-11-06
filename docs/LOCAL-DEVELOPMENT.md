@@ -48,3 +48,21 @@ en el puerto interno 8080. Compose conserva los puertos publicados configurados
 por `WEB_PORT` y `ADMIN_PORT`; los Services Kubernetes conservan puerto 80 y
 apuntan al puerto nombrado del contenedor. Nginx escribe PID y temporales en
 `/tmp`, que debe permanecer escribible por el usuario del contenedor.
+
+Para medir cobertura de navegador, primero preparar una API y dos cuentas
+**sintéticas y aisladas**. `scripts/capture-browser-coverage.cjs` exige
+`HM_COVERAGE_SYNTHETIC=1`, orígenes HTTP de loopback en
+`HM_COVERAGE_CLIENT_ORIGIN` y `HM_COVERAGE_ADMIN_ORIGIN`, suministros de fixture
+`HM_COVERAGE_CLIENT_SUPPLY` y `HM_COVERAGE_ADMIN_SUPPLY`, y la contraseña de
+fixture en `HM_COVERAGE_FIXTURE_PASSWORD`. Requiere las rutas locales
+`HM_PLAYWRIGHT_PACKAGE` (package.json) y `HM_CHROMIUM`; no carga archivos .env.
+Esos datos deben pertenecer a una base de prueba recién creada, nunca a la base
+habitual. El script captura fuentes y contadores V8 en `artifacts/tests` privado.
+
+Para fusionar, generar previamente `coverage-final.json` de la suite Node con
+c8 y ejecutar `node scripts/merge-browser-coverage.cjs NODE_JSON CLIENTE_JSON
+ADMIN_JSON DIRECTORIO_SALIDA RUTA_C8_PACKAGE_JSON`. La herramienta comprueba
+que cada fuente capturada coincide exactamente con su archivo y rechaza
+orígenes no locales. El script inline de HTML se omite de la importación de
+cobertura hasta disponer de mapeo de offsets validado; no se excluye del análisis.
+El LCOV generado refleja solo los escenarios realmente ejecutados.
