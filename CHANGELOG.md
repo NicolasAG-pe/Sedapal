@@ -2,6 +2,9 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- La API responde con CSP restrictiva; se verifican los encabezados en la prueba integral.
+- La navegación y la recarga administrativa comprueban explícitamente sus condiciones asíncronas; el retardo visual usa aleatoriedad del navegador.
+
 - La prueba de cifrado altera siempre el texto cifrado, incluso cuando su primer carácter aleatorio coincide con el sustituto.
 
 - La imagen backend incluye el validador de remitentes y la navegación desde notificaciones deja de esperar indefinidamente.

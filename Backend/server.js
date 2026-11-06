@@ -30,10 +30,11 @@ app.set('trust proxy', 1);
 // Cabecera X-Powered-By desactivada explícitamente (verificación: curl -I).
 app.disable('x-powered-by');
 
-// Helmet: headers de seguridad. CSP desactivada por ahora porque el
-// frontend actual usa scripts inline (imponerla rompería la web sin
-// refactorizar). Se protege el resto (HSTS, nosniff, frameguard, etc.).
-app.use(helmet({ contentSecurityPolicy: false }));
+// Esta aplicación sirve una API; las páginas cliente se sirven por separado.
+// Sus respuestas no necesitan cargar scripts, imágenes ni enviar formularios.
+app.use(helmet({ contentSecurityPolicy: { directives: {
+    defaultSrc: ["'none'"], frameAncestors: ["'none'"], formAction: ["'none'"]
+} } }));
 
 function esProduccion(){
     return String(process.env.NODE_ENV || '').toLowerCase() === 'production';

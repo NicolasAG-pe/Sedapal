@@ -150,6 +150,10 @@ async function browser(executable) {
         RESEND_FROM:'correo@fixture.invalid', HIDRO_TEST_MAILBOX:mailbox } });
     backend.stdout.on('data', data => { serverOutput += data; }); backend.stderr.on('data', data => { serverOutput += data; });
     await wait(async () => { try { return (await fetch(base + '/api/health')).ok; } catch (_) { return false; } }, 'API aislada');
+    const healthHeaders = await fetch(base + '/api/health');
+    assert.match(healthHeaders.headers.get('content-security-policy') || '', /default-src 'none'/);
+    assert.match(healthHeaders.headers.get('content-security-policy') || '', /frame-ancestors 'none'/);
+    ok('API: política CSP restrictiva en respuestas');
     worker=spawn(process.execPath,['--require',path.join(root,'Backend/test/resend-fixture.cjs'),
       path.join(root,'Backend/workers/email-outbox.cjs'),'--run'],{stdio:['ignore','pipe','pipe'],env:{...process.env,
       EMAIL_WORKER_ENABLED:'1',EMAIL_WORKER_DATABASE_URL:`postgres://hm_fixture:fixture-only-not-production@127.0.0.1:${port}/${database}`,

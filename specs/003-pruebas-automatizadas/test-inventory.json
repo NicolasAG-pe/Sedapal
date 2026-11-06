@@ -1464,7 +1464,7 @@
     },
     {
       "path": "scripts/test/admin-e2e.cjs",
-      "sha256": "5282efbf48df5f912b7162524c3a7a442b190416ac86acfee7c17e5f70cb6bbb",
+      "sha256": "2f91873251d134a68e357aa60058bc8cb6c2476f8a0f190fb071219202d91c76",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": false,

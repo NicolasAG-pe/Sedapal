@@ -1043,8 +1043,10 @@
   const interfazPush=window.createHMPush({session:sesionCliente,
     navigate:async section=>{
       const epoch=sesionCliente.generation();
-      let intentos=0;
-      while(navLock&&sesionCliente.isUser()&&epoch===sesionCliente.generation()&&intentos++<125)await new Promise(resolve=>setTimeout(resolve,40));
+      for(let intentos=0;intentos<125;intentos++){
+        if(!navLock||!sesionCliente.isUser()||epoch!==sesionCliente.generation())break;
+        await new Promise(resolve=>setTimeout(resolve,40));
+      }
       if(navLock)throw new Error("No se pudo abrir la sección. Inténtalo nuevamente.");
       if(sesionCliente.isUser()&&epoch===sesionCliente.generation())return openDashboardPage(section);
     },
@@ -3437,7 +3439,7 @@
     addUserMessage(clean);
     showBotTyping();
     const sessionAtSend = hbSessionId;
-    const delay = isReduced() ? 60 : 300 + Math.random() * 400;
+    const delay = isReduced() ? 60 : 300 + crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000 * 400;
     if(hidroBotTypingTimer){ clearTimeout(hidroBotTypingTimer); }
     hidroBotTypingTimer = setTimeout(async ()=>{
     let _hmEpoch=sesionCliente.generation();
@@ -3915,7 +3917,7 @@ async function descargarConstanciaPDF(r, btn){
   document.querySelectorAll('.pay-opt input').forEach(radio=>radio.addEventListener('change',()=>{
     document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
     const manual=document.querySelector('input[name="pay-method"]:checked').value==='yape_manual';
-    document.getElementById('pay-voluntary-label').hidden=!(manual&&paymentPilot&&!paymentPilotSynthetic);
+    document.getElementById('pay-voluntary-label').hidden=!manual||!paymentPilot||Boolean(paymentPilotSynthetic);
     document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual&&!paymentPilotSynthetic?'Enviar a verificación manual':'Registrar pago';
   }));
   document.getElementById('pay-confirm').addEventListener('click',async ev=>{
