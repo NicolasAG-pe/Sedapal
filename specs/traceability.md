@@ -98,3 +98,5 @@ AC-CI-05: exclusiones locales exactas en vercel.json y Backend/vercel.json verif
 | FR-CAT-003 / AC-CAT-03 | validación previa inventory; nueva prueba unit | CAT-T08/09 + inventario/checker aprobados |
 
 NFR-CAT-001: diff sin producto, dependencias ni acceso real. Research/Spec/Plan/Implement/Document realizados; validación específica aprobada23/23 incluidos PKG/configuración. Consolidación ampliada pendiente: Node22, PG18/Docker y TEST-T03/T04 (3/5 suplementarias en Node20). No cierre total ni CI remoto verde. [Resultados reales](006-contrato-catalogo/validation.md).
+
+CAT-01 seguimiento e404499: EPERM reproducido con console.log independiente; TEST-T03/T04 y cierre Node22/PG18 bloqueados por entorno. Sin cambios de código/expectativas; evidencia en validation.md. DD-01 autorizado continúa independientemente.

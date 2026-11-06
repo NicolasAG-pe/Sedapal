@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## CAT-01 — diagnóstico de validación pendiente
+
+- Reproducidos los dos fallos del runner y EPERM con subproceso trivial sin aplicación: restricción de captura del entorno; controles intactos.
+- Node22/PG18 no disponibles y Docker denegado; cierre ampliado pendiente, sin sustituir runtimes ni usar bases reales.
+
 ## CAT-01 — contrato del catálogo de pruebas
 
 - Validación de suites/rutas y pertenencia única antes de generar inventario; nueve pruebas nuevas, sin cambios funcionales ni dependencias.

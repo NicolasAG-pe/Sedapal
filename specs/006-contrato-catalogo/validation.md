@@ -20,3 +20,11 @@ DB-01: `git diff --exit-code 7b2c773 -- Backend/receipt-transactions.js Backend/
 Revisión de diff: sin dependencias, cambios de permisos, workflows, secretos o archivos privados nuevos. Solo rutas sintéticas en pruebas. Inventario conserva hashes de todos los101 archivos previos; una prueba añadida. PR26 sin coincidencia de archivos de código nuevos; CHANGELOG compartido requiere integración futura y regenerar inventario con sus pruebas. No analizado ni modificado SonarQube.
 
 CAT implementado y contrato específico validado localmente. Consolidación completa pendiente por Node22/PG18/daemon y dos fallos suplementarios de subprocesos; no declarar CI ni suite completa verdes. Próximo paso: revalidar este SHA en entorno local Node22/PG18 aislado antes de elegir otro incremento; no implica autorizar push.
+
+## Continuación prioritaria — entrada e404499, 2026-11-05
+
+Research acotado y plan: reproducir TEST-T03/T04 sin cambios, comparar con subproceso trivial y comprobar runtimes/DB. Criterio: no atribuir a producto errores presentes con console.log sin aplicación; cierre solo tras Node22 y PG18.
+
+P: test-runner.test.cjs directo vuelve a dar3 aprobadas/2 fallidas. spawnSync(process.execPath, ['-e', "console.log('synthetic-output')"], {env:cleanEnvironment(),encoding:'utf8'}) devuelve status0, error.code EPERM y stdout vacío. Con net.connect externo, status1, EPERM y marca TEST_NETWORK_BLOCKED presente en stderr. El guard sí actúa; la captura de salida falla incluso sin código del catálogo. Evidencia compatible con restricción de subprocesos/captura del sandbox, no defecto demostrado de CAT ni del guard. No se rebajan pruebas ni se cambian expectativas. TEST-T03/T04 bloqueadas para su acreditación completa en este entorno.
+
+P/N: Node20.19.2 disponible; búsqueda acotada en /opt, /usr/local, caches npm y /tmp sin runtime Node22. curl a nodejs.org falla por resolución DNS, no se instaló ni reemplazó Node. Sin psql/postgres en PATH. Docker CLI existe, daemon devuelve operation not permitted; no se accede a contenedores ni volúmenes. A diferencia de DB-01 (imagen local sedapal-backend Node22.23.4 y postgres:18.6, red none/tmpfs), aquí no se pueden consultar esas imágenes ni crear el laboratorio. No hay prueba Node22/PG18 nueva. CAT-TASK-06 sigue pendiente; DD-01 continúa con verificación estática autorizada.
