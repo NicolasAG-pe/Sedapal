@@ -52,7 +52,7 @@ async function main(argv = process.argv.slice(2)) {
         if (flags.includes('--coverage')) env.NODE_V8_COVERAGE = path.join(report, 'v8');
     }
     const status = runFiles(files, { env, report, coverage: flags.includes('--coverage'), direct: group === 'e2e' });
-    if (report) { let sha = null; try { sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, env, encoding: 'utf8', stdio: ['ignore','pipe','ignore'] }).trim(); } catch {}
+    if (report) { let sha = null; try { sha = execFileSync('/usr/bin/git', ['rev-parse', 'HEAD'], { cwd: root, env, encoding: 'utf8', stdio: ['ignore','pipe','ignore'] }).trim(); } catch {}
         const sourceHashes = Object.fromEntries(['package.json','scripts/test-runner.cjs','scripts/test-catalog.cjs','scripts/test-network-guard.cjs'].map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));
         fs.writeFileSync(path.join(report, 'run.json'), JSON.stringify({ sha, sourceHashes, node: process.version, group, files, status, coverage: flags.includes('--coverage'), scope: 'solo módulos cargados de esta suite; no cobertura global del producto' }, null, 2) + '\n'); console.log('Informe:', path.relative(root, report)); }
     return status;
