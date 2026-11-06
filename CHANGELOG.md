@@ -2,6 +2,8 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- Pruebas de los controles de procedencia de la cobertura de navegador y dependencia local reproducible para generar LCOV.
+
 - Instrumentación local de cobertura de navegador y fusión con Node que verifica el contenido de cada fuente antes de atribuir líneas.
 
 - Las imágenes web y administrativa usan Nginx sin root en el puerto interno 8080, con puertos publicados conservados y temporales privados.

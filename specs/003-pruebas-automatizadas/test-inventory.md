@@ -2,7 +2,7 @@
 
 Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada para listas explícitas; señales estáticas fuera de ellas no acreditan ejecución.
 
-107 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 55. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
+108 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 56. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
 
 | Archivo | Tipo | Grupo nuevo | Requisitos | Riesgo |
 |---|---|---|---|---|
@@ -72,6 +72,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `scripts/test/android-upgrade.test.cjs` | contrato | contract | Node22, historial Git y tags | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/backend-docker23.cjs` | manual/historica | fuera por defecto | Node22, dependencias Backend instaladas (rutas literales), herramientas opt-in indicadas en fuente | ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner |
 | `scripts/test/backend-history23.cjs` | manual/historica | fuera por defecto | Node22, PostgreSQL sintetico/fixture, dependencias Backend instaladas (rutas literales) | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `scripts/test/browser-coverage.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/chatbot-ui-checks.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/client-checks.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/client-packaging-browser.cjs` | E2E/navegador | e2e | Node22, Firefox y origen Nginx aislado | opt-in: HTTP local/Firefox con API sintetica |

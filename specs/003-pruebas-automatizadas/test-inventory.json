@@ -26,6 +26,7 @@
       "scripts/test/docker-context.test.cjs",
       "scripts/test/push-event-errors.test.cjs",
       "scripts/test/test-catalog.test.cjs",
+      "scripts/test/browser-coverage.test.cjs",
       "scripts/test/firebase-lab.cjs",
       "scripts/test/firebase-release.cjs",
       "scripts/test/test-runner.test.cjs"
@@ -1928,6 +1929,28 @@
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
     },
     {
+      "path": "scripts/test/browser-coverage.test.cjs",
+      "sha256": "065fbaa9d15dc2f621df938d0e2f1fd53dc8c7dc3f2976f9cc60c580e748c8f6",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:child_process"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
       "path": "scripts/test/chatbot-ui-checks.cjs",
       "sha256": "bc640324d926a1ac7cbf2f65d3d2a763fcab09d8d6b8cc16e22374b52c84a29e",
       "type": "helper",
@@ -3217,6 +3240,11 @@
       "path": "scripts/test/backend-history23.cjs",
       "referencedBy": [],
       "managedGroup": null
+    },
+    {
+      "path": "scripts/test/browser-coverage.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
     },
     {
       "path": "scripts/test/chatbot-ui-checks.cjs",
