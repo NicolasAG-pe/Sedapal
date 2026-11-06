@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## CI-01 — exclusión local de publicación accidental
+
+- Excluida únicamente chore/adopcion-sdd-rpi en ambos vercel.json; preservadas todas las otras claves.
+- Actualizados controles en lectura de Vercel y PR26; Render sin contexto confirmado. CI remoto continúa pendiente, sin push ni cambios remotos.
+
 ## DOC-01 — guías 1.2.0 y auditoría previa a publicación
 
 - Actualizadas portada, arquitectura, Docker aislado, perfiles PostgreSQL, pruebas, seguridad e índices SDD; API y antecedentes Android delimitados como históricos. Versiones fuente y npm diferenciadas.

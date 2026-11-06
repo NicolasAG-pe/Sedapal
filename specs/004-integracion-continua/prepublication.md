@@ -51,3 +51,13 @@ PR abierto [#26](https://github.com/NicolasAG-pe/Sedapal/pull/26), rama fix/sona
 `workflow_dispatch` necesita el archivo en la rama por defecto según [GitHub](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow?tool=webui). No se presupone que esté disponible para el primer push de una rama que aún no se ha integrado en main. No mergear para habilitarlo en este avance.
 
 Solicitud futura sugerida: «Autorizo completar los controles pendientes y aplicar únicamente las exclusiones de despliegue de chore/adopcion-sdd-rpi. Solo cuando todos los servicios estén comprobados, autorizo publicar el SHA revisado mediante push normal y verificar GitHub Actions y ausencia de despliegues; sin PR, merge ni publicación de aplicaciones». Si no se pueden preservar otras ramas, solicitar una autorización distinta antes de cambiar settings.
+
+## Seguimiento acelerado — 2026-11-05, entrada 7b2c773
+
+Autorización vigente: ajustes locales mínimos, commits independientes; sin publicación ni cambios remotos. Aplicada exclusión exacta de chore/adopcion-sdd-rpi en ambos vercel.json. Validación JSON antes/después: al retirar esa única entrada nueva, los objetos son idénticos; main y otras ramas conservados. La propuesta anterior queda como antecedente.
+
+Consultas nuevas en lectura: PR26 abierto, head 34b5ca901208e07d6f440022bb9eeceb37557e55 y base d3d27d0; 18 archivos. Intersección con nuestra rama: CHANGELOG.md, Frontend/Dockerfile y Frontend/Dockerfile.dockerignore; sin merge/rebase ni modificación del PR. El incremento de catálogo no modifica sus archivos de prueba, pero su integración futura exige regenerar inventario.
+
+Vercel get_git_deployment_context/get_project confirma proyectos hidro-mehora-admin y sedapal vinculados al repo, Node24 remoto; respuesta sin raíces, hooks ni reglas efectivas. La exclusión local no acredita un bloqueo completo del proveedor. Render list_workspaces descubre un workspace; get_selected_workspace devuelve INVALID_ARGUMENT, sin workspace seleccionado. La skill render-monitor/references/render-access.md exige identificación por el usuario antes de consultar servicios; no se infiere ni cambia contexto. Auto-deploy, previews y hooks siguen N. Apps/webhooks y políticas Actions siguen pendientes de acceso adecuado. No se consultaron secretos.
+
+CI-TASK-006 permanece pendiente: no push, run remoto ni cierre de CI-01. No pedir permisos entre tareas locales; resolver contexto Render/configuración remota y autorización de publicación en un avance futuro.

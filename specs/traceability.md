@@ -84,3 +84,7 @@ Cinco tareas CI locales verificadas; CI-TASK-006 (run real GitHub) pendiente has
 | FR-DOC-005; AC-DOC-04/05 | docs/SDD-RPI, specs/README, prepublication, constitución única | DOC-T04/05 enlaces, diff y simulación | Ver validación DOC-01 |
 
 [Especificación](005-documentacion-tecnica/spec.md), [tareas](005-documentacion-tecnica/tasks.md), [validación](005-documentacion-tecnica/validation.md). [Auditoría CI](004-integracion-continua/prepublication.md): Vercel sin exclusión de esta rama, detalles de raíces/hooks incompletos; Render/settings Apps no comprobados. No habilita publicación ni cierra CI-TASK-006. No se cambió configuración de proveedores ni el trabajo de otro compañero.
+
+## CI-01 — seguimiento acelerado
+
+AC-CI-05: exclusiones locales exactas en vercel.json y Backend/vercel.json verificadas por comparación JSON. PR26 head34b5ca9: solapamiento acumulado en tres archivos ya identificados. CI-TASK-006 pendiente; raíces/hooks Vercel, contexto/auto-deploy Render y Apps aún no acreditados. Ver prepublication.md.
