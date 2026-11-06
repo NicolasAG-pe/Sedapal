@@ -1,0 +1,26 @@
+# SDD + RPI — estado actual
+
+Actualizado2026-11-05. Rama chore/adopcion-sdd-rpi, base histórica d3d27d0. Solo commits locales; no push/PR/despliegues autorizados en esta sesión.
+
+| Avance | Estado / evidencia |
+|---|---|
+| PLAN-01 | Cerrado documentalmente, commit f7f21e6 |
+| [PKG-01](001-empaquetado-cliente/spec.md) | Completado localmente, [validación](001-empaquetado-cliente/validation.md) |
+| [DB-01](002-compatibilidad-recibos/spec.md) | Completado localmente, [validación](002-compatibilidad-recibos/validation.md) |
+| [TEST-01](003-pruebas-automatizadas/spec.md) | Completado localmente, [inventario](003-pruebas-automatizadas/test-inventory.md) y [validación](003-pruebas-automatizadas/validation.md) |
+| [DD-01](007-diccionario-datos/spec.md) | Completo documental estático, cuatro perfiles + Excel/DER; pg_catalog pendiente, [validación](007-diccionario-datos/validation.md) |
+| [CAT-01](006-contrato-catalogo/spec.md) | Implementado, 9/9 contrato local; consolidación Node22/PG18 pendiente, [validación](006-contrato-catalogo/validation.md) |
+| [CI-01](004-integracion-continua/spec.md) |5/6 tareas, remoto pendiente; [auditoría de publicación](004-integracion-continua/prepublication.md) incompleta |
+| [DOC-01](005-documentacion-tecnica/spec.md) | Documentación actualizada, [validación](005-documentacion-tecnica/validation.md) |
+
+- [Constitución única](../.specify/memory/constitution.md)
+- [Baseline histórica](baseline.md): evidencia vinculada a d3d27d0, no resultados posteriores atribuidos a ese SHA.
+- [Trazabilidad](traceability.md)
+- [Integración prevista de Spec Kit](spec-kit-integration.md): convenciones adoptadas manualmente, sin CLI instalada.
+- [Guía SDD + RPI](../docs/SDD-RPI.md)
+
+Cada avance mantiene spec/research/plan/tasks/validation; contratos, quickstart y modelo de datos según necesidad. Los números identifican carpetas, los IDs PKG/DB/TEST/CI/DOC identifican hallazgos/avances. TASK y T son namespaces separados de tareas y verificaciones. No generar ramas ni implementación con herramientas sin autorización.
+
+El estado de la tabla prevalece sobre descripciones históricas de sesiones anteriores, que se conservan en sus informes. El análisis de calidad pertenece a otro compañero y queda fuera de este avance.
+
+Consolidación final sobre402990c: **BLOQUEADO para publicación**. CAT-TASK-06 y DD-TASK-06 bloqueados por entorno; CI-TASK-006 remoto pendiente. PR26: Docker idéntico y conflicto editorial demostrado en CHANGELOG. [Informe de cierre y procedimiento restante](../docs/pruebas/cierre-sdd-120.md). No hay cierre global Node22/PG18 acreditado.

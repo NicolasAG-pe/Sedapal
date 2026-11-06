@@ -73,6 +73,9 @@ function crearServicioRecibos({ pool, validarRecibo }) {
         const {rowCount} = await client.query(`SELECT 1 FROM public.operaciones_pago WHERE id_recibo=$1
             AND estado IN ('declarada','pendiente_verificacion','verificada_manual','acreditada_proveedor') LIMIT 1`, [id]);
         if(rowCount>0)return true;
+        // La ruta productiva 014 excluye el piloto; las tablas de pagos siguen siendo obligatorias.
+        const { rows: [schema] } = await client.query("SELECT to_regclass('public.control_piloto_yape') AS piloto");
+        if (!schema.piloto) return false;
         return (await client.query(`SELECT 1 FROM public.control_piloto_yape WHERE id_recibo=$1 AND habilitado AND vence_en>clock_timestamp() LIMIT 1`,[id])).rowCount>0;
     }
     async function comprobarDuplicado(client, suministro, periodo, id = null) {

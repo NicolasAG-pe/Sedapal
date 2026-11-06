@@ -1,17 +1,6 @@
 # Historial de versiones
 
-## Revisión local de SonarQube — 1.2.0
 
-- Las validaciones de fechas comprueban explícitamente el valor numérico de cada fecha en cliente y servidor.
-- El panel rechaza fechas y horas inválidas en lugar de permitir que JavaScript las normalice silenciosamente; la prueba verifica la conversión a hora de Lima y las entradas incorrectas.
-- SonarQube identifica los directorios de pruebas JavaScript como pruebas para no contarlos como código de producción en las métricas de cobertura.
-- La sesión Android trata los rechazos sin objeto de error como fallos de almacenamiento, sin autorizar la sesión y permitiendo reintentar.
-- La limpieza de eventos push gestiona también los rechazos inesperados sin generar promesas huérfanas y permite volver a consultar el evento.
-- Configuración reproducible del análisis sobre el repositorio, con JavaScript propio y exclusión precisa de los archivos de contexto Docker que no son Dockerfiles.
-- Actualización de dependencias transitivas de desarrollo en el lockfile y reutilización del generador seguro de estado push Android, sin cambiar la identidad de la aplicación.
-- Pruebas de actualización Android compatibles con saltos de línea de Windows y referencias explícitas al estado del navegador en las pruebas de segundo factor.
-- El contexto y la imagen Docker del frontend incluyen los módulos compartidos que la página necesita para 2FA, recuperación e incidencias.
-- El reinicio de Socket.IO deja de enviar un argumento que la función de limpieza no utiliza.
 
 ## Kubernetes local 1.2.0 — actualización controlada
 

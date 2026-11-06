@@ -1,6 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
+      "chore/adopcion-sdd-rpi": false,
       "feature/k8s-local-actualizado": false,
       "feature/verificacion-correo": false,
       "integration/avance-18": false,

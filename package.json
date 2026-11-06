@@ -66,7 +66,14 @@
     "test:fcm:lab": "node --test Backend/test/push-credentials.cjs scripts/test/firebase-lab.cjs",
     "test:fcm:registration:native": "node scripts/test/android-session-native.cjs --fcm-registration",
     "android:fcm:release": "node scripts/build-android-fcm-release.cjs",
-    "test:fcm:release": "node --test Backend/test/push-credentials.cjs Backend/test/start.test.cjs scripts/test/firebase-release.cjs"
+    "test:fcm:release": "node --test Backend/test/push-credentials.cjs Backend/test/start.test.cjs scripts/test/firebase-release.cjs",
+    "test": "node scripts/test-runner.cjs safe",
+    "test:unit": "node scripts/test-runner.cjs unit",
+    "test:contract": "node scripts/test-runner.cjs contract",
+    "test:integration": "node scripts/test-runner.cjs integration",
+    "test:e2e": "node scripts/test-runner.cjs e2e",
+    "test:inventory": "node scripts/test-catalog.cjs --check",
+    "test:coverage": "node scripts/test-runner.cjs safe --coverage"
   },
   "dependencies": {
     "@capacitor/app": "^7.1.2",
