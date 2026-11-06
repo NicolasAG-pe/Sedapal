@@ -2,6 +2,8 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- Las pruebas de recuperación verifican remitentes válidos, dominios malformados e intentos de inyección de cabeceras.
+
 - Los generadores de PDF sintético cargan fuentes del repositorio por ruta fija, sin ejecutar archivos homónimos del directorio de trabajo.
 
 - La API responde con CSP restrictiva; se verifican los encabezados en la prueba integral.

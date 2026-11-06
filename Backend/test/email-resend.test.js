@@ -77,3 +77,14 @@ test('validación de remitente exige estructura coherente sin aceptar encabezado
         assert.equal(remitenteValido(input), false, String(input));
     }
 });
+
+test('recuperación acepta remitente válido y rechaza cabeceras y dominios malformados', () => {
+    const { config } = require('../password-recovery-crypto');
+    const recovery = { PASSWORD_RECOVERY_ENABLED: '1', PASSWORD_RECOVERY_SECRET: crypto.randomBytes(32).toString('hex'),
+        PASSWORD_RECOVERY_OUTBOX_KEY: crypto.randomBytes(32).toString('base64'), EMAIL_PROVIDER: 'resend',
+        RESEND_FROM: 'Equipo <correo@example.invalid>' };
+    assert.equal(config(recovery).from, recovery.RESEND_FROM);
+    for (const sender of ['correo@example..invalid', 'Equipo <correo@example.invalid', 'correo@example.invalid\r\nBcc: otra@example.invalid']) {
+        assert.throws(() => config({ ...recovery, RESEND_FROM: sender }), /Remitente/);
+    }
+});
