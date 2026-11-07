@@ -28,7 +28,7 @@ test('HTTP, trabajador independiente y migración: contrato OTP íntegro', async
         const mailbox=path.join(output,`mail-${++childSequence}.jsonl`);
         const proc=spawn(process.execPath,['--require',path.join(__dirname,'resend-fixture.cjs'),
             path.join(__dirname,'../workers/email-outbox.cjs'),mode],{env:{...process.env,
-            EMAIL_WORKER_ENABLED:'1',EMAIL_WORKER_DATABASE_URL:`postgres://hm_fixture:fixture-only-not-production@127.0.0.1:${connection.port}/${connection.database}`,
+            EMAIL_WORKER_ENABLED:'1',EMAIL_WORKER_DATABASE_URL:`postgres://hm_fixture:${encodeURIComponent(connection.password)}@127.0.0.1:${connection.port}/${connection.database}`,
             EMAIL_WORKER_EXPECTED_DATABASE:connection.database,HIDRO_TEST_MAILBOX:mailbox,HIDRO_TEST_PROVIDER_DELAY_MS:String(delay)},stdio:['ignore','pipe','pipe']});
         let stdout='',stderr='';proc.stdout.on('data',s=>{stdout+=s;});proc.stderr.on('data',s=>{stderr+=s;});
         const stopped=new Promise(resolve=>proc.on('exit',(code,signal)=>resolve({code,signal,stdout,stderr})));
@@ -138,8 +138,8 @@ test('HTTP, trabajador independiente y migración: contrato OTP íntegro', async
             assert.equal((await events(p.registro_id))[0].estado,'aceptado');
         });
         await t.test('Rol limitado procesa correo sin leer contraseñas ni escribir negocio',async()=>{
-            const role='hm_outbox_'+crypto.randomBytes(6).toString('hex');
-            await db.query(`CREATE ROLE "${role}" LOGIN PASSWORD 'fixture-only-not-production';
+            const role='hm_outbox_'+crypto.randomBytes(6).toString('hex'), rolePassword=crypto.randomBytes(24).toString('hex');
+            await db.query(`CREATE ROLE "${role}" LOGIN PASSWORD '${rolePassword}';
                 GRANT CONNECT ON DATABASE "${connection.database}" TO "${role}";
                 GRANT USAGE ON SCHEMA public TO "${role}";
                 GRANT SELECT,UPDATE ON correo_outbox TO "${role}";
@@ -147,7 +147,7 @@ test('HTTP, trabajador independiente y migración: contrato OTP íntegro', async
                 GRANT SELECT(id,correo,numero_suministro,invalidado,consumido_en,codigo_hash,intentos,vence_en)
                     ON registros_correo_pendientes TO "${role}";
                 GRANT UPDATE(codigo_vence_en) ON registros_correo_pendientes TO "${role}"`);
-            const limited=new Pool({...connection,user:role});
+            const limited=new Pool({...connection,user:role,password:rolePassword});
             try{
                 await assert.rejects(limited.query('SELECT clave_hash FROM registros_correo_pendientes'),{code:'42501'});
                 await assert.rejects(limited.query('SELECT * FROM usuarios'),{code:'42501'});

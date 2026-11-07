@@ -110,7 +110,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `scripts/test/release-image.test.cjs` | manual/historica | fuera por defecto | Node22, herramientas opt-in indicadas en fuente | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/secure-session.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/test-catalog.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
-| `scripts/test/test-runner.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
+| `scripts/test/test-runner.test.cjs` | unitaria | unit | Node22, PostgreSQL sintetico/fixture | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/totp-restore-lab.cjs` | manual/historica | fuera por defecto | Node22, PostgreSQL sintetico/fixture, dependencias Backend instaladas (rutas literales), herramientas opt-in indicadas en fuente | ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner |
 | `scripts/test/two-factor-ui.test.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/ui-money.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |

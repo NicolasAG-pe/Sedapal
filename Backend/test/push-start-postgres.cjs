@@ -10,7 +10,7 @@ test('worker push compartido verifica esquema antes de API; caída detiene herma
     await pool.query(sql('init.sql')); await pool.query(sql('migrations/011_recuperacion_clave.sql'));
     await pool.query(sql('migrations/012_notificaciones_push.sql'));
     const port = await new Promise(resolve => { const s = net.createServer(); s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => resolve(p)); }); });
-    const db = `postgres://hm_fixture:fixture-only-not-production@127.0.0.1:${connection.port}/${connection.database}`;
+    const db = `postgres://hm_fixture:${encodeURIComponent(connection.password)}@127.0.0.1:${connection.port}/${connection.database}`;
     child = spawn(process.execPath, [path.join(__dirname, '../start.cjs')], { env: { ...process.env,
       NODE_ENV: 'test', PORT: String(port), DATABASE_URL: db, EMAIL_PROVIDER: 'resend', EMAIL_REGISTRATION_ENABLED: '0',
       EMAIL_WORKER_ENABLED: '0', EMAIL_WORKER_SHARED_CONTAINER: '0',

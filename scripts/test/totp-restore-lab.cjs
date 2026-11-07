@@ -36,7 +36,7 @@ async function snapshot(db){
   }finally{await db.end();}
  }else if(process.argv[2]==='verify'){
   const m=JSON.parse(fs.readFileSync(file('manifest.json'),'utf8'));assert.match(m.target,/^hm_email_totp_target_[a-f0-9]+$/);
-  const db=new Pool({host:'127.0.0.1',port:Number(process.env.HIDRO_EMAIL_TEST_DB_PORT),database:m.target,user:'hm_fixture',password:'fixture-only-not-production'});
+  const db=new Pool({host:'127.0.0.1',port:Number(process.env.HIDRO_EMAIL_TEST_DB_PORT),database:m.target,user:'hm_fixture',password:process.env.HIDRO_EMAIL_TEST_DB_PASSWORD});
   try{
    stage='snapshot';const actual=await snapshot(db);const diffs=Object.keys(m.state).filter(k=>JSON.stringify(actual[k])!==JSON.stringify(m.state[k]));if(diffs.length)throw Error('snapshot:'+diffs.join(','));
    stage='keys';const env=restaurarClaves(fs.readFileSync(file('keys.enc'),'utf8'),Buffer.from(fs.readFileSync(file('recovery.key'),'utf8'),'base64'));

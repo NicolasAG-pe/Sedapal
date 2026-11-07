@@ -30,14 +30,16 @@ async function main(argv = process.argv.slice(2)) {
     const env = cleanEnvironment();
     if (group === 'integration') {
         const port = Number(process.env.HIDRO_EMAIL_TEST_DB_PORT);
-        if (process.env.HIDRO_TEST_ISOLATED_DB !== '1' || !Number.isInteger(port) || port < 1 || port > 65535) throw Error('Integración exige PG18 NUEVO aislado, HIDRO_TEST_ISOLATED_DB=1 y HIDRO_EMAIL_TEST_DB_PORT. No usar producción.');
+        const fixturePassword = process.env.HIDRO_EMAIL_TEST_DB_PASSWORD || '';
+        if (process.env.HIDRO_TEST_ISOLATED_DB !== '1' || !/^[A-Za-z0-9_-]{16,128}$/.test(fixturePassword) || !Number.isInteger(port) || port < 1 || port > 65535) throw Error('Integración exige PG18 NUEVO aislado, HIDRO_TEST_ISOLATED_DB=1 y puerto y contraseña sintéticos explícitos. No usar producción.');
         const { createRequire } = require('node:module');
         const { Client } = createRequire(path.join(root, 'Backend/package.json'))('pg');
-        const client = new Client({ host: '127.0.0.1', port, database: 'hm_email_test', user: 'hm_fixture', password: 'fixture-only-not-production', connectionTimeoutMillis: 3000 });
+        const client = new Client({ host: '127.0.0.1', port, database: 'hm_email_test', user: 'hm_fixture', password: fixturePassword, connectionTimeoutMillis: 3000 });
         try { await client.connect(); const r = await client.query("SELECT current_database() AS db,current_user AS role,current_setting('server_version_num') AS version");
             if (r.rows[0].db !== 'hm_email_test' || r.rows[0].role !== 'hm_fixture' || !r.rows[0].version.startsWith('18')) throw Error('Preflight de fixtures PG18 rechazado.');
         } finally { await client.end(); }
         env.HIDRO_EMAIL_TEST_DB_PORT = String(port);
+        env.HIDRO_EMAIL_TEST_DB_PASSWORD = fixturePassword;
     }
     if (group === 'e2e') {
         if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(process.env.HIDRO_PKG01_STATIC_ORIGIN || '')) throw Error('E2E requiere origen Nginx temporal verificado en loopback; no usar sitios reales.');

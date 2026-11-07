@@ -28,7 +28,7 @@ test('Registro → outbox cifrada Gmail → proceso worker independiente simulad
             account_verified: true, account_check: 'tokeninfo_email',
             client_id: 'fixture.apps.googleusercontent.com', client_secret: 'fixture-secret', refresh_token: 'fixture-refresh' }), { mode: 0o600 });
         const env = { ...process.env, EMAIL_PROVIDER: 'gmail', GMAIL_SENDER: sender, GMAIL_CREDENTIALS_FILE: credentialFile,
-            EMAIL_WORKER_ENABLED: '1', EMAIL_WORKER_DATABASE_URL: `postgres://hm_fixture:fixture-only-not-production@127.0.0.1:${connection.port}/${connection.database}`,
+            EMAIL_WORKER_ENABLED: '1', EMAIL_WORKER_DATABASE_URL: `postgres://hm_fixture:${encodeURIComponent(connection.password)}@127.0.0.1:${connection.port}/${connection.database}`,
             EMAIL_WORKER_EXPECTED_DATABASE: connection.database, EMAIL_OUTBOX_KEY: key.toString('base64'), HIDRO_GMAIL_TEST_MAILBOX: mailbox };
         delete env.RESEND_API_KEY;
         const stdout = execFileSync(process.execPath, ['--require', path.join(__dirname, 'gmail-fixture.cjs'),

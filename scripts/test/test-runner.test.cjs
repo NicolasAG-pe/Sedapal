@@ -40,3 +40,10 @@ test('TEST-T05: CLI inválida y prerrequisitos de integración/E2E ausentes fall
         assert.equal(result.status, 2, result.stdout + result.stderr);
     }
 });
+
+test('TEST-T06: integración no conecta si falta la contraseña sintética', () => {
+    const env = { ...cleanEnvironment(), HIDRO_TEST_ISOLATED_DB: '1', HIDRO_EMAIL_TEST_DB_PORT: '54321' };
+    const result = spawnSync(process.execPath, ['scripts/test-runner.cjs', 'integration'], { cwd: root, env, encoding: 'utf8' });
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /contraseña sintéticos explícitos/);
+});

@@ -2,6 +2,8 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- PostgreSQL sintético de CI usa una contraseña propia por ejecución y las pruebas locales reciben su credencial de fixture por entorno.
+
 - Los ejemplos PDF cargan módulos locales fijos sin compilar texto dinámico.
 
 - La imagen administrativa anuncia únicamente el puerto interno 8080 y usa la misma base Debian sin privilegios que el frontend.

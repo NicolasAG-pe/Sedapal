@@ -255,7 +255,7 @@
     },
     {
       "path": "Backend/test/email-gmail-worker.cjs",
-      "sha256": "472cb36dc6ce9f1953ddb75fc63f1d343d769fbb077cd1d001c89a8198cf94cb",
+      "sha256": "89c6fad2ac8382d3994f2fee2ade8a319c79fe53aed6b97e717c9cdf45b84c87",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -422,7 +422,7 @@
     },
     {
       "path": "Backend/test/email-outbox-api.cjs",
-      "sha256": "ff943fa6e8ad2d7d8c759c423d5e1b8f4af3ecab9668fb4363a95f19bebf59b6",
+      "sha256": "de6103b85813c3f9f8273b80f6eb200047fcb80057d4f9c9a93fc212bd293a74",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -557,7 +557,7 @@
     },
     {
       "path": "Backend/test/email-schema.cjs",
-      "sha256": "1b6e8e44cf3d64edeb92611ddfa21b77c4e34db6d0eae4a78440c60a4eb7cad0",
+      "sha256": "f116be91b2bfcbf2e0b4acd0ad092772d420662fc04ef7e12704e84f26780f22",
       "type": "integracion",
       "group": null,
       "nodeTest": false,
@@ -574,6 +574,7 @@
         "pg"
       ],
       "environmentNames": [
+        "HIDRO_EMAIL_TEST_DB_PASSWORD",
         "HIDRO_EMAIL_TEST_DB_PORT"
       ],
       "legacyNpm": [
@@ -638,7 +639,7 @@
     },
     {
       "path": "Backend/test/gmail-roles-local.cjs",
-      "sha256": "2a6d735f42425fb71b8639f413a637fe3dd6972bc2d728c33c03ed7e36187d2b",
+      "sha256": "97ec7163d216057d49e1a4b97c7c31aa893e805095f5c1b664f4af8a22c4ed7d",
       "type": "integracion",
       "group": "integration",
       "nodeTest": true,
@@ -1002,7 +1003,7 @@
     },
     {
       "path": "Backend/test/push-start-postgres.cjs",
-      "sha256": "8abe0236a79bf3efb9559ca7c1d82d81b56db230b307b797f2a5e93fd8edcb54",
+      "sha256": "68e1036cc8dc5a0dc658a4ec1a590e4d95d3d0e2d3ac779313a2cd49b7a715a1",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -1026,7 +1027,7 @@
     },
     {
       "path": "Backend/test/push.cjs",
-      "sha256": "afb19916c26caced0e2283added50f833c8aaa86b465953b242e1e9d37745440",
+      "sha256": "e0c70f648076fec483bec7937f5cf812e0b1c50f1e0090d452050cea3a731856",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -1216,7 +1217,7 @@
     },
     {
       "path": "Backend/test/start-postgres.cjs",
-      "sha256": "025d076265fc40874d5080e614fec051dafd9b2a51d4d385369a232b67460ebb",
+      "sha256": "3629a45270b1e0848b9f75c7ab23ff9a36fa7413af71aa1ac384debf69de1b3c",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -1469,7 +1470,7 @@
     },
     {
       "path": "scripts/test/admin-e2e.cjs",
-      "sha256": "2f91873251d134a68e357aa60058bc8cb6c2476f8a0f190fb071219202d91c76",
+      "sha256": "1c0016c4dffb0aa72feece183127a64e2896d064246778b549702b2c783765b8",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": false,
@@ -1490,6 +1491,7 @@
         "./client-checks.cjs"
       ],
       "environmentNames": [
+        "HIDRO_EMAIL_TEST_DB_PASSWORD",
         "HIDRO_EMAIL_TEST_DB_PORT",
         "HIDRO_TEST_CHROME",
         "HIDRO_TEST_DB_PORT",
@@ -2165,7 +2167,7 @@
     },
     {
       "path": "scripts/test/downgrade-lab.cjs",
-      "sha256": "a5dcaff247af43b2350f7f7e6b0df54631789ef3551d539aaf489fa9dfa24c0d",
+      "sha256": "78e9f5ded69ea09127f0c765cb16a9ebfac7c21912491c438a8fd92a2464bbba",
       "type": "manual/historica",
       "group": null,
       "nodeTest": false,
@@ -2891,12 +2893,13 @@
     },
     {
       "path": "scripts/test/test-runner.test.cjs",
-      "sha256": "807ca59c60fa5fc2d56140d179f6984fc9bc296476fa3aaed0c2eeab0bce56bd",
+      "sha256": "752385f458a4bdd7d46da0bdf54ca831d0c92a9a8a6d397706d840270597a938",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
       "requirements": [
-        "Node22"
+        "Node22",
+        "PostgreSQL sintetico/fixture"
       ],
       "dependencies": [
         "node:test",
@@ -2916,7 +2919,7 @@
     },
     {
       "path": "scripts/test/totp-restore-lab.cjs",
-      "sha256": "ac43cf8af8a00fe068c888eda1ee5a2d4d9233e92b39c87e841cb56bbd315b97",
+      "sha256": "b5d2fdf20d925a63c1395e0b337405dab49c9ef4194f2efee0240d0777b2ad1c",
       "type": "manual/historica",
       "group": null,
       "nodeTest": false,
@@ -2938,6 +2941,7 @@
         "../../Backend/node_modules/otpauth"
       ],
       "environmentNames": [
+        "HIDRO_EMAIL_TEST_DB_PASSWORD",
         "HIDRO_EMAIL_TEST_DB_PORT",
         "HIDRO_TOTP_LAB_DIR"
       ],

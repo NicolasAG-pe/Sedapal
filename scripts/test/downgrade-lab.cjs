@@ -13,7 +13,7 @@ const file=n=>path.join(dir,n),save=(n,d)=>fs.writeFileSync(file(n),typeof d==='
    const env={TOTP_ENCRYPTION_KEY:crypto.randomBytes(32).toString('base64')},secret=new(require('../../Backend/node_modules/otpauth').Secret)({size:20}).base32;
    await pool.query('INSERT INTO usuario_2fa(id_usuario,activo,secreto,version) VALUES (1,TRUE,$1,1)',[crearCifradoTotp(env).encrypt(secret,1)]);
    const recovery='11111111-22222222-33333333-44444444';await pool.query('INSERT INTO usuario_2fa_recuperacion(id_usuario,codigo_hash) VALUES (1,$1)',[crypto.createHash('sha256').update('hidro-recovery-v1:1:'+recovery).digest('hex')]);
-   save('api.env','DB_HOST=hm-2fa-audit-pg\nDB_PORT=5432\nPOSTGRES_DB='+connection.database+'\nPOSTGRES_USER=hm_fixture\nPOSTGRES_PASSWORD=fixture-only-not-production\nAUTH_TOKEN_SECRET='+crypto.randomBytes(32).toString('hex')+'\nTOTP_ENCRYPTION_KEY='+env.TOTP_ENCRYPTION_KEY+'\nNODE_ENV=production\nCORS_ALLOWED_ORIGINS=https://localhost\nEMAIL_REGISTRATION_ENABLED=0\nEMAIL_WORKER_ENABLED=0\nTOTP_ENROLLMENT_ENABLED=0\nTOTP_ADMIN_ENROLLMENT_ENABLED=0\n');
+   save('api.env','DB_HOST=hm-2fa-audit-pg\nDB_PORT=5432\nPOSTGRES_DB='+connection.database+'\nPOSTGRES_USER=hm_fixture\nPOSTGRES_PASSWORD='+connection.password+'\nAUTH_TOKEN_SECRET='+crypto.randomBytes(32).toString('hex')+'\nTOTP_ENCRYPTION_KEY='+env.TOTP_ENCRYPTION_KEY+'\nNODE_ENV=production\nCORS_ALLOWED_ORIGINS=https://localhost\nEMAIL_REGISTRATION_ENABLED=0\nEMAIL_WORKER_ENABLED=0\nTOTP_ENROLLMENT_ENABLED=0\nTOTP_ADMIN_ENROLLMENT_ENABLED=0\n');
    save('fixture.json',{password,recovery,numero_suministro:'987000099'});console.log('Fixture de downgrade preparada, sin destino productivo.');
   }finally{await pool.end();}
  }else if(process.argv[2]==='verify'){

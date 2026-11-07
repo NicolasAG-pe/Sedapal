@@ -9,8 +9,10 @@ const { Pool } = require('pg');
 async function nuevaBase(prefijo = 'schema') {
     const port = Number(process.env.HIDRO_EMAIL_TEST_DB_PORT);
     assert.ok(Number.isInteger(port) && port > 0, 'HIDRO_EMAIL_TEST_DB_PORT es obligatorio.');
+    const password = process.env.HIDRO_EMAIL_TEST_DB_PASSWORD || '';
+    assert.match(password, /^[A-Za-z0-9_-]{16,128}$/, 'HIDRO_EMAIL_TEST_DB_PASSWORD del fixture es obligatorio.');
     const connection = { host: '127.0.0.1', port, database: 'hm_email_test',
-        user: 'hm_fixture', password: 'fixture-only-not-production' };
+        user: 'hm_fixture', password };
     const parent = new Pool(connection);
     const database = `hm_email_${prefijo}_${crypto.randomBytes(8).toString('hex')}`;
     try {
