@@ -5,7 +5,7 @@ const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
 const groups = {
     unit: [
-        'Backend/test/config.test.js', 'Backend/test/email-cleanup.test.js', 'Backend/test/email-gmail.test.js',
+        'Backend/test/config.test.js', 'Backend/test/safe-log.test.js', 'Backend/test/email-cleanup.test.js', 'Backend/test/email-gmail.test.js',
         'Backend/test/email-live.test.js', 'Backend/test/email-otp.test.js', 'Backend/test/email-outbox.test.js',
         'Backend/test/email-resend.test.js', 'Backend/test/receipt-date.test.js', 'Backend/test/start.test.cjs',
         'Backend/test/totp-crypto.test.js', 'Backend/test/push-credentials.cjs',
@@ -13,7 +13,7 @@ const groups = {
         'scripts/test/secure-session.test.cjs', 'scripts/test/ui-money.test.cjs', 'scripts/test/hidrobot.test.cjs',
         'scripts/test/identity-palette.test.cjs', 'scripts/test/android-release-signing.test.cjs',
         'scripts/test/admin-date-validation.test.cjs', 'scripts/test/docker-context.test.cjs', 'scripts/test/push-event-errors.test.cjs',
-        'scripts/test/test-catalog.test.cjs', 'scripts/test/pdf-example-runtime.test.cjs', 'scripts/test/local-check-transport.test.cjs', 'scripts/test/browser-coverage.test.cjs', 'scripts/test/firebase-lab.cjs', 'scripts/test/firebase-release.cjs', 'scripts/test/test-runner.test.cjs'
+        'scripts/test/test-catalog.test.cjs', 'scripts/test/security-headers.test.cjs', 'scripts/test/pdf-example-runtime.test.cjs', 'scripts/test/local-check-transport.test.cjs', 'scripts/test/browser-coverage.test.cjs', 'scripts/test/firebase-lab.cjs', 'scripts/test/firebase-release.cjs', 'scripts/test/test-runner.test.cjs'
     ],
     contract: ['scripts/test/public-api-config.test.js', 'scripts/test/android-upgrade.test.cjs', 'scripts/test/client-packaging.test.cjs'],
     integration: ['Backend/test/receipt-profile-compat.cjs', 'Backend/test/payment-production-compat.cjs',

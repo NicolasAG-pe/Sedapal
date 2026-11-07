@@ -13,6 +13,15 @@ test('Docker conserva sus credenciales, host y puerto sin SSL', () => {
     assert.equal(config.database.ssl, false);
 });
 
+test('DB_HOST externo exige TLS con validación de certificado', () => {
+    for (const host of ['database.example.invalid', '192.0.2.10']) {
+        const config = obtenerConfiguracion({ DB_HOST: host, POSTGRES_DB: 'fixture', POSTGRES_USER: 'fixture' });
+        assert.equal(config.database.host, host);
+        assert.deepEqual(config.database.ssl, { rejectUnauthorized: true });
+        assert.notEqual(new Client(config.database).ssl.rejectUnauthorized, false);
+    }
+});
+
 test('DATABASE_URL tiene prioridad y pg negocia SSL verificado con servidor externo', () => {
     const config = obtenerConfiguracion({ PORT: '10000', DATABASE_URL: 'postgresql://fixture:fixture@db.example.invalid/app?sslmode=require&channel_binding=require', POSTGRES_DB: 'ignorar' });
     const client = new Client(config.database);

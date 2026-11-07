@@ -14,6 +14,45 @@ after(async () => {
     await close;
   }
 });
+test("las respuestas privadas y los rechazos de la API no se almacenan en caché", async () => {
+  for (const [route, token, expected] of [
+    ["/api/me/recibos", c.accounts.client.token, 200],
+    ["/api/admin/usuarios", c.accounts.client.token, 403],
+    ["/api/admin/usuarios", null, 401],
+  ]) {
+    const headers = token ? { Authorization: "Bearer " + token } : {};
+    const response = await fetch(c.base + route, { headers });
+    assert.equal(response.status, expected);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    await response.arrayBuffer();
+  }
+});
+test("login no revela cuentas desactivadas con contraseña incorrecta", async () => {
+  const account = c.accounts.other;
+  await c.db.query("UPDATE usuarios SET activo=false WHERE id_usuario=$1", [account.usuario.id_usuario]);
+  async function login(suministro, password) {
+    const response = await fetch(c.base + "/api/auth/login", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ numero_suministro: suministro, password }),
+    });
+    return { status: response.status, data: await response.json() };
+  }
+  try {
+    const inactive = await login(account.numero_suministro, "incorrect-synthetic");
+    const unknown = await login("999999999", "incorrect-synthetic");
+    assert.equal(inactive.status, 401);
+    assert.equal(unknown.status, 401);
+    assert.equal(inactive.data.mensaje, unknown.data.mensaje);
+    assert.equal((await login(account.numero_suministro, account.password)).status, 403);
+  } finally {
+    await c.db.query("UPDATE usuarios SET activo=true WHERE id_usuario=$1", [account.usuario.id_usuario]);
+    // La desactivación invalida la sesión anterior; obtener una nueva para
+    // las demás pruebas sin debilitar la revocación de sesiones.
+    const renewed = await login(account.numero_suministro, account.password);
+    assert.equal(renewed.status, 200);
+    account.token = renewed.data.token;
+  }
+});
 async function created() {
   const r = await c.create();
   assert.equal(r.status, 201);

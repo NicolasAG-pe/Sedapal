@@ -85,3 +85,5 @@ docker exec -e NODE_EXTRA_CA_CERTS=/cert/ca.crt -e TEST_WEB_BASE=https://web-tls
 ```
 
 La instancia secundaria escucha en la red aislada de fixtures. El cliente la consulta por loopback con un secreto nuevo aleatorio y un JWT efímero propio; no envía el JWT del servicio existente por esa conexión. No se deben montar secretos reales en este entorno.
+
+Las conexiones PostgreSQL por `DB_HOST` usan TLS con certificado verificado para destinos distintos de `db` y loopback. Un PostgreSQL externo debe presentar un certificado confiable para su nombre; no se debe desactivar la verificación para adaptarlo.

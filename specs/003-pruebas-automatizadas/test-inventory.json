@@ -4,6 +4,7 @@
   "groups": {
     "unit": [
       "Backend/test/config.test.js",
+      "Backend/test/safe-log.test.js",
       "Backend/test/email-cleanup.test.js",
       "Backend/test/email-gmail.test.js",
       "Backend/test/email-live.test.js",
@@ -26,6 +27,7 @@
       "scripts/test/docker-context.test.cjs",
       "scripts/test/push-event-errors.test.cjs",
       "scripts/test/test-catalog.test.cjs",
+      "scripts/test/security-headers.test.cjs",
       "scripts/test/pdf-example-runtime.test.cjs",
       "scripts/test/local-check-transport.test.cjs",
       "scripts/test/browser-coverage.test.cjs",
@@ -82,7 +84,7 @@
     },
     {
       "path": "Backend/test/config.test.js",
-      "sha256": "94e291d7136352e7a5d2ac7c7f9929889fabcea42f048399143c6ab7e02a1e56",
+      "sha256": "6832f9110605cb7c4f317664e87d71060db44bfe0593b3c266a3e85e96815c71",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -697,7 +699,7 @@
     },
     {
       "path": "Backend/test/incident-tracking.cjs",
-      "sha256": "fdc18b4d6defae644dfd9953605e14d3c2f20bcaaa5ff6024167513064517fbe",
+      "sha256": "5279ac5838cc75a0f783f85eebd47ab6520e1a7c1222db70478ab57e35283a28",
       "type": "integracion",
       "group": "integration",
       "nodeTest": true,
@@ -1214,6 +1216,25 @@
       "legacyNpm": [],
       "referencedBy": [],
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/safe-log.test.js",
+      "sha256": "2e1351a5c0183df3dfb98f5dfdd8099eb6e87635b23a3586201be8ebb345392d",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "../safe-log"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
       "path": "Backend/test/start-postgres.cjs",
@@ -2873,6 +2894,27 @@
       "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
+      "path": "scripts/test/security-headers.test.cjs",
+      "sha256": "4c9d13c0422823db2bbb98ad687a81f95dd1c1ca650c9ce10569e0f61fa128f8",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:crypto"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
       "path": "scripts/test/test-catalog.test.cjs",
       "sha256": "d869b500c67e2b5524aca9209284fa3688be3d1792c4786dbcafd0da36ff1b4a",
       "type": "unitaria",
@@ -3179,6 +3221,11 @@
       "managedGroup": null
     },
     {
+      "path": "Backend/test/safe-log.test.js",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
       "path": "Backend/test/start-postgres.cjs",
       "referencedBy": [],
       "managedGroup": null
@@ -3401,6 +3448,11 @@
       "path": "scripts/test/release-image.test.cjs",
       "referencedBy": [],
       "managedGroup": null
+    },
+    {
+      "path": "scripts/test/security-headers.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
     },
     {
       "path": "scripts/test/test-catalog.test.cjs",

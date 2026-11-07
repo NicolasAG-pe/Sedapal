@@ -15,6 +15,7 @@ COPY Shared/assets/ /var/www/html/shared/assets/
 COPY Frontend/nginx/default.conf /etc/nginx/sites-available/default
 
 COPY Frontend/nginx/nginx.conf /etc/nginx/hidro.conf
+COPY Frontend/nginx/security-headers.conf /etc/nginx/hidro-security-headers.conf
 USER www-data
 EXPOSE 8080
 

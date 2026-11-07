@@ -7,6 +7,7 @@
 !Admin/nginx/
 !Admin/nginx/default.conf
 !Admin/nginx/nginx.conf
+!Admin/nginx/security-headers.conf
 !Shared/
 !Shared/**
 !Frontend/

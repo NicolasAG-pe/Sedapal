@@ -2,6 +2,8 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- Los proxies web y administrativo agregan CSP, protección de encuadre y nosniff, y omiten la versión de Nginx; la API evita almacenar respuestas en caché exige TLS para PostgreSQL externo configurado mediante DB_HOST evita registrar detalles sensibles en errores internos y no revela cuentas desactivadas antes de verificar la contraseña.
+
 - PostgreSQL sintético de CI usa una contraseña propia por ejecución y las pruebas locales reciben su credencial de fixture por entorno.
 
 - Los ejemplos PDF cargan módulos locales fijos sin compilar texto dinámico.
