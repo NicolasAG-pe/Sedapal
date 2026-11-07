@@ -2,6 +2,8 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- Los ejemplos PDF cargan módulos locales fijos sin compilar texto dinámico.
+
 - La imagen administrativa anuncia únicamente el puerto interno 8080 y usa la misma base Debian sin privilegios que el frontend.
 
 - Los chequeos locales autenticados solo aceptan fixtures sintéticos y destinos HTTPS con certificado validado; la instancia de loopback usa un JWT efímero propio.

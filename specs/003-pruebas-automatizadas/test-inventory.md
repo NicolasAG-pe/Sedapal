@@ -2,7 +2,7 @@
 
 Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada para listas explícitas; señales estáticas fuera de ellas no acreditan ejecución.
 
-109 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 57. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
+110 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 58. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
 
 | Archivo | Tipo | Grupo nuevo | Requisitos | Riesgo |
 |---|---|---|---|---|
@@ -98,6 +98,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `scripts/test/payment-production-restore.cjs` | manual/historica | fuera por defecto | Node22, herramientas opt-in indicadas en fuente | ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner |
 | `scripts/test/payment-production-runtime.cjs` | manual/revision | fuera por defecto | Node22 | ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner |
 | `scripts/test/payment-realtime-flow.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile, herramientas opt-in indicadas en fuente | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `scripts/test/pdf-example-runtime.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/preproduccion24.cjs` | manual/historica | fuera por defecto | Node22, historial Git y tags, herramientas opt-in indicadas en fuente | ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner |
 | `scripts/test/profile-navigation.test.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/public-api-config.test.js` | contrato | contract | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
