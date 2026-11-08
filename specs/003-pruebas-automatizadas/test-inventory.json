@@ -699,7 +699,7 @@
     },
     {
       "path": "Backend/test/incident-tracking.cjs",
-      "sha256": "5279ac5838cc75a0f783f85eebd47ab6520e1a7c1222db70478ab57e35283a28",
+      "sha256": "7b9d778f1595ad5eedfbe71c2702c98766acbc45a0cde03723babcac0fc9ded9",
       "type": "integracion",
       "group": "integration",
       "nodeTest": true,
@@ -2895,7 +2895,7 @@
     },
     {
       "path": "scripts/test/security-headers.test.cjs",
-      "sha256": "4c9d13c0422823db2bbb98ad687a81f95dd1c1ca650c9ce10569e0f61fa128f8",
+      "sha256": "60e11ba0451e2bb7782825df532471c186aec665ff1ba5044ab96afa3e0aee2a",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,

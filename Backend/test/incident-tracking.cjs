@@ -38,8 +38,19 @@ test("login no revela cuentas desactivadas con contraseña incorrecta", async ()
     return { status: response.status, data: await response.json() };
   }
   try {
-    const inactive = await login(account.numero_suministro, "incorrect-synthetic");
-    const unknown = await login("999999999", "incorrect-synthetic");
+    const originalScrypt = crypto.scryptSync;
+    let calls = 0;
+    crypto.scryptSync = (...args) => { calls++; return originalScrypt(...args); };
+    let inactive, unknown;
+    try {
+      inactive = await login(account.numero_suministro, "incorrect-synthetic");
+      assert.equal(calls, 1, "la cuenta existente ejecuta scrypt");
+      calls = 0;
+      unknown = await login("999999999", "incorrect-synthetic");
+      assert.equal(calls, 1, "la cuenta inexistente ejecuta scrypt");
+    } finally {
+      crypto.scryptSync = originalScrypt;
+    }
     assert.equal(inactive.status, 401);
     assert.equal(unknown.status, 401);
     assert.equal(inactive.data.mensaje, unknown.data.mensaje);

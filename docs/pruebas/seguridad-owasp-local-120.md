@@ -39,3 +39,17 @@ En cada panel se consultaron pasivamente la página, configuración pública, CS
 - No se accedió a datos reales ni se realizó despliegue; no se inspeccionó exhaustivamente cada ruta, rol, navegador, dependencia o configuración remota. La rama puede actualizar el PR #29 pero no se ha fusionado ni desplegado. El resultado no implica inmunidad frente a ataques.
 
 Referencia: [OWASP HTTP Headers Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/HTTP_Headers_Cheat_Sheet.html).
+
+## Seguimiento defensivo posterior
+
+La autenticación de un suministro desconocido terminaba antes de ejecutar scrypt, a diferencia de la contraseña incorrecta de una cuenta existente. Ahora ejecuta una verificación scrypt con datos sintéticos fijos antes de responder el mismo 401. La prueba de integración comprueba una invocación de scrypt en ambos casos y conserva la comprobación de cuenta inactiva. Esto reduce una diferencia importante de tiempo; no demuestra que el tiempo de respuesta completo sea indistinguible ante todas las condiciones de base de datos y red.
+
+En Admin los estilos HTML estáticos pasaron a CSS y la CSP utiliza `style-src-attr 'none'`. Chromium verificó con una cuenta sintética el login y la navegación por recibos, cortes, incidencias, usuarios, pagos, atención y cuenta, sin infracciones CSP observadas. Se corrigió una diferencia de especificidad CSS detectada durante esa prueba. El cliente mantiene `style-src-attr 'unsafe-inline'` porque contiene estilos por atributo y su migración completa no se ha validado.
+
+Una nueva instancia ZAP operó exclusivamente en una red Docker interna, con copias aisladas de los paneles. El muestreo pasivo y la regla 40012 de XSS reflejado, limitada a un hilo, demora de un segundo y GET con parámetro sintético, finalizaron sin alertas altas, medias ni bajas. Las alertas informativas restantes corresponden a comentarios y a identificación de aplicación web moderna; no se comprobó que constituyan vulnerabilidades. El muestreo ampliado registró ocho instancias informativas para el cliente y cuatro para Admin, incluyendo las URL con parámetro de la prueba activa. No es un análisis exhaustivo.
+
+Pasaron 155 pruebas Node seguras; 12 pruebas aisladas de incidencias y autorización, y 30 de recuperación y 2FA, con proveedores sintéticos. El navegador también comprobó el cliente y el panel administrativo con las CSP activas. No se enviaron correos ni notificaciones reales y no se utilizaron datos de producción.
+
+El intento de análisis SonarQube posterior se cargó, pero la tarea `ba6ad8e5-e2c9-44f1-a9e3-ad27acf61d8a` falló: Elasticsearch puso índices en solo lectura por falta de espacio y rechazó la indexación. El dashboard consultado mostraba Quality Gate **ERROR** y cobertura nueva 0,0 %; no se importó un informe de cobertura para este intento. Las métricas mostradas no verifican los cambios de este seguimiento. Hace falta recuperar suficiente espacio, comprobar que Elasticsearch salga del modo de solo lectura y repetir el análisis con cobertura real actualizada.
+
+Siguen pendientes la comprobación de HTTPS y HSTS en cada entorno de despliegue, la revisión exhaustiva de autorizaciones y la medición de tiempos en condiciones variadas. La copia Docker solo verifica configuración local y no certifica la configuración de plataformas remotas. No se ha desplegado ni fusionado la rama.

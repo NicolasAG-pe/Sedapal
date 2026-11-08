@@ -662,6 +662,9 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
         const resultado = await pool.query(consulta, [String(numero_suministro)]);
 
         if (resultado.rowCount === 0) {
+            // Igualar el coste de verificación de cuentas existentes sin
+            // almacenar ni revelar una credencial de usuario.
+            verificarClave(password, 'scrypt$00000000000000000000000000000000$' + '0'.repeat(128));
             return res.status(401).json({
                 estado: "error",
                 mensaje: "Número de suministro o contraseña incorrectos."

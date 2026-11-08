@@ -152,7 +152,7 @@
             <button class="btn btn-sky" id="btn-nuevo-recibo" type="button">+ Nuevo recibo</button>
           </div>
         </div>
-        <div class="mod-stats" aria-label="Resumen de recibos" style="grid-template-columns:repeat(5,1fr)">
+        <div class="mod-stats stats-five" aria-label="Resumen de recibos">
           <div class="mod-stat"><small>Total</small><strong id="adm-rec-total">0</strong></div>
           <div class="mod-stat"><small>Emitidos/Pendientes</small><strong id="adm-rec-emi">0</strong></div>
           <div class="mod-stat"><small>Vencidos</small><strong id="adm-rec-venc">0</strong></div>
@@ -195,7 +195,7 @@
           </form>
         </div>
         <div class="section-head">
-          <h3 style="font-size:.9rem">Filtrar recibos</h3>
+          <h3 class="filter-heading">Filtrar recibos</h3>
           <div class="toolbar">
             <input type="search" id="adm-rec-search" class="search-input" placeholder="Suministro o periodo…" aria-label="Buscar por suministro o periodo" maxlength="120" data-limite-inteligente="suministro-texto" />
             <select id="adm-rec-estado" class="year-select" aria-label="Filtrar por estado">
@@ -225,7 +225,7 @@
           </div>
         </div>
         <div id="admin-view-cortes">
-        <div class="mod-stats" aria-label="Resumen de cortes" style="grid-template-columns:repeat(4,1fr)">
+        <div class="mod-stats stats-four" aria-label="Resumen de cortes">
           <div class="mod-stat"><small>Programados</small><strong id="adm-stat-prog">0</strong></div>
           <div class="mod-stat"><small>En proceso</small><strong id="adm-stat-proc">0</strong></div>
           <div class="mod-stat"><small>Finalizados</small><strong id="adm-stat-fin">0</strong></div>
@@ -283,14 +283,14 @@
           </div>
         </div>
         <div id="admin-view-incidencias">
-        <div class="mod-stats" aria-label="Resumen de incidencias" style="grid-template-columns:repeat(4,1fr)">
+        <div class="mod-stats stats-four" aria-label="Resumen de incidencias">
           <div class="mod-stat"><small>Total</small><strong id="adm-inc-total">0</strong></div>
           <div class="mod-stat"><small>Registradas</small><strong id="adm-inc-reg">0</strong></div>
           <div class="mod-stat"><small>En revisión</small><strong id="adm-inc-rev">0</strong></div>
           <div class="mod-stat"><small>Resueltas</small><strong id="adm-inc-res">0</strong></div>
         </div>
         <div class="section-head">
-          <h3 style="font-size:.9rem">Filtrar incidencias</h3>
+          <h3 class="filter-heading">Filtrar incidencias</h3>
           <div class="toolbar">
             <select id="adm-inc-estado" class="year-select" aria-label="Filtrar por estado">
               <option value="Todos">Todos los estados</option>
@@ -316,7 +316,7 @@
             <p class="page-desc">Consulta y administra las cuentas y suministros registrados.</p>
           </div>
         </div>
-        <div class="mod-stats" aria-label="Resumen de usuarios" style="grid-template-columns:repeat(5,1fr)">
+        <div class="mod-stats stats-five" aria-label="Resumen de usuarios">
           <div class="mod-stat"><small>Registrados</small><strong id="adm-usu-total">0</strong></div>
           <div class="mod-stat"><small>Activos</small><strong id="adm-usu-act">0</strong></div>
           <div class="mod-stat"><small>Desactivados</small><strong id="adm-usu-des">0</strong></div>
@@ -324,7 +324,7 @@
           <div class="mod-stat"><small>Sin ubicación</small><strong id="adm-usu-sin">0</strong></div>
         </div>
         <div class="section-head">
-          <h3 style="font-size:.9rem">Buscar y filtrar</h3>
+          <h3 class="filter-heading">Buscar y filtrar</h3>
           <div class="toolbar">
             <input type="search" id="adm-usu-search" class="search-input" placeholder="Correo o suministro…" aria-label="Buscar por correo o suministro" maxlength="120" data-limite-inteligente="suministro-texto" />
             <select id="adm-usu-rol" class="year-select" aria-label="Filtrar por rol">
@@ -349,7 +349,7 @@
             <button class="btn btn-sky" id="admin-usu-edit-ubi" type="button">Editar ubicación</button>
             <button class="btn btn-danger" id="admin-usu-toggle" type="button">Desactivar cuenta</button>
           </div>
-          <form id="admin-ubi-form" hidden novalidate style="margin-top:.8rem">
+          <form id="admin-ubi-form" hidden novalidate>
             <div class="field">
               <label for="adm-ubi-distrito">Distrito (vacío para limpiar)</label>
               <input type="text" id="adm-ubi-distrito" maxlength="100" placeholder="Ej. Comas" />
@@ -383,14 +383,14 @@
         </section>
         <h3>Registros históricos</h3>
         <p>Estos registros anteriores no tienen una verificación financiera atribuida. Sus importes no demuestran cobros bancarios.</p>
-        <div class="mod-stats" aria-label="Resumen de pagos" style="grid-template-columns:repeat(4,1fr)">
+        <div class="mod-stats stats-four" aria-label="Resumen de pagos">
           <div class="mod-stat"><small>Pagos registrados</small><strong id="adm-pay-total">0</strong></div>
           <div class="mod-stat"><small>Importe histórico</small><strong id="adm-pay-monto">S/ 0.00</strong></div>
           <div class="mod-stat"><small>Pagos hoy</small><strong id="adm-pay-hoy">0</strong></div>
           <div class="mod-stat"><small>Este mes</small><strong id="adm-pay-mes">0</strong></div>
         </div>
         <div class="section-head">
-          <h3 style="font-size:.9rem">Filtrar pagos</h3>
+          <h3 class="filter-heading">Filtrar pagos</h3>
           <div class="toolbar">
             <input type="search" id="adm-pay-sum" class="search-input" placeholder="Suministro…" aria-label="Filtrar por suministro" maxlength="9" inputmode="numeric" data-limite-inteligente="suministro" />
             <input type="search" id="adm-pay-per" class="search-input" placeholder="Periodo…" aria-label="Filtrar por periodo" maxlength="20" />
@@ -412,7 +412,7 @@
             <p class="page-desc">Gestiona y responde las solicitudes de atención de los usuarios.</p>
           </div>
         </div>
-        <div class="mod-stats" aria-label="Resumen de solicitudes" style="grid-template-columns:repeat(5,1fr)">
+        <div class="mod-stats stats-five" aria-label="Resumen de solicitudes">
           <div class="mod-stat"><small>Totales</small><strong id="adm-ate-total">0</strong></div>
           <div class="mod-stat"><small>Registradas</small><strong id="adm-ate-reg">0</strong></div>
           <div class="mod-stat"><small>En atención</small><strong id="adm-ate-proc">0</strong></div>
@@ -420,7 +420,7 @@
           <div class="mod-stat"><small>Cerradas</small><strong id="adm-ate-cer">0</strong></div>
         </div>
         <div class="section-head">
-          <h3 style="font-size:.9rem">Filtrar solicitudes</h3>
+          <h3 class="filter-heading">Filtrar solicitudes</h3>
           <div class="toolbar">
             <select id="adm-ate-estado" class="year-select" aria-label="Filtrar por estado">
               <option value="Todos">Todos los estados</option>
@@ -438,7 +438,7 @@
         <div class="support-card" id="admin-ate-resp-card" hidden aria-label="Responder solicitud">
           <h4 id="admin-ate-resp-title">Responder solicitud</h4>
           <div id="admin-ate-resp-body"></div>
-          <form id="admin-ate-resp-form" novalidate style="margin-top:.6rem">
+          <form id="admin-ate-resp-form" novalidate>
             <div class="field">
               <label for="adm-ate-estado-new">Estado</label>
               <select id="adm-ate-estado-new">
@@ -450,7 +450,7 @@
             </div>
             <div class="field">
               <label for="adm-ate-resp-text">Respuesta del operador</label>
-              <textarea id="adm-ate-resp-text" rows="3" maxlength="2000" data-contador="adm-ate-resp-count" placeholder="Escribe la respuesta visible para el usuario…" style="width:100%;padding:.7rem .8rem;border:2px solid var(--border);border-radius:10px;font-family:inherit"></textarea><small class="char-count" id="adm-ate-resp-count">0 / 2000</small>
+              <textarea id="adm-ate-resp-text" rows="3" maxlength="2000" data-contador="adm-ate-resp-count" placeholder="Escribe la respuesta visible para el usuario…"></textarea><small class="char-count" id="adm-ate-resp-count">0 / 2000</small>
             </div>
             <div class="dialog-actions">
               <button class="btn btn-ghost" id="admin-ate-resp-cancel" type="button">Cancelar</button>
@@ -503,7 +503,7 @@
       <button class="icon-btn" id="confirm-close" type="button" aria-label="Cerrar confirmación" data-icon="close"></button>
     </div>
     <div class="dialog-body">
-      <p id="confirm-text" style="font-size:.9rem;color:var(--text)">¿Deseas continuar?</p>
+      <p id="confirm-text">¿Deseas continuar?</p>
       <div class="dialog-actions">
         <button class="btn btn-ghost" id="confirm-cancel" type="button">Cancelar</button>
         <button class="btn btn-primary" id="confirm-ok" type="button">Aceptar</button>
