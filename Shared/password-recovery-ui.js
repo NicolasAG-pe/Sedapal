@@ -124,6 +124,9 @@
         }
       }
     }
+    function runSafely(task) {
+      run(task).catch(() => { el("error").textContent = "No se pudo completar la operación. Inténtalo nuevamente."; });
+    }
     async function send(current) {
       const data = await request("request", {
         solicitud_id: id,
@@ -143,19 +146,19 @@
       // Una respuesta perdida reintenta la misma UUID; no genera otra solicitud.
       if (!id || email !== value) id = crypto.randomUUID();
       email = value;
-      run(send);
+      runSafely(send);
     });
     el("resend").addEventListener("click", () => {
       if (busy || Date.now() < nextRequest) return;
       id = crypto.randomUUID();
       permission = "";
       el("code").value = el("factor").value = "";
-      run(send);
+      runSafely(send);
     });
     el("verify").addEventListener("submit", (event) => {
       event.preventDefault();
       if (!el("verify").reportValidity()) return;
-      run(async (current) => {
+      runSafely(async (current) => {
         const body = {
           solicitud_id: id,
           codigo: el("code").value,
@@ -193,7 +196,7 @@
         el("confirm").focus();
         return;
       }
-      run(async (current) => {
+      runSafely(async (current) => {
         el("password").value = el("confirm").value = "";
         const data = await request("complete", {
           solicitud_id: id,
@@ -219,7 +222,7 @@
         onOpen();
         container.hidden = false;
         step("request");
-        run(async (current) => {
+        runSafely(async (current) => {
           const data = await request("capabilities");
           if (current() && !data.disponible)
             throw new Error(

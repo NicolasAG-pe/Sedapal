@@ -22,6 +22,7 @@ function obtenerConfiguracion(env = process.env) {
         }
     }
 
+    const localDatabaseHost = host => ['db', 'localhost', '127.0.0.1', '::1', '[::1]'].includes(host);
     let database;
     if (String(env.DATABASE_URL || '').trim()) {
         let url;
@@ -32,7 +33,7 @@ function obtenerConfiguracion(env = process.env) {
         if (!['postgres:', 'postgresql:'].includes(url.protocol) || !url.hostname) {
             throw new Error('DATABASE_URL debe utilizar postgres:// o postgresql://.');
         }
-        const local = ['db', 'localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
+        const local = localDatabaseHost(url.hostname);
         // SSL en proveedores externos, con validación de certificado y host.
         // Se configura en la URL para evitar que pg sobrescriba un objeto ssl.
         if (!local) {
@@ -44,13 +45,14 @@ function obtenerConfiguracion(env = process.env) {
         }
         database = { connectionString: url.toString() };
     } else {
+        const host = env.DB_HOST || 'db';
         database = {
-            host: env.DB_HOST || 'db',
+            host,
             port: Number(env.DB_PORT || 5432),
             database: env.POSTGRES_DB,
             user: env.POSTGRES_USER,
             password: env.POSTGRES_PASSWORD,
-            ssl: false
+            ssl: localDatabaseHost(host) ? false : { rejectUnauthorized: true }
         };
     }
 

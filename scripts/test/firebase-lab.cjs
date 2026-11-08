@@ -16,7 +16,7 @@ test('compilación FCM solo acepta configuración privada del proyecto y paquete
   assert.throws(() => validateConfig(file));
 });
 test('APK de laboratorio rechaza APIs externas, credenciales y parámetros; admite solo loopback/emulador', () => {
-  assert.equal(localApi('http://10.0.2.2:12345'), 'http://10.0.2.2:12345');
-  for (const u of ['https://api.example.invalid', 'http://192.168.1.4', 'http://user:secret@localhost',
+  assert.equal(localApi('http://127.0.0.1:12345'), 'http://127.0.0.1:12345');
+  for (const u of ['https://api.example.invalid', 'http://192.168.1.4', 'http://10.0.2.2:12345', 'http://user:secret@localhost',
     'http://localhost/?token=fixture', 'http://localhost/api']) assert.throws(() => localApi(u));
 });

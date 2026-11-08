@@ -48,7 +48,7 @@ function crearProcesadorOutbox({ pool, key, enviarCodigo, proveedor = 'resend' }
         for (const c of candidates) {
             const result = await tx(async client => {
                 // Mismo orden que registro/reenvío; nunca bloquear primero la outbox.
-                for (const identity of [`correo:${c.correo}`, `suministro:${c.numero_suministro}`].sort()) {
+                for (const identity of [`correo:${c.correo}`, `suministro:${c.numero_suministro}`].sort((a, b) => a < b ? -1 : a > b ? 1 : 0)) {
                     const { rows: [lock] } = await client.query('SELECT pg_try_advisory_xact_lock(7401,hashtext($1)) AS ok', [identity]);
                     if (!lock.ok) return null;
                 }

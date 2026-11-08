@@ -21,7 +21,7 @@
   function load(){
    if(disposed||!active())return Promise.resolve();generation++;
    if(loadPromise){loadAgain=true;return loadPromise;}
-   loadPromise=(async()=>{do{loadAgain=false;await loadOnce(generation);}while(loadAgain&&!disposed&&active());})().finally(()=>{loadPromise=null;});return loadPromise;
+   loadPromise=(async()=>{for(;;){loadAgain=false;await loadOnce(generation);if(!loadAgain||disposed||!active())break;}})().finally(()=>{loadPromise=null;});return loadPromise;
   }
   async function loadOnce(version){
    if(disposed||!active())return;const status=$('#admin-operation-status');status.textContent='Consultando operaciones…';$('#admin-operation-list').setAttribute('aria-busy','true');

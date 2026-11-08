@@ -137,7 +137,7 @@ test('CLI de validación compartida procesa una entrega, permanece inactivo y no
   const first = await notice(u), selectedNotice = await notice(u, 'incidencia');
   const selected = (await ctx.db.query('SELECT id FROM push_entregas WHERE id_notificacion=$1', [selectedNotice.id_notificacion])).rows[0].id;
   const env = { ...process.env, PUSH_ENABLED: '1', PUSH_WORKER_ENABLED: '1', PUSH_PROVIDER: 'mock', NODE_ENV: 'test',
-    PUSH_DATABASE_URL: `postgres://hm_fixture:fixture-only-not-production@127.0.0.1:${ctx.connection.port}/${ctx.connection.database}`,
+    PUSH_DATABASE_URL: `postgres://hm_fixture:${encodeURIComponent(ctx.connection.password)}@127.0.0.1:${ctx.connection.port}/${ctx.connection.database}`,
     PUSH_EXPECTED_DATABASE: ctx.connection.database, PUSH_VALIDATION_DELIVERY_ID: selected, PUSH_VALIDATION_SINGLE_ATTEMPT: '1' };
   for (let attempt = 0; attempt < 2; attempt++) {
     const child = spawn(process.execPath, [path.join(__dirname, '../workers/push.cjs'), '--run'], { env, stdio: ['ignore','pipe','pipe','ipc'] });

@@ -4,6 +4,8 @@
   "groups": {
     "unit": [
       "Backend/test/config.test.js",
+      "Backend/test/password-recovery-unit.test.js",
+      "Backend/test/safe-log.test.js",
       "Backend/test/email-cleanup.test.js",
       "Backend/test/email-gmail.test.js",
       "Backend/test/email-live.test.js",
@@ -26,6 +28,10 @@
       "scripts/test/docker-context.test.cjs",
       "scripts/test/push-event-errors.test.cjs",
       "scripts/test/test-catalog.test.cjs",
+      "scripts/test/security-headers.test.cjs",
+      "scripts/test/pdf-example-runtime.test.cjs",
+      "scripts/test/local-check-transport.test.cjs",
+      "scripts/test/browser-coverage.test.cjs",
       "scripts/test/firebase-lab.cjs",
       "scripts/test/firebase-release.cjs",
       "scripts/test/test-runner.test.cjs"
@@ -79,7 +85,7 @@
     },
     {
       "path": "Backend/test/config.test.js",
-      "sha256": "94e291d7136352e7a5d2ac7c7f9929889fabcea42f048399143c6ab7e02a1e56",
+      "sha256": "6832f9110605cb7c4f317664e87d71060db44bfe0593b3c266a3e85e96815c71",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -252,7 +258,7 @@
     },
     {
       "path": "Backend/test/email-gmail-worker.cjs",
-      "sha256": "472cb36dc6ce9f1953ddb75fc63f1d343d769fbb077cd1d001c89a8198cf94cb",
+      "sha256": "89c6fad2ac8382d3994f2fee2ade8a319c79fe53aed6b97e717c9cdf45b84c87",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -419,7 +425,7 @@
     },
     {
       "path": "Backend/test/email-outbox-api.cjs",
-      "sha256": "ff943fa6e8ad2d7d8c759c423d5e1b8f4af3ecab9668fb4363a95f19bebf59b6",
+      "sha256": "de6103b85813c3f9f8273b80f6eb200047fcb80057d4f9c9a93fc212bd293a74",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -530,7 +536,7 @@
     },
     {
       "path": "Backend/test/email-resend.test.js",
-      "sha256": "f53bd2fc2183dddea0ef7f2c6423d939f38ee112dff62d578d5fa44ba2f1962a",
+      "sha256": "de649042a36862b477334a1ee03174874fe6c63f3f96b49b21ce78822015c0b0",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -541,7 +547,9 @@
         "node:test",
         "node:assert/strict",
         "node:crypto",
-        "../resend-mail"
+        "../resend-mail",
+        "../mail-address",
+        "../password-recovery-crypto"
       ],
       "environmentNames": [],
       "legacyNpm": [
@@ -552,7 +560,7 @@
     },
     {
       "path": "Backend/test/email-schema.cjs",
-      "sha256": "1b6e8e44cf3d64edeb92611ddfa21b77c4e34db6d0eae4a78440c60a4eb7cad0",
+      "sha256": "f116be91b2bfcbf2e0b4acd0ad092772d420662fc04ef7e12704e84f26780f22",
       "type": "integracion",
       "group": null,
       "nodeTest": false,
@@ -569,6 +577,7 @@
         "pg"
       ],
       "environmentNames": [
+        "HIDRO_EMAIL_TEST_DB_PASSWORD",
         "HIDRO_EMAIL_TEST_DB_PORT"
       ],
       "legacyNpm": [
@@ -633,7 +642,7 @@
     },
     {
       "path": "Backend/test/gmail-roles-local.cjs",
-      "sha256": "2a6d735f42425fb71b8639f413a637fe3dd6972bc2d728c33c03ed7e36187d2b",
+      "sha256": "97ec7163d216057d49e1a4b97c7c31aa893e805095f5c1b664f4af8a22c4ed7d",
       "type": "integracion",
       "group": "integration",
       "nodeTest": true,
@@ -691,7 +700,7 @@
     },
     {
       "path": "Backend/test/incident-tracking.cjs",
-      "sha256": "fdc18b4d6defae644dfd9953605e14d3c2f20bcaaa5ff6024167513064517fbe",
+      "sha256": "7b9d778f1595ad5eedfbe71c2702c98766acbc45a0cde03723babcac0fc9ded9",
       "type": "integracion",
       "group": "integration",
       "nodeTest": true,
@@ -820,6 +829,27 @@
       ],
       "referencedBy": [],
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/password-recovery-unit.test.js",
+      "sha256": "dc740bdd57d572347d8682257ebcba6af75c887fe485997bf44e3c550aa8a395",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "../password-recovery-crypto",
+        "../password-recovery"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
       "path": "Backend/test/password-recovery.cjs",
@@ -997,7 +1027,7 @@
     },
     {
       "path": "Backend/test/push-start-postgres.cjs",
-      "sha256": "8abe0236a79bf3efb9559ca7c1d82d81b56db230b307b797f2a5e93fd8edcb54",
+      "sha256": "68e1036cc8dc5a0dc658a4ec1a590e4d95d3d0e2d3ac779313a2cd49b7a715a1",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -1021,7 +1051,7 @@
     },
     {
       "path": "Backend/test/push.cjs",
-      "sha256": "afb19916c26caced0e2283added50f833c8aaa86b465953b242e1e9d37745440",
+      "sha256": "e0c70f648076fec483bec7937f5cf812e0b1c50f1e0090d452050cea3a731856",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -1210,8 +1240,27 @@
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
     },
     {
+      "path": "Backend/test/safe-log.test.js",
+      "sha256": "2e1351a5c0183df3dfb98f5dfdd8099eb6e87635b23a3586201be8ebb345392d",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "../safe-log"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
       "path": "Backend/test/start-postgres.cjs",
-      "sha256": "025d076265fc40874d5080e614fec051dafd9b2a51d4d385369a232b67460ebb",
+      "sha256": "3629a45270b1e0848b9f75c7ab23ff9a36fa7413af71aa1ac384debf69de1b3c",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -1264,7 +1313,7 @@
     },
     {
       "path": "Backend/test/totp-crypto.test.js",
-      "sha256": "db8c4c991e073f7a774dba1c6161bb2f89d486b8b3b5c1c31645b9e905b5d61e",
+      "sha256": "60499dae1970ae7e01317bb780e106cb0f84f8d7da553636b0280a797f2a3068",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -1464,7 +1513,7 @@
     },
     {
       "path": "scripts/test/admin-e2e.cjs",
-      "sha256": "5282efbf48df5f912b7162524c3a7a442b190416ac86acfee7c17e5f70cb6bbb",
+      "sha256": "1c0016c4dffb0aa72feece183127a64e2896d064246778b549702b2c783765b8",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": false,
@@ -1485,6 +1534,7 @@
         "./client-checks.cjs"
       ],
       "environmentNames": [
+        "HIDRO_EMAIL_TEST_DB_PASSWORD",
         "HIDRO_EMAIL_TEST_DB_PORT",
         "HIDRO_TEST_CHROME",
         "HIDRO_TEST_DB_PORT",
@@ -1713,7 +1763,7 @@
     },
     {
       "path": "scripts/test/android-session-native.cjs",
-      "sha256": "802130ac1e20ba81b3b1e8ffb83632969722edceff33cf0bbfe4c996fd26c7d7",
+      "sha256": "ca65e748ecabcddf52aeaf8fc95fc36f6c14b9e0876bb7575d9283a2e61fa910",
       "type": "Android/dispositivo",
       "group": null,
       "nodeTest": false,
@@ -1846,7 +1896,7 @@
     },
     {
       "path": "scripts/test/android-upgrade.test.cjs",
-      "sha256": "62fdf352ce6a18ee6dec9cc40470ff378443568c96c60c2c12683f65b8f7f9da",
+      "sha256": "f083259a3e85555e785c52f3c7b3958eb1632afd75dfd624cf6a570309ced535",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -1924,6 +1974,28 @@
       "legacyNpm": [],
       "referencedBy": [],
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/browser-coverage.test.cjs",
+      "sha256": "1ff4b987a108fa33289773f29a000d8dee7e86bd25afcb1c6042ced6333df899",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:os",
+        "node:path",
+        "node:child_process"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
       "path": "scripts/test/chatbot-ui-checks.cjs",
@@ -2090,7 +2162,7 @@
     },
     {
       "path": "scripts/test/docker-context.test.cjs",
-      "sha256": "fd05e73de953a3b4bbe2175c94d1df14ce89e319becc33fa6010b937ab328abb",
+      "sha256": "b5fd14b0ec53f2353a47e54146e205f19ad776aa32f9ef6eaa1f3f8f7fb0b263",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2138,7 +2210,7 @@
     },
     {
       "path": "scripts/test/downgrade-lab.cjs",
-      "sha256": "a5dcaff247af43b2350f7f7e6b0df54631789ef3551d539aaf489fa9dfa24c0d",
+      "sha256": "78e9f5ded69ea09127f0c765cb16a9ebfac7c21912491c438a8fd92a2464bbba",
       "type": "manual/historica",
       "group": null,
       "nodeTest": false,
@@ -2166,7 +2238,7 @@
     },
     {
       "path": "scripts/test/firebase-lab.cjs",
-      "sha256": "c40baa129e50c32e2537c9d5e0f588b5f49c57b7dc497604bc5ffb024b5435de",
+      "sha256": "737f693447ab6941185e6deb70a763b58a84c746159fe0795e1823603ea507f1",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2314,7 +2386,7 @@
     },
     {
       "path": "scripts/test/k8s-integration.test.cjs",
-      "sha256": "f86435049fecc2da551a36474cc451cb84ad7ae6f2802d6f239a6c6ee247b7d6",
+      "sha256": "52f826b00faa4ae4e4144a2c0eed63e2617b3a7cb20495cd2c2c62c08aac462d",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -2346,6 +2418,25 @@
       ],
       "referencedBy": [],
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/local-check-transport.test.cjs",
+      "sha256": "264fb6e54885045a673faca9b9cbccc581ca7834989b3e5a51f53edbbf24ce6a",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "../../Backend/local-check-transport"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
       "path": "scripts/test/password-recovery-flow.cjs",
@@ -2557,6 +2648,26 @@
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
     },
     {
+      "path": "scripts/test/pdf-example-runtime.test.cjs",
+      "sha256": "28e5ba58596ccec1da5bf4378e2c21d0dbfa39d1ba0e20d4a008794c857eae3f",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "../../Frontend/assets/vendor/jspdf.umd.min.js",
+        "../pdf-example-runtime.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
       "path": "scripts/test/preproduccion24.cjs",
       "sha256": "2eb6692ab2bcb3fee2e5730965a7625aaffd6df97ba336ccb615d608d2205330",
       "type": "manual/historica",
@@ -2607,7 +2718,7 @@
     },
     {
       "path": "scripts/test/public-api-config.test.js",
-      "sha256": "711b4e257911b724b9acca877314f6ebff0a491636a77a07a819eb2cdf16a2c7",
+      "sha256": "40e9b1f823990d5d6ae1eec8d8f09fbcc09a28d4db49030a4cfd0c7892fcbf8b",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -2805,6 +2916,27 @@
       "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
+      "path": "scripts/test/security-headers.test.cjs",
+      "sha256": "60e11ba0451e2bb7782825df532471c186aec665ff1ba5044ab96afa3e0aee2a",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:path",
+        "node:crypto"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
       "path": "scripts/test/test-catalog.test.cjs",
       "sha256": "d869b500c67e2b5524aca9209284fa3688be3d1792c4786dbcafd0da36ff1b4a",
       "type": "unitaria",
@@ -2825,12 +2957,13 @@
     },
     {
       "path": "scripts/test/test-runner.test.cjs",
-      "sha256": "807ca59c60fa5fc2d56140d179f6984fc9bc296476fa3aaed0c2eeab0bce56bd",
+      "sha256": "752385f458a4bdd7d46da0bdf54ca831d0c92a9a8a6d397706d840270597a938",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
       "requirements": [
-        "Node22"
+        "Node22",
+        "PostgreSQL sintetico/fixture"
       ],
       "dependencies": [
         "node:test",
@@ -2850,7 +2983,7 @@
     },
     {
       "path": "scripts/test/totp-restore-lab.cjs",
-      "sha256": "ac43cf8af8a00fe068c888eda1ee5a2d4d9233e92b39c87e841cb56bbd315b97",
+      "sha256": "b5d2fdf20d925a63c1395e0b337405dab49c9ef4194f2efee0240d0777b2ad1c",
       "type": "manual/historica",
       "group": null,
       "nodeTest": false,
@@ -2872,6 +3005,7 @@
         "../../Backend/node_modules/otpauth"
       ],
       "environmentNames": [
+        "HIDRO_EMAIL_TEST_DB_PASSWORD",
         "HIDRO_EMAIL_TEST_DB_PORT",
         "HIDRO_TOTP_LAB_DIR"
       ],
@@ -3076,6 +3210,11 @@
       "managedGroup": null
     },
     {
+      "path": "Backend/test/password-recovery-unit.test.js",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
       "path": "Backend/test/payment-production-compat.cjs",
       "referencedBy": [],
       "managedGroup": "integration"
@@ -3107,6 +3246,11 @@
       "path": "Backend/test/resend-fixture.cjs",
       "referencedBy": [],
       "managedGroup": null
+    },
+    {
+      "path": "Backend/test/safe-log.test.js",
+      "referencedBy": [],
+      "managedGroup": "unit"
     },
     {
       "path": "Backend/test/start-postgres.cjs",
@@ -3217,6 +3361,11 @@
       "managedGroup": null
     },
     {
+      "path": "scripts/test/browser-coverage.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
       "path": "scripts/test/chatbot-ui-checks.cjs",
       "referencedBy": [
         "scripts/test/android-session-native.cjs",
@@ -3278,6 +3427,11 @@
       "managedGroup": null
     },
     {
+      "path": "scripts/test/local-check-transport.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
       "path": "scripts/test/payment-production-browser.cjs",
       "referencedBy": [],
       "managedGroup": null
@@ -3291,6 +3445,11 @@
       "path": "scripts/test/payment-production-runtime.cjs",
       "referencedBy": [],
       "managedGroup": null
+    },
+    {
+      "path": "scripts/test/pdf-example-runtime.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
     },
     {
       "path": "scripts/test/preproduccion24.cjs",
@@ -3316,6 +3475,11 @@
       "path": "scripts/test/release-image.test.cjs",
       "referencedBy": [],
       "managedGroup": null
+    },
+    {
+      "path": "scripts/test/security-headers.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
     },
     {
       "path": "scripts/test/test-catalog.test.cjs",

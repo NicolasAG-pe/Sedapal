@@ -5,7 +5,7 @@ const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
 const groups = {
     unit: [
-        'Backend/test/config.test.js', 'Backend/test/email-cleanup.test.js', 'Backend/test/email-gmail.test.js',
+        'Backend/test/config.test.js', 'Backend/test/password-recovery-unit.test.js', 'Backend/test/safe-log.test.js', 'Backend/test/email-cleanup.test.js', 'Backend/test/email-gmail.test.js',
         'Backend/test/email-live.test.js', 'Backend/test/email-otp.test.js', 'Backend/test/email-outbox.test.js',
         'Backend/test/email-resend.test.js', 'Backend/test/receipt-date.test.js', 'Backend/test/start.test.cjs',
         'Backend/test/totp-crypto.test.js', 'Backend/test/push-credentials.cjs',
@@ -13,7 +13,7 @@ const groups = {
         'scripts/test/secure-session.test.cjs', 'scripts/test/ui-money.test.cjs', 'scripts/test/hidrobot.test.cjs',
         'scripts/test/identity-palette.test.cjs', 'scripts/test/android-release-signing.test.cjs',
         'scripts/test/admin-date-validation.test.cjs', 'scripts/test/docker-context.test.cjs', 'scripts/test/push-event-errors.test.cjs',
-        'scripts/test/test-catalog.test.cjs', 'scripts/test/firebase-lab.cjs', 'scripts/test/firebase-release.cjs', 'scripts/test/test-runner.test.cjs'
+        'scripts/test/test-catalog.test.cjs', 'scripts/test/security-headers.test.cjs', 'scripts/test/pdf-example-runtime.test.cjs', 'scripts/test/local-check-transport.test.cjs', 'scripts/test/browser-coverage.test.cjs', 'scripts/test/firebase-lab.cjs', 'scripts/test/firebase-release.cjs', 'scripts/test/test-runner.test.cjs'
     ],
     contract: ['scripts/test/public-api-config.test.js', 'scripts/test/android-upgrade.test.cjs', 'scripts/test/client-packaging.test.cjs'],
     integration: ['Backend/test/receipt-profile-compat.cjs', 'Backend/test/payment-production-compat.cjs',
@@ -23,7 +23,7 @@ const groups = {
 };
 function files() {
     return ['Backend/test', 'scripts/test'].flatMap(folder => fs.readdirSync(path.join(root, folder), { withFileTypes: true })
-        .filter(entry => entry.isFile()).map(entry => folder + '/' + entry.name)).sort();
+        .filter(entry => entry.isFile()).map(entry => folder + '/' + entry.name)).sort((a, b) => a.localeCompare(b, 'en'));
 }
 // Validar antes de clasificar: find() no debe ocultar pertenencias ambiguas.
 function validateGroups(catalog, discovered) {
@@ -83,7 +83,7 @@ function inventory() {
                             : 'NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso';
         return { path: name, sha256: crypto.createHash('sha256').update(source).digest('hex'), type, group,
             nodeTest: source.includes('node:test'), requirements: tools, dependencies,
-            environmentNames: [...new Set([...source.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)/g)].map(m => m[1]))].sort(),
+            environmentNames: [...new Set([...source.matchAll(/process\.env\.([A-Z][A-Z0-9_]*)/g)].map(m => m[1]))].sort((a, b) => a.localeCompare(b, 'en')),
             legacyNpm: legacy.filter(([, c]) => matches(c, name)).map(([key]) => key),
             referencedBy: names.filter(other => other !== name && [...sources[other].matchAll(/require\(["']([^"']+)["']/g)].some(m => {
                 if (!m[1].startsWith('.')) return false;

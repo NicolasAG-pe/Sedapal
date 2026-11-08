@@ -19,7 +19,8 @@
       "feature/auditoria-calidad-ux-120": false,
       "preparation/lanzamiento-oficial-120": false,
       "feature/fcm-oficial-120": false,
-      "feature/k8s-local-120": false
+      "feature/k8s-local-120": false,
+      "fix/sonarqube-final-120": false
     }
   }
 }

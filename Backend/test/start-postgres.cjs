@@ -16,7 +16,7 @@ test('esquema outbox ausente falla antes de readiness y no abre la API', { timeo
         const child = spawn(process.execPath, [path.join(__dirname, '../start.cjs')], { env: { ...process.env,
             EMAIL_WORKER_SHARED_CONTAINER: '1', EMAIL_WORKER_ENABLED: '1', EMAIL_REGISTRATION_ENABLED: '1', EMAIL_PROVIDER: 'gmail',
             GMAIL_SENDER: sender, GMAIL_CREDENTIALS_FILE: file, EMAIL_WORKER_EXPECTED_DATABASE: connection.database,
-            EMAIL_WORKER_DATABASE_URL: `postgres://hm_fixture:fixture-only-not-production@127.0.0.1:${connection.port}/${connection.database}`,
+            EMAIL_WORKER_DATABASE_URL: `postgres://hm_fixture:${encodeURIComponent(connection.password)}@127.0.0.1:${connection.port}/${connection.database}`,
             EMAIL_OUTBOX_KEY: crypto.randomBytes(32).toString('base64') }, stdio: ['ignore', 'pipe', 'pipe'] });
         let output = ''; child.stdout.on('data', b => { output += b; }); child.stderr.resume();
         assert.equal(await new Promise(resolve => child.on('close', resolve)), 1);
@@ -39,7 +39,7 @@ test('API/worker reales: canario, OTP, login, SIGTERM, caídas y recuperación s
         fs.writeFileSync(credentialFile, JSON.stringify({ type: 'authorized_user', client_type: 'desktop', scope: SCOPE, sender,
             account_verified: false, account_check: 'scope_only', client_id: 'fixture.apps.googleusercontent.com',
             client_secret: 'fixture-secret', refresh_token: 'fixture-refresh' }), { mode: 0o644 });
-        const db = `postgres://hm_fixture:fixture-only-not-production@127.0.0.1:${connection.port}/${connection.database}`;
+        const db = `postgres://hm_fixture:${encodeURIComponent(connection.password)}@127.0.0.1:${connection.port}/${connection.database}`;
         const env = { ...process.env, NODE_ENV: 'production', PORT: String(port), CORS_ALLOWED_ORIGINS: 'https://localhost',
             DATABASE_URL: db, AUTH_TOKEN_SECRET: crypto.randomBytes(48).toString('hex'), EMAIL_OTP_SECRET: crypto.randomBytes(48).toString('hex'),
             EMAIL_OUTBOX_KEY: crypto.randomBytes(32).toString('base64'), EMAIL_PROVIDER: 'gmail', GMAIL_SENDER: sender,

@@ -1,5 +1,60 @@
 # Historial de versiones
 
+## Correcciones SonarQube — 1.2.0
+
+- Se agregan pruebas unitarias de recuperación de contraseña para las claves, el cifrado autenticado, la elegibilidad y las entradas inválidas, sin conexiones a bases de datos.
+
+- El acceso a suministros inexistentes ejecuta la misma verificación scrypt que el acceso con contraseña incorrecta a una cuenta existente. El panel administrativo reemplaza sus estilos HTML por reglas CSS y prohíbe atributos de estilo mediante CSP.
+
+- Los proxies web y administrativo agregan CSP, protección de encuadre y nosniff, y omiten la versión de Nginx; la API evita almacenar respuestas en caché exige TLS para PostgreSQL externo configurado mediante DB_HOST evita registrar detalles sensibles en errores internos y no revela cuentas desactivadas antes de verificar la contraseña.
+
+- PostgreSQL sintético de CI usa una contraseña propia por ejecución y las pruebas locales reciben su credencial de fixture por entorno.
+
+- Los ejemplos PDF cargan módulos locales fijos sin compilar texto dinámico.
+
+- La imagen administrativa anuncia únicamente el puerto interno 8080 y usa la misma base Debian sin privilegios que el frontend.
+
+- Los chequeos locales autenticados solo aceptan fixtures sintéticos y destinos HTTPS con certificado validado; la instancia de loopback usa un JWT efímero propio.
+
+- El desarrollo Android usa loopback mediante adb reverse y rechaza destinos HTTP remotos.
+
+- La integración continua instala las dependencias de prueba desde el lockfile sin ejecutar scripts.
+
+- Pruebas de los controles de procedencia de la cobertura de navegador y dependencia local reproducible para generar LCOV.
+
+- Instrumentación local de cobertura de navegador y fusión con Node que verifica el contenido de cada fuente antes de atribuir líneas.
+
+- Las imágenes web y administrativa usan Nginx sin root en el puerto interno 8080, con puertos publicados conservados y temporales privados.
+
+- El backend Docker se ejecuta como usuario no privilegiado; los secretos montados deben ser legibles por UID 1000.
+
+- Las utilidades locales Debian de pruebas, Gmail y piloto Yape invocan Git o Docker de `/usr/bin` sin depender de PATH.
+
+- La operación local de Gmail invoca Docker y systemd-creds desde rutas del sistema, sin resolver ejecutables mediante PATH.
+
+- La dirección HTTP reservada al emulador Android no se acepta como destino web o administrativo remoto.
+
+- Las pruebas de recuperación verifican remitentes válidos, dominios malformados e intentos de inyección de cabeceras.
+
+- Los generadores de PDF sintético cargan fuentes del repositorio por ruta fija, sin ejecutar archivos homónimos del directorio de trabajo.
+
+- La API responde con CSP restrictiva; se verifican los encabezados en la prueba integral.
+- La navegación y la recarga administrativa comprueban explícitamente sus condiciones asíncronas; el retardo visual usa aleatoriedad del navegador.
+
+- La prueba de cifrado altera siempre el texto cifrado, incluso cuando su primer carácter aleatorio coincide con el sustituto.
+
+- La imagen backend incluye el validador de remitentes y la navegación desde notificaciones deja de esperar indefinidamente.
+
+- Recuperación de cuenta, 2FA, seguimiento y notificaciones gestionan rechazos inesperados en acciones de interfaz.
+
+- Android restringe el respaldo de aplicación y el tráfico sin cifrar en producción; la excepción de red local permanece solo en depuración.
+- La validación del remitente divide el nombre y el correo para evitar retrocesos excesivos, conservando el formato de envío admitido.
+
+- El análisis incluye explícitamente frontend, backend, administrador, código compartido y Android con la clave del proyecto local.
+- El panel gestiona rechazos de consultas y ordena filtros por idioma; el middleware administrativo propaga errores de autenticación.
+- Las validaciones de correo evitan retrocesos excesivos y las operaciones de registro y correo conservan el orden determinista de sus bloqueos.
+- Deshabilitados los despliegues Git para esta rama en ambas configuraciones del repositorio.
+
 ## Integración conjunta PostgreSQL, SDD y SonarQube — 1.2.0
 
 - Integrados los historiales PostgreSQL/Gmail y SonarQube sobre la base SDD/RPI sin reactivar el piloto de pagos.

@@ -30,14 +30,16 @@ async function main(argv = process.argv.slice(2)) {
     const env = cleanEnvironment();
     if (group === 'integration') {
         const port = Number(process.env.HIDRO_EMAIL_TEST_DB_PORT);
-        if (process.env.HIDRO_TEST_ISOLATED_DB !== '1' || !Number.isInteger(port) || port < 1 || port > 65535) throw Error('Integración exige PG18 NUEVO aislado, HIDRO_TEST_ISOLATED_DB=1 y HIDRO_EMAIL_TEST_DB_PORT. No usar producción.');
+        const fixturePassword = process.env.HIDRO_EMAIL_TEST_DB_PASSWORD || '';
+        if (process.env.HIDRO_TEST_ISOLATED_DB !== '1' || !/^[A-Za-z0-9_-]{16,128}$/.test(fixturePassword) || !Number.isInteger(port) || port < 1 || port > 65535) throw Error('Integración exige PG18 NUEVO aislado, HIDRO_TEST_ISOLATED_DB=1 y puerto y contraseña sintéticos explícitos. No usar producción.');
         const { createRequire } = require('node:module');
         const { Client } = createRequire(path.join(root, 'Backend/package.json'))('pg');
-        const client = new Client({ host: '127.0.0.1', port, database: 'hm_email_test', user: 'hm_fixture', password: 'fixture-only-not-production', connectionTimeoutMillis: 3000 });
+        const client = new Client({ host: '127.0.0.1', port, database: 'hm_email_test', user: 'hm_fixture', password: fixturePassword, connectionTimeoutMillis: 3000 });
         try { await client.connect(); const r = await client.query("SELECT current_database() AS db,current_user AS role,current_setting('server_version_num') AS version");
             if (r.rows[0].db !== 'hm_email_test' || r.rows[0].role !== 'hm_fixture' || !r.rows[0].version.startsWith('18')) throw Error('Preflight de fixtures PG18 rechazado.');
         } finally { await client.end(); }
         env.HIDRO_EMAIL_TEST_DB_PORT = String(port);
+        env.HIDRO_EMAIL_TEST_DB_PASSWORD = fixturePassword;
     }
     if (group === 'e2e') {
         if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(process.env.HIDRO_PKG01_STATIC_ORIGIN || '')) throw Error('E2E requiere origen Nginx temporal verificado en loopback; no usar sitios reales.');
@@ -52,7 +54,7 @@ async function main(argv = process.argv.slice(2)) {
         if (flags.includes('--coverage')) env.NODE_V8_COVERAGE = path.join(report, 'v8');
     }
     const status = runFiles(files, { env, report, coverage: flags.includes('--coverage'), direct: group === 'e2e' });
-    if (report) { let sha = null; try { sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, env, encoding: 'utf8', stdio: ['ignore','pipe','ignore'] }).trim(); } catch {}
+    if (report) { let sha = null; try { sha = execFileSync('/usr/bin/git', ['rev-parse', 'HEAD'], { cwd: root, env, encoding: 'utf8', stdio: ['ignore','pipe','ignore'] }).trim(); } catch {}
         const sourceHashes = Object.fromEntries(['package.json','scripts/test-runner.cjs','scripts/test-catalog.cjs','scripts/test-network-guard.cjs'].map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex')]));
         fs.writeFileSync(path.join(report, 'run.json'), JSON.stringify({ sha, sourceHashes, node: process.version, group, files, status, coverage: flags.includes('--coverage'), scope: 'solo módulos cargados de esta suite; no cobertura global del producto' }, null, 2) + '\n'); console.log('Informe:', path.relative(root, report)); }
     return status;

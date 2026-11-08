@@ -45,9 +45,11 @@ test('base y overlays: fuente SQL vigente, PVC, red, secretos y altas cerradas',
       }
     }
     for (const name of ['web','admin']) {
-      assert.ok(find(items,'Service',name));
+      const service=find(items,'Service',name);
+      assert.equal(container(find(items,'Deployment',name)).ports.find(p=>p.name==='http').containerPort,8080);
+      assert.equal(service.spec.ports[0].targetPort,'http');
       const conf=fs.readFileSync(path.join(root,name==='web'?'Frontend':'Admin','nginx/default.conf'),'utf8');
-      assert.match(conf,/backend:3000/);assert.match(conf,/socket\.io/);assert.match(conf,/Upgrade/);
+      assert.match(conf,/listen 8080/);assert.match(conf,/backend:3000/);assert.match(conf,/socket\.io/);assert.match(conf,/Upgrade/);
     }
     if (target==='local') {
       assert.equal(find(items,'Service','web').spec.ports[0].nodePort,30080);

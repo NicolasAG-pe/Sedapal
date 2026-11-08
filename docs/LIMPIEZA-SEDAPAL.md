@@ -119,9 +119,8 @@ npm run android:gradle -- :app:assembleDebug :app:testDebugUnitTest :app:lintDeb
 npm run test:config
 npm run test:documents
 
-# Lecturas sobre la base original, sin contraseña/token mostrado.
-docker compose exec -T backend node < scripts/check-local.cjs
-docker compose exec -T backend node < scripts/check-admin-local.cjs
+# Los chequeos autenticados ahora exigen fixture sintético y TLS verificable.
+# Seguir la preparación en docs/LOCAL-DEVELOPMENT.md; no usar la base original.
 ```
 
 Para pruebas con escritura/descargas PDF reales, usar el PostgreSQL tmpfs y Chromium

@@ -12,7 +12,7 @@ const { verifyClientRuntime } = require('../verify-client-runtime');
 
 test('Android se genera limpio y rechaza una salida con recursos anteriores', () => {
     const output = fs.mkdtempSync(path.join(os.tmpdir(), 'hidro-client-android-test-'));
-    buildWeb('android', { API_BASE_URL: 'http://10.0.2.2:8080' }, output);
+    buildWeb('android', { API_BASE_URL: 'http://127.0.0.1:8080' }, output);
     assert.equal(verifyClientRuntime(output).administrativeCode, false);
     for(const name of ['LogoSedapal.png','logo.png','sedapal1.png','sedapal.jpg']){
         assert.equal(fs.existsSync(path.join(output,'assets',name)),false,'Original histórico fuera del paquete: '+name);
@@ -21,7 +21,7 @@ test('Android se genera limpio y rechaza una salida con recursos anteriores', ()
     assert.deepEqual(fs.readdirSync(path.join(output, 'shared')).sort(), ['api.js', 'assets', 'icons.js', 'incident-timeline.js', 'password-recovery-ui.js', 'styles.css', 'two-factor-ui.js', 'ui.js']);
     const stale = path.join(output, 'admin.js');
     fs.writeFileSync(stale, '// Recurso antiguo: debe conservarse y bloquear el empaquetado.');
-    assert.throws(() => buildWeb('android', { API_BASE_URL: 'http://10.0.2.2:8080' }, output), /debe estar vacía/);
+    assert.throws(() => buildWeb('android', { API_BASE_URL: 'http://127.0.0.1:8080' }, output), /debe estar vacía/);
     assert.throws(() => verifyClientRuntime(output), /admin/i);
     assert.equal(fs.existsSync(stale), true);
 });
@@ -50,7 +50,7 @@ test('la misma URL pública configura REST y Socket.IO, sin rutas ni credenciale
     for (const url of ['https://api.example.invalid/api', 'https://user:password@api.example.invalid', 'https://api.example.invalid/?token=secret', 'http://api.example.invalid', 'https://demo.trycloudflare.com']) {
         assert.throws(() => readApiBase('android', { API_BASE_URL: url }));
     }
-    assert.equal(readApiBase('android', { API_BASE_URL: 'http://10.0.2.2:8080' }), 'http://10.0.2.2:8080');
+    assert.equal(readApiBase('android', { API_BASE_URL: 'http://127.0.0.1:8080' }), 'http://127.0.0.1:8080');
 });
 
 test('build publica solo runtime y no modifica la configuración fuente', () => {
@@ -65,4 +65,13 @@ test('build publica solo runtime y no modifica la configuración fuente', () => 
     assert.equal(context.window.HM_API_BASE, 'https://api.example.invalid');
     assert.equal(fs.readFileSync(path.join(root, 'Frontend/hm-api-config.js'), 'utf8'), source);
     assert.equal(fs.readFileSync(path.join(output, 'index.html'), 'utf8'), fs.readFileSync(path.join(root, 'Frontend/index.html'), 'utf8'));
+});
+
+
+test('el desarrollo Android solo admite HTTP de loopback y rechaza direcciones remotas', () => {
+    assert.equal(readApiBase('android', { API_BASE_URL: 'http://127.0.0.1:8080' }), 'http://127.0.0.1:8080');
+    for (const target of ['android', 'web', 'admin']) {
+        for (const host of ['10.0.2.2', '192.168.1.5', 'example.invalid'])
+            assert.throws(() => readApiBase(target, { API_BASE_URL: `http://${host}:8080` }), /HTTPS/);
+    }
 });

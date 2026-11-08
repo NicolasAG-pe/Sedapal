@@ -20,8 +20,14 @@ En un worktree independiente, con Node 22, Java 21, dependencias y SDK disponibl
 ```sh
 node scripts/build-android-fcm-lab.cjs --help
 node scripts/build-android-fcm-lab.cjs \
-  --config /ruta/privada/google-services.json --api http://10.0.2.2:45679
+  --config /ruta/privada/google-services.json --api http://127.0.0.1:45679
 ```
+
+Antes de iniciar la APK debug en el AVD dedicado, con el servicio local en ese puerto,
+ejecuta `adb -s <serial-del-emulador> reverse tcp:45679 tcp:45679`. Comprueba
+con `adb reverse --list` que el puerto no esté ocupado; retira solo ese reenvío
+con `adb -s <serial-del-emulador> reverse --remove tcp:45679` al terminar.
+El acceso usa loopback del AVD; no usar cuentas reales en HTTP de desarrollo.
 
 El comando valida proyecto, paquete, número de proyecto/app y archivo privado;
 rechaza APIs externas y no reemplaza configuración existente. Copia el JSON solo

@@ -10,7 +10,7 @@ const {SCOPE,TOKEN_URL,crearRemitenteGmail}=require('../gmail-mail');
 
 test('registro OTP Gmail con roles separados y sin acceso del worker a claves de usuarios',async()=>{
  const {pool,connection}=await nuevaBase('gmail_roles');
- const suffix=crypto.randomBytes(6).toString('hex');
+ const suffix=crypto.randomBytes(6).toString('hex'),rolePassword=crypto.randomBytes(24).toString('hex');
  const appGroup='hm_app_'+suffix,workerGroup='hm_worker_'+suffix,appLogin='hm_app_login_'+suffix,workerLogin='hm_worker_login_'+suffix;
  let app,worker;
  try{
@@ -20,8 +20,8 @@ test('registro OTP Gmail con roles separados y sin acceso del worker a claves de
   const rename=s=>s.replaceAll('hidro_app_permisos_120',appGroup).replaceAll('hidro_correo_worker_permisos_120',workerGroup);
   await pool.query(rename(sql('roles/aplicacion-local.sql')));
   await pool.query(rename(sql('roles/correo-local.sql')));
-  await pool.query(`CREATE ROLE "${appLogin}" LOGIN PASSWORD 'fixture-only-not-production' IN ROLE "${appGroup}"; CREATE ROLE "${workerLogin}" LOGIN PASSWORD 'fixture-only-not-production' IN ROLE "${workerGroup}"`);
-  app=new Pool({...connection,user:appLogin});worker=new Pool({...connection,user:workerLogin});
+  await pool.query(`CREATE ROLE "${appLogin}" LOGIN PASSWORD '${rolePassword}' IN ROLE "${appGroup}"; CREATE ROLE "${workerLogin}" LOGIN PASSWORD '${rolePassword}' IN ROLE "${workerGroup}"`);
+  app=new Pool({...connection,user:appLogin,password:rolePassword});worker=new Pool({...connection,user:workerLogin,password:rolePassword});
   const key=crypto.randomBytes(32),sender='fixture.sender@gmail.com',secret=crypto.randomBytes(32).toString('hex');
   const service=crearRegistroCorreo({pool:app,key,from:sender,proveedor:'gmail',secreto:secret,altasHabilitadas:true,generarClaveHash:()=> 'synthetic-hash',verificarClave:()=>true});
   const account={solicitud_id:crypto.randomUUID(),correo:'worker@example.invalid',numero_suministro:'979000001',password:'FixtureOnly123!'};

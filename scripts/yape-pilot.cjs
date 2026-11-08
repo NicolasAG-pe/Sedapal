@@ -4,7 +4,7 @@ const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),cryp
 const{execFileSync}=require('node:child_process'),{Pool}=require('../Backend/node_modules/pg'),QRCode=require('../Backend/node_modules/qrcode');
 const{pngSeguro}=require('../Backend/payment-operations'),{privateFile,fingerprint,databasePattern,loadPilot,guardPilot}=require('../Backend/yape-pilot');
 const root=path.resolve(__dirname,'..'),parent=path.join(os.homedir(),'.config/hidro-mejora/yape-pilot');
-const docker=(...args)=>execFileSync('docker',args,{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
+const docker=(...args)=>execFileSync('/usr/bin/docker',args,{encoding:'utf8',stdio:['ignore','pipe','pipe']}).trim();
 function localDocker(){if(process.env.DOCKER_HOST&&!process.env.DOCKER_HOST.startsWith('unix://'))throw Error('Se requiere Docker local.');const context=JSON.parse(docker('context','inspect'))[0];if(!context.Endpoints.docker.Host.startsWith('unix://'))throw Error('Se requiere Docker local.');}
 const poolFor=s=>new Pool({host:'127.0.0.1',port:s.db_port,database:s.database,user:'hm_fixture',password:s.db_password});
 function save(file,data){fs.writeFileSync(file,JSON.stringify(data,null,2),{mode:0o600,flag:'wx'});}

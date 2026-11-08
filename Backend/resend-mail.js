@@ -1,6 +1,7 @@
 'use strict';
 const { setTimeout: esperar } = require('node:timers/promises');
 const { validarSecreto } = require('./email-otp');
+const { remitenteValido } = require('./mail-address');
 
 function obtenerConfigCorreo(env = process.env, { requiereApiKey = true } = {}) {
     const apiKey = String(env.RESEND_API_KEY || '').trim();
@@ -9,7 +10,7 @@ function obtenerConfigCorreo(env = process.env, { requiereApiKey = true } = {}) 
     if ((requiereApiKey && !apiKey) || !from || !secreto) return null;
     validarSecreto(secreto);
     if (secreto === env.AUTH_TOKEN_SECRET) throw new Error('Usa un EMAIL_OTP_SECRET exclusivo.');
-    if (/[\r\n]/.test(from) || !/^(?:[^<>]+ <)?[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+>?$/.test(from)) {
+    if (!remitenteValido(from)) {
         throw new Error('RESEND_FROM debe contener un remitente válido.');
     }
     return { apiKey, from, secreto };

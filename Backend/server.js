@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const { Server } = require('socket.io');
 const { Pool } = require("pg");
 const { obtenerConfiguracion } = require('./config');
+const { logInternalError } = require('./safe-log');
 const { obtenerConfigCorreo } = require('./email-provider');
 const { obtenerClaveOutbox } = require('./outbox-crypto');
 const { crearRegistroCorreo, registrarRutasCorreo } = require('./email-registration');
@@ -30,10 +31,15 @@ app.set('trust proxy', 1);
 // Cabecera X-Powered-By desactivada explícitamente (verificación: curl -I).
 app.disable('x-powered-by');
 
-// Helmet: headers de seguridad. CSP desactivada por ahora porque el
-// frontend actual usa scripts inline (imponerla rompería la web sin
-// refactorizar). Se protege el resto (HSTS, nosniff, frameguard, etc.).
-app.use(helmet({ contentSecurityPolicy: false }));
+// Esta aplicación sirve una API; las páginas cliente se sirven por separado.
+// Sus respuestas no necesitan cargar scripts, imágenes ni enviar formularios.
+app.use(helmet({ contentSecurityPolicy: { directives: {
+    defaultSrc: ["'none'"], frameAncestors: ["'none'"], formAction: ["'none'"]
+} } }));
+
+// Evitar que navegadores o intermediarios conserven respuestas de API,
+// incluidos errores y datos privados devueltos a sesiones autenticadas.
+app.use('/api', (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 
 function esProduccion(){
     return String(process.env.NODE_ENV || '').toLowerCase() === 'production';
@@ -103,9 +109,7 @@ const servicioRecibos = crearServicioRecibos({ pool, validarRecibo: validarRecib
 // PostgreSQL puede cerrar conexiones inactivas durante reinicios o cortes de red.
 // pg descarta esos clientes; manejar el evento evita terminar el proceso Node.
 pool.on('error', (error) => {
-    console.error('Conexión inactiva de PostgreSQL interrumpida; se renovará al consultar.', {
-        codigo: error.code || 'desconocido'
-    });
+    logInternalError('Conexión inactiva de PostgreSQL interrumpida; se renovará al consultar.', error);
 });
 
 
@@ -270,7 +274,7 @@ app.get("/api/health", async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         res.status(500).json({
             estado: "error",
@@ -326,7 +330,7 @@ app.get("/api/recibos/:suministro", requiereAuth, async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         res.status(500).json({
             mensaje: "Error al consultar los recibos"
@@ -383,7 +387,7 @@ app.get("/api/incidencias/:suministro", requiereAuth, async (req, res) => {
 
     } catch (error) {
 
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         res.status(500).json({
             mensaje: "Error al consultar las incidencias"
@@ -440,7 +444,7 @@ app.get("/api/incidencias/:id/foto", requiereAuth, async (req, res) => {
         return res.send(resultado.rows[0].foto);
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         return res.status(500).json({
             estado: "error",
@@ -601,7 +605,7 @@ registerPush(app,{service:createPush({pool}),auth:requiereAuth,limit:limitadorGe
     expiry:req=>Number(jwt.decode(req.headers.authorization.split(' ')[1])?.exp)*1000});
 
 function requiereAdmin(req, res, next){
-    requiereAuth(req, res, () => {
+    return requiereAuth(req, res, () => {
         if (!req.user || req.user.rol !== 'admin') {
             return res.status(403).json({
                 estado: "error",
@@ -610,7 +614,7 @@ function requiereAdmin(req, res, next){
         }
 
         return next();
-    });
+    }).catch(next);
 }
 
 
@@ -658,6 +662,9 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
         const resultado = await pool.query(consulta, [String(numero_suministro)]);
 
         if (resultado.rowCount === 0) {
+            // Igualar el coste de verificación de cuentas existentes sin
+            // almacenar ni revelar una credencial de usuario.
+            verificarClave(password, 'scrypt$00000000000000000000000000000000$' + '0'.repeat(128));
             return res.status(401).json({
                 estado: "error",
                 mensaje: "Número de suministro o contraseña incorrectos."
@@ -666,17 +673,17 @@ app.post("/api/auth/login", limiteLogin, async (req, res) => {
 
         const fila = resultado.rows[0];
 
-        if (fila.activo === false) {
-            return res.status(403).json({
-                estado: "error",
-                mensaje: "Esta cuenta no se encuentra habilitada."
-            });
-        }
-
         if (!verificarClave(password, fila.clave_hash)) {
             return res.status(401).json({
                 estado: "error",
                 mensaje: "Número de suministro o contraseña incorrectos."
+            });
+        }
+
+        if (fila.activo === false) {
+            return res.status(403).json({
+                estado: "error",
+                mensaje: "Esta cuenta no se encuentra habilitada."
             });
         }
 
@@ -827,7 +834,7 @@ app.get("/api/perfil/:suministro", requiereAuth, async (req, res) => {
         return res.json(resultado.rows[0]);
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         return res.status(500).json({
             estado: "error",
@@ -1071,7 +1078,7 @@ app.post("/api/incidencias", limiteOperacionesSensibles, requiereAuth, async (re
         });
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         return res.status(500).json({
             estado: "error",
@@ -1160,7 +1167,7 @@ app.get("/api/pagos/:suministro", requiereAuth, async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         res.status(500).json({
             estado: "error",
@@ -1211,7 +1218,7 @@ app.get("/api/cortes", async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         return res.status(500).json({
             estado: "error",
@@ -1311,7 +1318,7 @@ app.get("/api/cortes/:suministro", requiereAuth, async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         return res.status(500).json({
             estado: "error",
@@ -1407,7 +1414,7 @@ app.get("/api/admin/cortes", requiereAdmin, async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         return res.status(500).json({
             estado: "error",
@@ -1461,7 +1468,7 @@ app.post("/api/admin/cortes", requiereAdmin, async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         return res.status(500).json({
             estado: "error",
@@ -1506,7 +1513,7 @@ app.patch("/api/admin/cortes/:id/cancelar", requiereAdmin, async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         return res.status(500).json({
             estado: "error",
@@ -1573,7 +1580,7 @@ app.patch("/api/admin/cortes/:id", requiereAdmin, async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         return res.status(500).json({
             estado: "error",
@@ -1616,7 +1623,7 @@ app.get("/api/admin/incidencias", requiereAdmin, async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         return res.status(500).json({
             estado: "error",
@@ -1665,7 +1672,7 @@ app.get("/api/admin/incidencias/:id/foto", requiereAdmin, async (req, res) => {
         return res.send(resultado.rows[0].foto);
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         return res.status(500).json({
             estado: "error",
@@ -1778,7 +1785,7 @@ app.get("/api/admin/recibos", requiereAdmin, async (req, res) => {
         });
 
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
 
         return res.status(500).json({
             estado: "error",
@@ -1859,7 +1866,7 @@ async function crearNotificacion(datos){
         }
         return idNotif;
     } catch (e) {
-        console.error('No se pudo crear la notificación.', e);
+        logInternalError('No se pudo crear la notificación.', e);
         return null;
     }
 }
@@ -1906,7 +1913,7 @@ app.get("/api/admin/usuarios", requiereAdmin, async (req, res) => {
         }));
         return res.json({ cantidad: usuarios.length, usuarios });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -1967,7 +1974,7 @@ app.get("/api/admin/usuarios/:id", requiereAdmin, async (req, res) => {
             ultimas_incidencias: incidencias.rows
         });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2004,7 +2011,7 @@ app.patch("/api/admin/usuarios/:id/estado", requiereAdmin, async (req, res) => {
         }
         return res.json({ estado: "ok", usuario: resultado.rows[0] });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2042,7 +2049,7 @@ app.patch("/api/admin/suministros/:id/ubicacion", requiereAdmin, async (req, res
         // automáticamente el cambio en la siguiente consulta/polling.
         return res.json({ estado: "ok", suministro: resultado.rows[0] });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2100,7 +2107,7 @@ app.get("/api/admin/pagos", requiereAdmin, async (req, res) => {
         );
         return res.json({ cantidad: resultado.rowCount, pagos: resultado.rows });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2153,7 +2160,7 @@ app.post("/api/atencion", limiteOperacionesSensibles, requiereAuth, async (req, 
             }
         });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2171,7 +2178,7 @@ app.get("/api/atencion", requiereAuth, async (req, res) => {
         );
         return res.json({ cantidad: resultado.rowCount, solicitudes: resultado.rows });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2218,7 +2225,7 @@ app.get("/api/admin/atencion", requiereAdmin, async (req, res) => {
         );
         return res.json({ cantidad: resultado.rowCount, solicitudes: resultado.rows });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2283,7 +2290,7 @@ app.patch("/api/admin/atencion/:id", requiereAdmin, async (req, res) => {
         emitirASuministro(sol.id_suministro, 'atencion:actualizada', { id: sol.id_solicitud, estado: sol.estado });
         return res.json({ estado: "ok", solicitud: sol });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2324,7 +2331,7 @@ app.get("/api/notificaciones", requiereAuth, async (req, res) => {
         const noLeidas = notifs.filter(n => !n.leida).length;
         return res.json({ cantidad: notifs.length, no_leidas: noLeidas, notificaciones: notifs });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2357,7 +2364,7 @@ app.patch("/api/notificaciones/:id/leida", requiereAuth, async (req, res) => {
         );
         return res.json({ estado: "ok", notificacion: { id_notificacion: idNotif, leida: true } });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2383,7 +2390,7 @@ app.get("/api/me/recibos", requiereAuth, async (req, res) => {
         );
         return res.json({ suministro: req.user.numero_suministro, cantidad: resultado.rowCount, recibos: resultado.rows });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ mensaje: "Error al consultar los recibos" });
     }
 });
@@ -2400,7 +2407,7 @@ app.get("/api/me/pagos", requiereAuth, async (req, res) => {
         );
         return res.json({ suministro: req.user.numero_suministro, cantidad: resultado.rowCount, pagos: resultado.rows });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2417,7 +2424,7 @@ app.get("/api/me/incidencias", requiereAuth, async (req, res) => {
         );
         return res.json({ suministro: req.user.numero_suministro, cantidad: resultado.rowCount, incidencias: resultado.rows });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ mensaje: "Error al consultar las incidencias" });
     }
 });
@@ -2437,7 +2444,7 @@ app.get("/api/me/perfil", requiereAuth, async (req, res) => {
         }
         return res.json(resultado.rows[0]);
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2473,7 +2480,7 @@ app.get("/api/me/cortes", requiereAuth, async (req, res) => {
             cortes: resultado.rows
         });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });
@@ -2536,7 +2543,7 @@ app.get("/api/admin/resumen", requiereAdmin, async (req, res) => {
             }
         });
     } catch (error) {
-        console.error(error);
+        logInternalError('Fallo interno de API.', error);
         return res.status(500).json({ estado: "error", mensaje: "Error interno del servidor." });
     }
 });

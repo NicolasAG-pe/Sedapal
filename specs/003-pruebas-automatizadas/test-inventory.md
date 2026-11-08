@@ -2,7 +2,7 @@
 
 Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada para listas explícitas; señales estáticas fuera de ellas no acreditan ejecución.
 
-107 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 55. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
+113 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 61. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
 
 | Archivo | Tipo | Grupo nuevo | Requisitos | Riesgo |
 |---|---|---|---|---|
@@ -33,6 +33,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `Backend/test/pagos-sin-piloto.cjs` | integracion | integration | Node22, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/password-recovery-fixture.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/password-recovery-schema.cjs` | integracion | fuera por defecto | Node22, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `Backend/test/password-recovery-unit.test.js` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `Backend/test/password-recovery.cjs` | integracion | fuera por defecto | Node22, jsonwebtoken, otpauth, ws, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/payment-operations.cjs` | integracion | fuera por defecto | Node22, pngjs, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/payment-production-compat.cjs` | integracion | integration | Node22, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
@@ -47,6 +48,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `Backend/test/receipt-profile-compat.cjs` | integracion | integration | Node22, pg, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/receipt-schema.cjs` | integracion | integration | Node22, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/resend-fixture.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `Backend/test/safe-log.test.js` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `Backend/test/start-postgres.cjs` | integracion | fuera por defecto | Node22, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/start.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `Backend/test/totp-crypto.test.js` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
@@ -72,6 +74,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `scripts/test/android-upgrade.test.cjs` | contrato | contract | Node22, historial Git y tags | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/backend-docker23.cjs` | manual/historica | fuera por defecto | Node22, dependencias Backend instaladas (rutas literales), herramientas opt-in indicadas en fuente | ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner |
 | `scripts/test/backend-history23.cjs` | manual/historica | fuera por defecto | Node22, PostgreSQL sintetico/fixture, dependencias Backend instaladas (rutas literales) | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `scripts/test/browser-coverage.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/chatbot-ui-checks.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/client-checks.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/client-packaging-browser.cjs` | E2E/navegador | e2e | Node22, Firefox y origen Nginx aislado | opt-in: HTTP local/Firefox con API sintetica |
@@ -89,6 +92,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `scripts/test/identity-visual.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile, herramientas opt-in indicadas en fuente | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/incident-tracking-flow.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/k8s-integration.test.cjs` | integracion | fuera por defecto | Node22, PostgreSQL sintetico/fixture, herramientas opt-in indicadas en fuente | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `scripts/test/local-check-transport.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/password-recovery-flow.cjs` | E2E/navegador | fuera por defecto | Node22, PostgreSQL sintetico/fixture, Playwright/Chromium externo al lockfile, dependencias Backend instaladas (rutas literales) | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/payment-audit-flow.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile, dependencias Backend instaladas (rutas literales), Poppler, herramientas opt-in indicadas en fuente | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/payment-flow.cjs` | E2E/navegador | fuera por defecto | Node22, PostgreSQL sintetico/fixture, Playwright/Chromium externo al lockfile, dependencias Backend instaladas (rutas literales) | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
@@ -96,6 +100,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `scripts/test/payment-production-restore.cjs` | manual/historica | fuera por defecto | Node22, herramientas opt-in indicadas en fuente | ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner |
 | `scripts/test/payment-production-runtime.cjs` | manual/revision | fuera por defecto | Node22 | ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner |
 | `scripts/test/payment-realtime-flow.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile, herramientas opt-in indicadas en fuente | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `scripts/test/pdf-example-runtime.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/preproduccion24.cjs` | manual/historica | fuera por defecto | Node22, historial Git y tags, herramientas opt-in indicadas en fuente | ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner |
 | `scripts/test/profile-navigation.test.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/public-api-config.test.js` | contrato | contract | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
@@ -106,8 +111,9 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `scripts/test/registration-state.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/release-image.test.cjs` | manual/historica | fuera por defecto | Node22, herramientas opt-in indicadas en fuente | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/secure-session.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
+| `scripts/test/security-headers.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/test-catalog.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
-| `scripts/test/test-runner.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
+| `scripts/test/test-runner.test.cjs` | unitaria | unit | Node22, PostgreSQL sintetico/fixture | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/totp-restore-lab.cjs` | manual/historica | fuera por defecto | Node22, PostgreSQL sintetico/fixture, dependencias Backend instaladas (rutas literales), herramientas opt-in indicadas en fuente | ALTO opt-in: verificar backups/contenedores/destino antes de ejecutar; fuera de runner |
 | `scripts/test/two-factor-ui.test.cjs` | E2E/navegador | fuera por defecto | Node22, Playwright/Chromium externo al lockfile | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/ui-money.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |

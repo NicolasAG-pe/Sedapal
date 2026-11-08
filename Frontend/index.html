@@ -535,7 +535,7 @@
               </form>
               <div id="two-factor-codes" hidden>
                 <p>Guarda estos códigos en un lugar privado fuera de Hidro-Mejora. Solo se muestran ahora y cada uno sirve una vez.</p>
-                <pre id="two-factor-codes-list" tabindex="0" aria-label="Códigos de recuperación"></pre>
+                <pre id="two-factor-codes-list" aria-label="Códigos de recuperación"></pre>
               </div>
               <p>Si perdiste tu autenticador, usa contraseña y recuperación para desactivar y volver a configurarlo. Para generar códigos nuevos necesitas tu autenticador.</p>
               <p id="two-factor-settings-error" role="alert"></p>
@@ -834,7 +834,7 @@
           <img id="inc-foto-prev" class="foto-prev" alt="Vista previa de la fotografía adjunta" hidden />
         </div>
         <div class="field">
-          <label>Ubicación (opcional)</label>
+          <span class="field-label">Ubicación (opcional)</span>
           <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
             <button class="btn btn-ghost" id="inc-geo" type="button" style="padding:.55rem .9rem;font-size:.84rem">Usar mi ubicación</button>
             <span class="coords" id="inc-coords">Sin ubicación compartida.</span>
@@ -1043,7 +1043,11 @@
   const interfazPush=window.createHMPush({session:sesionCliente,
     navigate:async section=>{
       const epoch=sesionCliente.generation();
-      while(navLock&&sesionCliente.isUser()&&epoch===sesionCliente.generation())await new Promise(resolve=>setTimeout(resolve,40));
+      for(let intentos=0;intentos<125;intentos++){
+        if(!navLock||!sesionCliente.isUser()||epoch!==sesionCliente.generation())break;
+        await new Promise(resolve=>setTimeout(resolve,40));
+      }
+      if(navLock)throw new Error("No se pudo abrir la sección. Inténtalo nuevamente.");
       if(sesionCliente.isUser()&&epoch===sesionCliente.generation())return openDashboardPage(section);
     },
     refresh:()=>sincronizarUsuarioPorEvento('notificacion'),notice:mensaje=>showToast(mensaje)
@@ -1621,7 +1625,7 @@
     try{ document.removeEventListener('touchmove', bloquearTouchDrawer); }catch(e){}
     if(!isDrawerLocked()) { document.body.classList.remove('drawer-open'); try{ syncHidroBotVisibility(); }catch(e){} return; }
     const doRestore = restore !== false;
-    const y = parseInt(document.body.dataset.drawerScrollY || '0', 10) || 0;
+    const y = Number.parseInt(document.body.dataset.drawerScrollY || '0', 10) || 0;
     document.body.dataset.drawerLocked = '';
     document.body.classList.remove('drawer-open');
     document.documentElement.style.overflow = '';
@@ -3435,7 +3439,7 @@
     addUserMessage(clean);
     showBotTyping();
     const sessionAtSend = hbSessionId;
-    const delay = isReduced() ? 60 : 300 + Math.random() * 400;
+    const delay = isReduced() ? 60 : 300 + crypto.getRandomValues(new Uint32Array(1))[0] / 0x100000000 * 400;
     if(hidroBotTypingTimer){ clearTimeout(hidroBotTypingTimer); }
     hidroBotTypingTimer = setTimeout(async ()=>{
     let _hmEpoch=sesionCliente.generation();
@@ -3913,8 +3917,8 @@ async function descargarConstanciaPDF(r, btn){
   document.querySelectorAll('.pay-opt input').forEach(radio=>radio.addEventListener('change',()=>{
     document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
     const manual=document.querySelector('input[name="pay-method"]:checked').value==='yape_manual';
-    document.getElementById('pay-voluntary-label').hidden=!(manual&&paymentPilot&&!paymentPilotSynthetic);
-    document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual?(paymentPilotSynthetic?'Registrar pago':'Enviar a verificación manual'):'Registrar pago';
+    document.getElementById('pay-voluntary-label').hidden=!manual||!paymentPilot||Boolean(paymentPilotSynthetic);
+    document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual&&!paymentPilotSynthetic?'Enviar a verificación manual':'Registrar pago';
   }));
   document.getElementById('pay-confirm').addEventListener('click',async ev=>{
     const btn=ev.currentTarget,epoch=sesionCliente.generation(),target=payTarget,view=paymentViewVersion;
@@ -5306,7 +5310,7 @@ async function descargarConstanciaPDF(r, btn){
   });
 
   function validarRegistro(correo, suministro, pass, pass2){
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)){
+    if(!/^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(correo)){
       return 'Ingresa un correo electrónico válido.';
     }
     if(!/^\d{9}$/.test(suministro)){

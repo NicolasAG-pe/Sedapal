@@ -100,7 +100,7 @@ async function browser(executable) {
     : fs.mkdtempSync(path.join(os.tmpdir(), 'hidro-admin-e2e-'));
   fs.mkdirSync(output, { recursive: true });
   const mailbox = path.resolve(output, 'mailbox.jsonl');
-  const connection = { host: '127.0.0.1', port, database: process.env.HIDRO_EMAIL_TEST_DB_PORT ? 'hm_email_test' : 'hm_admin_test', user: 'hm_fixture', password: 'fixture-only-not-production' };
+  const connection = { host: '127.0.0.1', port, database: process.env.HIDRO_EMAIL_TEST_DB_PORT ? 'hm_email_test' : 'hm_admin_test', user: 'hm_fixture', password: process.env.HIDRO_EMAIL_TEST_DB_PASSWORD || 'fixture-only-not-production' };
   const database = 'hm_admin_test_' + Date.now();
   const parent = new Pool(connection);
   let pool;
@@ -144,15 +144,19 @@ async function browser(executable) {
     const outboxKey=crypto.randomBytes(32).toString('base64');
     backend = spawn(process.execPath, ['--require', path.join(root,'Backend/test/resend-fixture.cjs'), 'server.js'], { cwd: path.join(root, 'Backend'), stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, PORT: String(backendPort), DATABASE_URL: '', DB_HOST: '127.0.0.1', DB_PORT: String(port),
-        POSTGRES_DB: database, POSTGRES_USER: 'hm_fixture', POSTGRES_PASSWORD: 'fixture-only-not-production',
+        POSTGRES_DB: database, POSTGRES_USER: 'hm_fixture', POSTGRES_PASSWORD: connection.password,
         AUTH_TOKEN_SECRET: 'isolated-e2e-fixture-secret-not-production', NODE_ENV: 'development', CORS_ALLOWED_ORIGINS: origin,
         EMAIL_REGISTRATION_ENABLED:'1', EMAIL_OUTBOX_KEY:outboxKey, EMAIL_OTP_SECRET: crypto.randomBytes(32).toString('hex'), RESEND_API_KEY:'fixture-provider-key',
         RESEND_FROM:'correo@fixture.invalid', HIDRO_TEST_MAILBOX:mailbox } });
     backend.stdout.on('data', data => { serverOutput += data; }); backend.stderr.on('data', data => { serverOutput += data; });
     await wait(async () => { try { return (await fetch(base + '/api/health')).ok; } catch (_) { return false; } }, 'API aislada');
+    const healthHeaders = await fetch(base + '/api/health');
+    assert.match(healthHeaders.headers.get('content-security-policy') || '', /default-src 'none'/);
+    assert.match(healthHeaders.headers.get('content-security-policy') || '', /frame-ancestors 'none'/);
+    ok('API: política CSP restrictiva en respuestas');
     worker=spawn(process.execPath,['--require',path.join(root,'Backend/test/resend-fixture.cjs'),
       path.join(root,'Backend/workers/email-outbox.cjs'),'--run'],{stdio:['ignore','pipe','pipe'],env:{...process.env,
-      EMAIL_WORKER_ENABLED:'1',EMAIL_WORKER_DATABASE_URL:`postgres://hm_fixture:fixture-only-not-production@127.0.0.1:${port}/${database}`,
+      EMAIL_WORKER_ENABLED:'1',EMAIL_WORKER_DATABASE_URL:`postgres://hm_fixture:${encodeURIComponent(connection.password)}@127.0.0.1:${port}/${database}`,
       EMAIL_WORKER_EXPECTED_DATABASE:database,EMAIL_OUTBOX_KEY:outboxKey,RESEND_API_KEY:'fixture-provider-key',HIDRO_TEST_MAILBOX:mailbox}});
     worker.stdout.on('data',data=>{serverOutput+=data;});worker.stderr.on('data',data=>{serverOutput+=data;});
     async function request(method, endpoint, token, body, status) {

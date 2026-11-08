@@ -18,7 +18,7 @@ const CONTRATO_CORREO = 'otp-outbox-v1';
 const ACTUALIZAR_CLIENTE = 'Actualiza Hidro-Mejora para crear una cuenta y verificar tu correo. Si ya tienes cuenta, puedes iniciar sesión normalmente.';
 
 function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verificarClave, altasHabilitadas = true, proveedor = 'resend', correoPermitido = null, emitirSesion = null }) {
-    if (correoPermitido !== null && (typeof correoPermitido !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoPermitido))) throw new Error('Destinatario canario inválido.');
+    if (correoPermitido !== null && (typeof correoPermitido !== 'string' || !/^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(correoPermitido))) throw new Error('Destinatario canario inválido.');
     function permitirCorreo(correo) {
         if (correoPermitido !== null && correo !== correoPermitido.toLowerCase()) throw new ErrorRegistro(503, 'El registro no está disponible temporalmente. Intenta más tarde.');
     }
@@ -45,7 +45,7 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verif
     // Todas las operaciones toman los mismos locks en el mismo orden, antes
     // del lock de fila: evita carreras entre registro, reenvío y confirmación.
     async function bloquear(cliente, correo, suministro) {
-        for (const clave of [`correo:${correo}`, `suministro:${suministro}`].sort()) {
+        for (const clave of [`correo:${correo}`, `suministro:${suministro}`].sort((a, b) => a < b ? -1 : a > b ? 1 : 0)) {
             await cliente.query('SELECT pg_advisory_xact_lock(7401, hashtext($1))', [clave]);
         }
     }
@@ -118,7 +118,7 @@ function crearRegistroCorreo({ pool, key, from, secreto, generarClaveHash, verif
             const correo = typeof body.correo === 'string' ? body.correo.trim().toLowerCase() : '';
             const suministro = typeof body.numero_suministro === 'string' ? body.numero_suministro.trim() : '';
             const password = body.password;
-            if (correo.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo)) {
+            if (correo.length > 120 || !/^[^\s@]+@[^\s@.]+(?:\.[^\s@.]+)+$/.test(correo)) {
                 throw new ErrorRegistro(400, 'Correo electrónico inválido.');
             }
             permitirCorreo(correo);
