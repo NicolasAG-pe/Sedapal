@@ -2,7 +2,7 @@
 
 Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada para listas explícitas; señales estáticas fuera de ellas no acreditan ejecución.
 
-112 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 60. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
+113 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 61. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
 
 | Archivo | Tipo | Grupo nuevo | Requisitos | Riesgo |
 |---|---|---|---|---|
@@ -33,6 +33,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `Backend/test/pagos-sin-piloto.cjs` | integracion | integration | Node22, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/password-recovery-fixture.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/password-recovery-schema.cjs` | integracion | fuera por defecto | Node22, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `Backend/test/password-recovery-unit.test.js` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `Backend/test/password-recovery.cjs` | integracion | fuera por defecto | Node22, jsonwebtoken, otpauth, ws, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/payment-operations.cjs` | integracion | fuera por defecto | Node22, pngjs, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/payment-production-compat.cjs` | integracion | integration | Node22, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |

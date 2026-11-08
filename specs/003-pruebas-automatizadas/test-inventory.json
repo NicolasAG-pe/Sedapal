@@ -4,6 +4,7 @@
   "groups": {
     "unit": [
       "Backend/test/config.test.js",
+      "Backend/test/password-recovery-unit.test.js",
       "Backend/test/safe-log.test.js",
       "Backend/test/email-cleanup.test.js",
       "Backend/test/email-gmail.test.js",
@@ -828,6 +829,27 @@
       ],
       "referencedBy": [],
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/password-recovery-unit.test.js",
+      "sha256": "dc740bdd57d572347d8682257ebcba6af75c887fe485997bf44e3c550aa8a395",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "../password-recovery-crypto",
+        "../password-recovery"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
       "path": "Backend/test/password-recovery.cjs",
@@ -3186,6 +3208,11 @@
         "scripts/test/password-recovery-flow.cjs"
       ],
       "managedGroup": null
+    },
+    {
+      "path": "Backend/test/password-recovery-unit.test.js",
+      "referencedBy": [],
+      "managedGroup": "unit"
     },
     {
       "path": "Backend/test/payment-production-compat.cjs",

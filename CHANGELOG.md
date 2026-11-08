@@ -2,6 +2,8 @@
 
 ## Correcciones SonarQube — 1.2.0
 
+- Se agregan pruebas unitarias de recuperación de contraseña para las claves, el cifrado autenticado, la elegibilidad y las entradas inválidas, sin conexiones a bases de datos.
+
 - El acceso a suministros inexistentes ejecuta la misma verificación scrypt que el acceso con contraseña incorrecta a una cuenta existente. El panel administrativo reemplaza sus estilos HTML por reglas CSS y prohíbe atributos de estilo mediante CSP.
 
 - Los proxies web y administrativo agregan CSP, protección de encuadre y nosniff, y omiten la versión de Nginx; la API evita almacenar respuestas en caché exige TLS para PostgreSQL externo configurado mediante DB_HOST evita registrar detalles sensibles en errores internos y no revela cuentas desactivadas antes de verificar la contraseña.
