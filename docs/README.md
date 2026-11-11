@@ -7,6 +7,7 @@ Guías actualizadas para el código 1.2.0 de la rama chore/adopcion-sdd-rpi, ref
 | Producto y estado | [README](../README.md), [CHANGELOG](../CHANGELOG.md) |
 | Arquitectura y clientes | [Arquitectura](ARCHITECTURE.md), [Android](ANDROID.md) |
 | Docker aislado | [Desarrollo local](LOCAL-DEVELOPMENT.md) |
+| Versiones y releases | [Versiones de herramientas](VERSIONES.md) |
 | Datos y perfiles | [PostgreSQL](DATABASE.md), [diccionario](base-de-datos/diccionario-de-datos.md), [DER](base-de-datos/diagrama-entidad-relacion.md), [Excel](base-de-datos/diccionario-de-datos.xlsx) |
 | API y contratos por dominio | [API](API.md) |
 | Seguridad y capacidades opt-in | [Seguridad](SECURITY.md) |

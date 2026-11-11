@@ -1,6 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
+      "correcciones": false,
       "integration/hidro-mejora-120-sdd-sonar": false,
       "chore/adopcion-sdd-rpi": false,
       "feature/k8s-local-actualizado": false,

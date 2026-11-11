@@ -22,7 +22,10 @@
 .supply-chip{background:none;border:0;color:var(--white);padding:0;font-size:.76rem}.supply-chip b{color:var(--white)}
 .supply-chip svg{display:none}.topbar .btn-logout{background:#ffffff18;color:var(--white);font-size:.8rem;border:1px solid #ffffff55}
 .topbar .connection-status{font-size:.7rem;color:var(--white);padding:0;border:0}.connection-status::before{background:var(--green)}
-.shell{max-width:1240px;padding:24px;gap:24px}.sidebar{width:218px;flex-basis:218px;top:88px;background:white;color:var(--text);border:1px solid var(--border);padding:18px 10px}
+.shell{max-width:1240px;padding:24px;gap:24px}
+/* Geometría del sidebar solo en escritorio. En móvil manda el drawer de
+   client.css; si se aplica aquí, el panel arranca en top:88px y queda desfasado. */
+@media(min-width:900px){.sidebar{width:218px;flex-basis:218px;top:88px;background:white;color:var(--text);border:1px solid var(--border);padding:18px 10px}}
 .side-title,.side-supply b{color:var(--navy)}.side-supply,.side-label,.side-cons-delta,.side-cons-title,.side-foot{color:var(--muted)}
 .side-status{color:var(--green)}.nav-item{color:var(--text);font-weight:500}.nav-item svg{color:var(--muted)}
 .nav-item.active{background:var(--sky-soft);color:var(--primary);box-shadow:none}.nav-item.active svg{color:var(--primary)}
@@ -61,7 +64,13 @@
 .hb-panel{border-radius:18px;overflow:hidden}.hb-head{background:linear-gradient(120deg,var(--primary),var(--secondary))}.hb-fab{width:48px;height:48px}.hb-bubble{font-size:.8rem;line-height:1.65}
 .mobile-tabs{display:none}.hm-icon{width:20px;height:20px;flex-shrink:0}
 @media(max-width:899px){
- .shell{padding:20px;display:block}.sidebar{background:white;color:var(--text);z-index:var(--z-drawer)}.drawer-brand strong{color:var(--navy)}.drawer-brand small{color:var(--muted)}.drawer-close{color:var(--navy);border-color:var(--border);background:var(--bg)}
+ .shell{padding:20px;display:block}
+ /* Drawer móvil: anclado al borde superior real, con el ancho táctil previsto.
+      Si se hereda top:88px el panel queda cortado y el scrim asoma por arriba. */
+ .sidebar{position:fixed;top:0;bottom:0;left:0;width:min(300px,84vw);flex-basis:auto;border:0;
+   border-radius:0 18px 18px 0;background:white;color:var(--text);z-index:var(--z-drawer);
+   padding:calc(18px + env(safe-area-inset-top,0px)) 12px 0}
+ .drawer-head{border-bottom-color:var(--border)}.drawer-brand strong{color:var(--navy)}.drawer-brand small{color:var(--muted)}.drawer-close{color:var(--navy);border-color:var(--border);background:var(--bg)}
  .topbar-inner{padding:8px 16px;min-height:60px;display:flex;flex-wrap:nowrap;gap:10px}.topbar-right{display:contents}.mini-brand{flex:1}.mini-brand-sub,.supply-chip,#client-connection,.topbar #btn-logout{display:none!important}.topbar-logo{width:32px;height:32px}.topbar .mini-brand strong{font-size:.9rem}
  .topbar #btn-notif{display:grid}.dashboard{padding-bottom:calc(94px + env(safe-area-inset-bottom,0px))}.mobile-tabs{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--primary);border-top:3px solid var(--sky);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));z-index:var(--z-navigation);gap:2px;box-shadow:var(--shadow-sm)}
  .mobile-tabs .nav-item{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:7px 2px;min-height:56px;border-radius:10px;box-shadow:none;font-size:.62rem;background:none;color:var(--white)}

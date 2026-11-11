@@ -15,7 +15,7 @@ PLAN-01, PKG-01, DB-01 y TEST-01 completados localmente. CI-01 implementado, 5/6
 - Backend Node22/Express5, PostgreSQL18 y Socket.IO; frontend HTML/CSS/JavaScript y Shared; Android Capacitor7/Java21.
 - OTP/outbox, 2FA, recuperación de clave y push están implementados con configuración y habilitación específicas. Su presencia en código no significa que estén activos en Docker o producción. Los pagos demostrativos no realizan cargos bancarios.
 
-Docker: cliente Nginx y Admin Nginx → Backend interno → PostgreSQL local. Android empaqueta el cliente; Admin tiene una ruta de build independiente. Render/Vercel/Neon son destinos documentados, cuyo estado efectivo no se certifica desde el código. [Arquitectura](docs/ARCHITECTURE.md), [seguridad](docs/SECURITY.md) y [prepublicación](specs/004-integracion-continua/prepublication.md).
+Docker: cliente Nginx y Admin Nginx → Backend interno → PostgreSQL local, en cuatro servicios con redes `edge`/`data` separadas. Android empaqueta el cliente; Admin tiene una ruta de build independiente. Render/Vercel/Neon son destinos documentados, cuyo estado efectivo no se certifica desde el código. [Arquitectura](docs/ARCHITECTURE.md), [versiones y releases](docs/VERSIONES.md), [seguridad](docs/SECURITY.md) y [prepublicación](specs/004-integracion-continua/prepublication.md).
 
 ## Desarrollo local y pruebas
 
@@ -35,6 +35,6 @@ npm test
 
 `Frontend/`, `Admin/` y `Shared/` contienen clientes/recursos; `Backend/` API, workers y pruebas; `Base-de-Datos/` esquema y migraciones; `android/` proyecto nativo; `scripts/` builds y validación. `artifacts/` son salidas locales ignoradas. La constitución única está en `.specify/memory/constitution.md` y el ciclo SDD + RPI en `specs/`.
 
-[Índice técnico](docs/README.md), [API](docs/API.md), [PostgreSQL](docs/DATABASE.md), [Android](docs/ANDROID.md), [SDD + RPI](docs/SDD-RPI.md) y [CI](docs/CI.md). No publicar esta rama hasta completar la auditoría de automatizaciones; no se hizo push, PR ni despliegue en DOC-01.
+[Índice técnico](docs/README.md), [API](docs/API.md), [PostgreSQL](docs/DATABASE.md), [Android](docs/ANDROID.md), [versiones](docs/VERSIONES.md), [SDD + RPI](docs/SDD-RPI.md) y [CI](docs/CI.md). No publicar esta rama hasta completar la auditoría de automatizaciones; no se hizo push, PR ni despliegue en DOC-01.
 
 Diccionario de datos DD-01: [metadatos completos](docs/base-de-datos/diccionario-de-datos.md), [DER Mermaid](docs/base-de-datos/diagrama-entidad-relacion.md), [perfiles](docs/base-de-datos/perfiles-esquema.md) y [Excel](docs/base-de-datos/diccionario-de-datos.xlsx). Generación estática verificable desde SQL versionado; sin validación nueva contra PostgreSQL.

@@ -1,6 +1,6 @@
 # Arquitectura del código 1.2.0
 
-Revisión documental: 2026-11-05, entrada6399d44; base histórica d3d27d0. Se conserva la arquitectura existente; no hay extracción de módulos ni cambio de tecnología en DOC-01.
+Revisión documental: 2026-11-05, entrada6399d44; base histórica d3d27d0. Se conserva la arquitectura existente; no hay extracción de módulos ni cambio de tecnología en DOC-01. Actualización 2026-11-11: se documentan la estructura Docker de microservicios y las versiones resueltas.
 
 ```mermaid
 flowchart LR
@@ -10,7 +10,30 @@ flowchart LR
   API --> DB[(PostgreSQL)]
 ```
 
-El dibujo representa dependencias lógicas, no servicios remotos comprobados. En Compose, ambos Nginx hacen proxy de `/api` y Socket.IO al backend; backend3000 y db5432 son internos. Solo los puertos cliente/Admin se publican al host. Ver [Compose](../compose.yaml) y [desarrollo local](LOCAL-DEVELOPMENT.md).
+El dibujo representa dependencias lógicas, no servicios remotos comprobados. En Compose, ambos Nginx hacen proxy de `/api` y Socket.IO al backend; backend3000 y db5432 son internos. Solo los puertos cliente/Admin se publican al host. Ver [Compose](../compose.yaml), [desarrollo local](LOCAL-DEVELOPMENT.md) y [versiones](VERSIONES.md).
+
+## Estructura Docker de microservicios
+
+`compose.yaml` compone cuatro servicios con una responsabilidad cada uno y dos
+redes separadas. No es un despliegue productivo ni sustituye Render/Vercel/Neon.
+
+| Servicio | Responsabilidad | Red | Puerto | Depende de |
+|---|---|---|---|---|
+| `web` | cliente SPA servido por Nginx; proxy de `/api` y `/socket.io` | `edge` | host `${WEB_PORT:-8080}` → 80 | `backend` healthy |
+| `admin` | panel administrativo Nginx; mismo proxy a la API | `edge` | host `${ADMIN_PORT:-8081}` → 80 | `backend` healthy |
+| `backend` | API Express 5, Socket.IO y workers | `edge` + `data` | interno 3000 | `db` healthy |
+| `db` | PostgreSQL 18 con volumen `postgres_data` | `data` | interno 5432 | — |
+
+- `edge` es la única red con salida al exterior; la usan los clientes y la API.
+- `data` es `internal: true`: solo `backend` y `db` participan, sin ruta hacia fuera.
+- `backend` y `db` no publican puertos; el acceso de depuración es
+  `docker compose exec`, nunca un puerto público.
+- Cada servicio declara `healthcheck`; `restart: unless-stopped` mantiene el
+  proceso tras fallos transitorios.
+- Las versiones resueltas de imágenes y dependencias están en [VERSIONES.md](VERSIONES.md).
+
+La separación por redes no cambia contratos de API, puertos publicados ni el
+volumen de datos; solo limita qué contenedor puede hablar con la base.
 
 ## Responsabilidades y límites
 
