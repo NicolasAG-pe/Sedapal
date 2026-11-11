@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Correcciones de interfaz y documentación de despliegue — 2026-11-11
+
+- Corregido el drawer móvil del cliente: `app-layout.css` sobrescribía la geometría de `client.css` y el panel abría en `top:88px` con 218px de ancho. Ahora ocupa el alto completo, usa `min(300px,84vw)`, respeta el área segura y su cabecera vuelve a mostrar el borde.
+- `compose.yaml` declara dos redes: `edge` para los clientes y la API, y `data` interna para API y PostgreSQL. No cambian puertos publicados, contratos ni el volumen de datos.
+- Documentadas la estructura Docker de microservicios y las versiones resueltas de imágenes, dependencias Node, Android y librerías vendorizadas en `docs/VERSIONES.md`.
+- Excluida la rama `correcciones` de los despliegues Git en ambos `vercel.json`, sin modificar `main` ni las ramas ya excluidas.
+- Verificado con `docker compose config`, suites seguras y medición de la geometría del drawer en Firefox headless; sin cambios en versiones de la aplicación.
+
 ## Integración conjunta PostgreSQL, SDD y SonarQube — 1.2.0
 
 - Integrados los historiales PostgreSQL/Gmail y SonarQube sobre la base SDD/RPI sin reactivar el piloto de pagos.
