@@ -1,6 +1,6 @@
 # SDD + RPI — estado actual
 
-Actualizado2026-11-05. Rama chore/adopcion-sdd-rpi, base histórica d3d27d0. Solo commits locales; no push/PR/despliegues autorizados en esta sesión.
+Referencia actualizada el 2026-11-11: `main` en `4f15173`. Las especificaciones siguientes conservan los estados y evidencias de sus avances originales, cuya base histórica es `d3d27d0`. La integración posterior incluye los PR #26, #28 y #30; [CI](../docs/CI.md) registra un run remoto exitoso del commit integrado en el PR #30.
 
 | Avance | Estado / evidencia |
 |---|---|
@@ -10,7 +10,7 @@ Actualizado2026-11-05. Rama chore/adopcion-sdd-rpi, base histórica d3d27d0. Sol
 | [TEST-01](003-pruebas-automatizadas/spec.md) | Completado localmente, [inventario](003-pruebas-automatizadas/test-inventory.md) y [validación](003-pruebas-automatizadas/validation.md) |
 | [DD-01](007-diccionario-datos/spec.md) | Completo documental estático, cuatro perfiles + Excel/DER; pg_catalog pendiente, [validación](007-diccionario-datos/validation.md) |
 | [CAT-01](006-contrato-catalogo/spec.md) | Implementado, 9/9 contrato local; consolidación Node22/PG18 pendiente, [validación](006-contrato-catalogo/validation.md) |
-| [CI-01](004-integracion-continua/spec.md) |5/6 tareas, remoto pendiente; [auditoría de publicación](004-integracion-continua/prepublication.md) incompleta |
+| [CI-01](004-integracion-continua/spec.md) | Registro original: 5/6 tareas; ejecución remota posterior en [CI](../docs/CI.md). La [auditoría original](004-integracion-continua/prepublication.md) es histórica |
 | [DOC-01](005-documentacion-tecnica/spec.md) | Documentación actualizada, [validación](005-documentacion-tecnica/validation.md) |
 
 - [Constitución única](../.specify/memory/constitution.md)
@@ -21,6 +21,6 @@ Actualizado2026-11-05. Rama chore/adopcion-sdd-rpi, base histórica d3d27d0. Sol
 
 Cada avance mantiene spec/research/plan/tasks/validation; contratos, quickstart y modelo de datos según necesidad. Los números identifican carpetas, los IDs PKG/DB/TEST/CI/DOC identifican hallazgos/avances. TASK y T son namespaces separados de tareas y verificaciones. No generar ramas ni implementación con herramientas sin autorización.
 
-El estado de la tabla prevalece sobre descripciones históricas de sesiones anteriores, que se conservan en sus informes. El análisis de calidad pertenece a otro compañero y queda fuera de este avance.
+La tabla describe el cierre registrado por cada avance; la evidencia posterior se identifica por su SHA y no modifica retrospectivamente los informes.
 
-Consolidación final sobre402990c: **BLOQUEADO para publicación**. CAT-TASK-06 y DD-TASK-06 bloqueados por entorno; CI-TASK-006 remoto pendiente. PR26: Docker idéntico y conflicto editorial demostrado en CHANGELOG. [Informe de cierre y procedimiento restante](../docs/pruebas/cierre-sdd-120.md). No hay cierre global Node22/PG18 acreditado.
+Antecedente histórico sobre `402990c`: la consolidación quedó bloqueada para publicación en esa sesión. CAT-TASK-06 y DD-TASK-06 bloqueados por entorno; CI-TASK-006 remoto pendiente. PR26: Docker idéntico y conflicto editorial demostrado en CHANGELOG. [Informe de cierre y procedimiento restante](../docs/pruebas/cierre-sdd-120.md). Ese informe no incorpora las integraciones ni el run remoto posteriores; consultar [CI actual](../docs/CI.md).

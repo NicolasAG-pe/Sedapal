@@ -2,7 +2,7 @@
 
 ## Estado de la referencia
 
-DOC-01, 2026-11-05: la tabla inferior describe **v1.0.0**, no el inventario completo de1.2.0. No usar su total de41 rutas como conteo actual. Las rutas efectivas están en [server.js](../Backend/server.js) y módulos existentes; no se generó OpenAPI ni snapshot exhaustivo nuevo.
+Referencia actual: código 1.2.0 de `main` en `4f15173` (2026-11-11). La tabla histórica inferior describe **v1.0.0**; su total de 41 rutas no es el conteo actual. Las rutas efectivas están en [server.js](../Backend/server.js) y módulos existentes; no se generó OpenAPI ni snapshot exhaustivo nuevo.
 
 Contratos posteriores: [OTP/outbox](verificacion-correo.md), [2FA](seguridad-despliegue-2fa.md), [recuperación](../Backend/password-recovery.js), [push](android-push-firebase.md), [incidencias](../Backend/incident-tracking.js) y [recibos transaccionales](integridad-recibos.md). DB-01 conserva URLs/permisos/locks y permite el perfil sin tabla piloto; rechaza dependencias obligatorias ausentes. [Contrato verificado](../specs/002-compatibilidad-recibos/contracts/receipts.md).
 

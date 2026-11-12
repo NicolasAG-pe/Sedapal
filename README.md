@@ -6,7 +6,7 @@ Proyecto universitario de gestión de servicios de agua: cliente web de desarrol
 
 Android declara **1.2.0 / versionCode 6**; los manifiestos npm raíz y Backend conservan **1.0.0**. Esa diferencia no se corrige modificando versiones en este avance documental. El [historial](CHANGELOG.md) y las [reglas Android](docs/ANDROID-RELEASE.md) distinguen candidatos y releases históricas; no se afirma una nueva APK publicada ni un despliegue actual validado.
 
-PLAN-01, PKG-01, DB-01 y TEST-01 completados localmente. CI-01 implementado, 5/6 tareas: ejecución en GitHub pendiente. DOC-01 documenta el árbol de esta rama; base histórica `d3d27d0`, referencia de entrada `6399d44`. [Especificaciones y evidencia](specs/README.md).
+Referencia documental: `main` en `4f15173693e1620197c5ab6f13be9c04b904f686`, comprobado el 2026-11-11. Incluye la integración PostgreSQL/SDD/SonarQube (PR #28) y las correcciones de interfaz y Docker (PR #30). La [ejecución CI del commit integrado](https://github.com/NicolasAG-pe/Sedapal/actions/runs/43121800154) aprobó las suites seguras en Node 22 y la integración sintética en PostgreSQL 18; no equivale a validar producción. [Especificaciones e informes históricos](specs/README.md).
 
 ## Funcionalidades y arquitectura
 
@@ -35,6 +35,6 @@ npm test
 
 `Frontend/`, `Admin/` y `Shared/` contienen clientes/recursos; `Backend/` API, workers y pruebas; `Base-de-Datos/` esquema y migraciones; `android/` proyecto nativo; `scripts/` builds y validación. `artifacts/` son salidas locales ignoradas. La constitución única está en `.specify/memory/constitution.md` y el ciclo SDD + RPI en `specs/`.
 
-[Índice técnico](docs/README.md), [API](docs/API.md), [PostgreSQL](docs/DATABASE.md), [Android](docs/ANDROID.md), [versiones](docs/VERSIONES.md), [SDD + RPI](docs/SDD-RPI.md) y [CI](docs/CI.md). No publicar esta rama hasta completar la auditoría de automatizaciones; no se hizo push, PR ni despliegue en DOC-01.
+[Índice técnico](docs/README.md), [API](docs/API.md), [PostgreSQL](docs/DATABASE.md), [Android](docs/ANDROID.md), [versiones](docs/VERSIONES.md), [SDD + RPI](docs/SDD-RPI.md) y [CI](docs/CI.md). Cada avance sigue [AGENTS.md](AGENTS.md): rama de trabajo, revisión de secretos, pruebas, changelog, commit, push y Draft PR hacia `main`, con automatizaciones comprobadas antes de publicar. El merge y los despliegues requieren autorización explícita.
 
 Diccionario de datos DD-01: [metadatos completos](docs/base-de-datos/diccionario-de-datos.md), [DER Mermaid](docs/base-de-datos/diagrama-entidad-relacion.md), [perfiles](docs/base-de-datos/perfiles-esquema.md) y [Excel](docs/base-de-datos/diccionario-de-datos.xlsx). Generación estática verificable desde SQL versionado; sin validación nueva contra PostgreSQL.

@@ -4,7 +4,7 @@ Requisitos: Git, Docker Engine/Compose v2; Node22/npm para pruebas y generadores
 
 ## Antes de iniciar servicios
 
-Esta guía describe una instalación **nueva**; los comandos no se ejecutaron durante DOC-01. No usar la copia original ni reutilizar sus `.env`, identidad Compose, contenedores, volúmenes, respaldos o datos. Dos carpetas llamadas Sedapal pueden compartir el proyecto Compose por defecto. Inspeccionar recursos y puertos actuales en modo lectura antes de elegir identidad y puertos nuevos.
+Esta guía describe una instalación **nueva**, según el código de `main` en `4f15173` (2026-11-11); esta revisión documental no inicia servicios. No usar la copia original ni reutilizar sus `.env`, identidad Compose, contenedores, volúmenes, respaldos o datos. Dos carpetas llamadas Sedapal pueden compartir el proyecto Compose por defecto. Inspeccionar recursos y puertos actuales en modo lectura antes de elegir identidad y puertos nuevos.
 
 En esta copia, crear una configuración local desde [.env.example](../.env.example) solo si no existe; completar valores **sintéticos/locales**, secretos locales nuevos y los orígenes CORS que correspondan. Nunca copiar credenciales productivas ni versionar `.env`. No imprimir su contenido. Si ya hay una configuración/instalación, no sobrescribir ni ejecutar esta receta sobre ella.
 

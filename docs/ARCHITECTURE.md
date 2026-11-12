@@ -1,6 +1,6 @@
 # Arquitectura del código 1.2.0
 
-Revisión documental: 2026-11-05, entrada6399d44; base histórica d3d27d0. Se conserva la arquitectura existente; no hay extracción de módulos ni cambio de tecnología en DOC-01. Actualización 2026-11-11: se documentan la estructura Docker de microservicios y las versiones resueltas.
+Referencia documental: `main` en `4f15173`, comprobada el 2026-11-11. Incluye la integración PostgreSQL/SDD/SonarQube y la estructura Docker con redes `edge` y `data`; las versiones resueltas figuran en [VERSIONES.md](VERSIONES.md).
 
 ```mermaid
 flowchart LR
