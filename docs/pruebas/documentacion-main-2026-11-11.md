@@ -15,9 +15,11 @@
 - Comparación estructural JSON: al retirar únicamente `docs/alinear-main: false`, ambas configuraciones Vercel son idénticas a la base; se conservan las exclusiones de main y verificación de correo.
 - No se ejecutaron suites Node ni integración SQL para este cambio documental. El entorno local informa Node 20.19.2; el workflow requiere Node 22. Los resultados remotos anteriores tienen su SHA propio.
 
-## Publicación pendiente
+## Controles previos a publicación
 
 - Workflow versionado sin pasos de despliegue; Draft PR hacia main activa CI.
 - Vercel confirma dos proyectos vinculados: `hidro-mehora-admin` y `sedapal`. Ambos archivos versionados excluyen esta rama; el conector no expone raíces ni hooks efectivos.
-- Render responde sin workspace seleccionado; pendiente confirmación del espacio para consultar servicios y previews. No se cambió configuración remota.
-- No se ha realizado push ni abierto PR en esta revisión. La comprobación posterior de ausencia de nuevos despliegues queda pendiente del control previo y de la publicación.
+- El propietario confirmó el workspace de Render. Inventario con previews incluidas: un único servicio vinculado, `hidro-mejora-api`, raíz `Backend`, rama `main`, `autoDeploy=no`, `autoDeployTrigger=off`, `previews.generation=off` y `pullRequestPreviewsEnabled=no`. No se cambió configuración remota.
+- Baseline Render: último deploy `dep-dbhoj23bc2fs73f115q0`, creado el 2026-10-29. Baseline Vercel: últimos deployments `dpl_6N38ibmKYsSNE9qkbQSqiDGigjqJ` (Admin) y `dpl_8aiM976VpWBDQ9tEJi5yTfCJwGbk` (sedapal).
+- Nueva consulta de referencias antes del push: main permanece en `4f15173`; la rama documental aún no existe en origin.
+- Estos controles se registran antes del primer push. La comprobación posterior de ausencia de nuevos despliegues y los resultados del Draft PR se informarán con sus enlaces; este documento no adelanta resultados aún no observados.

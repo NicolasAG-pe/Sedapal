@@ -6,6 +6,7 @@
 - Enlazada la ejecución GitHub Actions 43121800154: ambos jobs aprobados para `3484fe5`, sin atribuir ese resultado al SHA de merge ni certificar producción.
 - Documentado el ejecutor de migraciones locales existente, con alcance limitado y registro SHA-256.
 - Conservados los informes históricos y corregidas las referencias a una rama antigua, publicaciones aún pendientes y exclusiones Vercel supuestamente ausentes.
+- Comprobado el servicio Render conectado: despliegues automáticos y previews desactivados; registradas las referencias previas de despliegue sin modificar proveedores.
 - Excluida `docs/alinear-main` de despliegues Git en ambas raíces Vercel; sin cambios de aplicación, base de datos ni versiones.
 
 ## Correcciones de interfaz y documentación de despliegue — 2026-11-11
