@@ -1,6 +1,6 @@
 # PostgreSQL: esquema y perfiles
 
-Fuente: [init.sql](../Base-de-Datos/init.sql), [migraciones](../Base-de-Datos/migrations/) y fixtures de DB-01/TEST-01. PostgreSQL18; no se inspeccionó Neon ni se ejecutó SQL en DOC-01. Ninguna receta de esta página autoriza cambios sobre una base existente.
+Fuente: [init.sql](../Base-de-Datos/init.sql), [migraciones](../Base-de-Datos/migrations/) y fixtures de DB-01/TEST-01. Referencia de código: `main` en `4f15173` (2026-11-11), PostgreSQL 18; esta revisión documental no consulta Neon ni ejecuta SQL. Ninguna receta de esta página autoriza cambios sobre una base existente.
 
 ## Dos rutas diferentes
 
@@ -35,7 +35,7 @@ Las migraciones incrementales requieren tablas base: `pagos`, por ejemplo, está
 
 En un laboratorio **nuevo y dedicado** que necesite recuperación/push, partir de init.sql y evaluar011→012, sin repetir los bloques ya incorporados ni aplicar014. Habilitar flags no sustituye aplicar el esquema correspondiente, y aplicar SQL no habilita proveedores.
 
-Para una instalación existente: primero inventario de tablas/columnas/restricciones e historial aplicado, identificación del perfil, revisión de dependencias reales, respaldo controlado y autorización del propietario. Después preparar un plan específico de cambios faltantes. No hay ejecutor automático ni manifiestos de perfiles instalados por DOC-01. No se proporciona un comando genérico de migración productiva.
+Para una instalación existente: primero inventario de tablas/columnas/restricciones e historial aplicado, identificación del perfil, revisión de dependencias reales, respaldo controlado y autorización del propietario. Después preparar un plan específico de cambios faltantes. El repositorio incluye un [ejecutor local controlado](../scripts/migrar-postgresql-local.cjs) para 003, 004, 005, 006, 007, 008 y 013, con confirmación explícita, destino loopback, transacciones y registro SHA-256. Rechaza objetos previos sin registro y cambios de checksum; no reconcilia automáticamente esquemas existentes ni instala todos los perfiles. No es una receta genérica de migración productiva.
 
 ## Invariantes y validación
 

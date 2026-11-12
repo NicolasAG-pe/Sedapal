@@ -1,6 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
+      "docs/alinear-main": false,
       "correcciones": false,
       "integration/hidro-mejora-120-sdd-sonar": false,
       "chore/adopcion-sdd-rpi": false,

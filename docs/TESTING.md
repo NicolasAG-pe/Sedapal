@@ -1,6 +1,6 @@
 # Pruebas reproducibles
 
-TEST-01 conserva pruebas anteriores y añade selección explícita segura. Referencia de ejecución: [validation.md](../specs/003-pruebas-automatizadas/validation.md); precisión de inventario en6399d44. DOC-01 no vuelve a ejecutar pruebas de producto ni atribuye a GitHub resultados locales.
+TEST-01 conserva pruebas anteriores y añade selección explícita segura. Referencia de ejecución: [validation.md](../specs/003-pruebas-automatizadas/validation.md); inventario original en `6399d44`. La evidencia remota posterior del commit integrado en `main` se describe en [CI](CI.md), sin atribuirla a la ejecución original.
 
 ## Prerrequisitos y comandos
 
@@ -35,7 +35,7 @@ El runner limpia entorno y limita conexiones Node a loopback; no es sandbox de c
 
 ## CI
 
-[Workflow](../.github/workflows/ci.yml): safe→integration en Node22, PostgreSQL18 efímero, sin secrets ni deploy. Validación local aprobada, ejecución remota pendiente. [Controles antes de publicar](../specs/004-integracion-continua/prepublication.md). No se exige repetir128/62 pruebas por un cambio exclusivamente documental.
+[Workflow](../.github/workflows/ci.yml): safe→integration en Node22, PostgreSQL18 efímero, sin secrets ni deploy. Ejecución remota del commit integrado en el PR #30 aprobada en ambos jobs; [SHA y enlace](CI.md). [Controles antes de publicar](../specs/004-integracion-continua/prepublication.md). No se exige repetir128/62 pruebas por un cambio exclusivamente documental.
 
 ### Integridad del catálogo
 

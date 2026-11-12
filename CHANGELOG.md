@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Documentación alineada con main — 2026-11-11
+
+- Actualizados README, índice técnico, arquitectura, API, base de datos, desarrollo local, CI, despliegue, pruebas y proceso SDD para la referencia main `4f15173`, incluidos los PR #28 y #30.
+- Enlazada la ejecución GitHub Actions 43121800154: ambos jobs aprobados para `3484fe5`, sin atribuir ese resultado al SHA de merge ni certificar producción.
+- Documentado el ejecutor de migraciones locales existente, con alcance limitado y registro SHA-256.
+- Conservados los informes históricos y corregidas las referencias a una rama antigua, publicaciones aún pendientes y exclusiones Vercel supuestamente ausentes.
+- Excluida `docs/alinear-main` de despliegues Git en ambas raíces Vercel; sin cambios de aplicación, base de datos ni versiones.
+
 ## Correcciones de interfaz y documentación de despliegue — 2026-11-11
 
 - Corregido el drawer móvil del cliente: `app-layout.css` sobrescribía la geometría de `client.css` y el panel abría en `top:88px` con 218px de ancho. Ahora ocupa el alto completo, usa `min(300px,84vw)`, respeta el área segura y su cabecera vuelve a mostrar el borde.

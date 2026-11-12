@@ -1,6 +1,6 @@
 # Destinos y publicación controlada
 
-Esta guía describe configuración versionada y destinos históricos; **no certifica su estado remoto actual**. DOC-01 no despliega ni cambia settings. [Auditoría previa a publicación](../specs/004-integracion-continua/prepublication.md).
+Esta guía describe configuración versionada y destinos históricos; **no certifica su estado remoto actual**. Referencia: `main` en `4f15173`, comprobada el 2026-11-11. [Auditoría previa a publicación](../specs/004-integracion-continua/prepublication.md).
 
 | Componente | Destino documentado / fuente |
 |---|---|
@@ -14,8 +14,8 @@ El archivo raíz [vercel.json](../vercel.json) configura framework:null, `node s
 
 [Backend/Dockerfile](../Backend/Dockerfile) usa Node22-alpine, npm ci --omit=dev y **node start.cjs**, que supervisa API/workers según flags. No afirmar que inicia directamente server.js ni que los workers estén activos. La configuración remota de proveedor, esquema y flags requiere revisión específica sin revelar secretos.
 
-Los dos vercel.json actuales excluyen main y varias ramas, pero no chore/adopcion-sdd-rpi. No se cambiaron aquí. El parche específico propuesto y los controles Render, previews, hooks y Apps figuran en la auditoría. Un workflow sin deploy no impide despliegues de proveedores externos. Mantener main y demás ramas sin cambios.
+Ambos `vercel.json` excluyen `main`, `chore/adopcion-sdd-rpi`, `feature/verificacion-correo` y otras ramas mediante `git.deploymentEnabled`. Revisar los archivos para conocer la lista exacta: las ramas nuevas necesitan su propia exclusión en las dos raíces antes del primer push. Estos controles Git no acreditan el bloqueo de hooks, API ni otros proveedores. Conservar las exclusiones existentes.
 
-La autorización de CI remoto no equivale a permiso para desplegar aplicaciones, publicar APK ni crear PR. Hasta completar el inventario de todos los servicios y recibir autorización para el SHA revisado, no hacer push. [CI](CI.md) conserva su ejecución remota como pendiente.
+El flujo vigente de [AGENTS.md](../AGENTS.md) requiere un Draft PR hacia `main` desde el primer avance, con revisión de automatizaciones antes del push y comprobación posterior de ausencia de despliegues. El merge, los despliegues y la publicación de APK requieren autorización explícita. [CI](CI.md) registra la evidencia remota disponible.
 
 Los informes de lanzamiento y pruebas remotas anteriores son históricos: [preparación1.2.0](LANZAMIENTO-OFICIAL-120.md), [guía VPS anterior](DEPLOY-VPS-HISTORICO.md). No revalidarlos consultando endpoints productivos en este avance. Para entornos nuevos locales, usar [LOCAL-DEVELOPMENT](LOCAL-DEVELOPMENT.md).
