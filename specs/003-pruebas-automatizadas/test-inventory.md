@@ -2,11 +2,13 @@
 
 Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada para listas explícitas; señales estáticas fuera de ellas no acreditan ejecución.
 
-109 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 57. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
+111 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 59. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
 
 | Archivo | Tipo | Grupo nuevo | Requisitos | Riesgo |
 |---|---|---|---|---|
 | `Backend/test/android-session.cjs` | integracion | fuera por defecto | Node22, jsonwebtoken, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `Backend/test/auth-service-postgres.cjs` | integracion | integration | Node22, jsonwebtoken, otpauth, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
+| `Backend/test/auth-service.test.cjs` | unitaria | unit | Node22, jsonwebtoken | revisada: mocks/archivos temporales/loopback; guard de red |
 | `Backend/test/config.test.js` | unitaria | unit | Node22, pg | revisada: mocks/archivos temporales/loopback; guard de red |
 | `Backend/test/email-api.cjs` | integracion | fuera por defecto | Node22, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/email-cleanup-cli.cjs` | integracion | fuera por defecto | Node22, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |

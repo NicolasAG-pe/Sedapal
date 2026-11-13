@@ -1,9 +1,14 @@
 # Laboratorio local — requisitos de construcción
 
 MS-02 ya tiene [Dockerfile y ejecución de Notifications](../../Backend/services/notifications/README.md)
-probados sin red externa. El laboratorio Compose completo descrito abajo sigue
-pendiente. Las pruebas PostgreSQL usan una instancia nueva sin puertos publicados,
-network none y tmpfs; el runner comparte exclusivamente su namespace de red.
+probados sin red externa. MS-03 añade el
+[Dockerfile de Auth](../../Backend/services/auth/README.md) con el mismo patrón:
+`docker build -f Backend/services/auth/Dockerfile -t hidro-ms120-auth:local Backend`,
+ejecución `--read-only --cap-drop ALL` sin red externa, healthcheck sobre `/live`
+y `/ready` (503 `degraded` sin base, comportamiento esperado). El laboratorio
+Compose completo descrito abajo sigue pendiente. Las pruebas PostgreSQL usan una
+instancia nueva sin puertos publicados, network none y tmpfs; el runner comparte
+exclusivamente su namespace de red.
 
 Estado: **compose.microservices.yaml todavía no implementado**. No ejecutar
 comandos de arranque suponiendo que esta propuesta constituye un laboratorio.

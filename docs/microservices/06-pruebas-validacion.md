@@ -1,5 +1,26 @@
 # Validación MS-01
 
+## Etapa MS-03 — Auth independiente, 2026-11-13
+
+- Suite segura completa con Node 22.23.5: **158 aprobadas, 0 fallidas,
+  0 omitidas** (147 previas + 11 nuevas de `auth-service.test.cjs`).
+- Integración del servicio Auth en proceso separado sobre PostgreSQL 18
+  aislada (network none, tmpfs, sin puertos publicados): **1 aprobada, 0
+  fallidas**. Recorre registro OTP con outbox, entrega simulada por el worker,
+  verificación, login, sesión, perfil, 2FA completa, introspección interna
+  firmada, cambio de contraseña con reautenticación forzada, revocación
+  administrativa y reinicio del proceso conservando la revocación.
+- Inventario de rutas regenerado (`node scripts/test-catalog.cjs --write`):
+  catálogo vigente con las 27 rutas del servicio enumeradas por la prueba.
+- Imagen `hidro-ms120-auth:local` construida y ejecutada como usuario node,
+  filesystem de solo lectura, sin red externa ni credenciales SQL: `/live`
+  devolvió 200 y `/ready` 503 `degraded` sin base de datos, comportamiento
+  esperado.
+
+Estos resultados no acreditan todavía Billing/Operations independientes,
+gateway, laboratorio completo, Realtime con cierre de sockets, frontend E2E ni
+Android nativo.
+
 ## Etapa MS-02 — Notifications, 2026-11-13
 
 - Suite segura con código nuevo, Node 22.23.4: **147 aprobadas, 0 fallidas,

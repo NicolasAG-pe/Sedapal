@@ -1,5 +1,14 @@
 # Historial de versiones
 
+## Servicio Auth independiente — MS-03
+
+- Extraído el dominio Auth a un proceso Node 22 propio: login/registro de correo, JWT, OTP, 2FA, recuperación de contraseñas, revocación y autorización por rol/suministro, reutilizando los módulos de dominio del monolito sin importar `server.js`.
+- Conservadas las 27 rutas públicas del dominio con paridad verificada por prueba de inventario; ninguna ruta de Billing, Operations, Notifications ni Realtime.
+- Añadido contrato interno `POST /internal/v1/auth/introspect` con el mismo esquema HMAC del transporte de correo, secreto exclusivo obligatorio, un intento por cliente y respuesta fail-closed sin `clave_hash`, OTP ni secretos.
+- La revocación activa sigue fail-closed: cada petición JWT rele usuarios, suministros y usuario_2fa; hooks de cierre de sockets inyectables, por defecto solo registran logs JSON.
+- Arranque exige `AUTH_TOKEN_SECRET`; Dockerfile con `npm ci --omit=dev --ignore-scripts`, usuario node, filesystem de solo lectura y healthchecks `/live` y `/ready` sobre las 11 tablas Auth.
+- Pruebas: 11 unitarias nuevas en la suite segura (158 aprobadas en total con Node 22.23.5) y una integración PostgreSQL 18 aislada que recorre OTP, sesión, 2FA, introspección, cambio de contraseña y revocación con reinicio.
+
 ## Notifications independiente — transporte de correo local
 
 - Implementado proceso Notifications con Dockerfile propio, healthchecks, cierre ordenado y contrato HTTP interno autenticado; sin credenciales ni consultas PostgreSQL, JWT u OTP.

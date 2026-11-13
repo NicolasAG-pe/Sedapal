@@ -1,8 +1,11 @@
 # Arquitectura objetivo y avance de implementación
 
 Avance MS-02: [Notifications transporte](../../Backend/services/notifications/README.md)
-implementado y probado en proceso separado. El diagrama completo sigue siendo
-objetivo pendiente; Auth/Billing/Operations continúan en el backend anterior.
+implementado y probado en proceso separado. Avance MS-03:
+[Auth proceso independiente](../../Backend/services/auth/README.md) con sus 27
+rutas de dominio y el contrato interno de introspección. Billing, Operations,
+Realtime y el gateway continúan en el backend anterior; el diagrama completo
+sigue siendo objetivo pendiente.
 
 Se conserva el monolito como alternativa hasta que todos los criterios MS-01
 pasen. Ninguna configuración de producción se cambia por integrar esta documentación.

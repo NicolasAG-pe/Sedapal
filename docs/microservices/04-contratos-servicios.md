@@ -1,12 +1,20 @@
 # Contratos internos propuestos
 
-## Contrato implementado en MS-02
+## Contratos implementados en MS-02 y MS-03
 
 El [transporte de correo](../../Backend/services/notifications/README.md) ya
 se ejecuta en un proceso independiente. Su endpoint interno autenticado recibe
 una entrega tras el COMMIT de la outbox, sin mover la activación OTP fuera de
 Auth. Se mantienen la coordinación por lease, cancelación y decisión de reintento
-en el propietario original. Las demás propuestas de esta página siguen pendientes.
+en el propietario original.
+
+[Auth](../../Backend/services/auth/README.md) también es un proceso
+independiente y expone la introspección de la tabla: `POST
+/internal/v1/auth/introspect` con el mismo esquema HMAC que el transporte, un
+intento por petición, respuesta fail-closed sin caché permisiva y sin
+`clave_hash`, OTP ni secretos. El cliente `createIntrospector` devuelve `null`
+sin confirmación y cada consumidor decide su propio cierre. Los contratos
+siguientes de esta página siguen pendientes.
 
 ## Contratos restantes
 
@@ -16,7 +24,7 @@ No normalizar errores con formatos actualmente diferentes.
 
 | Contrato | Entrada / salida | Garantías requeridas |
 |---|---|---|
-| Auth: introspección | Bearer original → identidad, suministro, rol, versión MFA | Estado actual; no caché permisiva; sin clave_hash ni secretos |
+| Auth: introspección (implementada en MS-03) | Bearer original → identidad, suministro, rol, versión MFA | Estado actual; no caché permisiva; sin clave_hash ni secretos |
 | Auth: identidad/ubicación | IDs acotados y actor → campos públicos autorizados | Acceso por rol/suministro; prohibido SQL arbitrario |
 | Auth: reclamar entrega | Identidad de worker → job opaco, lease, plazo | Mismos locks/activación OTP y límites que código actual |
 | Auth: resultado de entrega | job_id, lease, outcome permitido | Idempotencia; rechazo de lease vencido; ambigüedad Gmail preservada |
