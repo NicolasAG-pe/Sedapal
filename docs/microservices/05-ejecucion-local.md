@@ -1,17 +1,57 @@
 # Laboratorio local — requisitos de construcción
 
-MS-02 ya tiene [Dockerfile y ejecución de Notifications](../../Backend/services/notifications/README.md)
-probados sin red externa. MS-03 añade el
-[Dockerfile de Auth](../../Backend/services/auth/README.md) con el mismo patrón:
-`docker build -f Backend/services/auth/Dockerfile -t hidro-ms120-auth:local Backend`,
-ejecución `--read-only --cap-drop ALL` sin red externa, healthcheck sobre `/live`
-y `/ready` (503 `degraded` sin base, comportamiento esperado). El laboratorio
-Compose completo descrito abajo sigue pendiente. Las pruebas PostgreSQL usan una
-instancia nueva sin puertos publicados, network none y tmpfs; el runner comparte
-exclusivamente su namespace de red.
+## Laboratorio Compose de los servicios extraídos (MS-02 y MS-03)
 
-Estado: **compose.microservices.yaml todavía no implementado**. No ejecutar
-comandos de arranque suponiendo que esta propuesta constituye un laboratorio.
+`compose.microservices.yaml` ejecuta únicamente los procesos ya implementados:
+db (PostgreSQL 18 sintético exclusivo), db-init (aplica `init.sql` y las
+migraciones repetibles 003/006/007/011 y termina), auth, notifications y el
+worker existente `Backend/workers/email-outbox.cjs` empaquetado en la imagen de
+Auth. El proyecto Compose tiene identidad propia `hidro-ms120-lab`: levantar
+este archivo no crea, modifica ni detiene la pila del monolito (`compose.yaml`).
+No hay gateway, Billing, Operations ni clientes: no están extraídos todavía.
+
+Solo procesos internos: ningún servicio publica puertos; todo el tráfico queda
+en la red `interna` con `internal: true` (sin salida a Internet). Los secretos
+no se versionan: se generan en `.env.microservicios` (ignorado por Git) siguiendo
+`.env.microservicios.example`; compose falla de forma explícita si falta alguno.
+La base es sintética y aislada (`hm_email_lab`, usuario `hm_fixture`, valores
+etiquetados como fixture al igual que en CI). En este laboratorio el rol es
+superusuario de su instancia: la separación de roles SQL queda para la etapa de
+independencia de almacenes.
+
+```sh
+cp .env.microservicios.example .env.microservicios
+# Completar las seis claves con openssl rand (ver la plantilla) y chmod 600.
+docker compose --env-file .env.microservicios -f compose.microservices.yaml up -d --build
+docker compose --env-file .env.microservicios -f compose.microservices.yaml ps
+```
+
+Comprobación de comunicación entre procesos independientes: registrar una
+cuenta contra Auth (contenedor `auth`), ver la fila `pendiente` de
+`correo_outbox` en `db`, arrancar el worker y comprobar la transición a
+`aceptado` con `proveedor_id` `stub-…` — un id que solo Notifications puede
+devolver. Control negativo: con `notifications` detenida el trabajo nunca pasa
+a `aceptado` (queda en reintento con ambigüedad, sin `proveedor_id`) y al
+reanudar Notifications la entrega continúa sin reiniciar Auth ni el monolito.
+
+Para detener el laboratorio: `docker compose --env-file .env.microservicios
+-f compose.microservices.yaml stop`. No usar `down -v` ni `prune` sin
+autorización: el volumen `hidro-ms120-lab_datos_lab` solo contiene datos
+sintéticos del laboratorio, pero la limpieza de volúmenes no es decisión
+automática.
+
+## Estado general
+
+MS-02 y MS-03 tienen ejecución Compose local probada sin red externa. El
+laboratorio completo (web, admin, gateway, billing, operations, realtime)
+descrito abajo sigue pendiente. Las pruebas PostgreSQL usan una instancia nueva
+sin puertos publicados, network none y tmpfs; el runner comparte exclusivamente
+su namespace de red.
+
+Estado: **compose.microservices.yaml implementado para los servicios extraídos**;
+el laboratorio completo con clientes y gateway no existe todavía. No ejecutar
+`compose.yaml` suponiendo que incluye microservicios, ni los archivos de este
+laboratorio suponiendo arquitectura completa.
 `compose.yaml` original permanece intacto.
 
 El futuro laboratorio tendrá identidad exclusiva `hidro-ms120-<identificador>`,

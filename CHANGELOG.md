@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Laboratorio Compose de microservicios (MS-02/MS-03)
+
+- Añadido `compose.microservices.yaml` con identidad exclusiva `hidro-ms120-lab`: db PostgreSQL 18 sintético, db-init (init.sql + migraciones repetibles 003/006/007/011), auth, notifications y el worker existente de outbox de Auth; sin gateway ni clientes que aún no existen.
+- Ningún puerto publicado y red interna sin salida (`internal: true`); healthchecks propios para auth (`/ready` sobre las 11 tablas), notifications, worker y db; secretos generados localmente en `.env.microservicios` (fuera de Git, con plantilla `.env.microservicios.example` y fallo explícito si falta alguno).
+- La imagen de Auth copia además `workers/email-outbox.cjs` para ejecutar el worker como contenedor independiente; entrega probada vía Notifications en modo stub con control negativo fail-closed y recuperación automática.
+- Comprobado: 5 contenedores (4 en ejecución + db-init terminado), registro OTP → outbox `pendiente` → entrega `aceptado` con id `stub-…`, verificación de correo y login, introspección interna con token manipulado rechazado; la pila del monolito no se modifica ni se detiene.
+
 ## Servicio Auth independiente — MS-03
 
 - Extraído el dominio Auth a un proceso Node 22 propio: login/registro de correo, JWT, OTP, 2FA, recuperación de contraseñas, revocación y autorización por rol/suministro, reutilizando los módulos de dominio del monolito sin importar `server.js`.
