@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Auditoría para migración a microservicios — 2026-11-13
+
+- Inventariadas 75 rutas del código actual y sus dependencias de dominio, permisos, tablas y eventos; documentados locks y triggers que impiden una extracción directa segura.
+- Añadidos propuesta de arquitectura, contratos, criterios de laboratorio, validación, riesgos y preparación futura; se distingue expresamente diseño de implementación pendiente.
+- Incorporado MS-01 al proceso SDD, con referencia origin/main `1be9c28` y suite segura ejecutada en Node 22.23.4: 141 pruebas aprobadas, sin modificar expectativas.
+- Excluida únicamente `feature/arquitectura-microservicios-120` de despliegues Git en ambas raíces Vercel. Publicación pendiente de verificar automatizaciones externas; sin cambios funcionales, SQL ni producción.
+
 ## Documentación alineada con main — 2026-11-11
 
 - Actualizados README, índice técnico, arquitectura, API, base de datos, desarrollo local, CI, despliegue, pruebas y proceso SDD para la referencia main `4f15173`, incluidos los PR #28 y #30.
