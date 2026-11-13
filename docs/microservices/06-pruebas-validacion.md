@@ -1,5 +1,25 @@
 # Validación MS-01
 
+## Etapa MS-02 — Notifications, 2026-11-13
+
+- Suite segura con código nuevo, Node 22.23.4: **147 aprobadas, 0 fallidas,
+  0 omitidas** (`safe-hkihFH`). Incluye seis contratos nuevos.
+- Integración completa PostgreSQL 18: **90 aprobadas, 0 fallidas, 1 omisión
+  condicional: histórico duplicado sin migración** (`integration-godGnK`). Incluye proceso
+  Notifications separado, OTP, caída/reinicio y respuesta Gmail perdida.
+- Regresiones OTP/outbox adicionales: **26 aprobadas**, sin fallos ni omisiones
+  en la ejecución anterior a ampliar el caso Gmail de Notifications.
+- Imagen independiente construida y ejecutada como usuario node, filesystem
+  de solo lectura, sin red ni credenciales SQL: `/ready` devolvió 200.
+- Un ensayo seguro detectó prueba TOTP intermitente: la mutación por `X` podía
+  coincidir con el carácter original. Se garantiza alteración real y se conserva
+  el rechazo obligatorio; no cambió el cifrado del producto.
+
+Estos resultados no acreditan todavía Billing/Auth/Operations independientes,
+gateway, laboratorio completo, frontend E2E ni Android nativo.
+
+## Referencia anterior MS-01
+
 Base: `1be9c28891272567f63b79f19838800431c09e91`; fecha 2026-11-13.
 
 | Verificación | Resultado comprobado |

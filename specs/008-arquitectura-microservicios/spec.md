@@ -1,7 +1,8 @@
 # MS-01 — Migración gradual de Hidro-Mejora 1.2.0
 
 Rama: feature/arquitectura-microservicios-120. Base: 1be9c28. Fecha: 2026-11-13.
-Estado: auditoría y propuesta; implementación pendiente.
+Estado: auditoría y primera extracción de transporte Notifications implementadas;
+separación completa de dominios pendiente.
 
 La autorización del usuario de esta sesión permite implementación local,
 pruebas sintéticas, commits y publicación condicionada al bloqueo de despliegues.

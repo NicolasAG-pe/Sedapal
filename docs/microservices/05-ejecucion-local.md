@@ -1,5 +1,10 @@
 # Laboratorio local — requisitos de construcción
 
+MS-02 ya tiene [Dockerfile y ejecución de Notifications](../../Backend/services/notifications/README.md)
+probados sin red externa. El laboratorio Compose completo descrito abajo sigue
+pendiente. Las pruebas PostgreSQL usan una instancia nueva sin puertos publicados,
+network none y tmpfs; el runner comparte exclusivamente su namespace de red.
+
 Estado: **compose.microservices.yaml todavía no implementado**. No ejecutar
 comandos de arranque suponiendo que esta propuesta constituye un laboratorio.
 `compose.yaml` original permanece intacto.

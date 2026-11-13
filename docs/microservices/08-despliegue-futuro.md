@@ -1,5 +1,19 @@
 # Preparación futura de producción
 
+## Consulta Render autorizada — MS-02
+
+Workspace confirmado por el propietario: wDeco's workspace. Consulta en lectura
+2026-11-13: `hidro-mejora-api`, rama main, raíz Backend, autoDeploy=no,
+autoDeployTrigger=off, previews.generation=off y pullRequestPreviewsEnabled=no.
+Último despliegue listado `dep-dbhoj23bc2fs73f115q0`: live, trigger api, commit
+6894b3e3fde8c6600a87816ad8675c0446b676d5. No se consultaron secretos ni se
+modificó configuración. Esto no inventaría hooks externos ni certifica salud
+funcional. La instrucción posterior del propietario **prohíbe push**, aunque
+los despliegues automáticos del servicio estén desactivados.
+
+Notifications ya dispone de Dockerfile independiente. Su modo proveedor sigue
+cerrado por defecto y no se ha probado contra servicios reales.
+
 Estado: **no lista para desplegar**. No se crearon servicios, Blueprints ni
 credenciales; no se consultó ni modificó Neon. La integración a main y la
 activación deben ser decisiones separadas.

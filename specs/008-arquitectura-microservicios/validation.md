@@ -1,5 +1,12 @@
 # Validación MS-01
 
+MS-02: [resultados nuevos](../../docs/microservices/06-pruebas-validacion.md):
+147 pruebas seguras aprobadas; integración 90 aprobadas y 1 omisión condicional;
+imagen Notifications construida/arrancada. Transporte opt-in; monolito preservado.
+Autorización posterior: consulta Render solo lectura, implementación y commits
+locales; **sin push, merge ni despliegues**. No preparar publicación como paso
+automático al concluir las pruebas.
+
 Fecha 2026-11-13, SHA de referencia 1be9c28891272567f63b79f19838800431c09e91.
 
 - Inventario de pruebas: vigente, comprobado con comando del repositorio.

@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Notifications independiente — transporte de correo local
+
+- Implementado proceso Notifications con Dockerfile propio, healthchecks, cierre ordenado y contrato HTTP interno autenticado; sin credenciales ni consultas PostgreSQL, JWT u OTP.
+- Worker de Auth puede delegar transporte mediante NOTIFICATIONS_URL; conserva transacciones, activación OTP, leases, cancelación y reintentos. Sin esa variable permanece el modo anterior.
+- Proveedores reales cerrados por defecto; stub restringido a destinatarios .invalid. Pruebas de firma, replay, plazo, errores, caída/reinicio y Gmail ambiguo sin duplicación.
+- Node 22: 147 pruebas seguras aprobadas; PostgreSQL 18 aislado: 90 aprobadas y 1 omisión condicional. Corregida mutación aleatoria nula en prueba TOTP sin relajar expectativas ni cambiar cifrado.
+- Render consultado solo en lectura: auto-deploy y previews desactivados. Se conserva prohibición expresa de push, merge y despliegues.
+
 ## Auditoría para migración a microservicios — 2026-11-13
 
 - Inventariadas 75 rutas del código actual y sus dependencias de dominio, permisos, tablas y eventos; documentados locks y triggers que impiden una extracción directa segura.

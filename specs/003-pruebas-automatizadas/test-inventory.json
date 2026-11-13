@@ -3,6 +3,7 @@
   "base": "162e2d8",
   "groups": {
     "unit": [
+      "Backend/test/notification-transport.test.cjs",
       "Backend/test/config.test.js",
       "Backend/test/email-cleanup.test.js",
       "Backend/test/email-gmail.test.js",
@@ -36,6 +37,7 @@
       "scripts/test/client-packaging.test.cjs"
     ],
     "integration": [
+      "Backend/test/notifications-postgres.cjs",
       "Backend/test/receipt-profile-compat.cjs",
       "Backend/test/payment-production-compat.cjs",
       "Backend/test/quality-migrations.cjs",
@@ -134,6 +136,7 @@
         "Backend/test/email-outbox-api.cjs",
         "Backend/test/email-registration-gate.cjs",
         "Backend/test/incident-tracking-fixture.cjs",
+        "Backend/test/notifications-postgres.cjs",
         "Backend/test/otp-auto-session.cjs",
         "Backend/test/password-recovery.cjs",
         "Backend/test/payment-operations.cjs",
@@ -719,6 +722,60 @@
       "risk": "opt-in: crea bases hijas y modifica exclusivamente fixtures PG18"
     },
     {
+      "path": "Backend/test/notification-transport.test.cjs",
+      "sha256": "1b6b7c49058cb568dada4586cfd4d11a898f0689df6ff9589374eac9adf858f6",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "../services/notifications/server.cjs",
+        "../notification-transport",
+        "../email-provider"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/notifications-postgres.cjs",
+      "sha256": "6cf35dc7f2f8e73d3be9a2ea593288cc6c35b44963bf2eea0425ef81d1e5b36e",
+      "type": "integracion",
+      "group": "integration",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "node:child_process",
+        "node:path",
+        "node:net",
+        "./email-api.cjs",
+        "../email-outbox",
+        "../notification-transport",
+        "../outbox-crypto",
+        "../mail-envelope"
+      ],
+      "environmentNames": [
+        "AUTH_TOKEN_SECRET",
+        "EMAIL_OUTBOX_KEY",
+        "PATH"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "opt-in: crea bases hijas y modifica exclusivamente fixtures PG18"
+    },
+    {
       "path": "Backend/test/otp-auto-session.cjs",
       "sha256": "88cf41aacfbadc545a19032f7b35f31999f39d34e6038319d036bc05aa5b9643",
       "type": "integracion",
@@ -1264,7 +1321,7 @@
     },
     {
       "path": "Backend/test/totp-crypto.test.js",
-      "sha256": "db8c4c991e073f7a774dba1c6161bb2f89d486b8b3b5c1c31645b9e905b5d61e",
+      "sha256": "1eac79362c154c3edfd5a77bf0d6361a9cd521b944cb981a91197f7ef7b56fc3",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -3061,6 +3118,16 @@
         "scripts/test/quality-audit-flow.cjs"
       ],
       "managedGroup": null
+    },
+    {
+      "path": "Backend/test/notification-transport.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
+      "path": "Backend/test/notifications-postgres.cjs",
+      "referencedBy": [],
+      "managedGroup": "integration"
     },
     {
       "path": "Backend/test/pagos-sin-piloto.cjs",

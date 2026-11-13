@@ -1,5 +1,15 @@
 # Contratos internos propuestos
 
+## Contrato implementado en MS-02
+
+El [transporte de correo](../../Backend/services/notifications/README.md) ya
+se ejecuta en un proceso independiente. Su endpoint interno autenticado recibe
+una entrega tras el COMMIT de la outbox, sin mover la activación OTP fuera de
+Auth. Se mantienen la coordinación por lease, cancelación y decisión de reintento
+en el propietario original. Las demás propuestas de esta página siguen pendientes.
+
+## Contratos restantes
+
 Estado: diseño pendiente de implementación y validación. Las 75 rutas públicas,
 JSON, códigos HTTP, cabeceras, bytes de imágenes y JWT existentes se conservan.
 No normalizar errores con formatos actualmente diferentes.

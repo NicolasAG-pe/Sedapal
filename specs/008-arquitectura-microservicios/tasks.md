@@ -6,6 +6,9 @@
 - [x] Ejecutar inventario y referencia segura Node 22: 141/141.
 - [x] Redactar auditoría, matriz, propuesta y riesgos.
 - [x] Preparar exclusiones locales Vercel exclusivamente para esta rama.
+- [x] MS-02: extraer transporte de correo a proceso Notifications sin credenciales SQL/JWT/OTP.
+- [x] MS-02: conservar transacciones OTP y comprobar caída, reinicio y Gmail ambiguo en PostgreSQL sintético.
+- [x] MS-02: consultar Render en lectura tras confirmación de workspace; auto-deploy y previews desactivados.
 - [ ] Resolver contratos transaccionales y pruebas de aislamiento SQL.
 - [ ] Implementar Notifications, Auth, Operations, Billing, Realtime y gateway.
 - [ ] Implementar y ejecutar laboratorio Compose y regresiones PostgreSQL 18.

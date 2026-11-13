@@ -2,7 +2,7 @@
 
 Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada para listas explícitas; señales estáticas fuera de ellas no acreditan ejecución.
 
-107 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 55. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
+109 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 57. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
 
 | Archivo | Tipo | Grupo nuevo | Requisitos | Riesgo |
 |---|---|---|---|---|
@@ -29,6 +29,8 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `Backend/test/gmail-roles-local.cjs` | integracion | integration | Node22, pg, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/incident-tracking-fixture.cjs` | helper | fuera por defecto | Node22, pngjs, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/incident-tracking.cjs` | integracion | integration | Node22, ws | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
+| `Backend/test/notification-transport.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
+| `Backend/test/notifications-postgres.cjs` | integracion | integration | Node22, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/otp-auto-session.cjs` | integracion | fuera por defecto | Node22, jsonwebtoken, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/pagos-sin-piloto.cjs` | integracion | integration | Node22, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/password-recovery-fixture.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |

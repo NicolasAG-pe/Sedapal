@@ -1,4 +1,8 @@
-# Arquitectura objetivo — propuesta, no implementada
+# Arquitectura objetivo y avance de implementación
+
+Avance MS-02: [Notifications transporte](../../Backend/services/notifications/README.md)
+implementado y probado en proceso separado. El diagrama completo sigue siendo
+objetivo pendiente; Auth/Billing/Operations continúan en el backend anterior.
 
 Se conserva el monolito como alternativa hasta que todos los criterios MS-01
 pasen. Ninguna configuración de producción se cambia por integrar esta documentación.
