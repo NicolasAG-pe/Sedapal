@@ -1,0 +1,166 @@
+# ============================================================
+# Laboratorio Compose de microservicios — MS-02 y MS-03
+# SOLO los procesos ya implementados y probados:
+#   db            PostgreSQL 18 sintético exclusivo (sin puertos publicados)
+#   db-init       aplica init.sql + migraciones repetibles del dominio Auth y termina
+#   auth          servicio Auth independiente (puerto interno 3100)
+#   notifications servicio Notifications independiente (puerto interno 3104)
+#   worker        worker de outbox de Auth (código existente Backend/workers/email-outbox.cjs),
+#                 entrega vía Notifications (NOTIFICATIONS_URL)
+# Billing, Operations, Gateway, Realtime y los clientes NO están aquí:
+# todavía no están extraídos. El monolito de compose.yaml es otra pila con otra
+# identidad de proyecto: levantar esta no crea, modifica ni detiene esos cuatro
+# contenedores.
+# Identidad exclusiva: proyecto "hidro-ms120-lab", red interna sin salida al
+# host ni a Internet, volumen propio. Ningún puerto publicado: la verificación
+# se hace con `docker compose exec`.
+# Secretos: generar .env.microservicios localmente (ver .env.microservicios.example).
+# Este archivo solo contiene valores de laboratorio etiquetados como fixture,
+# con el mismo criterio que .github/workflows/ci.yml.
+# ============================================================
+name: hidro-ms120-lab
+
+services:
+
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: hm_email_lab
+      POSTGRES_USER: hm_fixture
+      POSTGRES_PASSWORD: fixture-only-not-production
+    # El servicio se llama "db" porque obtenerConfiguracion() considera ese
+    # host local (sslmode disable) para DATABASE_URL del laboratorio.
+    expose:
+      - "5432"
+    networks:
+      - interna
+    volumes:
+      - datos_lab:/var/lib/postgresql
+      - ./Base-de-Datos/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hm_fixture -d hm_email_lab"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  db-init:
+    image: postgres:18
+    # Las migraciones 003/006/007/011 son repetibles (probado en la integración
+    # PostgreSQL 18); se reaplican en cada arranque del laboratorio.
+    command: >
+      sh -c "for m in 003_verificacion_correo 006_correo_outbox 007_usuario_2fa 011_recuperacion_clave; do
+               echo Aplicando $$m;
+               psql -v ON_ERROR_STOP=1 -h db -U hm_fixture -d hm_email_lab -f /sql/migrations/$$m.sql || exit 1;
+             done;
+             echo Migraciones aplicadas."
+    environment:
+      PGPASSWORD: fixture-only-not-production
+    volumes:
+      - ./Base-de-Datos:/sql:ro
+    networks:
+      - interna
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  auth:
+    build:
+      context: ./Backend
+      dockerfile: services/auth/Dockerfile
+    environment:
+      PORT: "3100"
+      NODE_ENV: test
+      DATABASE_URL: "postgresql://hm_fixture:fixture-only-not-production@db:5432/hm_email_lab"
+      AUTH_TOKEN_SECRET: "${LAB_AUTH_TOKEN_SECRET:?Falta LAB_AUTH_TOKEN_SECRET: genera .env.microservicios con .env.microservicios.example}"
+      EMAIL_OTP_SECRET: "${LAB_EMAIL_OTP_SECRET:?Falta LAB_EMAIL_OTP_SECRET: genera .env.microservicios con .env.microservicios.example}"
+      EMAIL_OUTBOX_KEY: "${LAB_EMAIL_OUTBOX_KEY:?Falta LAB_EMAIL_OUTBOX_KEY: genera .env.microservicios con .env.microservicios.example}"
+      TOTP_ENCRYPTION_KEY: "${LAB_TOTP_ENCRYPTION_KEY:?Falta LAB_TOTP_ENCRYPTION_KEY: genera .env.microservicios con .env.microservicios.example}"
+      AUTH_INTERNAL_SECRET: "${LAB_AUTH_INTERNAL_SECRET:?Falta LAB_AUTH_INTERNAL_SECRET: genera .env.microservicios con .env.microservicios.example}"
+      AUTH_INTROSPECTION_URL: http://127.0.0.1:3100
+      EMAIL_PROVIDER: resend
+      RESEND_FROM: correo@example.invalid
+      EMAIL_REGISTRATION_ENABLED: "1"
+    expose:
+      - "3100"
+    networks:
+      - interna
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3100/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 15s
+    restart: unless-stopped
+
+  notifications:
+    build:
+      context: ./Backend
+      dockerfile: services/notifications/Dockerfile
+    environment:
+      PORT: "3104"
+      NODE_ENV: test
+      NOTIFICATIONS_INTERNAL_SECRET: "${LAB_NOTIFICATIONS_INTERNAL_SECRET:?Falta LAB_NOTIFICATIONS_INTERNAL_SECRET: genera .env.microservicios con .env.microservicios.example}"
+      EMAIL_PROVIDER: resend
+      NOTIFICATIONS_DELIVERY_MODE: stub
+    # El servicio rechaza arrancar si recibe credenciales del dominio: aquí solo
+    # recibe su secreto de pareja y el modo de laboratorio (stub, solo .invalid).
+    expose:
+      - "3104"
+    networks:
+      - interna
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3104/ready').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: ./Backend
+      dockerfile: services/auth/Dockerfile
+    # Proceso existente del dominio Auth: reclama la outbox con lease y entrega
+    # cada mensaje a Notifications por el contrato interno firmado.
+    command: ["node", "workers/email-outbox.cjs", "--run"]
+    environment:
+      NODE_ENV: test
+      EMAIL_WORKER_ENABLED: "1"
+      EMAIL_WORKER_DATABASE_URL: "postgresql://hm_fixture:fixture-only-not-production@db:5432/hm_email_lab"
+      EMAIL_WORKER_EXPECTED_DATABASE: hm_email_lab
+      EMAIL_OUTBOX_KEY: "${LAB_EMAIL_OUTBOX_KEY:?Falta LAB_EMAIL_OUTBOX_KEY: genera .env.microservicios con .env.microservicios.example}"
+      EMAIL_PROVIDER: resend
+      NOTIFICATIONS_URL: http://notifications:3104
+      NOTIFICATIONS_ALLOW_LOCAL_HTTP: "1"
+      NOTIFICATIONS_INTERNAL_SECRET: "${LAB_NOTIFICATIONS_INTERNAL_SECRET:?Falta LAB_NOTIFICATIONS_INTERNAL_SECRET: genera .env.microservicios con .env.microservicios.example}"
+    networks:
+      - interna
+    depends_on:
+      db:
+        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
+      notifications:
+        condition: service_healthy
+    healthcheck:
+      # Liveness del proceso: PID 1 debe seguir siendo el worker.
+      test: ["CMD", "node", "-e", "process.exit(require('fs').readFileSync('/proc/1/cmdline').toString().includes('email-outbox') ? 0 : 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+      start_period: 10s
+    restart: unless-stopped
+
+networks:
+  # Única red del laboratorio: sin salida a Internet ni rutas hacia el host.
+  interna:
+    internal: true
+
+volumes:
+  # Volumen exclusivo del laboratorio. No borrar con down -v sin autorización.
+  datos_lab:

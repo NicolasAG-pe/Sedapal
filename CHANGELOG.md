@@ -1,5 +1,36 @@
 # Historial de versiones
 
+## Laboratorio Compose de microservicios (MS-02/MS-03)
+
+- Añadido `compose.microservices.yaml` con identidad exclusiva `hidro-ms120-lab`: db PostgreSQL 18 sintético, db-init (init.sql + migraciones repetibles 003/006/007/011), auth, notifications y el worker existente de outbox de Auth; sin gateway ni clientes que aún no existen.
+- Ningún puerto publicado y red interna sin salida (`internal: true`); healthchecks propios para auth (`/ready` sobre las 11 tablas), notifications, worker y db; secretos generados localmente en `.env.microservicios` (fuera de Git, con plantilla `.env.microservicios.example` y fallo explícito si falta alguno).
+- La imagen de Auth copia además `workers/email-outbox.cjs` para ejecutar el worker como contenedor independiente; entrega probada vía Notifications en modo stub con control negativo fail-closed y recuperación automática.
+- Comprobado: 5 contenedores (4 en ejecución + db-init terminado), registro OTP → outbox `pendiente` → entrega `aceptado` con id `stub-…`, verificación de correo y login, introspección interna con token manipulado rechazado; la pila del monolito no se modifica ni se detiene.
+
+## Servicio Auth independiente — MS-03
+
+- Extraído el dominio Auth a un proceso Node 22 propio: login/registro de correo, JWT, OTP, 2FA, recuperación de contraseñas, revocación y autorización por rol/suministro, reutilizando los módulos de dominio del monolito sin importar `server.js`.
+- Conservadas las 27 rutas públicas del dominio con paridad verificada por prueba de inventario; ninguna ruta de Billing, Operations, Notifications ni Realtime.
+- Añadido contrato interno `POST /internal/v1/auth/introspect` con el mismo esquema HMAC del transporte de correo, secreto exclusivo obligatorio, un intento por cliente y respuesta fail-closed sin `clave_hash`, OTP ni secretos.
+- La revocación activa sigue fail-closed: cada petición JWT rele usuarios, suministros y usuario_2fa; hooks de cierre de sockets inyectables, por defecto solo registran logs JSON.
+- Arranque exige `AUTH_TOKEN_SECRET`; Dockerfile con `npm ci --omit=dev --ignore-scripts`, usuario node, filesystem de solo lectura y healthchecks `/live` y `/ready` sobre las 11 tablas Auth.
+- Pruebas: 11 unitarias nuevas en la suite segura (158 aprobadas en total con Node 22.23.5) y una integración PostgreSQL 18 aislada que recorre OTP, sesión, 2FA, introspección, cambio de contraseña y revocación con reinicio.
+
+## Notifications independiente — transporte de correo local
+
+- Implementado proceso Notifications con Dockerfile propio, healthchecks, cierre ordenado y contrato HTTP interno autenticado; sin credenciales ni consultas PostgreSQL, JWT u OTP.
+- Worker de Auth puede delegar transporte mediante NOTIFICATIONS_URL; conserva transacciones, activación OTP, leases, cancelación y reintentos. Sin esa variable permanece el modo anterior.
+- Proveedores reales cerrados por defecto; stub restringido a destinatarios .invalid. Pruebas de firma, replay, plazo, errores, caída/reinicio y Gmail ambiguo sin duplicación.
+- Node 22: 147 pruebas seguras aprobadas; PostgreSQL 18 aislado: 90 aprobadas y 1 omisión condicional. Corregida mutación aleatoria nula en prueba TOTP sin relajar expectativas ni cambiar cifrado.
+- Render consultado solo en lectura: auto-deploy y previews desactivados. Se conserva prohibición expresa de push, merge y despliegues.
+
+## Auditoría para migración a microservicios — 2026-11-13
+
+- Inventariadas 75 rutas del código actual y sus dependencias de dominio, permisos, tablas y eventos; documentados locks y triggers que impiden una extracción directa segura.
+- Añadidos propuesta de arquitectura, contratos, criterios de laboratorio, validación, riesgos y preparación futura; se distingue expresamente diseño de implementación pendiente.
+- Incorporado MS-01 al proceso SDD, con referencia origin/main `1be9c28` y suite segura ejecutada en Node 22.23.4: 141 pruebas aprobadas, sin modificar expectativas.
+- Excluida únicamente `feature/arquitectura-microservicios-120` de despliegues Git en ambas raíces Vercel. Publicación pendiente de verificar automatizaciones externas; sin cambios funcionales, SQL ni producción.
+
 ## Documentación alineada con main — 2026-11-11
 
 - Actualizados README, índice técnico, arquitectura, API, base de datos, desarrollo local, CI, despliegue, pruebas y proceso SDD para la referencia main `4f15173`, incluidos los PR #28 y #30.

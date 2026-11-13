@@ -3,6 +3,8 @@
   "base": "162e2d8",
   "groups": {
     "unit": [
+      "Backend/test/auth-service.test.cjs",
+      "Backend/test/notification-transport.test.cjs",
       "Backend/test/config.test.js",
       "Backend/test/email-cleanup.test.js",
       "Backend/test/email-gmail.test.js",
@@ -36,6 +38,8 @@
       "scripts/test/client-packaging.test.cjs"
     ],
     "integration": [
+      "Backend/test/auth-service-postgres.cjs",
+      "Backend/test/notifications-postgres.cjs",
       "Backend/test/receipt-profile-compat.cjs",
       "Backend/test/payment-production-compat.cjs",
       "Backend/test/quality-migrations.cjs",
@@ -76,6 +80,64 @@
       ],
       "referencedBy": [],
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/auth-service-postgres.cjs",
+      "sha256": "8cf58c3adc1aeec6fcd4d2e8e7cf8d69d615bfd14a20efbc72cf581f1fe34fdd",
+      "type": "integracion",
+      "group": "integration",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "jsonwebtoken",
+        "otpauth",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "node:child_process",
+        "node:path",
+        "node:net",
+        "jsonwebtoken",
+        "otpauth",
+        "./email-schema.cjs",
+        "../email-outbox",
+        "../resend-mail",
+        "../totp-crypto",
+        "../services/auth/internal-transport.cjs"
+      ],
+      "environmentNames": [
+        "PATH"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "opt-in: crea bases hijas y modifica exclusivamente fixtures PG18"
+    },
+    {
+      "path": "Backend/test/auth-service.test.cjs",
+      "sha256": "358b2fe0ec88ef07a163385a70bfeff821d7ce3cf3745c31d5b0b9977f660343",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "jsonwebtoken"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "node:http",
+        "jsonwebtoken",
+        "../services/auth/server.cjs",
+        "../services/auth/internal-transport.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
       "path": "Backend/test/config.test.js",
@@ -134,6 +196,7 @@
         "Backend/test/email-outbox-api.cjs",
         "Backend/test/email-registration-gate.cjs",
         "Backend/test/incident-tracking-fixture.cjs",
+        "Backend/test/notifications-postgres.cjs",
         "Backend/test/otp-auto-session.cjs",
         "Backend/test/password-recovery.cjs",
         "Backend/test/payment-operations.cjs",
@@ -575,6 +638,7 @@
         "test:email:schema"
       ],
       "referencedBy": [
+        "Backend/test/auth-service-postgres.cjs",
         "Backend/test/email-api.cjs",
         "Backend/test/email-cleanup-cli.cjs",
         "Backend/test/email-cleanup.cjs",
@@ -715,6 +779,60 @@
       "legacyNpm": [
         "test:incidents"
       ],
+      "referencedBy": [],
+      "risk": "opt-in: crea bases hijas y modifica exclusivamente fixtures PG18"
+    },
+    {
+      "path": "Backend/test/notification-transport.test.cjs",
+      "sha256": "1b6b7c49058cb568dada4586cfd4d11a898f0689df6ff9589374eac9adf858f6",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "../services/notifications/server.cjs",
+        "../notification-transport",
+        "../email-provider"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/notifications-postgres.cjs",
+      "sha256": "6cf35dc7f2f8e73d3be9a2ea593288cc6c35b44963bf2eea0425ef81d1e5b36e",
+      "type": "integracion",
+      "group": "integration",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "node:child_process",
+        "node:path",
+        "node:net",
+        "./email-api.cjs",
+        "../email-outbox",
+        "../notification-transport",
+        "../outbox-crypto",
+        "../mail-envelope"
+      ],
+      "environmentNames": [
+        "AUTH_TOKEN_SECRET",
+        "EMAIL_OUTBOX_KEY",
+        "PATH"
+      ],
+      "legacyNpm": [],
       "referencedBy": [],
       "risk": "opt-in: crea bases hijas y modifica exclusivamente fixtures PG18"
     },
@@ -1264,7 +1382,7 @@
     },
     {
       "path": "Backend/test/totp-crypto.test.js",
-      "sha256": "db8c4c991e073f7a774dba1c6161bb2f89d486b8b3b5c1c31645b9e905b5d61e",
+      "sha256": "1eac79362c154c3edfd5a77bf0d6361a9cd521b944cb981a91197f7ef7b56fc3",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -3029,6 +3147,16 @@
   ],
   "noDirectLegacyNpm": [
     {
+      "path": "Backend/test/auth-service-postgres.cjs",
+      "referencedBy": [],
+      "managedGroup": "integration"
+    },
+    {
+      "path": "Backend/test/auth-service.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
       "path": "Backend/test/email-gmail-worker.cjs",
       "referencedBy": [],
       "managedGroup": null
@@ -3061,6 +3189,16 @@
         "scripts/test/quality-audit-flow.cjs"
       ],
       "managedGroup": null
+    },
+    {
+      "path": "Backend/test/notification-transport.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
+      "path": "Backend/test/notifications-postgres.cjs",
+      "referencedBy": [],
+      "managedGroup": "integration"
     },
     {
       "path": "Backend/test/pagos-sin-piloto.cjs",

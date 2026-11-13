@@ -5,7 +5,7 @@ const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
 const groups = {
     unit: [
-        'Backend/test/config.test.js', 'Backend/test/email-cleanup.test.js', 'Backend/test/email-gmail.test.js',
+        'Backend/test/auth-service.test.cjs', 'Backend/test/notification-transport.test.cjs', 'Backend/test/config.test.js', 'Backend/test/email-cleanup.test.js', 'Backend/test/email-gmail.test.js',
         'Backend/test/email-live.test.js', 'Backend/test/email-otp.test.js', 'Backend/test/email-outbox.test.js',
         'Backend/test/email-resend.test.js', 'Backend/test/receipt-date.test.js', 'Backend/test/start.test.cjs',
         'Backend/test/totp-crypto.test.js', 'Backend/test/push-credentials.cjs',
@@ -16,7 +16,7 @@ const groups = {
         'scripts/test/test-catalog.test.cjs', 'scripts/test/firebase-lab.cjs', 'scripts/test/firebase-release.cjs', 'scripts/test/test-runner.test.cjs'
     ],
     contract: ['scripts/test/public-api-config.test.js', 'scripts/test/android-upgrade.test.cjs', 'scripts/test/client-packaging.test.cjs'],
-    integration: ['Backend/test/receipt-profile-compat.cjs', 'Backend/test/payment-production-compat.cjs',
+    integration: ['Backend/test/auth-service-postgres.cjs', 'Backend/test/notifications-postgres.cjs', 'Backend/test/receipt-profile-compat.cjs', 'Backend/test/payment-production-compat.cjs',
         'Backend/test/quality-migrations.cjs', 'Backend/test/receipt-concurrency.cjs', 'Backend/test/receipt-schema.cjs',
         'Backend/test/gmail-roles-local.cjs', 'Backend/test/pagos-sin-piloto.cjs', 'Backend/test/two-factor.cjs', 'Backend/test/incident-tracking.cjs'],
     e2e: ['scripts/test/client-packaging-browser.cjs']

@@ -1,5 +1,10 @@
 # SDD + RPI — estado actual
 
+Nuevo avance: [MS-01](008-arquitectura-microservicios/spec.md), auditoría y propuesta
+para migración a microservicios sobre `1be9c28`. Primera extracción Notifications
+implementada; migración y validación integral pendientes;
+[tareas](008-arquitectura-microservicios/tasks.md).
+
 Referencia actualizada el 2026-11-11: `main` en `4f15173`. Las especificaciones siguientes conservan los estados y evidencias de sus avances originales, cuya base histórica es `d3d27d0`. La integración posterior incluye los PR #26, #28 y #30; [CI](../docs/CI.md) registra un run remoto exitoso del commit integrado en el PR #30.
 
 | Avance | Estado / evidencia |

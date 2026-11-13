@@ -14,6 +14,7 @@ function obtenerConfigCorreo(env = process.env, options = {}) {
 }
 function configurarProveedorWorker(env) {
     const provider = proveedor(env);
+    if (env.NOTIFICATIONS_URL) return { provider, remote: require('./notification-transport').configuration(env) };
     if (provider === 'resend') {
         if (!env.RESEND_API_KEY?.trim()) throw new Error('Falta configuración privada de Resend.');
         return { provider, apiKey: env.RESEND_API_KEY.trim() };
@@ -23,6 +24,7 @@ function configurarProveedorWorker(env) {
         credentials: gmail.validarCredenciales(gmail.leerJsonPrivado(env.GMAIL_CREDENTIALS_FILE), sender) } };
 }
 function crearRemitenteProveedor(config) {
+    if (config.remote) return require('./notification-transport').createSender(config.remote, config.provider);
     return config.provider === 'gmail' ? gmail.crearRemitenteGmail(config.gmail) : resend.crearRemitente({ apiKey: config.apiKey }, { maxAttempts: 1 });
 }
 module.exports = { proveedor, obtenerConfigCorreo, configurarProveedorWorker, crearRemitenteProveedor };
