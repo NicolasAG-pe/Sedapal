@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## Hotfix de recibos para feria — 1.2.0
+
+- Se validan los años de emisión y vencimiento y se limita el plazo del recibo a un año; los cortes también rechazan años fuera de 2000–2100.
+- El hotfix parte del main actualizado, que ya incorpora la compatibilidad para editar y anular recibos sin el esquema opcional del piloto.
+
 ## Documentación alineada con main — 2026-11-11
 
 - Actualizados README, índice técnico, arquitectura, API, base de datos, desarrollo local, CI, despliegue, pruebas y proceso SDD para la referencia main `4f15173`, incluidos los PR #28 y #30.

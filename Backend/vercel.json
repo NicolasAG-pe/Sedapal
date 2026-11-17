@@ -1,6 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
+      "hotfix/recibos-main-actual-120": false,
       "docs/alinear-main": false,
       "correcciones": false,
       "integration/hidro-mejora-120-sdd-sonar": false,

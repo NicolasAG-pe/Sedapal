@@ -1343,6 +1343,10 @@ function validarCorteAdmin(body){
         return { error: 'Fechas de inicio y fin inválidas.' };
     }
 
+    if (!fechaAdminEnRango(inicio) || !fechaAdminEnRango(fin)) {
+        return { error: 'Las fechas del corte deben estar entre los años 2000 y 2100.' };
+    }
+
     if (fin <= inicio) {
         return { error: 'La fecha de fin debe ser posterior a la fecha de inicio.' };
     }
@@ -1722,8 +1726,16 @@ function validarReciboAdmin(body){
         return { error: 'Fechas de emisión y vencimiento inválidas.' };
     }
 
+    if (!fechaAdminEnRango(emision) || !fechaAdminEnRango(vencimiento)) {
+        return { error: 'Las fechas del recibo deben estar entre los años 2000 y 2100.' };
+    }
+
     if (vencimiento < emision) {
         return { error: 'La fecha de vencimiento debe ser igual o posterior a la emisión.' };
+    }
+
+    if (vencimiento - emision > 366 * 24 * 3600 * 1000) {
+        return { error: 'El vencimiento no puede superar un año desde la emisión.' };
     }
 
     if (!Number.isFinite(monto) || monto <= 0 || monto > 99999999.99) {
@@ -1738,6 +1750,13 @@ function validarReciboAdmin(body){
     // al día anterior al serializar un Date en America/Lima.
     return { numero, periodo, emision: emision.toISOString().slice(0, 10),
         vencimiento: vencimiento.toISOString().slice(0, 10), monto, consumo };
+}
+
+// Compartida con validarCorteAdmin. Un año mal escrito en el panel (p. ej. 0206 o 20266) produciría recibos y avisos
+// inválidos para siempre; se limitan las fechas administrativas a un rango realista.
+function fechaAdminEnRango(fecha){
+    const anio = fecha.getUTCFullYear();
+    return anio >= 2000 && anio <= 2100;
 }
 
 function filaReciboAdmin(fila){
