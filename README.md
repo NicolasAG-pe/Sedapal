@@ -1,27 +1,49 @@
 # Hidro-Mejora 1.2.0
 
-Proyecto universitario de gestión de servicios de agua: cliente web de desarrollo/Android y panel administrativo independiente sobre una API compartida. No es un sistema oficial de SEDAPAL ni una pasarela bancaria.
+Hidro-Mejora es un proyecto académico independiente de la Universidad Norbert Wiener orientado a la gestión de servicios de agua. Busca facilitar la consulta de información y la atención de operaciones e incidencias mediante una aplicación para usuarios y un panel administrativo. No tiene vínculo oficial con SEDAPAL ni es una pasarela bancaria.
 
-## Estado del código y del trabajo
+## Funcionalidades principales
 
-Android declara **1.2.0 / versionCode 6**; los manifiestos npm raíz y Backend conservan **1.0.0**. Esa diferencia no se corrige modificando versiones en este avance documental. El [historial](CHANGELOG.md) y las [reglas Android](docs/ANDROID-RELEASE.md) distinguen candidatos y releases históricas; no se afirma una nueva APK publicada ni un despliegue actual validado.
+- Usuarios: cuenta y perfil, recibos y consumo, documentos referenciales, operaciones de pago, incidencias con seguimiento, cortes, atención e HidroBot local.
+- Administración: gestión de usuarios y suministros, recibos, pagos, incidencias, cortes y atención, con permisos administrativos.
 
-Referencia documental: `main` en `4f15173693e1620197c5ab6f13be9c04b904f686`, comprobado el 2026-11-11. Incluye la integración PostgreSQL/SDD/SonarQube (PR #28) y las correcciones de interfaz y Docker (PR #30). La [ejecución CI del commit integrado](https://github.com/NicolasAG-pe/Sedapal/actions/runs/43121800154) aprobó las suites seguras en Node 22 y la integración sintética en PostgreSQL 18; no equivale a validar producción. [Especificaciones e informes históricos](specs/README.md).
+La disponibilidad y las pruebas de cada capacidad dependen del entorno y la configuración. Consulta [pruebas](docs/TESTING.md) y las [evidencias históricas](docs/README.md#referencias-especializadas-e-históricas).
 
-## Funcionalidades y arquitectura
+## Componentes
 
-- Cliente: cuenta, recibos/consumo, documentos referenciales, operaciones de pago, incidencias con seguimiento, cortes, atención, perfil e HidroBot local.
-- Admin: gestión de usuarios/suministros, recibos, pagos, incidencias, cortes y atención, con permisos administrativos.
-- Backend Node22/Express5, PostgreSQL18 y Socket.IO; frontend HTML/CSS/JavaScript y Shared; Android Capacitor7/Java21.
-- OTP/outbox, 2FA, recuperación de clave y push están implementados con configuración y habilitación específicas. Su presencia en código no significa que estén activos en Docker o producción. Los pagos demostrativos no realizan cargos bancarios.
+- **Aplicación Android para usuarios:** empaqueta el cliente y permite acceder a las funciones de usuario.
+- **Panel administrativo web:** interfaz independiente para la gestión administrativa.
+- **Backend/API y PostgreSQL:** API compartida, servicios de dominio y almacenamiento de datos.
 
-Docker: cliente Nginx y Admin Nginx → Backend interno → PostgreSQL local, en cuatro servicios con redes `edge`/`data` separadas. Android empaqueta el cliente; Admin tiene una ruta de build independiente. Render/Vercel/Neon son destinos documentados, cuyo estado efectivo no se certifica desde el código. [Arquitectura](docs/ARCHITECTURE.md), [versiones y releases](docs/VERSIONES.md), [seguridad](docs/SECURITY.md) y [prepublicación](specs/004-integracion-continua/prepublication.md).
+La presentación de feria se centra en Android y el panel administrativo web. El cliente web del repositorio se utiliza para desarrollo y pruebas.
 
-## Desarrollo local y pruebas
+## Arquitectura y tecnologías
 
-Consulta [desarrollo local](docs/LOCAL-DEVELOPMENT.md) antes de iniciar Docker: las dos copias del repositorio pueden compartir nombre Compose, puertos y volúmenes. Usa identidad y configuración nuevas para un laboratorio aislado; conserva la instalación original. `init.sql` es perfil laboratorio, no una receta de producción.
+Android utiliza Capacitor 7 y Java 21; las interfaces usan HTML, CSS y JavaScript. El backend utiliza Node.js 22, Express 5 y Socket.IO, con PostgreSQL 18. Docker Compose proporciona un entorno local con cliente web, Admin, API y base de datos en redes separadas.
 
-Para las suites seguras, con Node22 y sin cargar variables productivas:
+Consulta [arquitectura](docs/ARCHITECTURE.md), [versiones de herramientas](docs/VERSIONES.md) y [seguridad](docs/SECURITY.md).
+
+## Estructura del repositorio
+
+| Carpeta | Contenido |
+|---|---|
+| `Frontend/` | Cliente web y recursos de la aplicación de usuario. |
+| `Admin/` | Panel administrativo web. |
+| `Backend/` | API, servicios, workers y pruebas. |
+| `Shared/` | Recursos y módulos compartidos por las interfaces. |
+| `Base-de-Datos/` | Esquema, migraciones y perfiles de datos. |
+| `android/` | Proyecto nativo Android. |
+| `scripts/` | Herramientas de compilación, mantenimiento y pruebas. |
+| `docs/` | Guías técnicas y evidencias. |
+| `specs/` | Especificaciones y trazabilidad SDD. |
+
+## Instalación y ejecución
+
+Para un laboratorio nuevo, consulta primero [desarrollo local](docs/LOCAL-DEVELOPMENT.md): describe requisitos, configuración, puertos y arranque aislado. No reutilices credenciales ni volúmenes de una instalación existente; `init.sql` corresponde a un perfil de laboratorio, no a producción. Para compilar Android, consulta la [guía Android](docs/ANDROID.md).
+
+## Pruebas y documentación técnica
+
+Para las suites seguras, con Node 22 y sin cargar variables productivas:
 
 ```bash
 npm ci --prefix Backend --ignore-scripts --no-audit --no-fund
@@ -29,12 +51,14 @@ npm run test:inventory
 npm test
 ```
 
-`npm run test:unit`, `npm run test:contract`, `npm run test:coverage` y `npm test -- --report` usan selección explícita. Integración PostgreSQL y E2E requieren recursos aislados y opt-in: [comandos y límites](docs/TESTING.md). Los scripts históricos no heredan automáticamente los controles nuevos.
+La integración PostgreSQL y las pruebas E2E requieren recursos aislados y activación expresa: [comandos y límites](docs/TESTING.md). Los scripts históricos no heredan automáticamente los controles nuevos.
 
-## Organización
+[Índice técnico](docs/README.md) · [API](docs/API.md) · [PostgreSQL y diccionario](docs/DATABASE.md) · [CI](docs/CI.md) · [Especificaciones e informes históricos](specs/README.md) · [Reglas de trabajo](AGENTS.md)
 
-`Frontend/`, `Admin/` y `Shared/` contienen clientes/recursos; `Backend/` API, workers y pruebas; `Base-de-Datos/` esquema y migraciones; `android/` proyecto nativo; `scripts/` builds y validación. `artifacts/` son salidas locales ignoradas. La constitución única está en `.specify/memory/constitution.md` y el ciclo SDD + RPI en `specs/`.
+## Estado actual y limitaciones
 
-[Índice técnico](docs/README.md), [API](docs/API.md), [PostgreSQL](docs/DATABASE.md), [Android](docs/ANDROID.md), [versiones](docs/VERSIONES.md), [SDD + RPI](docs/SDD-RPI.md) y [CI](docs/CI.md). Cada avance sigue [AGENTS.md](AGENTS.md): rama de trabajo, revisión de secretos, pruebas, changelog, commit, push y Draft PR hacia `main`, con automatizaciones comprobadas antes de publicar. El merge y los despliegues requieren autorización explícita.
-
-Diccionario de datos DD-01: [metadatos completos](docs/base-de-datos/diccionario-de-datos.md), [DER Mermaid](docs/base-de-datos/diagrama-entidad-relacion.md), [perfiles](docs/base-de-datos/perfiles-esquema.md) y [Excel](docs/base-de-datos/diccionario-de-datos.xlsx). Generación estática verificable desde SQL versionado; sin validación nueva contra PostgreSQL.
+- Android declara **1.2.0 / versionCode 6**; los manifiestos npm raíz y Backend declaran **1.0.0**. Consulta el [historial](CHANGELOG.md) y las [reglas de release Android](docs/ANDROID-RELEASE.md).
+- Los pagos son demostrativos y no realizan cargos bancarios.
+- OTP/outbox, 2FA, recuperación de clave y push requieren configuración y habilitación específicas; su presencia en el código no implica que estén activos en Docker o producción.
+- La documentación no certifica una nueva APK publicada ni el estado actual de los despliegues en Render, Vercel o Neon.
+- La [ejecución CI documentada](https://github.com/NicolasAG-pe/Sedapal/actions/runs/43121800154) corresponde al commit integrado indicado en [CI](docs/CI.md); no valida por sí sola producción.

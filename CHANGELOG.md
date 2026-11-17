@@ -1,5 +1,9 @@
 # Historial de versiones
 
+## Presentación del repositorio para la feria — 2026-11-17
+
+- Reorganizado el README para presentar Android, el panel administrativo, la arquitectura, las instrucciones y las limitaciones del proyecto; sin cambios funcionales ni de versiones.
+
 ## Documentación alineada con main — 2026-11-11
 
 - Actualizados README, índice técnico, arquitectura, API, base de datos, desarrollo local, CI, despliegue, pruebas y proceso SDD para la referencia main `4f15173`, incluidos los PR #28 y #30.
