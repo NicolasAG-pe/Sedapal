@@ -41,3 +41,19 @@ npm test
 ```
 
 El lock raíz y `npm ci` se reservan para herramientas Capacitor cuando se necesiten. `npm run build:web` y `npm run build:admin` escriben artefactos locales, no despliegan; revisar siempre su configuración pública de API antes de pruebas de navegador. [TESTING](TESTING.md) separa integración, navegador, Android y pruebas live. No ejecutar scripts históricos de restauración/correo/live como parte del arranque.
+
+## Laboratorio integrado Auth y Notifications
+
+`compose.integration.yaml` sirve para comprobar la migración progresiva sin tocar `compose.yaml`. Crea `hidro-ms120-integration`, PostgreSQL temporal en memoria, Auth, Notifications en modo `stub`, worker de outbox y Backend. Web y Admin solo se publican en `127.0.0.1:8180` y `127.0.0.1:8181`; base, worker, Auth y Notifications permanecen en la red interna.
+
+Crear un archivo privado nuevo `.env.integration` con seis secretos de fixture distintos: `LAB_AUTH_TOKEN_SECRET`, `LAB_EMAIL_OTP_SECRET`, `LAB_EMAIL_OUTBOX_KEY`, `LAB_TOTP_ENCRYPTION_KEY`, `LAB_AUTH_INTERNAL_SECRET` y `LAB_NOTIFICATIONS_INTERNAL_SECRET`. Puede usarse la misma forma de generación descrita en `.env.microservicios.example`; no copiar `.env` ni claves reales.
+
+```bash
+docker compose --env-file .env.integration -f compose.integration.yaml config --quiet
+docker compose --env-file .env.integration -f compose.integration.yaml up -d --no-build --pull never
+docker compose --env-file .env.integration -f compose.integration.yaml ps
+```
+
+El Backend delega las rutas `/api/auth/*`, perfil y cambios administrativos de identidad a Auth mediante `AUTH_SERVICE_URL`. Las demás rutas y Socket.IO siguen en Backend. Si Auth no responde, esas rutas devuelven `503 AUTH_UNAVAILABLE`; no recurren al monolito. El correo del laboratorio acepta únicamente destinatarios `.invalid` y devuelve ids `stub-…`; nunca entrega a proveedores reales.
+
+La prueba manual `Backend/test/microservices-compose.cjs` crea una cuenta sintética, pero requiere que el worker esté activo para procesar la outbox. No utilizarla contra otra identidad Compose. Para detener el laboratorio usar `docker compose --env-file .env.integration -f compose.integration.yaml stop`; sus datos temporales desaparecen al detener PostgreSQL y no hay volumen persistente.

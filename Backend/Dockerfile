@@ -10,6 +10,7 @@ COPY start.cjs server.js config.js auth-contract.js two-factor.js totp-crypto.js
 COPY password-recovery.js password-recovery-crypto.js password-recovery-worker.js push.js push-credentials.js push-provider.js push-worker.js incident-tracking.js ./
 COPY workers/ ./workers/
 COPY notification-transport.js ./
+COPY auth-gateway.cjs ./
 
 EXPOSE 3000
 

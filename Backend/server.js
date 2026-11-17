@@ -62,6 +62,11 @@ app.use(cors({
 // Límite acotado: fotografías de incidencias hasta 2 MB + overhead base64.
 app.use(express.json({ limit: '3mb' }));
 
+// Opt-in de laboratorio: conserva la entrada /api existente para web y Android.
+const authGateway = require('./auth-gateway.cjs');
+const authGatewayConfig = authGateway.configuration(process.env);
+app.use(authGateway.createGateway(authGatewayConfig, { afterMutation: reconciliarSocketsAuth }));
+
 // Rate limits (por IP, detrás de Nginx gracias a trust proxy = 1).
 // Mensajes genéricos para no revelar política exacta al atacante.
 function limitadorGenerico(maxPeticiones, ventanaMinutos){
@@ -117,6 +122,27 @@ pool.on('error', (error) => {
 // ==========================================
 
 let ioTiempoReal = null;
+
+async function reconciliarSocketsAuth({ pathname }) {
+    if (!ioTiempoReal) return;
+    try {
+        for (const socket of ioTiempoReal.sockets.sockets.values()) {
+            const actual = await pool.query(`SELECT u.rol,u.activo,COALESCE(m.version,0) AS mfa_version,
+                COALESCE(m.activo,FALSE) AS mfa_activo FROM usuarios u
+                LEFT JOIN usuario_2fa m USING(id_usuario) WHERE u.id_usuario=$1`, [socket.user.id_usuario]);
+            if (!actual.rows[0]?.activo || !permiteSesion(socket.authClaims, actual.rows[0]) ||
+                socket.authClaims.exp * 1000 <= Date.now()) {
+                socket.emit('sesion:invalidada', { motivo: 'credenciales' });
+                socket.disconnect(true);
+            }
+        }
+        const location = pathname.match(/^\/api\/admin\/suministros\/(\d+)\/ubicacion\/?$/i);
+        if (location) emitirASuministro(Number(location[1]), 'perfil:actualizado', { id: Number(location[1]) });
+    } catch (_) {
+        // Nunca conservar sockets autorizados cuando no se puede releer el estado.
+        ioTiempoReal.disconnectSockets(true);
+    }
+}
 
 function rtLog(mensaje){
     // En producción, logs mínimos. Nunca JWT, hashes ni secretos.
@@ -2544,6 +2570,18 @@ app.get("/api/admin/resumen", requiereAdmin, async (req, res) => {
 
 const httpServer = http.createServer(app);
 configurarTiempoReal(httpServer);
+// Respaldo ante respuesta perdida después de un COMMIT o cambio interno en Auth.
+// Solo en modo integrado; evita conservar indefinidamente sockets revocados.
+if (authGatewayConfig) {
+    let checking = false;
+    const authTimer = setInterval(async () => {
+        if (checking) return;
+        checking = true;
+        try { await reconciliarSocketsAuth({ pathname: '' }); } finally { checking = false; }
+    }, 5000);
+    authTimer.unref();
+    httpServer.once('close', () => clearInterval(authTimer));
+}
 
 if (require.main === module) {
     let stopping = false;

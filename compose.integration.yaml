@@ -1,0 +1,133 @@
+# Laboratorio NUEVO, nunca combinar con compose.yaml ni su .env.
+# Reutiliza imágenes locales y Backend/node_modules; no construye ni descarga.
+name: hidro-ms120-integration
+x-node: &node
+  image: node:22-alpine
+  pull_policy: never
+  user: node
+  working_dir: /app
+  read_only: true
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  tmpfs: [/tmp]
+  volumes: [./Backend:/app:ro]
+  networks: [lab]
+x-database: &database
+  DATABASE_URL: postgresql://hm_fixture:fixture-only-not-production@db:5432/hm_email_lab
+x-auth: &auth
+  <<: *database
+  NODE_ENV: test
+  AUTH_TOKEN_SECRET: ${LAB_AUTH_TOKEN_SECRET:?Usa un archivo de laboratorio nuevo}
+  EMAIL_OTP_SECRET: ${LAB_EMAIL_OTP_SECRET:?Falta clave OTP}
+  EMAIL_OUTBOX_KEY: ${LAB_EMAIL_OUTBOX_KEY:?Falta clave outbox}
+  TOTP_ENCRYPTION_KEY: ${LAB_TOTP_ENCRYPTION_KEY:?Falta clave TOTP}
+  EMAIL_PROVIDER: resend
+  RESEND_FROM: correo@example.invalid
+  EMAIL_REGISTRATION_ENABLED: '1'
+  TOTP_ENROLLMENT_ENABLED: '1'
+  CORS_ALLOWED_ORIGINS: http://localhost:8180,http://localhost:8181
+services:
+  db:
+    image: postgres:18
+    pull_policy: never
+    environment:
+      POSTGRES_DB: hm_email_lab
+      POSTGRES_USER: hm_fixture
+      POSTGRES_PASSWORD: fixture-only-not-production
+    # Memoria temporal exclusiva; parar esta base descarta SOLO sus fixtures.
+    tmpfs: ['/var/lib/postgresql:rw,nosuid,size=256m']
+    volumes:
+      - ./Base-de-Datos/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks: [lab]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U hm_fixture -d hm_email_lab]
+      interval: 3s
+      timeout: 3s
+      retries: 15
+  db-init:
+    image: postgres:18
+    pull_policy: never
+    environment: {PGPASSWORD: fixture-only-not-production}
+    volumes: [./Base-de-Datos:/sql:ro]
+    networks: [lab]
+    command:
+      - sh
+      - -ec
+      - |
+        for m in 003_verificacion_correo 006_correo_outbox 007_usuario_2fa 011_recuperacion_clave 012_notificaciones_push 013_seguimiento_incidencias; do
+          psql -v ON_ERROR_STOP=1 -h db -U hm_fixture -d hm_email_lab -f /sql/migrations/$$m.sql
+        done
+    depends_on: {db: {condition: service_healthy}}
+  auth:
+    <<: *node
+    command: [node, services/auth/server.cjs]
+    environment:
+      <<: *auth
+      PORT: '3100'
+      AUTH_INTERNAL_SECRET: ${LAB_AUTH_INTERNAL_SECRET:?Falta clave interna Auth}
+    depends_on: {db-init: {condition: service_completed_successfully}}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3100/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  notifications:
+    <<: *node
+    command: [node, services/notifications/server.cjs]
+    environment:
+      NODE_ENV: test
+      PORT: '3104'
+      EMAIL_PROVIDER: resend
+      NOTIFICATIONS_DELIVERY_MODE: stub
+      NOTIFICATIONS_INTERNAL_SECRET: ${LAB_NOTIFICATIONS_INTERNAL_SECRET:?Falta clave Notifications}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3104/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  worker:
+    <<: *node
+    command: [node, workers/email-outbox.cjs, --run]
+    environment:
+      NODE_ENV: test
+      EMAIL_WORKER_ENABLED: '1'
+      EMAIL_WORKER_DATABASE_URL: postgresql://hm_fixture:fixture-only-not-production@db:5432/hm_email_lab
+      EMAIL_WORKER_EXPECTED_DATABASE: hm_email_lab
+      EMAIL_OUTBOX_KEY: ${LAB_EMAIL_OUTBOX_KEY:?Falta clave outbox}
+      EMAIL_PROVIDER: resend
+      NOTIFICATIONS_URL: http://notifications:3104
+      NOTIFICATIONS_ALLOW_LOCAL_HTTP: '1'
+      NOTIFICATIONS_INTERNAL_SECRET: ${LAB_NOTIFICATIONS_INTERNAL_SECRET:?Falta clave Notifications}
+    depends_on:
+      db-init: {condition: service_completed_successfully}
+      notifications: {condition: service_healthy}
+    stop_grace_period: 20s
+  backend:
+    <<: *node
+    command: [node, server.js]
+    environment:
+      <<: *auth
+      PORT: '3000'
+      AUTH_SERVICE_URL: http://auth:3100
+      AUTH_ALLOW_LOCAL_HTTP: '1'
+    depends_on: {auth: {condition: service_healthy}}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  web:
+    image: sedapal-web:latest
+    pull_policy: never
+    ports: ['127.0.0.1:8180:80']
+    networks: [lab, edge]
+    depends_on: {backend: {condition: service_healthy}}
+  admin:
+    image: sedapal-admin:latest
+    pull_policy: never
+    ports: ['127.0.0.1:8181:80']
+    networks: [lab, edge]
+    depends_on: {backend: {condition: service_healthy}}
+networks:
+  lab: {internal: true}
+  edge: {}

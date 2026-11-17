@@ -5,6 +5,7 @@ const crypto = require('node:crypto');
 const root = path.resolve(__dirname, '..');
 const groups = {
     unit: [
+        'Backend/test/auth-gateway.test.cjs',
         'Backend/test/auth-service.test.cjs', 'Backend/test/notification-transport.test.cjs', 'Backend/test/config.test.js', 'Backend/test/email-cleanup.test.js', 'Backend/test/email-gmail.test.js',
         'Backend/test/email-live.test.js', 'Backend/test/email-otp.test.js', 'Backend/test/email-outbox.test.js',
         'Backend/test/email-resend.test.js', 'Backend/test/receipt-date.test.js', 'Backend/test/start.test.cjs',

@@ -3,6 +3,7 @@
   "base": "162e2d8",
   "groups": {
     "unit": [
+      "Backend/test/auth-gateway.test.cjs",
       "Backend/test/auth-service.test.cjs",
       "Backend/test/notification-transport.test.cjs",
       "Backend/test/config.test.js",
@@ -82,8 +83,30 @@
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
     },
     {
+      "path": "Backend/test/auth-gateway.test.cjs",
+      "sha256": "79cb63dedee529af28f6837b50b3f2ec3d4aafb0394016616c1709b0824ba548",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "express"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:http",
+        "express",
+        "../auth-gateway.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
       "path": "Backend/test/auth-service-postgres.cjs",
-      "sha256": "8cf58c3adc1aeec6fcd4d2e8e7cf8d69d615bfd14a20efbc72cf581f1fe34fdd",
+      "sha256": "ee59866e9591e3ca3900030368053edb8f142da1494e628cf18f1bd508830168",
       "type": "integracion",
       "group": "integration",
       "nodeTest": true,
@@ -106,7 +129,8 @@
         "../email-outbox",
         "../resend-mail",
         "../totp-crypto",
-        "../services/auth/internal-transport.cjs"
+        "../services/auth/internal-transport.cjs",
+        "./gateway-fixture.cjs"
       ],
       "environmentNames": [
         "PATH"
@@ -117,7 +141,7 @@
     },
     {
       "path": "Backend/test/auth-service.test.cjs",
-      "sha256": "358b2fe0ec88ef07a163385a70bfeff821d7ce3cf3745c31d5b0b9977f660343",
+      "sha256": "876afa0ad57d1c3b004e609b8651d75e1f79f6373b336500e0388db691744ef3",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -547,7 +571,7 @@
     },
     {
       "path": "Backend/test/email-outbox.test.js",
-      "sha256": "167a74885f068c3d2bbe22b5d44a8c4af9e143dbf335f4334eb85d57723a9ef5",
+      "sha256": "678826ddded905824b4ab086fecb14b53a3da5c341ca69d00d00a96d64e4c5c0",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -560,7 +584,8 @@
         "node:crypto",
         "../outbox-crypto",
         "../workers/email-outbox.cjs",
-        "../resend-mail"
+        "../resend-mail",
+        "node:events"
       ],
       "environmentNames": [],
       "legacyNpm": [
@@ -647,6 +672,7 @@
         "Backend/test/email-live.cjs",
         "Backend/test/email-outbox-api.cjs",
         "Backend/test/email-outbox-postgres.cjs",
+        "Backend/test/gateway-fixture.cjs",
         "Backend/test/gmail-roles-local.cjs",
         "Backend/test/incident-tracking-fixture.cjs",
         "Backend/test/incident-tracking.cjs",
@@ -671,6 +697,42 @@
         "scripts/test/k8s-integration.test.cjs",
         "scripts/test/payment-flow.cjs",
         "scripts/test/totp-restore-lab.cjs"
+      ],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/gateway-fixture.cjs",
+      "sha256": "9cd93ddae382106c19526130ff0ee3597d570ee1df61499013a1643505a76fe9",
+      "type": "helper",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "ws",
+        "pngjs",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:crypto",
+        "node:child_process",
+        "node:path",
+        "node:net",
+        "../notification-transport",
+        "./email-schema.cjs",
+        "../password-recovery-worker",
+        "../password-recovery-crypto",
+        "ws",
+        "../../Frontend/assets/vendor/socket.io.min.js",
+        "../server",
+        "pngjs"
+      ],
+      "environmentNames": [
+        "PATH"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [
+        "Backend/test/auth-service-postgres.cjs"
       ],
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
     },
@@ -781,6 +843,33 @@
       ],
       "referencedBy": [],
       "risk": "opt-in: crea bases hijas y modifica exclusivamente fixtures PG18"
+    },
+    {
+      "path": "Backend/test/microservices-compose.cjs",
+      "sha256": "ad385eafddeb2417ceb140588afcb9090c44e5ca625f9fb91db66554bdeb7377",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "pg"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:crypto",
+        "pg",
+        "../outbox-crypto",
+        "node:timers/promises"
+      ],
+      "environmentNames": [
+        "AUTH_SERVICE_URL",
+        "DATABASE_URL",
+        "EMAIL_OUTBOX_KEY",
+        "NODE_ENV"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
     },
     {
       "path": "Backend/test/notification-transport.test.cjs",
@@ -3147,6 +3236,11 @@
   ],
   "noDirectLegacyNpm": [
     {
+      "path": "Backend/test/auth-gateway.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
+    },
+    {
       "path": "Backend/test/auth-service-postgres.cjs",
       "referencedBy": [],
       "managedGroup": "integration"
@@ -3172,6 +3266,13 @@
       "managedGroup": null
     },
     {
+      "path": "Backend/test/gateway-fixture.cjs",
+      "referencedBy": [
+        "Backend/test/auth-service-postgres.cjs"
+      ],
+      "managedGroup": null
+    },
+    {
       "path": "Backend/test/gmail-fixture.cjs",
       "referencedBy": [],
       "managedGroup": null
@@ -3188,6 +3289,11 @@
         "scripts/test/incident-tracking-flow.cjs",
         "scripts/test/quality-audit-flow.cjs"
       ],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/microservices-compose.cjs",
+      "referencedBy": [],
       "managedGroup": null
     },
     {

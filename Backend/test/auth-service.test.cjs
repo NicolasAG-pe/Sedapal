@@ -190,10 +190,10 @@ test('Introspección fail-closed: firma, replay, vencimiento, token inválido y 
             'X-Hidro-Signature': signature(INTROSPECT_SECRET, timestamp, nonce, JSON.stringify({ version: 1, token })) };
     })() };
     assert.equal((await s.fetch(PATH, vieja)).status, 401);
-    // Token firmado pero inválido: 200 vigente:false motivo sesion; cliente -> null
+    // Token firmado pero inválido: 200 vigente:false motivo invalido; cliente -> null
     const invalido = await s.fetch(PATH, introspectRequest({ version: 1, token: 'basura' }));
     assert.equal(invalido.status, 200);
-    assert.equal((await invalido.json()).motivo, 'sesion');
+    assert.equal((await invalido.json()).motivo, 'invalido');
     assert.equal(await introspector('basura'), null);
     // Estados de cuenta tras releer PostgreSQL
     const estados = [['desconocido', () => ({ rows: [], rowCount: 0 })], ['inactivo', () => filaIdentidad({ activo: false })],

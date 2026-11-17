@@ -24,7 +24,9 @@ const hashFixture = password => {
     return 'scrypt$' + salt + '$' + crypto.scryptSync(password, salt, 64).toString('hex');
 };
 
-test('Servicio Auth independiente: OTP, sesión, 2FA, introspección y revocación en otro PID', async t => {
+for (const integrated of [false, true]) test(integrated
+    ? 'Entrada común: Auth, Notifications, permisos, recibos, incidencias, recuperación, 2FA y revocación Socket.IO'
+    : 'Servicio Auth independiente: OTP, sesión, 2FA, introspección y revocación en otro PID', async t => {
     const db = await (async () => {
         const { pool: base, connection } = await nuevaBase('ms_auth');
         await base.query(sql('init.sql'));
@@ -40,13 +42,18 @@ test('Servicio Auth independiente: OTP, sesión, 2FA, introspección y revocaci�
         EMAIL_OUTBOX_KEY: crypto.randomBytes(32).toString('base64'),
         TOTP_ENCRYPTION_KEY: crypto.randomBytes(32).toString('base64'),
         AUTH_INTERNAL_SECRET: crypto.randomBytes(32).toString('hex') };
+    if (integrated) Object.assign(secretos, {
+        PASSWORD_RECOVERY_SECRET: crypto.randomBytes(32).toString('hex'),
+        PASSWORD_RECOVERY_OUTBOX_KEY: crypto.randomBytes(32).toString('base64')
+    });
     const reservation = net.createServer();
     await new Promise(resolve => reservation.listen(0, '127.0.0.1', resolve));
     const puerto = reservation.address().port;
     await new Promise(resolve => reservation.close(resolve));
     const ambiente = () => ({ PATH: process.env.PATH, NODE_ENV: 'test', PORT: String(puerto),
         DATABASE_URL: `postgresql://hm_fixture:fixture-only-not-production@127.0.0.1:${db.connection.port}/${db.connection.database}`,
-        EMAIL_REGISTRATION_ENABLED: '1', RESEND_FROM: 'correo@example.invalid', TOTP_ENROLLMENT_ENABLED: '1', ...secretos });
+        EMAIL_REGISTRATION_ENABLED: '1', RESEND_FROM: 'correo@example.invalid', TOTP_ENROLLMENT_ENABLED: '1',
+        ...(integrated ? { PASSWORD_RECOVERY_ENABLED: '1' } : {}), ...secretos });
     let child, parada, logs = '', ip = 1;
     async function arrancar() {
         child = fork(path.resolve(__dirname, '../services/auth/server.cjs'), [], { silent: true, env: ambiente() });
@@ -59,7 +66,12 @@ test('Servicio Auth independiente: OTP, sesión, 2FA, introspección y revocaci�
     }
     t.after(async () => { if (child?.exitCode === null && child?.signalCode === null) child.kill('SIGTERM'); await parada; });
     await arrancar();
-    const base = 'http://127.0.0.1:' + puerto;
+    const authBase = 'http://127.0.0.1:' + puerto;
+    let base = authBase, integration;
+    if (integrated) {
+        integration = await require('./gateway-fixture.cjs').start({ t, env: ambiente(), db: db.pool, authBase });
+        base = integration.base;
+    }
     async function request(ruta, { metodo = 'GET', cuerpo, token, contrato, ipFija } = {}) {
         const res = await fetch(base + ruta, { method: metodo, headers: {
             ...(cuerpo !== undefined ? { 'Content-Type': 'application/json' } : {}),
@@ -70,9 +82,9 @@ test('Servicio Auth independiente: OTP, sesión, 2FA, introspección y revocaci�
         return { res, data };
     }
     // Salud del proceso
-    assert.equal((await (await fetch(base + '/live')).json()).service, 'auth');
-    assert.equal((await (await fetch(base + '/ready')).json()).status, 'ok');
-    assert.equal((await (await fetch(base + '/ready')).json()).auth_contract, 'hidro-auth-2fa-v2');
+    assert.equal((await (await fetch(authBase + '/live')).json()).service, 'auth');
+    assert.equal((await (await fetch(authBase + '/ready')).json()).status, 'ok');
+    assert.equal((await (await fetch(authBase + '/ready')).json()).auth_contract, 'hidro-auth-2fa-v2');
 
     // Registro OTP: el servicio solo encola; nadie envía desde el proceso del servicio
     const cuenta = { correo: 'cliente800@example.invalid', numero_suministro: '900800800', password: 'FixtureAuth123' };
@@ -91,14 +103,15 @@ test('Servicio Auth independiente: OTP, sesión, 2FA, introspección y revocaci�
         return Response.json({ id: crypto.randomUUID() });
     };
     const worker = crearProcesadorOutbox({ pool: db.pool, key: Buffer.from(secretos.EMAIL_OUTBOX_KEY, 'base64'),
-        enviarCodigo: crearRemitente({ apiKey: 'fixture-provider-key' }, { fetchImpl: fixtureFetch, maxAttempts: 1 }) });
+        enviarCodigo: integration ? integration.sender(mensajes) : crearRemitente({ apiKey: 'fixture-provider-key' }, { fetchImpl: fixtureFetch, maxAttempts: 1 }) });
+    if (integration) await integration.outage(worker);
     assert.equal((await worker.procesarUno()).estado, 'aceptado');
     assert.equal(mensajes.length, 1);
     const codigo = mensajes[0].codigo;
     const verificado = await request('/api/auth/verify-email', { metodo: 'POST', cuerpo: { registro_id: alta.data.registro_id, codigo } });
     assert.equal(verificado.res.status, 201, JSON.stringify(verificado.data));
     const idUsuario = verificado.data.usuario.id_usuario;
-    const token = verificado.data.token;
+    let token = verificado.data.token;
     assert.equal(jwt.verify(token, secretos.AUTH_TOKEN_SECRET).id_usuario, idUsuario);
     assert.equal(jwt.verify(token, secretos.AUTH_TOKEN_SECRET).exp - jwt.verify(token, secretos.AUTH_TOKEN_SECRET).iat, 28800);
 
@@ -113,7 +126,7 @@ test('Servicio Auth independiente: OTP, sesión, 2FA, introspección y revocaci�
     assert.equal(login.res.status, 200);
 
     // Contrato interno: introspección del Bearer original
-    const introspector = createIntrospector(configuration({ AUTH_INTROSPECTION_URL: base, AUTH_INTERNAL_SECRET: secretos.AUTH_INTERNAL_SECRET }));
+    const introspector = createIntrospector(configuration({ AUTH_INTROSPECTION_URL: authBase, AUTH_INTERNAL_SECRET: secretos.AUTH_INTERNAL_SECRET }));
     const identidad = await introspector(token);
     assert.equal(identidad.id_usuario, Number(idUsuario));
     assert.equal(identidad.numero_suministro, cuenta.numero_suministro);
@@ -129,11 +142,19 @@ test('Servicio Auth independiente: OTP, sesión, 2FA, introspección y revocaci�
     assert.ok(Number.isInteger(identidad.id_suministro));
     assert.equal(await introspector('token-manipulado'), null);
 
+    if (integration) {
+        await integration.business({ request, token, idUsuario, suministro: cuenta.numero_suministro });
+        await integration.recovery({ request, cuenta, token });
+        cuenta.password = 'FixtureRecovered123';
+        token = (await request('/api/auth/login', { metodo: 'POST', cuerpo: { numero_suministro: cuenta.numero_suministro, password: cuenta.password } })).data.token;
+        await integration.connect(token);
+    }
     // Cambio de contraseña transaccional; el trigger revocar_credenciales (011)
     // eleva la versión de seguridad y el JWT anterior pasa a SESSION_REAUTH_REQUIRED.
     const cambio = await request('/api/auth/change-password', { metodo: 'POST', token,
         cuerpo: { password_actual: cuenta.password, password_nueva: 'NuevaClave456', password_confirmacion: 'NuevaClave456' } });
     assert.equal(cambio.res.status, 200, JSON.stringify(cambio.data));
+    if (integration) await integration.disconnected();
     assert.equal((await request('/api/auth/session', { token })).res.status, 401);
     const relanzamiento = await request('/api/auth/login', { metodo: 'POST', cuerpo: { numero_suministro: cuenta.numero_suministro, password: 'NuevaClave456' } });
     assert.equal(relanzamiento.res.status, 200);
@@ -175,12 +196,17 @@ test('Servicio Auth independiente: OTP, sesión, 2FA, introspección y revocaci�
     const loginAdmin = await request('/api/auth/login', { metodo: 'POST', cuerpo: { numero_suministro: '900800999', password: 'AdminFixture123' }, ipFija: '198.51.100.7' });
     assert.equal(loginAdmin.res.status, 200);
     const adminToken = loginAdmin.data.token;
+    if (integration) {
+        assert.equal((await request('/api/admin/recibos', { token: adminToken })).res.status, 200);
+        await integration.connect(tokenTras2fa);
+    }
     const metodoIncorrecto = await request('/api/admin/usuarios/' + idUsuario + '/estado', { metodo: 'POST', token: adminToken, cuerpo: { activo: false } });
     assert.equal(metodoIncorrecto.res.status, 404);
     const desactivacion = await request('/api/admin/usuarios/' + idUsuario + '/estado', { metodo: 'PATCH', token: adminToken, cuerpo: { activo: false } });
     assert.equal(desactivacion.res.status, 200, JSON.stringify(desactivacion.data));
+    if (integration) await integration.disconnected();
     assert.equal((await request('/api/auth/session', { token: tokenTras2fa })).res.status, 403);
-    const sinFirma = await fetch(base + INTROSPECT_PATH, { method: 'POST' }); // sin HMAC: 401
+    const sinFirma = await fetch(authBase + INTROSPECT_PATH, { method: 'POST' }); // sin HMAC: 401
     assert.equal(sinFirma.status, 401);
     assert.equal(await introspector(tokenTras2fa), null);
     assert.equal((await request('/api/admin/usuarios/' + admin.id_usuario + '/estado', { metodo: 'PATCH', token: adminToken, cuerpo: { activo: false } })).res.status, 409);
@@ -188,8 +214,13 @@ test('Servicio Auth independiente: OTP, sesión, 2FA, introspección y revocaci�
     // Reinicio del servicio: la revocación persiste en PostgreSQL, no en memoria
     child.kill('SIGTERM');
     assert.equal((await parada).code, 0);
+    if (integration) {
+        assert.equal((await request('/api/auth/session', { token: adminToken })).res.status, 503);
+        assert.equal((await request('/api/admin/recibos', { token: adminToken })).res.status, 200);
+        assert.equal((await fetch(base + INTROSPECT_PATH, { method: 'POST' })).status, 404);
+    }
     await arrancar();
-    assert.equal((await (await fetch(base + '/ready')).json()).status, 'ok');
+    assert.equal((await (await fetch(authBase + '/ready')).json()).status, 'ok');
     assert.equal((await request('/api/auth/session', { token: tokenTras2fa, ipFija: '198.51.100.9' })).res.status, 403);
     assert.equal(await introspector(tokenTras2fa), null);
     assert.equal((await request('/api/auth/login', { metodo: 'POST', cuerpo: { numero_suministro: cuenta.numero_suministro, password: 'NuevaClave456' }, ipFija: '198.51.100.11' })).res.status, 403);

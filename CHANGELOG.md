@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Integración local progresiva de Auth y Notifications — MS-04
+
+- El backend conserva `/api` y Socket.IO como entrada común, y delega solo las rutas de Auth a `AUTH_SERVICE_URL` cuando se habilita explícitamente. Sin esa variable, la aplicación oficial conserva el comportamiento monolítico.
+- Cliente web, panel y Android mantienen sus rutas actuales. Recibos, pagos, incidencias, cortes y atención siguen en Backend; los tokens emitidos por Auth se verifican contra PostgreSQL para esas rutas. Cambios de credenciales, MFA o estado de cuenta revalidan y cierran sockets afectados.
+- Añadido `compose.integration.yaml`: laboratorio `hidro-ms120-integration` con PostgreSQL temporal, Auth, Notifications stub, worker, Backend y los clientes en `127.0.0.1:8180/8181`. No reutiliza la base, volumen ni puertos de `compose.yaml`.
+- El worker de correo ya no termina al perder una conexión transitoria de PostgreSQL: espera con retroceso y reanuda desde la outbox, sin repetir directamente una entrega. La prueba con el worker anterior confirmó salida `1`; el corregido se mantuvo activo bajo el mismo corte sintético.
+- Comprobado ahora en Node 22.23.5: suite segura 163 aprobadas; integración PostgreSQL 18 aislada 92 aprobadas, 1 omisión condicional, 0 fallidas. Incluye registro/OTP, Notifications stub, caída y reinicio, recuperación de clave, 2FA, permisos, recibos, incidencias, sesiones Socket.IO y revocación. No se enviaron correos reales ni se compiló APK.
+
 ## Laboratorio Compose de microservicios (MS-02/MS-03)
 
 - Añadido `compose.microservices.yaml` con identidad exclusiva `hidro-ms120-lab`: db PostgreSQL 18 sintético, db-init (init.sql + migraciones repetibles 003/006/007/011), auth, notifications y el worker existente de outbox de Auth; sin gateway ni clientes que aún no existen.

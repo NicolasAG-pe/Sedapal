@@ -426,9 +426,9 @@ function createService({ pool, env = process.env, hooks = {} }) {
         }
         let datos;
         try { datos = jwt.verify(solicitud.token, secretoAuth()); }
-        catch (_) { return reply(200, { version: 1, vigente: false, motivo: 'sesion' }); }
+        catch (_) { return reply(200, { version: 1, vigente: false, motivo: 'invalido' }); }
         const idUsuario = Number(datos.id_usuario);
-        if (!Number.isInteger(idUsuario) || idUsuario <= 0) return reply(200, { version: 1, vigente: false, motivo: 'sesion' });
+        if (!Number.isInteger(idUsuario) || idUsuario <= 0) return reply(200, { version: 1, vigente: false, motivo: 'invalido' });
         (async () => {
             try {
                 const verif = await pool.query(
