@@ -2,6 +2,7 @@
 
 ## Orientación generativa de HidroBot con GroqCloud
 
+- Si el cliente se desconecta durante Auth, conversación descarta la solicitud antes de guardar contexto o llamar al proveedor. El lanzador se apaga con SIGTERM en segundo plano y el puente ADB vuelve a 8284 incluso si el Gateway de demostración está temporalmente caído.
 - Validado el recorrido de la APK LAB v10 en el POCO con Auth del laboratorio, respuesta simulada y fuente oficial, dos cuentas separadas, respaldo ante 429 y regreso de 8285 a 8284.
 - El ensayo rotula como simuladas las respuestas del transporte controlado. El relé TLS se prueba contra HTTPS local con una clave ficticia por descriptor, presupuesto de una solicitud y rechazo de un certificado con nombre incorrecto.
 - El lanzador acota el arranque y el plazo de Auth, libera sus procesos y sockets al terminar y limita el modo real al suministro sintético autorizado. Se omite el texto crudo de los registros y se rechaza cualquier respuesta que repita la clave del proveedor.

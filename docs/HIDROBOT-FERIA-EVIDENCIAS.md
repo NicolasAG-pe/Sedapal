@@ -24,8 +24,8 @@ Documento de apoyo para la exposición. Separa lo que se comprobó con la APK y 
 
 | Conjunto | Resultado |
 | --- | --- |
-| Unitarias y de contratos (`npm test`) | 201 aprobadas, 0 fallos |
-| Integración con PostgreSQL 18 aislado (`npm run test:integration`) | 92 aprobadas y 1 omisión histórica, medido antes de este avance. No se repitió: este avance no toca la base de datos |
+| Unitarias y de contratos (`npm test`) | 201 aprobadas en la CI publicada. La revisión local añadió la regresión de desconexión durante Auth y obtuvo 202 aprobadas, 0 fallos. |
+| Integración con PostgreSQL 18 aislado (`npm run test:integration`) | 92 aprobadas y 1 omisión histórica en la CI del PR #37. La revisión local se limitó a conversación y al lanzador. |
 | Inventario de pruebas (`npm run test:inventory`) | Vigente |
 | `npm run test:hidrobot:groq:isolated` y `--bridge-check` | Aprobados. Loopback, namespaces separados, CORS, timeout, presupuesto, TLS, validación de sesión y restauración de ADB a 8284. |
 | Auditoría de dependencias de ejecución del Backend | `npm audit --prefix Backend --omit=dev` devolvió cero avisos. |

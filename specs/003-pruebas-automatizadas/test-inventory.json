@@ -814,7 +814,7 @@
     },
     {
       "path": "Backend/test/groq-chain.test.cjs",
-      "sha256": "edf64bb2049406f8137f86ab5431ac3f51ad0ac6053b6e01de3156dee752a420",
+      "sha256": "8f4440204f8d538f69e05254ff0374cab37641ed59ba1a95b69daaf7fc4ce850",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,

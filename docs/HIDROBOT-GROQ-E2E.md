@@ -110,7 +110,7 @@ scripts/hidrobot-groq/adb-bridge.sh rollback
 scripts/hidrobot-groq/adb-bridge.sh status
 ```
 
-`rollback` comprueba la disponibilidad de 8284 antes de mover el puente. Si 8284 se detuvo, primero restablece el Gateway de demostración con `node artifacts/hidrobot-groq-lab/gateway-v2.cjs <origins.json>` en el entorno que lo contiene. `e2e.py` restaura el puente si apunta a 8285 al terminar, al recibir Ctrl-C o SIGTERM, o al fallar el ensayo. Si se desconecta el USB durante el regreso, vuelve a conectarlo y ejecuta `rollback`.
+`rollback` devuelve el puente a 8284 aunque el Gateway de demostración esté caído. Si informa que 8284 no responde, restablece ese proceso con `node artifacts/hidrobot-groq-lab/gateway-v2.cjs <origins.json>` en el entorno que lo contiene. `e2e.py` restaura el puente si apunta a 8285 al terminar, al recibir Ctrl-C o SIGTERM, o al fallar el ensayo. Si se desconecta el USB durante el regreso, vuelve a conectarlo y ejecuta `rollback`.
 
 ### Pasos reservados al operador autorizado
 

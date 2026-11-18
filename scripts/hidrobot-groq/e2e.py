@@ -537,8 +537,11 @@ def assert_no_secret(events, secret, where):
 def restore_bridge():
     """Restaura únicamente el puente del ensayo activo y comprueba el destino por ADB."""
     if bridge_points(8285):
-        check(bridge_command("rollback").returncode == 0 and bridge_points(8284),
+        result = bridge_command("rollback")
+        check(result.returncode == 0 and bridge_points(8284),
               "el puente vuelve al Gateway de demostración (8284)")
+        if result.stderr:
+            log(result.stderr.strip())
 
 
 def rehearse_tls():
@@ -572,6 +575,8 @@ def main():
     args = parser.parse_args()
     if args.run and not re.fullmatch(r"9[0-9]{8}", args.synthetic_supply or ""):
         parser.error("--run requiere --synthetic-supply con un suministro sintético LAB de nueve dígitos que empiece con 9.")
+    # Bash puede dejar SIGINT ignorada en un trabajo en segundo plano.
+    signal.signal(signal.SIGTERM, signal.default_int_handler)
     ttl, budget = min(1800, max(5, args.ttl)), min(MAX_REAL_REQUESTS, max(1, args.max_external))
     log("Ensayo controlado: Auth sintético y transporte de Groq simulado, sin salida a Internet.")
     summary, _ = run_session("preflight")
@@ -594,7 +599,6 @@ def main():
     if host not in ("127.0.0.1", "localhost") or not args.origins.is_file():
         raise ValueError("Auth debe ser loopback y origins.json debe existir.")
     check(bridge_points(8284), "puente inicial hacia el Gateway anterior (8284)")
-    signal.signal(signal.SIGTERM, lambda *_: signal.raise_signal(signal.SIGINT))
     try:
         with ExitStack() as stack:
             fd, key = None, FIXTURE_KEY

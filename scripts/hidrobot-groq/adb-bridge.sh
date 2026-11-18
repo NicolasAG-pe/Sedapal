@@ -44,13 +44,12 @@ case "${1:-}" in
         echo "Android LAB usa el Gateway del ensayo. Para volver: $0 rollback"
         ;;
     rollback)
-        if ! ready "$DEMO_PORT"; then
-            echo "El Gateway anterior no responde en 127.0.0.1:$DEMO_PORT. No se cambió el puente." >&2
-            echo "Restablece el Gateway LAB en 8284 y vuelve a ejecutar rollback." >&2
-            exit 1
-        fi
         point "$DEMO_PORT"
-        echo "Android LAB vuelve al Gateway de demostración con conversación simulada."
+        if ready "$DEMO_PORT"; then
+            echo "Android LAB vuelve al Gateway de demostración con conversación simulada."
+        else
+            echo "Puente restaurado. El Gateway 127.0.0.1:$DEMO_PORT no responde. Restablece el servicio de demostración." >&2
+        fi
         ;;
     *)
         echo "Uso: $0 status | switch | rollback" >&2

@@ -33,15 +33,16 @@ async function setup(t, transport, { service = {}, now } = {}) {
     }));
     const logs = [];
     const provider = createGroqCloudProvider({ apiKey, transport, ...(now ? { now } : {}) });
-    const chat = await listening(t, createServer(createConversationService({
+    const chatServer = createServer(createConversationService({
         validateSession: sessionValidator(auth), provider, providerMs: 6000, onProviderError: code => logs.push(code), ...service
-    })));
+    }));
+    const chat = await listening(t, chatServer);
     const gateway = await listening(t, createGateway({ origins: { conversation: chat }, allowedOrigins: [] }).server);
     const post = (body, token = 'A', signal) => fetch(new URL('/api/chat', gateway), {
         method: 'POST', signal, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer jwt-sintetico-' + token },
         body: JSON.stringify({ version: 2, conversationId: randomUUID(), topic: 'saving', style: 'summary', ...body })
     });
-    return { post, logs };
+    return { post, logs, chatServer };
 }
 
 test('el JWT, el identificador de conversación y los datos de la cuenta no llegan al proveedor', async t => {
@@ -148,6 +149,34 @@ test('si el cliente se desconecta, la solicitud al proveedor se cancela y libera
     await new Promise(resolve => setTimeout(resolve, 80));
     assert.equal(signal.aborted, true);
     assert.deepEqual(f.logs, []);
+});
+
+test('una desconexión durante Auth no abre salida al proveedor ni guarda contexto', { timeout: 4000 }, async t => {
+    const authStarted = Promise.withResolvers();
+    const authResult = Promise.withResolvers();
+    const chatClosed = Promise.withResolvers();
+    let validations = 0;
+    let calls = 0;
+    const f = await setup(t, async () => { calls++; return completion(prose); }, {
+        service: { validateSession() {
+            if (++validations !== 1) return true;
+            authStarted.resolve();
+            return authResult.promise;
+        } }
+    });
+    f.chatServer.once('request', (_req, res) => res.once('close', chatClosed.resolve));
+
+    const conversationId = randomUUID();
+    const controller = new AbortController();
+    const cancelled = assert.rejects(f.post({ conversationId }, 'A', controller.signal), { name: 'AbortError' });
+    await authStarted.promise;
+    controller.abort();
+    await Promise.all([cancelled, chatClosed.promise]);
+    authResult.resolve(true);
+
+    const followup = await f.post({ conversationId, topic: 'more' });
+    assert.equal(calls, 0);
+    assert.deepEqual(await followup.json(), { version: 2, mode: 'clarification' });
 });
 
 test('dos sesiones usan conversaciones separadas y la continuación no cruza cuentas', async t => {

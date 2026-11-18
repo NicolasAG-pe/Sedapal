@@ -77,11 +77,15 @@ function createConversationService({
             }
             const bearer = req.get('authorization') || '';
             if (!/^Bearer [A-Za-z0-9._-]{1,4096}$/.test(bearer)) return reject(res, 401, 'CHAT_AUTH_REQUIRED');
+            let valid;
             try {
-                if (!await validateSession(bearer)) return reject(res, 403, 'CHAT_AUTH_REQUIRED');
+                valid = await validateSession(bearer);
             } catch (_) {
-                return reject(res, 503, 'CHAT_AUTH_UNAVAILABLE');
+                if (!res.destroyed) return reject(res, 503, 'CHAT_AUTH_UNAVAILABLE');
+                return;
             }
+            if (res.destroyed) return;
+            if (!valid) return reject(res, 403, 'CHAT_AUTH_REQUIRED');
             req.sessionKey = createHash('sha256').update(bearer).digest('hex');
             return next();
         },
