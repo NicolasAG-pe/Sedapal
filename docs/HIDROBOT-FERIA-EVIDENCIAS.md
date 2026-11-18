@@ -15,7 +15,7 @@ Documento de apoyo para la exposición. Separa lo que se comprobó con la APK y 
 
 ## Qué todavía no está demostrado
 
-- El recorrido completo Android → Gateway → conversación → GroqCloud no se ha ejecutado de punta a punta. El Gateway de demostración (`127.0.0.1:8284`) usa `simulated-generation` y la interfaz rotula el texto como «Generación simulada».
+- El recorrido completo Android → Gateway → conversación → GroqCloud no se ha ejecutado con la API real. El tramo Gateway → conversación → adaptador sí se ensayó con un transporte controlado. El Gateway de demostración (`127.0.0.1:8284`) usa `simulated-generation` y la interfaz rotula el texto como «Generación simulada».
 - No hay medición de fidelidad con varias preguntas reales. La comprobación léxica no detecta toda afirmación plausible pero incorrecta.
 - La exposición a usuarios finales no está autorizada. Ver `docs/HIDROBOT-LAB.md`, sección «Verificación de condiciones de Groq».
 
@@ -36,4 +36,4 @@ Documento de apoyo para la exposición. Separa lo que se comprobó con la APK y 
 
 ## Siguiente paso
 
-Construir un lanzador aislado para el ensayo de punta a punta, equivalente al del piloto, y ejecutarlo una vez con la autorización del administrador elegible. Hasta entonces, no se declara inferencia real en Android.
+El lanzador aislado del ensayo de punta a punta ya existe y su ensayo controlado pasa (`docs/HIDROBOT-GROQ-E2E.md`). Falta ejecutarlo una vez en modo real, con la autorización del administrador elegible y una clave nueva. Hasta entonces, no se declara inferencia real en Android.

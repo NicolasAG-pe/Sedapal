@@ -7,6 +7,7 @@
 - Añadidas siete pruebas de la cadena Gateway, Auth, conversación y adaptador con transporte controlado: sin JWT ni datos de cuenta hacia el proveedor, plazo vencido, pausa por 429, errores 4xx y 5xx, saturación, desconexión del cliente y aislamiento entre sesiones.
 - Documentada la verificación de condiciones de Groq del 2026-11-18 y corregida la cuota: la página publica los límites como base del plan Developer, sin confirmar el nivel gratuito.
 - La rama queda excluida de despliegues Git en ambos `vercel.json`. Añadidas las evidencias para la feria.
+- Añadido el lanzador aislado del ensayo Android LAB, Gateway, conversación y GroqCloud: sandbox sin red ni entorno, relés Unix con destino fijo, presupuesto de peticiones y clave nueva por descriptor. Su ensayo controlado pasa sin salir a Internet.
 
 ## HidroBot 3.0 en laboratorio
 
