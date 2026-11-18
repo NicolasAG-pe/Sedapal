@@ -2,7 +2,7 @@
 
 Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada para listas explícitas; señales estáticas fuera de ellas no acreditan ejecución.
 
-118 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 66. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
+120 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 68. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
 
 | Archivo | Tipo | Grupo nuevo | Requisitos | Riesgo |
 |---|---|---|---|---|
@@ -32,6 +32,8 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `Backend/test/gateway-fixture.cjs` | helper | fuera por defecto | Node22, ws, pngjs, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/gmail-fixture.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/gmail-roles-local.cjs` | integracion | integration | Node22, pg, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
+| `Backend/test/groq-chain.test.cjs` | contrato | contract | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
+| `Backend/test/groq-cloud.test.cjs` | contrato | contract | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `Backend/test/incident-tracking-fixture.cjs` | helper | fuera por defecto | Node22, pngjs, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/incident-tracking.cjs` | integracion | integration | Node22, ws | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/microservices-compose.cjs` | integracion | fuera por defecto | Node22, pg | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |

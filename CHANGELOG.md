@@ -1,5 +1,20 @@
 # Historial de versiones
 
+## Orientación generativa de HidroBot con GroqCloud
+
+- Si el cliente se desconecta durante Auth, conversación descarta la solicitud antes de guardar contexto o llamar al proveedor. El lanzador se apaga con SIGTERM en segundo plano y el puente ADB vuelve a 8284 incluso si el Gateway de demostración está temporalmente caído.
+- Validado el recorrido de la APK LAB v10 en el POCO con Auth del laboratorio, respuesta simulada y fuente oficial, dos cuentas separadas, respaldo ante 429 y regreso de 8285 a 8284.
+- El ensayo rotula como simuladas las respuestas del transporte controlado. El relé TLS se prueba contra HTTPS local con una clave ficticia por descriptor, presupuesto de una solicitud y rechazo de un certificado con nombre incorrecto.
+- El lanzador acota el arranque y el plazo de Auth, libera sus procesos y sockets al terminar y limita el modo real al suministro sintético autorizado. Se omite el texto crudo de los registros y se rechaza cualquier respuesta que repita la clave del proveedor.
+- Añadido el adaptador backend de GroqCloud para GPT-OSS 20B. La generación usa temas públicos con fuentes controladas y conserva el catálogo como respaldo. El modo local es el predeterminado.
+- Se mantiene el contrato de Android LAB v10 y se documentan la activación autorizada, las cuotas, la reversión y la demostración con el simulador.
+- Añadidas siete pruebas de la cadena Gateway, Auth, conversación y adaptador con transporte controlado: sin JWT ni datos de cuenta hacia el proveedor, plazo vencido, pausa por 429, errores 4xx y 5xx, saturación, desconexión del cliente y aislamiento entre sesiones.
+- Documentada la verificación de condiciones de Groq del 2026-11-18 y corregida la cuota: la página publica los límites como base del plan Developer, sin confirmar el nivel gratuito.
+- La rama queda excluida de despliegues Git en ambos `vercel.json`. Añadidas las evidencias para la feria.
+- Añadido el lanzador aislado del ensayo Android LAB, Gateway, conversación y GroqCloud: sandbox sin red ni entorno, relés Unix con destino fijo, presupuesto de peticiones y clave nueva por descriptor. Su ensayo controlado pasa sin salir a Internet.
+- Añadido `--bridge-check`, que ensaya el cambio y la restauración del puente con el teléfono y un Gateway real en 8285, y comprobaciones de aislamiento sobre los procesos vivos. Documentado cómo verificar la respuesta generada dentro de HidroBot.
+- El primer ensayo real se limita por defecto a una solicitud. El lanzador verifica que la clave no aparezca en respuestas ni registros, y el nuevo `adb-bridge.sh` cambia y restaura el puente de la APK LAB sin tocar la APK.
+
 ## HidroBot 3.0 en laboratorio
 
 - Añadido el servicio opcional de conversación con proveedor simulado y respuestas de un catálogo con fuentes oficiales. El cliente mantiene fuera del servicio los mensajes y datos de la cuenta.

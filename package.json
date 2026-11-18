@@ -27,6 +27,7 @@
     "test:email:live": "node Backend/test/email-live.cjs --live",
     "test:email:e2e": "node scripts/test/admin-e2e.cjs",
     "test:chatbot": "node --test scripts/test/hidrobot.test.cjs",
+    "test:hidrobot:groq:isolated": "/usr/bin/python3 -I scripts/hidrobot-groq/e2e.py",
     "test:documents": "node --test scripts/test/documents.test.cjs",
     "test:ui": "node --test scripts/test/ui-money.test.cjs",
     "test:receipts": "node --test Backend/test/receipt-concurrency.cjs Backend/test/receipt-schema.cjs",
