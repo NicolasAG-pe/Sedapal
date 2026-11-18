@@ -267,6 +267,81 @@ def rehearse(port):
           "ninguna respuesta ni encabezado hacia Android contiene la clave del proveedor ni un token")
 
 
+def descendants(pid):
+    """Procesos descendientes de pid, leídos de /proc."""
+    children = {}
+    for entry in Path("/proc").iterdir():
+        if entry.name.isdigit():
+            try:
+                parent = int((entry / "stat").read_text().rsplit(")", 1)[1].split()[1])
+            except (OSError, IndexError, ValueError):
+                continue
+            children.setdefault(parent, []).append(int(entry.name))
+    found, pending = [], [pid]
+    while pending:
+        for child in children.get(pending.pop(), []):
+            found.append(child)
+            pending.append(child)
+    return found
+
+
+def host_checks(process, port):
+    """Comprueba desde el anfitrión, sobre procesos vivos, el aislamiento que declara el diseño."""
+    # bwrap también menciona sandbox.cjs en sus argumentos: se identifica el proceso por su ejecutable dentro del sandbox.
+    node = next((pid for pid in descendants(process.pid)
+                 if Path(f"/proc/{pid}/cmdline").read_bytes().split(b"\0")[0] == b"/node"), None)
+    check(node is not None, "el servicio de conversación corre dentro del sandbox")
+    check(os.readlink(f"/proc/{node}/ns/net") != os.readlink("/proc/self/ns/net"), "espacio de red propio, distinto del anfitrión")
+    check(os.readlink(f"/proc/{node}/ns/pid") != os.readlink("/proc/self/ns/pid"), "espacio de procesos propio")
+    names = {item.split(b"=")[0] for item in Path(f"/proc/{node}/environ").read_bytes().split(b"\0") if item}
+    check(names <= {b"PWD"}, "el servicio no recibió variables del anfitrión (solo PWD, fijada por bubblewrap)")
+    targets = [os.readlink(f"/proc/{node}/fd/{fd.name}") for fd in Path(f"/proc/{node}/fd").iterdir()]
+    check(not any(str(SECRET) in target for target in targets), "el sandbox no conserva un descriptor del archivo de la clave")
+    listening = subprocess.run(["ss", "-ltnH", f"sport = :{port}"], capture_output=True, text=True, timeout=5).stdout.split()
+    locals_ = [item for item in listening if item.endswith(f":{port}")]
+    check(locals_ and all(item.startswith("127.0.0.1:") for item in locals_), f"el Gateway del ensayo solo escucha en 127.0.0.1:{port}")
+
+
+def phone_request(path, token=None, payload=None):
+    """curl ejecutado en el teléfono contra el puente adb reverse, con el origen de la WebView."""
+    command = "curl -s -m 8 -w '\\n%{http_code}' -H 'Origin: http://localhost' -H 'Content-Type: application/json'"
+    if token:
+        command += f" -H 'Authorization: Bearer {token}'"
+    if payload is not None:
+        command += f" -X POST -d '{json.dumps(payload)}'"
+    out = subprocess.run(["adb", "shell", f"{command} http://127.0.0.1:45689{path}"],
+                         capture_output=True, text=True, timeout=20).stdout.strip()
+    body, _, code = out.rpartition("\n")
+    try:
+        return int(code), json.loads(body) if body.startswith("{") else body
+    except ValueError:
+        return 0, out
+
+
+def bridge_check(port):
+    """Cambia el puente de la APK LAB al Gateway del ensayo, lo usa desde el teléfono y lo restaura."""
+    script = str(HERE / "adb-bridge.sh")
+    run = lambda action: subprocess.run(["bash", script, action], capture_output=True, text=True, timeout=30)
+    mapping = lambda: subprocess.run(["adb", "reverse", "--list"], capture_output=True, text=True, timeout=15).stdout
+    payload = {"version": 2, "conversationId": str(uuid.uuid4()), "topic": "saving", "style": "summary"}
+    try:
+        check("tcp:45689 tcp:8284" in mapping(), "puente inicial hacia el Gateway anterior (8284)")
+        result = run("switch")
+        check(result.returncode == 0 and f"tcp:45689 tcp:{port}" in mapping(), f"switch: el teléfono apunta al Gateway del ensayo ({port})")
+        check(phone_request("/ready")[0] == 200, "desde el teléfono, /ready del Gateway del ensayo responde 200")
+        code, _ = phone_request("/api/chat", None, payload)
+        check(code == 401, "desde el teléfono, /api/chat sin sesión responde 401")
+        code, body = phone_request("/api/chat", "jwt-sintetico-A", payload)
+        check(code == 200 and isinstance(body, dict) and body.get("mode") == "generated" and body.get("evidence") == ["base"],
+              "desde el teléfono, una sesión sintética recibe modo generated por el Gateway del ensayo")
+        result = run("rollback")
+        check(result.returncode == 0 and "tcp:45689 tcp:8284" in mapping(), "rollback: el puente vuelve al Gateway anterior (8284)")
+        code, body = phone_request("/api/chat", "jwt-sintetico-A", payload)
+        check(code == 403, "tras el rollback, el Gateway anterior (Auth real) rechaza la sesión sintética")
+    finally:
+        restore_bridge()
+
+
 def read_events(process, events):  # events mezcla el hilo lector, líneas de texto y dicts
     for line in process.stdout:
         line = line.rstrip()
@@ -279,7 +354,7 @@ def read_events(process, events):  # events mezcla el hilo lector, líneas de te
         log("  [sandbox] " + line)
 
 
-def session(real, origins, gateway_port, auth_target, ttl, budget, secret_fd):
+def session(real, origins, gateway_port, auth_target, ttl, budget, secret_fd, hold=None):
     """Levanta sandbox, relés y Gateway. En modo controlado ejecuta el guion y apaga todo."""
     with tempfile.TemporaryDirectory(prefix="hidrobot-e2e-", dir=RUNTIME) as name:
         relay_dir = Path(name)
@@ -292,9 +367,10 @@ def session(real, origins, gateway_port, auth_target, ttl, budget, secret_fd):
                 if not real:
                     auth_server = fake_auth()
                     auth_target = auth_server.server_address
-                    origins = relay_dir / "origins.json"
-                    origins.write_text(json.dumps({n: f"http://172.31.0.{i}:3100" for i, n in
-                                                   enumerate(["auth", "billing", "operations", "notifications", "realtime"], 2)}))
+                    if origins is None:
+                        origins = relay_dir / "origins.json"
+                        origins.write_text(json.dumps({n: f"http://172.31.0.{i}:3100" for i, n in
+                                                       enumerate(["auth", "billing", "operations", "notifications", "realtime"], 2)}))
                 cleanup.append(Relay(relay_dir / "auth.sock", lambda: socket.create_connection(auth_target, timeout=3), 64 * 1024))
                 if real:
                     cleanup.append(Relay(relay_dir / "groq.sock", lambda: socket.create_connection(UPSTREAM, timeout=7),
@@ -318,6 +394,7 @@ def session(real, origins, gateway_port, auth_target, ttl, budget, secret_fd):
                     stdout=subprocess.PIPE, text=True, cwd=REPO)
                 cleanup.append(Child(gateway))
                 port = json.loads(gateway.stdout.readline())["puerto"]
+                host_checks(process, port)
                 if real:
                     log(f"Gateway del ensayo en 127.0.0.1:{port}. Servicio real abierto hasta {ttl} s o Ctrl-C.")
                     log("Para Android LAB v10, en otra terminal: scripts/hidrobot-groq/adb-bridge.sh switch")
@@ -326,6 +403,8 @@ def session(real, origins, gateway_port, auth_target, ttl, budget, secret_fd):
                         process.wait(timeout=ttl + 10)
                     except (subprocess.TimeoutExpired, KeyboardInterrupt):
                         pass
+                elif hold:
+                    hold(port)
                 else:
                     rehearse(port)
                 return process, events, cleanup
@@ -386,6 +465,8 @@ def main():
     parser.add_argument("--run", action="store_true", help="Usar solo con autorización expresa de una cuenta elegible.")
     parser.add_argument("--origins", type=Path, default=DEFAULT_ORIGINS, help="origins.json del Gateway LAB (solo --run).")
     parser.add_argument("--gateway-port", type=int, default=8285)
+    parser.add_argument("--bridge-check", action="store_true",
+                        help="Ensayo controlado del puente ADB con un Gateway real en 8285. Sin llamadas a Groq.")
     parser.add_argument("--auth", default="%s:%d" % DEFAULT_AUTH, help="Auth LAB loopback (solo --run).")
     parser.add_argument("--ttl", type=int, default=300, help="Segundos que queda abierto el servicio real (5-1800).")
     parser.add_argument("--max-external", type=int, default=1,
@@ -400,6 +481,17 @@ def main():
     check(summary["codigos_backend"] == ["CHAT_PROVIDER_TIMEOUT", "GROQ_QUOTA", "GROQ_QUOTA"],
           "códigos de respaldo acotados y sin detalles")
     log("Ensayo controlado aprobado. No hubo llamadas a GroqCloud.")
+    if args.bridge_check:
+        if args.run or args.gateway_port != 8285 or not args.origins.is_file():
+            raise ValueError("--bridge-check usa el puerto 8285, exige origins.json y no se combina con --run.")
+        log("Ensayo del puente ADB: Gateway del ensayo en 8285 con Auth sintético y transporte simulado.")
+        try:
+            summary, events = run_session(False, args.origins, 8285, None, 30, 0, None, bridge_check)
+        finally:
+            restore_bridge()
+        check(summary["intentos_externos"] == 1 and summary["codigos_backend"] == [],
+              "el teléfono provocó una única generación simulada y ninguna llamada externa")
+        return
     if not args.run:
         return
     host, port = args.auth.rsplit(":", 1)

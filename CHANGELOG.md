@@ -8,6 +8,7 @@
 - Documentada la verificación de condiciones de Groq del 2026-11-18 y corregida la cuota: la página publica los límites como base del plan Developer, sin confirmar el nivel gratuito.
 - La rama queda excluida de despliegues Git en ambos `vercel.json`. Añadidas las evidencias para la feria.
 - Añadido el lanzador aislado del ensayo Android LAB, Gateway, conversación y GroqCloud: sandbox sin red ni entorno, relés Unix con destino fijo, presupuesto de peticiones y clave nueva por descriptor. Su ensayo controlado pasa sin salir a Internet.
+- Añadido `--bridge-check`, que ensaya el cambio y la restauración del puente con el teléfono y un Gateway real en 8285, y comprobaciones de aislamiento sobre los procesos vivos. Documentado cómo verificar la respuesta generada dentro de HidroBot.
 - El primer ensayo real se limita por defecto a una solicitud. El lanzador verifica que la clave no aparezca en respuestas ni registros, y el nuevo `adb-bridge.sh` cambia y restaura el puente de la APK LAB sin tocar la APK.
 
 ## HidroBot 3.0 en laboratorio

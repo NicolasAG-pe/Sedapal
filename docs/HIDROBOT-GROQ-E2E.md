@@ -23,13 +23,20 @@ flowchart LR
 - El Gateway escucha únicamente en `127.0.0.1` y solo puede conectarse a los destinos del laboratorio.
 - La clave llega por un descriptor de archivo de solo lectura. Nunca pasa por argumentos, entorno, Gateway, Android ni GitHub.
 
-## 1. Ensayo controlado (sin credenciales ni Internet)
+## 1. Ensayos sin credenciales ni Internet
+
+Estos dos ensayos pueden repetirse cuando se quiera. Ninguno lee un secreto ni llama a GroqCloud. Todo transporte hacia Groq está simulado dentro del sandbox.
 
 ```bash
-/usr/bin/python3 -I scripts/hidrobot-groq/e2e.py
+/usr/bin/python3 -I scripts/hidrobot-groq/e2e.py                  # ensayo controlado
+/usr/bin/python3 -I scripts/hidrobot-groq/e2e.py --bridge-check   # puente ADB con el teléfono conectado
 ```
 
-Usa un Auth sintético con dos sesiones, el adaptador real y un transporte de Groq simulado dentro del sandbox. Comprueba, a través del Gateway: 401 sin sesión, 403 con sesión desconocida, texto generado, CORS para el origen de la WebView, aislamiento entre dos sesiones, respaldo por plazo vencido, respaldo por 429 y pausa sin nueva salida. Termina con exactamente tres intentos externos simulados. **No es inferencia real.**
+**Ensayo controlado.** Auth sintético con dos sesiones, el adaptador real y un transporte de Groq simulado. Comprueba desde el anfitrión, sobre procesos vivos, que el servicio corre con red y procesos propios, que solo recibe `PWD` como variable de entorno, que no conserva el descriptor de la clave y que el Gateway solo escucha en `127.0.0.1`. A través del Gateway verifica 401 sin sesión, 403 con sesión desconocida, texto generado, CORS de la WebView, aislamiento entre dos sesiones, respaldo por plazo vencido y por 429, y pausa sin nueva salida. Verifica que ninguna respuesta hacia Android ni registro del sandbox contiene la clave. Termina con exactamente tres intentos simulados.
+
+**Ensayo del puente** (`--bridge-check`). Levanta el Gateway del ensayo en el puerto 8285 con los orígenes reales del LAB y Auth sintético. Ejecuta `adb-bridge.sh switch`, comprueba desde el teléfono con `curl` por `adb reverse` que `/ready` responde 200, que `/api/chat` sin sesión da 401 y que una sesión sintética recibe modo `generated`. Después ejecuta `rollback` y comprueba que el Gateway anterior vuelve a atender. El teléfono provoca una sola generación simulada. Si algo falla, el puente se restaura igualmente.
+
+**No son inferencia real.**
 
 ## 2. Primer ensayo real: una sola solicitud
 
@@ -67,6 +74,28 @@ Por defecto el lanzador abre **una única petición a GroqCloud** durante 5 minu
 
 Se aprueba con HTTP 200 en el registro `groq`, el rótulo «Orientación generada» en el teléfono, un texto fiel a los extractos, un solo intento externo y la comprobación de ausencia de la clave.
 
+### Cómo comprobar que la respuesta generada aparece en HidroBot
+
+Antes de preguntar, `scripts/hidrobot-groq/adb-bridge.sh status` debe mostrar el puente hacia el puerto del ensayo. Si apunta a 8284, el teléfono habla con la demostración simulada.
+
+| Lo que ves en HidroBot | Qué significa |
+| --- | --- |
+| Rótulo «Orientación generada» y enlace «Consultar fuente oficial» | La respuesta pasó por GroqCloud y superó la validación del servidor y del cliente |
+| Rótulo «Generación simulada» | La respuesta vino del proveedor simulado: el puente sigue en 8284 |
+| Texto sin rótulo | Respaldo del catálogo: el proveedor falló, venció el plazo, hubo cuota o se agotó el tope de una solicitud |
+
+La comprobación se completa con tres evidencias que deben coincidir:
+
+1. **Registro del lanzador.** Aparece una línea `{"evento":"groq","http":200,"ms":…,"tokens":{…},"texto_publico":"…"}`. El campo `texto_publico` debe ser el mismo texto que muestra HidroBot, con el mismo enlace de fuente.
+2. **Resumen final.** `intentos_externos` vale 1 y `codigos_backend` está vacío. Un código como `GROQ_AUTH`, `GROQ_QUOTA` o `CHAT_PROVIDER_TIMEOUT` explica un respaldo.
+3. **Captura de pantalla.** Opcional. Guárdala solo en `artifacts/`, que git ignora, y solo con la cuenta sintética a la vista:
+
+   ```bash
+   adb exec-out screencap -p > artifacts/hidrobot-groq-lab/evidencia-hidrobot.png
+   ```
+
+Una segunda pregunta («¿En pocas palabras?») ya no tendrá intento externo disponible y debe mostrar el catálogo sin rótulo. Eso confirma que el tope funciona. No cuenta como fallo.
+
 ### Regreso al Gateway anterior
 
 El Gateway de demostración con conversación simulada (puerto 8284) no se detiene durante el ensayo. Para volver, en cualquier momento:
@@ -77,6 +106,19 @@ scripts/hidrobot-groq/adb-bridge.sh status
 ```
 
 `rollback` restaura el puente a `127.0.0.1:8284`. Si ese Gateway no responde, no cambia el puente e imprime el comando para reiniciarlo (`node artifacts/hidrobot-groq-lab/gateway-v2.cjs <origins.json>`). `e2e.py` ejecuta el mismo regreso al terminar, incluso si el ensayo falla. Mientras el puente apunte al Gateway del ensayo, el inicio de sesión de la APK depende de que ese proceso siga activo. No hace falta reinstalar ni revertir la APK.
+
+### Pasos reservados al operador autorizado
+
+Solo estos pasos requieren a la persona elegible o el teléfono en sus manos. El resto se ejecutó y verificó localmente.
+
+| Paso | Quién |
+| --- | --- |
+| Confirmar la elegibilidad (18 años, proyecto aislado, modelo permitido) y autorizar expresamente **una** inferencia real con datos sintéticos | Administrador de GroqCloud |
+| Cargar la clave nueva con el comando del paso 1 | Administrador, en terminal local |
+| Ejecutar `e2e.py --run` y `adb-bridge.sh switch` | Operador |
+| Iniciar sesión con la cuenta sintética y preguntar «¿Cómo ahorrar agua?» en el POCO M4 Pro | Operador |
+| Revocar la clave y retirar `hidrobot-groq-e2e.key` | Administrador |
+| Revocar y retirar la clave del piloto anterior, `hidrobot-groq-pilot.key`, que este lanzador no usa | Administrador |
 
 ### Autorización necesaria
 
