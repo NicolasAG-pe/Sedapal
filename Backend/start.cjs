@@ -125,7 +125,7 @@ function supervisar({ env = process.env, spawnImpl = spawn, signals = process,
         if (shared && enabled) {
             prepared = prepare(env);
             const workerEnv = { ...prepared.env }; delete workerEnv.GMAIL_CREDENTIALS_JSON;
-            for (const key of Object.keys(workerEnv)) if (key.startsWith('PUSH_')) delete workerEnv[key];
+            for (const key of Object.keys(workerEnv)) if (key.startsWith('PUSH_') || key.startsWith('CHAT_')) delete workerEnv[key];
             const child = launch('worker', [path.join(__dirname, 'workers/email-outbox.cjs'), '--run'], workerEnv, true);
             waitForWorker('worker', child, 'email_worker_ready');
         } else launchApi();

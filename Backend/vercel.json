@@ -12,6 +12,7 @@
       "fix/lab-consumo-recibos-anulados": false,
       "feature/hidrobot-contexto-lab120": false,
       "feature/hidrobot-groqcloud-lab120": false,
+      "feature/hidrobot-produccion": false,
       "integration/hotfix-main-ms120": false,
       "preparation/backend-avance-23": false,
       "feature/seguridad-totp": false,

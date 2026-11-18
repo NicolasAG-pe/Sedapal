@@ -24,7 +24,7 @@ test('por defecto conserva solo API; SIGTERM cierra el contenedor sin error', as
     assert.equal(f.signals.listenerCount('SIGTERM'), 0);
 });
 test('push comparte contenedor con correo: readiness de ambos y secretos separados por proceso', async () => {
-    const f = fixture({ ...enabled, AUTH_TOKEN_SECRET: 'fixture-jwt', PUSH_ENABLED: '1', PUSH_WORKER_ENABLED: '1',
+    const f = fixture({ ...enabled, AUTH_TOKEN_SECRET: 'fixture-jwt', CHAT_GROQ_API_KEY: 'fixture-chat-key', PUSH_ENABLED: '1', PUSH_WORKER_ENABLED: '1',
         PUSH_WORKER_SHARED_CONTAINER: '1', PUSH_TOKEN_KEY: 'fixture-key', PUSH_SERVICE_ACCOUNT_JSON: 'fixture-json',
         PUSH_DATABASE_URL: 'fixture-db' });
     const push = f.calls.find(c => c.args[0].endsWith('/push.cjs'));
@@ -34,6 +34,8 @@ test('push comparte contenedor con correo: readiness de ambos y secretos separad
     assert.equal(email.options.env.PUSH_TOKEN_KEY, undefined);
     push.child.emit('message', { event: 'push_worker_ready' }); assert.equal(f.calls.length, 2);
     email.child.emit('message', { event: 'email_worker_ready' }); assert.equal(f.calls.length, 3);
+    for (const child of f.calls.slice(0, 2)) assert.equal(child.options.env.CHAT_GROQ_API_KEY, undefined);
+    assert.equal(f.calls[2].options.env.CHAT_GROQ_API_KEY, 'fixture-chat-key');
     const api = f.calls[2]; assert.equal(api.options.env.PUSH_TOKEN_KEY, 'fixture-key');
     for (const key of ['PUSH_SERVICE_ACCOUNT_JSON','PUSH_SERVICE_ACCOUNT_FILE','PUSH_DATABASE_URL']) assert.equal(api.options.env[key], undefined);
     assert.equal(api.options.env.PUSH_WORKER_ENABLED, '0');

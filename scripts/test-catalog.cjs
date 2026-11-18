@@ -17,7 +17,7 @@ const groups = {
         'scripts/test/test-catalog.test.cjs', 'scripts/test/firebase-lab.cjs', 'scripts/test/firebase-release.cjs', 'scripts/test/test-runner.test.cjs'
     ],
     contract: ['Backend/test/services-routing.test.cjs', 'Backend/test/conversation.test.cjs', 'Backend/test/groq-cloud.test.cjs', 'Backend/test/groq-chain.test.cjs', 'scripts/test/public-api-config.test.js', 'scripts/test/android-upgrade.test.cjs', 'scripts/test/client-packaging.test.cjs'],
-    integration: ['Backend/test/auth-service-postgres.cjs', 'Backend/test/notifications-postgres.cjs', 'Backend/test/receipt-profile-compat.cjs', 'Backend/test/payment-production-compat.cjs',
+    integration: ['Backend/test/conversation-production.cjs', 'Backend/test/auth-service-postgres.cjs', 'Backend/test/notifications-postgres.cjs', 'Backend/test/receipt-profile-compat.cjs', 'Backend/test/payment-production-compat.cjs',
         'Backend/test/quality-migrations.cjs', 'Backend/test/receipt-concurrency.cjs', 'Backend/test/receipt-schema.cjs',
         'Backend/test/gmail-roles-local.cjs', 'Backend/test/pagos-sin-piloto.cjs', 'Backend/test/two-factor.cjs', 'Backend/test/incident-tracking.cjs'],
     e2e: ['scripts/test/client-packaging-browser.cjs']

@@ -33,4 +33,5 @@ function readApiBase(target, env = process.env) {
     return url.origin;
 }
 
-module.exports = { readApiBase, root };
+const productionAPI = 'https://hidro-mejora-api.onrender.com';
+module.exports = { readApiBase, root, productionAPI };
