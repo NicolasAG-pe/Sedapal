@@ -133,21 +133,23 @@
   function words(text){
     return (normalize(text,640).match(/[a-z]{4,}/g)||[]).filter(word=>!common.has(word));
   }
-  function generated(id,value,style='standard'){
-    const facts=evidence(id);
-    if(!facts.length || !styles.includes(style) || !value || Object.keys(value).length!==2 ||
-       typeof value.text!=='string' || !Array.isArray(value.evidence) || value.evidence.length<1 ||
-       value.evidence.length>3 || new Set(value.evidence).size!==value.evidence.length ||
-       !value.evidence.every(ref=>facts.some(fact=>fact.id===ref))) return null;
+  function generated(id,value,style='standard',{extracts=evidence(id),onReject=()=>{}}={}){
+    const reject = reason => { onReject(reason); return null; };
+    if(!extracts.length || !styles.includes(style) || !value || Object.keys(value).length!==2 ||
+       typeof value.text!=='string' || !Array.isArray(value.evidence)) return reject('SCHEMA');
+    if(value.evidence.length<1 || value.evidence.length>3 ||
+       new Set(value.evidence).size!==value.evidence.length ||
+       !value.evidence.every(ref=>extracts.some(fact=>fact.id===ref))) return reject('EVIDENCE');
     const text=value.text.normalize('NFC').trim();
     const limit=style==='summary'?280:640;
-    if(text.length<25 || text.length>limit || !/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ .,;:¿?¡!()\n³]+$/u.test(text) ||
-       /³/u.test(text.replace(/\bm³(?!\p{L})/gu,'')) ||
-       /\b(?:www|https?|javascript|contrasena|otp|credenciales|cuenta bancaria|tarjeta bancaria|numero de tarjeta|tu dni|tu direccion|envia(?:me)? (?:tu|el)|transfiere|deposit(?:a|e)|ignora|instrucciones del sistema|garantiz\w*|consumo fue|debes pagar|manana)\b/.test(normalize(text,limit)) ||
-       /\b[\p{L}]+\.(?:com|net|org|pe|gob|mx)\b/iu.test(text)) return null;
-    const anchors=new Set(facts.filter(fact=>value.evidence.includes(fact.id)).flatMap(fact=>words(fact.text)));
+    if(text.length<25 || text.length>limit) return reject('TEXT_LENGTH');
+    if(!/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ .,;:¿?¡!()\n³]+$/u.test(text) ||
+       /³/u.test(text.replace(/\bm³(?!\p{L})/gu,''))) return reject('CHARACTERS');
+    if(/\b(?:www|https?|javascript|contrasena|otp|credenciales|cuenta bancaria|tarjeta bancaria|numero de tarjeta|tu dni|tu direccion|envia(?:me)? (?:tu|el)|transfiere|deposit(?:a|e)|ignora|instrucciones del sistema|garantiz\w*|consumo fue|debes pagar|manana)\b/.test(normalize(text,limit)) ||
+       /\b[\p{L}]+\.(?:com|net|org|pe|gob|mx)\b/iu.test(text)) return reject('UNSAFE_TEXT');
+    const anchors=new Set(extracts.filter(fact=>value.evidence.includes(fact.id)).flatMap(fact=>words(fact.text)));
     const sentences=text.split(/[.!?]\s+|\n+/).filter(sentence=>sentence.trim());
-    if(sentences.some(sentence=>new Set(words(sentence).filter(word=>anchors.has(word))).size<2)) return null;
+    if(sentences.some(sentence=>new Set(words(sentence).filter(word=>anchors.has(word))).size<2)) return reject('GROUNDING');
     return {text,evidence:[...value.evidence]};
   }
   function answer(message){ return get(match(message)); }

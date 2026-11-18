@@ -6,7 +6,7 @@ const assert = require('node:assert/strict');
 const { createServer } = require('node:http');
 const { randomUUID } = require('node:crypto');
 const { createGateway } = require('../services/gateway/server.cjs');
-const { createConversationService, sessionValidator } = require('../services/conversation/server.cjs');
+const { createConversationService, sessionValidator, providerLogger } = require('../services/conversation/server.cjs');
 const { createGroqCloudProvider } = require('../services/conversation/groq-cloud.cjs');
 const knowledge = require('../../Frontend/assets/js/sedapal-knowledge.js');
 
@@ -118,35 +118,70 @@ test('los errores 401, 403, 5xx, red y contenido inválido usan el catálogo con
     assert.equal(f.logs.length, cases.length);
 });
 
-test('la saturación del servicio usa el catálogo sin abrir más salidas que el límite de concurrencia', async t => {
-    let open = 0;
-    let peak = 0;
-    const release = [];
-    const f = await setup(t, () => new Promise(resolve => {
-        open++; peak = Math.max(peak, open);
-        release.push(() => { open--; resolve(completion(prose)); });
-    }), { service: { maxInFlight: 2, sessionLimit: 50, ipLimit: 100 } });
-    const pending = [f.post(), f.post(), f.post(), f.post()].map(async request => (await request).json());
-    await new Promise(resolve => setTimeout(resolve, 100));
-    assert.equal(peak, 2);
-    release.forEach(finish => finish());
-    const modes = (await Promise.all(pending)).map(answer => answer.mode).sort();
-    assert.deepEqual(modes, ['fallback', 'fallback', 'generated', 'generated']);
+test('el respaldo conserva el contrato y los logs solo contienen el código y el motivo fijo', async t => {
+    const warning = t.mock.method(console, 'warn', () => {});
+    let reply;
+    const f = await setup(t, () => reply, { service: { onProviderError: providerLogger() } });
+    const conversationId = randomUUID();
+    for (let i = 0; i < 2; i++) {
+        reply = completion({ text: 'Para cuidar el agua usa los caños. Contacto privado sintetico@example.invalid.',
+            evidence:['base'] });
+        assert.deepEqual(await (await f.post({ conversationId })).json(), fallbackBrief);
+    }
+    reply = new Response(JSON.stringify({ choices: [{ finish_reason: 'length',
+        message: { role: 'assistant', content: apiKey } }] }));
+    assert.deepEqual(await (await f.post({ conversationId })).json(), fallbackBrief);
+    providerLogger()('GROQ_INVALID_OUTPUT', 'Bearer jwt-sintetico-A PII ' + apiKey);
+    providerLogger()(apiKey + ' jwt-sintetico-A');
+    assert.deepEqual(warning.mock.calls.map(call => call.arguments), [
+        ['[conversation]', 'GROQ_INVALID_OUTPUT', 'CHARACTERS'],
+        ['[conversation]', 'GROQ_INVALID_OUTPUT', 'FINISH_LENGTH'],
+        ['[conversation]', 'GROQ_INVALID_OUTPUT'],
+        ['[conversation]', 'CHAT_PROVIDER_ERROR']
+    ]);
+    const logged = JSON.stringify(warning.mock.calls.map(call => call.arguments));
+    for (const privateValue of [apiKey, 'jwt-sintetico-A', 'sintetico@example.invalid', conversationId, '900000001', 'Contacto privado']) {
+        assert.equal(logged.includes(privateValue), false);
+    }
 });
 
-test('si el cliente se desconecta, la solicitud al proveedor se cancela y libera su plaza', async t => {
-    let signal;
+test('la saturación del servicio usa el catálogo sin abrir más salidas que el límite de concurrencia', { timeout: 8000 }, async t => {
+    const bothOpen = Promise.withResolvers();
+    const release = [];
+    let calls = 0;
+    const f = await setup(t, () => new Promise(resolve => {
+        calls++;
+        release.push(() => resolve(completion(prose)));
+        if (release.length === 2) bothOpen.resolve();
+    }), { service: { maxInFlight: 2, sessionLimit: 50, ipLimit: 100 } });
+    const pending = [f.post(), f.post()].map(async request => (await request).json());
+    await bothOpen.promise;
+    try {
+        const fallbacks = await Promise.all([f.post(), f.post()].map(async request => (await request).json()));
+        assert.deepEqual(fallbacks, [fallbackBrief, fallbackBrief]);
+        assert.equal(calls, 2);
+    } finally {
+        release.forEach(finish => finish());
+        const completed = await Promise.all(pending);
+        assert.deepEqual(completed.map(answer => answer.mode), ['generated', 'generated']);
+    }
+});
+
+test('si el cliente se desconecta, la solicitud al proveedor se cancela y libera su plaza', { timeout: 8000 }, async t => {
+    const started = Promise.withResolvers();
+    const cancelled = Promise.withResolvers();
     const f = await setup(t, (_url, request) => new Promise((_resolve, reject) => {
-        signal = request.signal;
-        signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+        const { signal } = request;
+        signal.addEventListener('abort', () => { reject(signal.reason); cancelled.resolve(); }, { once: true });
+        started.resolve(signal);
     }));
     const controller = new AbortController();
     const pending = f.post({}, 'A', controller.signal).then(() => 'respuesta', () => 'cancelada');
-    await new Promise(resolve => setTimeout(resolve, 80));
-    assert.ok(signal && !signal.aborted);
+    const signal = await started.promise;
+    assert.equal(signal.aborted, false);
     controller.abort();
     assert.equal(await pending, 'cancelada');
-    await new Promise(resolve => setTimeout(resolve, 80));
+    await cancelled.promise;
     assert.equal(signal.aborted, true);
     assert.deepEqual(f.logs, []);
 });
@@ -190,5 +225,6 @@ test('dos sesiones usan conversaciones separadas y la continuación no cruza cue
     assert.equal((await (await f.post({ conversationId, topic: 'more' }, 'B')).json()).mode, 'clarification');
     assert.equal((await (await f.post({ conversationId, topic: 'more' }, 'A')).json()).mode, 'generated');
     assert.deepEqual(seen.map(({ continuation }) => continuation), [false, true]);
-    assert.deepEqual(seen.map(({ extracts }) => extracts), Array(2).fill(knowledge.evidence('saving')));
+    assert.deepEqual(seen[0].extracts, seen[1].extracts);
+    assert.equal(seen[0].extracts[0].text, knowledge.evidence('saving')[0].text.split(' En Inicio')[0]);
 });

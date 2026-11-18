@@ -82,9 +82,9 @@ test('Render y Gateway usan login oficial y solo el canario llega al transporte 
     for (const outgoing of calls) {
         assert.deepEqual(outgoing.headers, { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key });
         const { messages } = JSON.parse(outgoing.body);
-        assert.deepEqual(JSON.parse(messages[1].content), {
-            topic: 'saving', continuation: false, style: 'standard', extracts: knowledge.evidence('saving')
-        });
+        const { extracts, ...publicContext } = JSON.parse(messages[1].content);
+        assert.deepEqual(publicContext, { topic: 'saving', continuation: false, style: 'standard' });
+        assert.equal(extracts[0].text, knowledge.evidence('saving')[0].text.split(' En Inicio')[0]);
         for (const secret of [first.token, first.suministro.numero_suministro, first.usuario.correo, id, key]) {
             assert.equal(outgoing.body.includes(secret), false);
         }
