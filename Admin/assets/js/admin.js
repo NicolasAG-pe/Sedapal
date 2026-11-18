@@ -19,13 +19,18 @@
   const security=window.createHMTwoFactorUI({session:{token:session.token,authFetch:authRequest},apiFetch:api.fetch,
     showLogin:message=>logout(message || ''),
     showChallenge:()=>{document.getElementById('admin-forgot-wrap').hidden=true;loginForm.hidden=true;document.getElementById('admin-password').value='';},
-    authenticated:async data=>{const epoch=attempt;try{await completeAdminLogin(data,epoch);}catch(error){if(epoch===attempt&&!shared.ui.isAborted(error))logout('No se pudo confirmar la sesión. Inicia sesión nuevamente.');throw error;}},showProfile:()=>navigate('admin-cuenta')});
+    authenticated:async data=>{
+      const epoch=attempt;
+      realtime.stop();
+      try{await completeAdminLogin(data,epoch);}
+      catch(error){if(epoch===attempt&&!shared.ui.isAborted(error))logout('No se pudo confirmar la sesión. Inicia sesión nuevamente.');throw error;}
+    },showProfile:()=>navigate('admin-cuenta')});
   const realtime = shared.createRealtime(session, {
     events: ['incidencia:nueva', 'incidencia:actualizada', 'atencion:nueva',
       'atencion:actualizada', 'recibo:nuevo', 'recibo:actualizado', 'pago:nuevo', 'corte:actualizado'],
     onChange: () => { if (session.isAdmin() && modules) modules.load(page); },
     onStatus: updateConnection,
-    onInvalidated: () => logout('Tu sesión cambió o terminó. Inicia sesión nuevamente.')
+    onInvalidated: () => security.onSessionInvalidated(() => logout('Tu sesión cambió o terminó. Inicia sesión nuevamente.'))
   });
 
   const passwordRecovery=window.createHMPasswordRecovery({container:document.getElementById('password-recovery'),
@@ -983,7 +988,7 @@
       const desc = document.createElement('div'); desc.className = 'inc-desc';
       desc.textContent = 'Suministro: ' + r.numero_suministro + ' · ' + fmt(Number(r.monto)) + ' · ' + Number(r.consumo_m3) + ' m³';
       const meta = document.createElement('div'); meta.className = 'inc-meta';
-      meta.textContent = 'Emisión ' + formatearFechaCorta(r.fecha_emision) + ' · Vence ' + formatearFechaCorta(r.fecha_vencimiento);
+      meta.textContent = 'Emisión ' + shared.ui.receiptDate(r.fecha_emision) + ' · Vence ' + shared.ui.receiptDate(r.fecha_vencimiento);
       d.appendChild(row); d.appendChild(desc); d.appendChild(meta);
       const box = document.createElement('div'); box.className = 'tbl-actions';
       if(!r.tiene_pago){

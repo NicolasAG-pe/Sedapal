@@ -170,8 +170,10 @@ for (const integrated of [false, true]) test(integrated
     const { rows: [mfa] } = await db.pool.query('SELECT * FROM usuario_2fa WHERE id_usuario=$1', [idUsuario]);
     const secretoTotp = crearCifradoTotp(secretos).decrypt(mfa.pendiente_secreto, idUsuario);
     const codigoTotp = new OTPAuth.TOTP({ secret: OTPAuth.Secret.fromBase32(secretoTotp) }).generate({ timestamp: Date.now() });
+    if (integration) await integration.connect(tokenRenovado);
     const confirmado = await request('/api/auth/2fa/confirm', { metodo: 'POST', token: tokenRenovado, cuerpo: { codigo: codigoTotp } });
     assert.equal(confirmado.res.status, 200, JSON.stringify(confirmado.data));
+    if (integration) await integration.disconnected();
     assert.equal(confirmado.data.codigos_recuperacion.length, 10);
     const tokenTras2fa = confirmado.data.token;
     assert.equal((await request('/api/auth/session', { token: tokenRenovado })).res.status, 401); // versión MFA cambió

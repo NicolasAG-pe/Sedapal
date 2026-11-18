@@ -3,14 +3,14 @@
   'use strict';
   global.createHMTwoFactorUI=function({session,apiFetch,showLogin,showChallenge,authenticated,showProfile}){
     const el=id=>document.getElementById('two-factor-'+id);
-    let pending=null,active=false,busy=false,generation=0,timer;
+    let pending=null,active=false,busy=false,generation=0,timer,rotation=null;
     function hidePrivate(){
       el('manage').reset();el('confirm').reset();el('confirm').hidden=true;
       el('qr').removeAttribute('src');el('codes-list').textContent='';el('codes').hidden=true;
       el('settings-error').textContent='';el('controls').hidden=true;
     }
     function clear(){
-      generation++;pending=null;clearTimeout(timer);busy=false;active=false;
+      generation++;pending=null;clearTimeout(timer);busy=false;active=false;rotation=null;
       el('login').reset();el('login').hidden=true;el('login-error').textContent='';hidePrivate();
       el('status').textContent='Consulta el estado de protección de tu cuenta.';el('open').disabled=true;render();
       for(const b of document.querySelectorAll('#two-factor-login button,#two-factor-controls button'))b.disabled=false;
@@ -77,13 +77,31 @@
       if(data.codigos_recuperacion){el('codes-list').textContent=data.codigos_recuperacion.join('\n');el('codes').hidden=false;}
       await load();
     }
+    function onSessionInvalidated(closeSession){
+      // El servidor revoca el socket anterior antes de responder con el nuevo JWT.
+      if(rotation){rotation.closeSession=closeSession;return;}
+      closeSession();
+    }
+    async function rotateSession(path,body){
+      const operation={closeSession:null};
+      rotation=operation;
+      let data;
+      try{data=await request(path,body,true);}
+      finally{
+        if(rotation===operation){
+          rotation=null;
+          if(!data)operation.closeSession?.();
+        }
+      }
+      await changed(data);
+    }
     el('confirm').addEventListener('submit',event=>{event.preventDefault();run('settings-error',async()=>{
       const codigo=el('confirm-code').value;el('confirm-code').value='';
-      await changed(await request('/api/auth/2fa/confirm',{codigo},true));
+      await rotateSession('/api/auth/2fa/confirm',{codigo});
     });});
     for(const [button,path]of [['disable','disable'],['recovery','recovery']])el(button).addEventListener('click',()=>run('settings-error',async()=>{
       const body={password:el('password').value,codigo:el('existing-code').value};el('password').value='';el('existing-code').value='';
-      await changed(await request('/api/auth/2fa/'+path,body,true));
+      await rotateSession('/api/auth/2fa/'+path,body);
     }));
     el('login').addEventListener('submit',event=>{event.preventDefault();run('login-error',async()=>{
       if(!pending || Date.parse(pending.vence_en)<=Date.now())throw new Error('El desafío venció. Vuelve a iniciar sesión.');
@@ -93,7 +111,7 @@
       pending=null;clearTimeout(timer);el('login').reset();el('login').hidden=true;
     });});
     el('cancel').addEventListener('click',()=>{clear();showLogin();});
-    return{clear,load,challenge(data){
+    return{clear,load,onSessionInvalidated,challenge(data){
       if(typeof data.desafio!=='string'||!/^[A-Za-z0-9_-]{43}$/.test(data.desafio)||!Number.isFinite(Date.parse(data.vence_en)))throw new Error('Desafío inválido.');
       clear();pending={desafio:data.desafio,vence_en:data.vence_en};showChallenge();el('login').hidden=false;el('login-code').focus();
       timer=setTimeout(()=>{pending=null;el('login').reset();el('login-error').textContent='El desafío venció. Vuelve a iniciar sesión.';},Math.max(0,Date.parse(data.vence_en)-Date.now()));

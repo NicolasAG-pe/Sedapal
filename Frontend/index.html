@@ -1414,11 +1414,11 @@
     s.on('corte:actualizado', ()=>{ sincronizarUsuarioPorEvento('corte'); });
     s.on('notificacion:nueva', ()=>{ sincronizarUsuarioPorEvento('notificacion'); });
     s.on('perfil:actualizado', ()=>{ sincronizarUsuarioPorEvento('perfil'); });
-    s.on('sesion:invalidada', ()=>{
+    s.on('sesion:invalidada', ()=>interfaz2fa.onSessionInvalidated(()=>{
       try{ showToast('Tu sesión cambió o terminó. Inicia sesión nuevamente.'); }catch(e){}
       try{ detenerTiempoReal(); }catch(e){}
       try{ cerrarSesionCompleta('Sesión terminada. Inicia sesión nuevamente.'); }catch(e){}
-    });
+    }));
   }
   function iniciarTiempoReal(){
     try{ detenerTiempoReal(); }catch(e){}
@@ -2036,8 +2036,8 @@
       periodo: etiqueta,
       numRecibo: 'R-' + idStr,
       monto: monto, estado: api.estado,
-      emision: emiValida ? formatearFechaCorta(api.fecha_emision) : '—',
-      vencimiento: venValida ? formatearFechaCorta(api.fecha_vencimiento) : '—',
+      emision: emiValida ? window.HMShared.ui.receiptDate(api.fecha_emision) : '—',
+      vencimiento: venValida ? window.HMShared.ui.receiptDate(api.fecha_vencimiento) : '—',
       fechaEmisionISO: api.fecha_emision || null,
       fechaVencimientoISO: api.fecha_vencimiento || null,
       consumoM3: consumoM3, consumo: consumoM3 + ' m³',

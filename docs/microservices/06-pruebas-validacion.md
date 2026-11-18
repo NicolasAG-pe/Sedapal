@@ -1,4 +1,46 @@
-# Validación MS-01
+# Validación de microservicios
+
+## MS-04 — Cliente, panel y sesiones, 2026-11-17
+
+Punto de partida `1c1b042` en `feature/arquitectura-microservicios-120`
+con árbol limpio. Se arrancó el laboratorio `hidro-ms120-integration` desde
+sus imágenes locales. Había siete servicios en ejecución al finalizar
+el arranque y `db-init` salió con código 0. PostgreSQL 18 (`hm_email_lab`)
+usa tmpfs y red interna, sin puerto publicado. Los logs se revisaron mediante
+conteos y estados de servicio. Las pruebas desde los clientes usaron cuentas
+sintéticas `.invalid`, sin procesar pagos ni envíos FCM.
+
+| Verificación | Resultado |
+|---|---|
+| Unitarias y contratos, Node 22.23.5 | 164 aprobadas, sin fallos ni omisiones. Incluye la prueba de fecha civil de recibo. Inventario vigente. |
+| Integración PostgreSQL 18 aislada | 92 aprobadas, cero fallos y una omisión condicional del caso de histórico duplicado sin migración. Incluye roles, permisos, concurrencia de recibos y desconexión Socket.IO por contraseña, 2FA y desactivación. |
+| Firefox, cliente y panel en 8180/8181 | Alta, confirmación OTP, login, perfil y rechazo de usuario en el panel. El recibo publicado y el cambio de estado de una incidencia aparecieron en el cliente sin recargar. Emisión y vencimiento coincidieron con los días guardados. La edición de ubicación disparó una reconsulta de perfil, cuyos campos visibles son correo, suministro y fecha. |
+| Sesiones en Firefox | El cambio de contraseña cerró dos sesiones conectadas. Al activar 2FA, la sesión iniciadora mostró los diez códigos de recuperación y reconectó con el JWT nuevo. La otra sesión se cerró. El siguiente ingreso exigió TOTP. La desactivación desde el panel cerró la sesión del cliente. |
+| Correo simulado | Worker → Notifications stub → outbox `aceptado` con id `stub-…` y carga cifrada descartada. El OTP real del fixture se tomó en memoria antes de activar el worker y se introdujo en Firefox. |
+| Android nativo | Pendiente. El fuente declara 1.2.0/código 6. Los constructores de release configuran la API y Socket.IO HTTPS de Render y Capacitor usa el origen WebView `https://localhost`. El teléfono, ADB y el APK de referencia no estaban disponibles para comprobar instalación o el destino del binario. |
+
+Se corrigió la lista de orígenes del laboratorio: los clientes se publican por
+`127.0.0.1`, que antes recibía 403 al negociar Socket.IO. Tras el ajuste,
+`localhost` y `127.0.0.1` respondieron 200 en ambos puertos y el origen ajeno
+continuó en 403. Se ajustó también la rotación de sesión 2FA para esperar el
+JWT renovado en la interfaz que inició la operación. El backend sigue
+desconectando los sockets del JWT anterior. Recibos conserva el día civil de
+PostgreSQL aun cuando la API lo serializa como ISO con hora.
+
+Firefox se automatizó por WebDriver BiDi con el cliente a 390 y 1160 px y el
+panel a 1366 px. Las correcciones estáticas se sirvieron mediante montajes
+temporales de solo lectura sobre Nginx, conservando las imágenes locales y la
+base del laboratorio. La activación de 2FA se probó con el rol usuario.
+
+Para repetir la comprobación nativa hace falta identificar el APK y su hash,
+disponer de ADB y un dispositivo autorizado, y usar un build de laboratorio
+con origen y destino controlados (ADB reverse y variante debug en teléfono,
+o AVD con `10.0.2.2:8180`). La configuración de release apunta a producción
+y no se usó para este ensayo. Véase [Android](../ANDROID.md) y la
+[evidencia histórica del APK 1.2.0](../pruebas/fcm-oficial-120.md).
+
+La [preparación de Billing](09-preparacion-billing.md) registra las condiciones
+transaccionales y de compatibilidad pendientes.
 
 ## Etapa MS-03 — Auth independiente, 2026-11-13
 

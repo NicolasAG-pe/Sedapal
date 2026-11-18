@@ -40,19 +40,24 @@ autorización: el volumen `hidro-ms120-lab_datos_lab` solo contiene datos
 sintéticos del laboratorio, pero la limpieza de volúmenes no es decisión
 automática.
 
-## Estado general
+## Laboratorio con cliente y panel — MS-04
 
-MS-02 y MS-03 tienen ejecución Compose local probada sin red externa. El
-laboratorio completo (web, admin, gateway, billing, operations, realtime)
-descrito abajo sigue pendiente. Las pruebas PostgreSQL usan una instancia nueva
-sin puertos publicados, network none y tmpfs; el runner comparte exclusivamente
-su namespace de red.
+`compose.integration.yaml` añade Backend como entrada HTTP y Socket.IO y
+sirve cliente y panel en `127.0.0.1:8180` y `127.0.0.1:8181`. PostgreSQL,
+Auth, Notifications y el worker usan la red interna. La base es temporal y
+Notifications usa el stub de correo. La [guía local](../LOCAL-DEVELOPMENT.md)
+incluye los comandos y la [matriz de pruebas](06-pruebas-validacion.md)
+registra el alcance comprobado.
 
-Estado: **compose.microservices.yaml implementado para los servicios extraídos**;
-el laboratorio completo con clientes y gateway no existe todavía. No ejecutar
-`compose.yaml` suponiendo que incluye microservicios, ni los archivos de este
-laboratorio suponiendo arquitectura completa.
-`compose.yaml` original permanece intacto.
+## Laboratorio de arquitectura completa
+
+Gateway, Billing, Operations y Realtime como procesos independientes siguen
+pendientes. Las pruebas PostgreSQL usan una instancia nueva sin puertos
+publicados, `network none` y tmpfs. El runner comparte exclusivamente su
+namespace de red.
+
+El laboratorio integrado y la instalación de `compose.yaml` tienen identidades
+y redes distintas. Usa el archivo que corresponde al alcance de la prueba.
 
 El futuro laboratorio tendrá identidad exclusiva `hidro-ms120-<identificador>`,
 sin container_name fijo, redes/volúmenes externos ni referencias a instalaciones

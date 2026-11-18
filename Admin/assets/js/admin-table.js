@@ -1,7 +1,7 @@
 // Columnas por registro. Se mueven los botones originales y sus listeners.
 (function(global){
   'use strict';
-  const {node,date,money}=global.HMShared.ui;
+  const {node,date,receiptDate,money}=global.HMShared.ui;
   const definitions={
     'admin-usu-list':['Usuarios y suministros',['Cuenta','Suministro','Ubicación y registros','Rol','Estado','Acciones']],
     'admin-rec-list':['Recibos',['Recibo y periodo','Suministro','Fechas','Consumo','Importe','Estado','Acciones']],
@@ -14,7 +14,7 @@
   function columns(kind,d,heading,badge,actions){
     switch(kind){
       case 'admin-usu-list':return [heading,d.numero_suministro||'—',stack((d.distrito||'Sin distrito')+' / '+(d.zona||'Sin zona'),'Reg: '+date(d.fecha_registro)+' · Recibos: '+d.cantidad_recibos+' · Pagos: '+d.cantidad_pagos+' · Incidencias: '+d.cantidad_incidencias),d.rol==='admin'?'Administrador':'Usuario',badge,actions];
-      case 'admin-rec-list':return [heading,d.numero_suministro,stack('Emisión '+date(d.fecha_emision),'Vence '+date(d.fecha_vencimiento)),Number(d.consumo_m3)+' m³',money(d.monto),badge,actions];
+      case 'admin-rec-list':return [heading,d.numero_suministro,stack('Emisión '+receiptDate(d.fecha_emision),'Vence '+receiptDate(d.fecha_vencimiento)),Number(d.consumo_m3)+' m³',money(d.monto),badge,actions];
       case 'admin-cortes-list':return [heading,stack(d.motivo,d.alcance==='General'?'Cobertura general':(d.distrito||'—')+' / '+(d.zona||'—')),stack(date(d.fecha_inicio,true),date(d.fecha_fin,true)),badge,actions];
       case 'admin-inc-list':return [stack(heading.textContent,d.tipo),d.numero_suministro,stack(d.descripcion,'Ref: '+(d.referencia||'—')),date(d.fecha_registro),badge,actions];
       case 'admin-pay-list':return [heading,d.numero_suministro,stack('Recibo #'+d.id_recibo,d.metodo||'—'),stack(d.codigo_operacion||'—',date(d.fecha_pago)),money(d.monto)];

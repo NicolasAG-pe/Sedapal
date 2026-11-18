@@ -106,7 +106,7 @@
     },
     {
       "path": "Backend/test/auth-service-postgres.cjs",
-      "sha256": "ee59866e9591e3ca3900030368053edb8f142da1494e628cf18f1bd508830168",
+      "sha256": "56e7cde8be62958649dee801fa7170a1ed9acc50472fd656f56903334375c2be",
       "type": "integracion",
       "group": "integration",
       "nodeTest": true,
@@ -3111,7 +3111,7 @@
     },
     {
       "path": "scripts/test/ui-money.test.cjs",
-      "sha256": "6d1020f1499613c034dafcd8c7e14ce175ce4085d048fa0325e1fc07a188c220",
+      "sha256": "ed0ab7da98c49416d3d2909e14f076622bdd5b210d410a7f3f038445241c93d1",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,

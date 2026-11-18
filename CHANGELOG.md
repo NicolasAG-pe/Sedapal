@@ -1,5 +1,13 @@
 # Historial de versiones
 
+## Validación del laboratorio de Auth y Notifications — MS-04
+
+- Corregidos los orígenes loopback de Socket.IO para cliente y panel. El laboratorio sigue restringido a los puertos locales 8180 y 8181.
+- Corregida la carrera entre la revocación de Socket.IO y la respuesta de 2FA que renueva la sesión y entrega códigos de recuperación. La integración comprueba la desconexión del socket con JWT anterior.
+- Cliente y panel conservan el día de emisión y vencimiento de los recibos cuando PostgreSQL devuelve fechas serializadas con hora.
+- Node 22.23.5: 164 pruebas seguras aprobadas. PostgreSQL 18 aislado: 92 aprobadas, una omisión condicional y cero fallos. Firefox comprobó registro con OTP simulado, roles, recibos, seguimiento de incidencias y revocación de sesiones por contraseña, 2FA y desactivación. Android queda pendiente.
+- Documentado el orden de extracción de Billing. Recibos y pagos permanecen en el Backend para conservar la integridad transaccional.
+
 ## Integración local progresiva de Auth y Notifications — MS-04
 
 - El backend conserva `/api` y Socket.IO como entrada común, y delega solo las rutas de Auth a `AUTH_SERVICE_URL` cuando se habilita explícitamente. Sin esa variable, la aplicación oficial conserva el comportamiento monolítico.
