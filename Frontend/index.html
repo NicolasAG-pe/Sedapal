@@ -3027,6 +3027,7 @@
   const hbKnowledgeChat = window.HMHidroBotChat.createKnowledgeChat({
     knowledge:window.HMSedapalKnowledge,
     enabled:window.HM_CHAT_LAB === true,
+    version:2,
     identifier:()=>globalThis.crypto?.randomUUID?.(),
     request:async (body,signal)=>{
       const response=await apiFetch('/api/chat',{
@@ -3069,6 +3070,12 @@
     m.className = 'hb-msg bot';
     const s = document.createElement('span');
     s.textContent = data.text;
+    if(data.mode === 'generated' || data.mode === 'generated-simulated'){
+      const mode = document.createElement('span');
+      mode.className = 'hb-time';
+      mode.textContent = data.mode === 'generated' ? 'Orientación generada' : 'Generación simulada';
+      m.appendChild(mode);
+    }
     const t = document.createElement('span');
     t.className = 'hb-time'; t.textContent = hbTime();
     m.appendChild(s); m.appendChild(t);
@@ -3291,15 +3298,29 @@
     return handleBotGuide(guide,message);
   }
   function handleBotMessage(message){
-    const normalized=normalizeBotText(message);
     const online=navigator.onLine;
-    if(hbKnowledgeChat.hasTopic() && /^(?:y )?(?:dime mas|cuentame mas|explicame mas|mas detalles|algo mas)[?!. ¿¡]*$/.test(normalized.replace(/^[¿¡]+/,''))){
-      return hbKnowledgeChat.reply({followup:true,online});
+    const style=window.HMSedapalKnowledge.followupStyle(message);
+    if(style && hbKnowledgeChat.hasTopic()){
+      return hbKnowledgeChat.reply({followup:true,style,online});
     }
     const topic=window.HMSedapalKnowledge.match(message);
     const guide=detectBotGuide(message);
-    if(['saving','read-receipt'].includes(topic) && !['no_water','low_pressure','leak'].includes(guide)){
+    const normalized=normalizeBotText(message);
+    const generalTopic=['saving','read-receipt','read-consumption','detect-leaks','water-outage-guide'].includes(topic);
+    const accountSpecific=/\b(?:mi recibo|mis recibos|mi corte|mi zona|mi suministro|mis incidencias|cuanto|cuando|a que hora|hoy|ayer|actual(?:es)?)\b/.test(normalized);
+    if(generalTopic && (!accountSpecific || topic==='saving') && !['no_water','low_pressure','incident','payment','pdf'].includes(guide)
+      && (guide!=='leak' || topic==='detect-leaks')){
       hbConversation.reset();
+      if(topic==='water-outage-guide'){
+        return hbKnowledgeChat.reply({topic,online}).then(answer=>({
+          ...answer,actions:[createBotAction('Revisar cortes',()=>hbGo('cortes'))]
+        }));
+      }
+      if(topic==='detect-leaks'){
+        return hbKnowledgeChat.reply({topic,online}).then(answer=>({
+          ...answer,actions:[createBotAction('Reportar fuga',b=>{ minimizeBot(); openIncidentModal('Fuga de agua',b); })]
+        }));
+      }
       return hbKnowledgeChat.reply({topic,online});
     }
     const answer=handleLocalBotMessage(message);

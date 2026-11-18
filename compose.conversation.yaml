@@ -18,6 +18,9 @@ services:
       NODE_ENV: test
       PORT: '3110'
       CHAT_AUTH_URL: http://auth:3100
+      CHAT_PROVIDER: ${CHAT_PROVIDER:-local}
+      CHAT_GROQ_MODEL: ${CHAT_GROQ_MODEL:-openai/gpt-oss-20b}
+      CHAT_GROQ_API_KEY:
     depends_on: {auth: {condition: service_healthy}}
     healthcheck:
       test: [CMD, node, -e, "fetch('http://127.0.0.1:3110/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]

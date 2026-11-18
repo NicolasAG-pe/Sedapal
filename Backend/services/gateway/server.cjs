@@ -77,7 +77,7 @@ function createGateway({ origins, allowedOrigins, trustIngress = false }) {
             res.status(503).json({ estado: 'error', codigo: name === 'auth' ? 'AUTH_UNAVAILABLE' : 'SERVICE_UNAVAILABLE',
                 mensaje: 'Servicio temporalmente no disponible.' });
         };
-        proxy.setTimeout(name === 'realtime' ? 35000 : name === 'conversation' ? 3000 : 15000, () => proxy.destroy(Error('upstream timeout')));
+        proxy.setTimeout(name === 'realtime' ? 35000 : name === 'conversation' ? 8500 : 15000, () => proxy.destroy(Error('upstream timeout')));
         proxy.once('error', unavailable);
         proxy.on('response', upstream => {
             if (!upstream.statusCode) { upstream.resume(); return unavailable(); }

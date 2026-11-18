@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## Orientación generativa de HidroBot con GroqCloud
+
+- Añadido el adaptador backend de GroqCloud para GPT-OSS 20B. La generación usa temas públicos con fuentes controladas y conserva el catálogo como respaldo. El modo local es el predeterminado.
+- Se mantiene el contrato de Android LAB v10 y se documentan la activación autorizada, las cuotas, la reversión y la demostración con el simulador.
+
 ## HidroBot 3.0 en laboratorio
 
 - Añadido el servicio opcional de conversación con proveedor simulado y respuestas de un catálogo con fuentes oficiales. El cliente mantiene fuera del servicio los mensajes y datos de la cuenta.
