@@ -2496,7 +2496,7 @@
     },
     {
       "path": "scripts/test/hidrobot.test.cjs",
-      "sha256": "3e3446c5a1f2cfb8bf175b763f50096cf2c1db72359894264ebd58707b5bccab",
+      "sha256": "f42839ca9c69266de5e78a6273515784b6fbbcdd35a1c02dae069bdf294b138b",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2507,7 +2507,8 @@
         "node:test",
         "node:assert/strict",
         "node:fs",
-        "node:vm"
+        "node:vm",
+        "../../Frontend/assets/js/hidrobot-conversation.js"
       ],
       "environmentNames": [],
       "legacyNpm": [
