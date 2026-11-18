@@ -97,6 +97,7 @@ test('rechaza texto ajeno a las fuentes, valores de cuenta y envolturas inespera
         { ...prose, text: 'Para cuidar el agua, visita sitio.pe.' },
         { ...prose, text: 'Para cuidar el agua envía tu DNI y usa los caños.' },
         { ...prose, text: 'Para cuidar el agua revisa <b>los caños</b>.' },
+        { ...prose, text: `Para cuidar el agua, revisa los caños y anota ${apiKey}.` },
         { ...prose, text: 'La tarifa por cuidar el agua y usar los caños es de ochenta soles.' },
         { ...prose, text: 'Para cuidar el agua revisa el consumo de once metros cúbicos en los caños.' },
         { ...prose, text: 'Tu consumo de agua en caños y duchas fue 96 m³.' },

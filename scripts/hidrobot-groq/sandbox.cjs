@@ -15,8 +15,9 @@ const dir = '/run/hidrobot-e2e';
 const secret = '/run/secrets/chat-groq-api-key';
 const host = 'api.groq.com';
 const destination = 'https://' + host + '/openai/v1/chat/completions';
-const [mode, canary, ttlText, budgetText] = process.argv.slice(2);
+const [mode, canary, ttlText, budgetText, syntheticSupply] = process.argv.slice(2);
 const real = mode === 'run';
+const tlsCheck = mode === 'tls-check';
 const model = 'openai/gpt-oss-20b';
 const budget = Number(budgetText);
 const codes = [];
@@ -39,7 +40,8 @@ async function isolation() {
 function validateSession(bearer) {
     return new Promise((resolve, reject) => {
         const request = http.request({ socketPath: dir + '/auth.sock', path: '/api/auth/session', method: 'GET',
-            headers: { Authorization: bearer, Host: 'auth' }, timeout: 1500 }, response => {
+            headers: { Authorization: bearer, Host: 'auth' }, signal: AbortSignal.timeout(1500) }, response => {
+            response.once('error', reject);
             if (response.statusCode === 401 || response.statusCode === 403) { response.resume(); return resolve(false); }
             if (response.statusCode !== 200) { response.resume(); return reject(Error('Auth no disponible')); }
             const chunks = [];
@@ -51,11 +53,12 @@ function validateSession(bearer) {
             response.on('end', () => {
                 try {
                     const { estado, usuario, suministro } = JSON.parse(Buffer.concat(chunks));
-                    resolve(estado === 'ok' && usuario?.rol === 'usuario' && /^\d{9}$/.test(suministro?.numero_suministro || ''));
+                    const number = suministro?.numero_suministro;
+                    resolve(estado === 'ok' && usuario?.rol === 'usuario' && /^\d{9}$/.test(number || '') &&
+                        (!real || String(number) === syntheticSupply));
                 } catch (error) { reject(error); }
             });
         });
-        request.once('timeout', () => request.destroy(Error('Auth tardó demasiado')));
         request.once('error', reject);
         request.end();
     });
@@ -67,7 +70,7 @@ const completion = content => Response.json({
 
 // Transporte controlado: reproduce el contrato HTTP de Groq sin salir del sandbox.
 function scriptedTransport() {
-    const steps = ['ok', 'hang', 'quota'];
+    const steps = mode === 'android' ? ['ok', 'ok', 'quota'] : ['ok', 'hang', 'quota'];
     return async (url, { signal }) => {
         assert.equal(url, destination);
         const step = steps[external++];
@@ -83,10 +86,10 @@ function scriptedTransport() {
 }
 
 // Transporte real: TLS validado contra api.groq.com sobre el canal Unix que abre el anfitrión.
-function relayTransport() {
+function relayTransport(ca) {
     const agent = new https.Agent({ keepAlive: false, maxSockets: 1 });
     agent.createConnection = () => tls.connect({
-        socket: net.connect({ path: dir + '/groq.sock' }), host, servername: host, rejectUnauthorized: true
+        socket: net.connect({ path: dir + '/groq.sock' }), host, servername: host, rejectUnauthorized: true, ca
     });
     return (url, options) => {
         assert.equal(url, destination);
@@ -112,10 +115,12 @@ function relayTransport() {
                     const body = Buffer.concat(chunks);
                     const event = { evento: 'groq', http: incoming.statusCode, ms: Math.round(performance.now() - started) };
                     if (incoming.statusCode === 200) {
-                        const parsed = JSON.parse(body);
-                        const { prompt_tokens: entrada, completion_tokens: salida, total_tokens: total } = parsed.usage || {};
-                        event.tokens = { entrada, salida, total };
-                        try { event.texto_publico = JSON.parse(parsed.choices[0].message.content).text?.slice(0, 640); } catch (_) { /* lo valida el adaptador */ }
+                        try {
+                            const { prompt_tokens: entrada, completion_tokens: salida, total_tokens: total } = JSON.parse(body).usage || {};
+                            if ([entrada, salida, total].every(value => Number.isSafeInteger(value) && value >= 0)) {
+                                event.tokens = { entrada, salida, total };
+                            }
+                        } catch (_) { /* El adaptador valida el cuerpo completo. */ }
                     }
                     emit(event);
                     const retryAfter = incoming.headers['retry-after'];
@@ -137,13 +142,17 @@ async function main() {
     await isolation();
     let apiKey = 'groq-fixture-only';
     if (real) {
+        assert.match(syntheticSupply, /^9\d{8}$/);
+    }
+    if (real || tlsCheck) {
         assert.ok(Number.isInteger(budget) && budget >= 1 && budget <= 3);
         apiKey = fs.readFileSync(secret, 'utf8').trim();
-    } else {
-        assert.equal(fs.existsSync(secret), false);
-        assert.equal(fs.existsSync(dir + '/groq.sock'), false);
-    }
-    const provider = createGroqCloudProvider({ model, apiKey, transport: real ? relayTransport() : scriptedTransport() });
+    } else assert.equal(fs.existsSync(secret), false);
+    assert.equal(fs.existsSync(dir + '/groq.sock'), real || tlsCheck);
+    const ca = tlsCheck ? fs.readFileSync('/run/tls-fixture.pem') : undefined;
+    const groq = createGroqCloudProvider({ model, apiKey,
+        transport: real || tlsCheck ? relayTransport(ca) : scriptedTransport() });
+    const provider = real ? groq : { ...groq, mode: 'generated-simulated' };
     const app = createConversationService({
         validateSession, provider, providerMs: real ? 6000 : 300,
         onProviderError: code => { codes.push(code); emit({ evento: 'respaldo', codigo: code }); }
@@ -151,7 +160,7 @@ async function main() {
     const server = http.createServer(app);
     const socketPath = dir + '/chat.sock';
     await new Promise((ok, bad) => { server.once('error', bad); server.listen(socketPath, ok); });
-    emit({ evento: 'listo', modo: real ? 'groq-real' : 'controlado', modelo: model, presupuesto_externo: real ? budget : 0 });
+    emit({ evento: 'listo', modo: mode, modelo: model, presupuesto_externo: real ? budget : 0 });
 
     let stopping = false;
     const stop = () => {
@@ -159,7 +168,8 @@ async function main() {
         stopping = true;
         server.closeAllConnections();
         server.close(() => {
-            emit({ evento: 'resumen', modo: real ? 'groq-real' : 'controlado', intentos_externos: external, codigos_backend: codes });
+            emit({ evento: 'resumen', modo: mode, intentos_transporte: external,
+                intentos_externos: real ? external : 0, codigos_backend: codes });
             process.exit(0);
         });
     };

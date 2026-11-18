@@ -10,7 +10,8 @@ const [originsFile, listenText, bridgeText] = process.argv.slice(2);
 const origins = Object.fromEntries(Object.entries(JSON.parse(fs.readFileSync(originsFile, 'utf8')))
     .map(([name, value]) => [name, new URL(value)]));
 assert.deepEqual(Object.keys(origins).sort(), ['auth', 'billing', 'notifications', 'operations', 'realtime']);
-assert.ok(Object.values(origins).every(url => url.protocol === 'http:' && /^172\.31\.0\.\d+$/.test(url.hostname)));
+assert.ok(Object.values(origins).every(url => url.protocol === 'http:' && url.href === url.origin + '/' &&
+    (url.hostname === '127.0.0.1' || /^172\.31\.0\.\d+$/.test(url.hostname))));
 const listenPort = Number(listenText);
 const bridgePort = Number(bridgeText);
 assert.ok(Number.isInteger(listenPort) && listenPort >= 0 && listenPort < 65536);

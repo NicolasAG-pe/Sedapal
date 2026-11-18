@@ -838,7 +838,7 @@
     },
     {
       "path": "Backend/test/groq-cloud.test.cjs",
-      "sha256": "15cb24a847950beb691df472eb94178865db61c326edd74d8c409771adf711a6",
+      "sha256": "37faaab29f3b6680181b934ec7d5870bfd339112cf07eef2e7f383371fd4efeb",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,

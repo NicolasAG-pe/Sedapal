@@ -2,6 +2,9 @@
 
 ## Orientación generativa de HidroBot con GroqCloud
 
+- Validado el recorrido de la APK LAB v10 en el POCO con Auth del laboratorio, respuesta simulada y fuente oficial, dos cuentas separadas, respaldo ante 429 y regreso de 8285 a 8284.
+- El ensayo rotula como simuladas las respuestas del transporte controlado. El relé TLS se prueba contra HTTPS local con una clave ficticia por descriptor, presupuesto de una solicitud y rechazo de un certificado con nombre incorrecto.
+- El lanzador acota el arranque y el plazo de Auth, libera sus procesos y sockets al terminar y limita el modo real al suministro sintético autorizado. Se omite el texto crudo de los registros y se rechaza cualquier respuesta que repita la clave del proveedor.
 - Añadido el adaptador backend de GroqCloud para GPT-OSS 20B. La generación usa temas públicos con fuentes controladas y conserva el catálogo como respaldo. El modo local es el predeterminado.
 - Se mantiene el contrato de Android LAB v10 y se documentan la activación autorizada, las cuotas, la reversión y la demostración con el simulador.
 - Añadidas siete pruebas de la cadena Gateway, Auth, conversación y adaptador con transporte controlado: sin JWT ni datos de cuenta hacia el proveedor, plazo vencido, pausa por 429, errores 4xx y 5xx, saturación, desconexión del cliente y aislamiento entre sesiones.

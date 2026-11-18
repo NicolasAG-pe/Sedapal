@@ -126,7 +126,7 @@ function createGroqCloudProvider({ model = defaultModel, apiKey, transport, now 
                     throw failure('GROQ_INVALID_OUTPUT');
                 }
                 const answer = knowledge.generated(topic, JSON.parse(message.content), style);
-                if (!answer || claimsAccountFacts(answer.text)) throw failure('GROQ_INVALID_OUTPUT');
+                if (!answer || answer.text.includes(apiKey) || claimsAccountFacts(answer.text)) throw failure('GROQ_INVALID_OUTPUT');
                 return answer;
             } catch (_) {
                 throw failure(signal.aborted ? 'GROQ_CANCELLED' : 'GROQ_INVALID_OUTPUT');
