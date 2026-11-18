@@ -18,7 +18,7 @@ class TrackingError extends Error {
 const missing = () => new TrackingError(404, "Incidencia no encontrada.");
 const fields =
   "id_incidencia,id_suministro,tipo,descripcion,referencia,latitud,longitud,fecha_registro,estado,(foto IS NOT NULL) AS tiene_foto";
-function createIncidentTracking({ pool }) {
+function createIncidentTracking({ pool, sharedStorage = false }) {
   async function change(user, id, body) {
     if (!identifier(id)) throw missing();
     const estado = String(body.estado || "").trim(),
@@ -55,6 +55,7 @@ function createIncidentTracking({ pool }) {
       const {
         rows: [actor],
       } = await c.query(
+        sharedStorage ? 'SELECT * FROM hm_contract.lock_actor($1,false)' :
         "SELECT u.rol,u.activo,COALESCE(m.version,0) AS version FROM usuarios u LEFT JOIN usuario_2fa m USING(id_usuario) WHERE u.id_usuario=$1 FOR SHARE OF u",
         [user.id_usuario],
       );
@@ -119,6 +120,7 @@ function createIncidentTracking({ pool }) {
         const {
           rows: [notice],
         } = await c.query(
+          sharedStorage ? "SELECT hm_contract.operations_notice($1,'Usuario',$2,$3,'incidencia') AS id_notificacion" :
           "INSERT INTO notificaciones(id_suministro,alcance,titulo,mensaje,tipo) VALUES($1,'Usuario',$2,$3,'incidencia') RETURNING id_notificacion",
           [
             updated.id_suministro,

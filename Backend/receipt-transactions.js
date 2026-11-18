@@ -22,7 +22,7 @@ function errorPublico(error) {
     return error;
 }
 
-function crearServicioRecibos({ pool, validarRecibo }) {
+function crearServicioRecibos({ pool, validarRecibo, sharedStorage = false }) {
     async function transaccion(operacion) {
         const client = await pool.connect();
         let descartar;
@@ -48,6 +48,11 @@ function crearServicioRecibos({ pool, validarRecibo }) {
         if (!Number.isSafeInteger(id) || id <= 0) throw inexistente();
     }
     async function bloquearSuministro(client, campo, valor) {
+        if (sharedStorage) {
+            const { rows: [s] } = await client.query('SELECT * FROM hm_contract.lock_supply($1,$2,$3)',
+                campo === 'id_suministro' ? [valor, null, null] : [null, valor, null]);
+            return s;
+        }
         // campo solo proviene de las dos llamadas internas, nunca del cliente HTTP.
         const { rows: [s] } = await client.query(`SELECT id_suministro,numero_suministro,id_usuario
             FROM public.suministros WHERE ${campo}=$1 FOR NO KEY UPDATE`, [valor]);

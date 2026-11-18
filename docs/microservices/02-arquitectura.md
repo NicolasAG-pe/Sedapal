@@ -1,14 +1,10 @@
 # Arquitectura objetivo y avance de implementación
 
-Avance MS-02: [Notifications transporte](../../Backend/services/notifications/README.md)
-implementado y probado en proceso separado. Avance MS-03:
-[Auth proceso independiente](../../Backend/services/auth/README.md) con sus 27
-rutas de dominio y el contrato interno de introspección. Billing, Operations,
-Realtime y el gateway continúan en el backend anterior; el diagrama completo
-sigue siendo objetivo pendiente.
-
-Se conserva el monolito como alternativa hasta que todos los criterios MS-01
-pasen. Ninguna configuración de producción se cambia por integrar esta documentación.
+MS-05 añade Billing, Operations, Realtime y Gateway como procesos separados.
+Auth conserva cuentas y sesión. Notifications atiende la bandeja, push y
+transporte de correo. El [laboratorio MS-05](10-laboratorio-servicios.md)
+sirve las 75 rutas públicas y Socket.IO a través de Gateway. El modo anterior
+sigue disponible para las instalaciones existentes y para reversión.
 
 ```mermaid
 flowchart LR
@@ -31,12 +27,10 @@ flowchart LR
   E --> R
 ```
 
-Los almacenes pueden residir inicialmente en PostgreSQL 18 con roles separados.
-Realtime se propone como proceso adicional para que reiniciar entregas de
-Notifications no cierre sockets ni detenga Billing. Gateway sin credenciales
-SQL; bibliotecas compartidas solo para protocolo, validación y observabilidad.
-No importar `server.js` desde cada servicio para filtrar rutas: conservaría
-acoplamiento y capacidad de acceso indiscriminado.
+La implementación usa una instancia PostgreSQL 18 con roles separados,
+proyecciones de lectura y funciones acotadas. Realtime consume eventos de
+PostgreSQL. Gateway no tiene rol SQL. La separación permite reiniciar cada
+dominio sin ejecutar `server.js` para atender sus rutas.
 
 | Propietario | Datos propuestos | Contrato para consumidores |
 |---|---|---|
@@ -46,9 +40,9 @@ acoplamiento y capacidad de acceso indiscriminado.
 | Notifications | notificaciones, notificaciones_lecturas, push_dispositivos, push_entregas | Creación deduplicada, entrega, lectura y revocación |
 | Realtime | Cursor/inbox propio; salas en memoria | Eventos mínimos autorizados; reconsulta REST tras reconectar |
 
-Esta propiedad es objetivo, no concesión SQL ejecutada. Las FK y triggers
-existentes atraviesan estas fronteras: requieren migración aditiva específica,
-contratos estrechos y pruebas de permisos antes de declarar independencia.
+La migración 015 aprovisiona las concesiones sobre roles ya creados. Las FK
+entre dominios se conservan en la instancia. Los permisos y el procedimiento
+se detallan en el [laboratorio MS-05](10-laboratorio-servicios.md).
 
 ## Decisiones
 

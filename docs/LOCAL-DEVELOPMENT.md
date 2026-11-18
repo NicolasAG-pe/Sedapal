@@ -59,3 +59,11 @@ El Backend delega las rutas `/api/auth/*`, perfil y cambios administrativos de i
 La prueba manual `Backend/test/microservices-compose.cjs` crea una cuenta sintética. Detén solo el worker antes de ejecutarla y arráncalo cuando indique `fixture_encolado`. Así puede leer el OTP sintético antes de que el worker elimine la carga cifrada al confirmar la entrega. Ejecuta la prueba únicamente en el proyecto `hidro-ms120-integration`.
 
 Para detener todo el laboratorio usa `docker compose --env-file .env.integration -f compose.integration.yaml stop`. PostgreSQL perderá sus fixtures temporales al detenerse. Consulta los [resultados de integración](microservices/06-pruebas-validacion.md) y la [preparación de Billing](microservices/09-preparacion-billing.md).
+
+## Laboratorio sin monolito
+
+`compose.services.yaml` monta el cliente y el panel en `127.0.0.1:8280/8281`.
+Gateway dirige REST y Socket.IO a Auth, Billing, Operations, Notifications y
+Realtime. Usa `.env.services` para secretos locales, correo `.invalid` y push
+simulado. Los demás proyectos de Compose conservan sus puertos y bases.
+Consulta [arranque, contratos y verificación](microservices/10-laboratorio-servicios.md).

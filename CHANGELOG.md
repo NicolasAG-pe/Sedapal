@@ -13,6 +13,13 @@
 - Comprobado el servicio Render conectado: despliegues automáticos y previews desactivados; registradas las referencias previas de despliegue sin modificar proveedores.
 - Excluida `docs/alinear-main` de despliegues Git en ambas raíces Vercel; sin cambios de aplicación, base de datos ni versiones.
 
+## Laboratorio de servicios separados — MS-05
+
+- Gateway independiente conserva las 75 rutas públicas y Socket.IO. Auth, Billing, Operations, Notifications y Realtime atienden sus rutas sin arrancar el backend monolítico.
+- PostgreSQL 18 compartido con roles por dominio, vistas de lectura, locks transaccionales acotados y eventos durables. Recibos y pagos conservan un solo escritor.
+- Integrados correo OTP y recuperación simulados, bandeja de avisos y worker push mock. El laboratorio tiene su propia base temporal y los clientes en 8280/8281.
+- Verificados los flujos principales en Firefox, los reintentos de pago e incidencia después de COMMIT, los permisos SQL y la recuperación tras detener servicios. Android nativo y el corte oficial quedan pendientes.
+
 ## Validación del laboratorio de Auth y Notifications — MS-04
 
 - Corregidos los orígenes loopback de Socket.IO para cliente y panel. El laboratorio sigue restringido a los puertos locales 8180 y 8181.

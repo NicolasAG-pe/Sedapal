@@ -9,12 +9,13 @@
 - [x] MS-02: extraer transporte de correo a proceso Notifications sin credenciales SQL/JWT/OTP.
 - [x] MS-02: conservar transacciones OTP y comprobar caída, reinicio y Gmail ambiguo en PostgreSQL sintético.
 - [x] MS-02: consultar Render en lectura tras confirmación de workspace; auto-deploy y previews desactivados.
-- [ ] Resolver contratos transaccionales y pruebas de aislamiento SQL.
-- [ ] Implementar Notifications, Auth, Operations, Billing, Realtime y gateway.
-- [ ] Implementar y ejecutar laboratorio Compose y regresiones PostgreSQL 18.
-- [ ] Ejecutar integración, fallos, reinicios, navegador y Android.
+- [x] Aplicar contratos transaccionales y comprobar permisos de roles en PostgreSQL compartida.
+- [x] Integrar Notifications, Auth, Operations, Billing, Realtime y Gateway.
+- [x] Arrancar `compose.services.yaml` y ejecutar regresiones PostgreSQL 18.
+- [x] Comprobar web y panel en Firefox con el gateway.
+- [ ] Validar un APK de laboratorio en Android nativo con dispositivo o AVD autorizado.
 - [ ] Preparar/validar archivos productivos y revisar límites/costos vigentes.
 - [ ] Completar comprobaciones de automatizaciones remotas.
 - [ ] Publicar rama, abrir Draft PR y comprobar CI/ausencia de despliegues.
 
-El primer avance es auditoría; no cerrar migración con estas tareas pendientes.
+El [informe MS-05](validation.md) registra la evidencia de esta etapa.

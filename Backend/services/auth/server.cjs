@@ -396,6 +396,10 @@ function createService({ pool, env = process.env, hooks = {} }) {
         }
     });
 
+    if (env.MICROSERVICES_REPORTING === '1') {
+        require('./reporting.cjs').registerRoutes(app, { pool, requiereAdmin, sharedStorage: true });
+    }
+
     // ================== CONTRATO INTERNO: INTROSPECCIÓN ==================
     // Bearer original -> identidad vigente tras releer PostgreSQL. Fail-closed,
     // sin caché permisiva y sin clave_hash, OTP ni secretos (docs/microservices/04).
@@ -409,7 +413,12 @@ function createService({ pool, env = process.env, hooks = {} }) {
             !/^[a-f0-9]{64}$/.test(mac || '')) return reply(401, { version: 1, vigente: false, motivo: 'unauthorized' });
         const body = req.rawBody || '';
         if (Buffer.byteLength(body) > 4096) return reply(413, { version: 1, vigente: false, motivo: 'too_large' });
-        const expected = Buffer.from(INTROSPECT.signature(env.AUTH_INTERNAL_SECRET || '', timestamp, nonce, body), 'hex');
+        const consumer = req.headers['x-hidro-consumer'];
+        const secret = consumer === undefined ? env.AUTH_INTERNAL_SECRET :
+            ['billing', 'operations', 'notifications', 'realtime'].includes(consumer) ?
+                env['AUTH_INTERNAL_' + consumer.toUpperCase() + '_SECRET'] : null;
+        if (typeof secret !== 'string' || Buffer.byteLength(secret) < 32) return reply(401, { version: 1, vigente: false, motivo: 'unauthorized' });
+        const expected = Buffer.from(INTROSPECT.signature(secret, timestamp, nonce, body), 'hex');
         let provided;
         try { provided = Buffer.from(mac, 'hex'); } catch (_) { return reply(401, { version: 1, vigente: false, motivo: 'unauthorized' }); }
         if (provided.length !== expected.length || !crypto.timingSafeEqual(provided, expected)) {

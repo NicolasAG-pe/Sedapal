@@ -5,13 +5,14 @@ const { PATH, key, signature, outcome } = require('../../notification-transport'
 const { configurarProveedorWorker, crearRemitenteProveedor } = require('../../email-provider');
 const uuid = value => typeof value === 'string' && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value);
 
-function createService({ secret, provider, send, maxConcurrent = 16 }) {
+function createService({ secret, provider, send, maxConcurrent = 16, api }) {
     key(secret);
     if (!['resend', 'gmail'].includes(provider) || typeof send !== 'function') throw Error('Configuración Notifications inválida.');
     const seen = new Map(); let active = 0, stopping = false;
     const reply = (res, status, data) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(data)); };
     const server = http.createServer(async (req, res) => {
         try {
+            if (api && (req.url.startsWith('/api/') || req.url === '/ready') && !stopping) return api(req, res);
             if (req.method === 'GET' && ['/live', '/ready'].includes(req.url)) {
                 return reply(res, stopping ? 503 : 200, { service: 'notifications', status: stopping ? 'stopping' : 'ok' });
             }
@@ -45,7 +46,7 @@ function createService({ secret, provider, send, maxConcurrent = 16 }) {
     return { server, stop: () => { stopping = true; return new Promise(resolve => server.close(resolve)); } };
 }
 
-function fromEnvironment(env) {
+function fromEnvironment(env, { api } = {}) {
     const secret = key(env.NOTIFICATIONS_INTERNAL_SECRET);
     const provider = env.EMAIL_PROVIDER || 'resend';
     if (['DATABASE_URL', 'POSTGRES_PASSWORD', 'AUTH_TOKEN_SECRET', 'EMAIL_OTP_SECRET', 'EMAIL_OUTBOX_KEY', 'EMAIL_WORKER_DATABASE_URL'].some(k => env[k])) throw Error('Notifications no debe recibir credenciales del dominio.');
@@ -60,20 +61,28 @@ function fromEnvironment(env) {
         if (env.NOTIFICATIONS_DELIVERY_MODE !== 'provider' || env.NOTIFICATIONS_REAL_DELIVERY_ALLOWED !== '1' || env.NOTIFICATIONS_URL) throw Error('Entrega real no habilitada.');
         send = crearRemitenteProveedor(configurarProveedorWorker(env));
     }
-    return createService({ secret, provider, send });
+    return createService({ secret, provider, send, api });
 }
 if (require.main === module) {
     try {
         const port = Number(process.env.PORT || 3104);
         if (!Number.isInteger(port) || port < 1 || port > 65535) throw Error();
-        const service = fromEnvironment(process.env);
+        let domain;
+        if (process.env.NOTIFICATIONS_DATABASE_URL) {
+            const { createDomain } = require('../runtime.cjs');
+            domain = createDomain('notifications', require('./routes.cjs').registerRoutes,
+                ['notificaciones', 'notificaciones_lecturas', 'push_dispositivos', 'push_entregas'],
+                { ...process.env, DATABASE_URL: process.env.NOTIFICATIONS_DATABASE_URL });
+        }
+        const service = fromEnvironment(process.env, { api: domain?.app });
         service.server.on('error', () => { console.error(JSON.stringify({ service: 'notifications', event: 'listen_error' })); process.exitCode = 1; });
         service.server.listen(port, '0.0.0.0', () => {
             console.log(JSON.stringify({ service: 'notifications', event: 'ready' }));
             if (process.send) process.send({ event: 'ready', port });
         });
         const stop = () => { const timer = setTimeout(() => process.exit(1), 20000); timer.unref();
-            service.stop().then(() => { clearTimeout(timer); process.exit(0); }); };
+            service.stop().then(() => domain?.pool.end()).then(() => { clearTimeout(timer); process.exit(0); },
+                () => process.exit(1)); };
         process.once('SIGTERM', stop); process.once('SIGINT', stop);
     } catch (_) { console.error(JSON.stringify({ service: 'notifications', event: 'configuration_error' })); process.exitCode = 1; }
 }

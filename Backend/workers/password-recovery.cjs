@@ -7,6 +7,7 @@ const {
   crearRemitenteProveedor,
 } = require("../email-provider");
 const { createRecoveryWorker } = require("../password-recovery-worker");
+const notifications = require("../notification-transport");
 async function main(args = process.argv.slice(2), env = process.env) {
   if (args.length === 1 && args[0] === "--help") {
     console.log(
@@ -49,15 +50,16 @@ async function main(args = process.argv.slice(2), env = process.env) {
       expected
     )
       throw Error();
-    const transport = configurarProveedorWorker({
-      ...env,
-      EMAIL_REGISTRATION_ALLOWED_EMAIL:
-        env.PASSWORD_RECOVERY_ALLOWED_EMAIL || null,
-    });
+    const transport = env.NOTIFICATIONS_URL ?
+      notifications.createSender(notifications.configuration(env), env.EMAIL_PROVIDER || "resend") :
+      crearRemitenteProveedor(configurarProveedorWorker({
+        ...env,
+        EMAIL_REGISTRATION_ALLOWED_EMAIL: env.PASSWORD_RECOVERY_ALLOWED_EMAIL || null,
+      }));
     const worker = createRecoveryWorker({
       pool,
       env,
-      enviarCodigo: crearRemitenteProveedor(transport),
+      enviarCodigo: transport,
     });
     process.once("SIGTERM", halt);
     process.once("SIGINT", halt);

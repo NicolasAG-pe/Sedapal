@@ -178,7 +178,7 @@ async function browser(executable) {
     ok('JWT firmado pero expirado y firma alterada son rechazados por la API (401)');
     const userId = user.usuario.id_usuario;
     const supplyId = user.suministro.id_suministro;
-    const routes = [...fs.readFileSync(path.join(root, 'Backend/server.js'), 'utf8').matchAll(/app\.(get|post|patch)\(["'](\/api\/admin\/[^"']+)["'], requiereAdmin/g)];
+    const routes = [...['server.js', 'services/billing/routes.cjs', 'services/operations/routes.cjs', 'services/auth/reporting.cjs'].map(file => fs.readFileSync(path.join(root, 'Backend', file), 'utf8')).join('\n').matchAll(/app\.(get|post|patch)\(["'](\/api\/admin\/[^"']+)["'], requiereAdmin/g)];
     assert.equal(routes.length, 19);
     for (const route of routes) {
       const method = route[1].toUpperCase(), endpoint = route[2].replace(':id', '1');

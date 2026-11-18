@@ -1,5 +1,18 @@
 # Preparación futura de producción
 
+## Situación comprobada en MS-05
+
+La migración 015 y el gateway se ensayaron en Docker local. El perfil 008/014
+sin piloto se validó sobre una segunda instancia sintética. El corte oficial
+requiere probar su esquema y reglas de restauración en una copia aislada,
+identificar la APK instalada y revisar la configuración de secretos, red y
+proveedores. Los comandos y reversión están en el
+[laboratorio MS-05](10-laboratorio-servicios.md).
+
+Consulta 2026-11-17: Render continúa vinculado a `main` con auto-deploy y
+previews desactivados. Vercel excluye la rama de trabajo y `main` en ambas
+raíces. La rama local conserva los commits para revisión antes de publicar.
+
 ## Consulta Render autorizada — MS-02
 
 Workspace confirmado por el propietario: wDeco's workspace. Consulta en lectura

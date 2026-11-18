@@ -1,4 +1,10 @@
-# Contratos internos propuestos
+# Contratos internos
+
+MS-05 implementa consumidores de introspección con claves separadas,
+proyecciones SQL, bloqueos específicos y buzón durable. Véase el
+[contrato ejecutado en el laboratorio](10-laboratorio-servicios.md#contratos-y-propiedad-de-datos).
+Los endpoints internos de identidad, estadísticas o recepción de eventos
+descritos más abajo son alternativas si se separan las instancias PostgreSQL.
 
 ## Contratos implementados en MS-02 y MS-03
 
@@ -13,10 +19,9 @@ independiente y expone la introspección de la tabla: `POST
 /internal/v1/auth/introspect` con el mismo esquema HMAC que el transporte, un
 intento por petición, respuesta fail-closed sin caché permisiva y sin
 `clave_hash`, OTP ni secretos. El cliente `createIntrospector` devuelve `null`
-sin confirmación y cada consumidor decide su propio cierre. Los contratos
-siguientes de esta página siguen pendientes.
+sin confirmación y cada consumidor decide su propio cierre.
 
-## Contratos restantes
+## Contratos propuestos para almacenes físicamente separados
 
 Estado: diseño pendiente de implementación y validación. Las 75 rutas públicas,
 JSON, códigos HTTP, cabeceras, bytes de imágenes y JWT existentes se conservan.
@@ -48,7 +53,7 @@ saneado y circuitos de fallo independientes. No reintentar POST/PATCH sin
 clave y semántica idempotente del dominio. Un timeout después de COMMIT exige
 consulta de estado usando solicitud_id, no repetir ciegamente.
 
-## Contratos todavía sin solución verificada
+## Condiciones pendientes para almacenes independientes
 
 1. Incidencia + notificación inmediata en el mismo COMMIT: el outbox conserva
    intención, pero no garantiza visibilidad inmediata del aviso tras HTTP 200.

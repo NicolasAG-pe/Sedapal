@@ -25,7 +25,7 @@ function configuration(env) {
     if ([env.AUTH_TOKEN_SECRET, env.EMAIL_OTP_SECRET, env.EMAIL_OUTBOX_KEY].includes(secret)) {
         throw Error('Clave interna debe ser exclusiva.');
     }
-    return { url: url.origin, secret };
+    return { url: url.origin, secret, consumer: env.AUTH_INTERNAL_CONSUMER };
 }
 // Identidad pública: nunca clave_hash, OTP, correo ni material de cifrado.
 // PostgreSQL devuelve BIGINT como texto: se normaliza a número entero aquí,
@@ -36,27 +36,30 @@ function identidad(row) {
         numero_suministro: row.numero_suministro === undefined ? null : row.numero_suministro,
         rol: row.rol, mfa_version: Number(row.mfa_version || 0), mfa_activo: !!row.mfa_activo };
 }
-function createIntrospector(config, { fetchImpl = fetch } = {}) {
+function createIntrospector(config, { fetchImpl = fetch, detailed = false } = {}) {
+    const failure = motivo => detailed ? { motivo } : null;
     return async token => {
-        if (typeof token !== 'string' || token.length > 4096) return null;
+        if (typeof token !== 'string' || token.length > 4096) return failure('invalido');
         const timestamp = String(Date.now()), nonce = crypto.randomUUID();
         const body = JSON.stringify({ version: 1, token });
         try {
             // Un único intento, sin redirecciones; el estado durable es de Auth.
             const r = await fetchImpl(config.url + PATH, { method: 'POST', redirect: 'error',
                 headers: { 'Content-Type': 'application/json', 'X-Hidro-Time': timestamp, 'X-Hidro-Nonce': nonce,
+                    ...(config.consumer ? { 'X-Hidro-Consumer': config.consumer } : {}),
                     'X-Hidro-Signature': signature(config.secret, timestamp, nonce, body) },
                 body, signal: AbortSignal.timeout(5000) });
-            if (r.status !== 200) { await r.body?.cancel(); return null; }
+            if (r.status !== 200) { await r.body?.cancel(); return failure('unavailable'); }
             const reader = r.body.getReader(); let size = 0; const chunks = [];
             for (;;) { const { done, value } = await reader.read(); if (done) break;
-                size += value.length; if (size > 1024) { await reader.cancel(); return null; }
+                size += value.length; if (size > 1024) { await reader.cancel(); return failure('unavailable'); }
                 chunks.push(Buffer.from(value)); }
             const data = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-            return data && data.version === 1 && data.vigente === true && data.identidad &&
-                Number.isInteger(data.identidad.id_usuario) && ['usuario', 'admin'].includes(data.identidad.rol)
-                ? data.identidad : null;
-        } catch (_) { return null; }
+            if (data?.version !== 1) return failure('unavailable');
+            if (data.vigente === true && Number.isSafeInteger(data.identidad?.id_usuario) &&
+                ['usuario', 'admin'].includes(data.identidad.rol)) return detailed ? data : data.identidad;
+            return failure(['invalido', 'desconocido', 'inactivo', 'sesion'].includes(data.motivo) ? data.motivo : 'unavailable');
+        } catch (_) { return failure('unavailable'); }
     };
 }
 module.exports = { PATH, key, signature, configuration, identidad, createIntrospector };

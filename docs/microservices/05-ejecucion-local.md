@@ -49,17 +49,17 @@ Notifications usa el stub de correo. La [guía local](../LOCAL-DEVELOPMENT.md)
 incluye los comandos y la [matriz de pruebas](06-pruebas-validacion.md)
 registra el alcance comprobado.
 
-## Laboratorio de arquitectura completa
+## Laboratorio de servicios separados — MS-05
 
-Gateway, Billing, Operations y Realtime como procesos independientes siguen
-pendientes. Las pruebas PostgreSQL usan una instancia nueva sin puertos
-publicados, `network none` y tmpfs. El runner comparte exclusivamente su
-namespace de red.
+`compose.services.yaml` ejecuta los seis procesos y sus tres workers. Usa
+PostgreSQL sintético, roles separados y entrada en 8280/8281. El proyecto
+se llama `hidro-ms120-services`. Consulta los [comandos](10-laboratorio-servicios.md#arranque-y-validación).
+Las regresiones PostgreSQL del modo anterior usan otra instancia aislada.
 
 El laboratorio integrado y la instalación de `compose.yaml` tienen identidades
 y redes distintas. Usa el archivo que corresponde al alcance de la prueba.
 
-El futuro laboratorio tendrá identidad exclusiva `hidro-ms120-<identificador>`,
+Cada laboratorio conserva identidad exclusiva `hidro-ms120-<identificador>`,
 sin container_name fijo, redes/volúmenes externos ni referencias a instalaciones
 previas. Solo web y Admin publicarán puertos loopback disponibles; PostgreSQL,
 gateway y dominios serán internos. Variables nuevas generadas localmente y

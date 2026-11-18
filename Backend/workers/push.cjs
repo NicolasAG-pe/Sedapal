@@ -39,11 +39,9 @@ async function main(args = process.argv.slice(2), env = process.env) {
       decodeURIComponent(url.pathname.slice(1)) !== env.PUSH_EXPECTED_DATABASE
     )
       throw Error();
-    if (
-      env.PUSH_PROVIDER === "mock" &&
-      (!["127.0.0.1", "localhost"].includes(url.hostname) ||
-        env.NODE_ENV !== "test")
-    )
+    const localFixture = ["127.0.0.1", "localhost"].includes(url.hostname) ||
+      (env.PUSH_LAB_DOCKER === "1" && url.hostname === "db" && env.PUSH_EXPECTED_DATABASE === "hm_micro_lab");
+    if (env.PUSH_PROVIDER === "mock" && (!localFixture || env.NODE_ENV !== "test"))
       throw Error();
     pool = new Pool({
       ...obtenerConfiguracion({ DATABASE_URL: url.toString() }).database,

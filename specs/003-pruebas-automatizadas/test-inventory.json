@@ -34,6 +34,7 @@
       "scripts/test/test-runner.test.cjs"
     ],
     "contract": [
+      "Backend/test/services-routing.test.cjs",
       "scripts/test/public-api-config.test.js",
       "scripts/test/android-upgrade.test.cjs",
       "scripts/test/client-packaging.test.cjs"
@@ -1320,7 +1321,7 @@
     },
     {
       "path": "Backend/test/receipt-date.test.js",
-      "sha256": "1b91a7a16b3107d2b72570a9b421fa6ab3a108c4db049d21e85c94cd34df5cdd",
+      "sha256": "ac8f5cb42d0354c68283a6f00930e4c4c54a73532d74291a81c4c78942a1d41e",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -1412,6 +1413,82 @@
         "HIDRO_TEST_MAILBOX",
         "HIDRO_TEST_PROVIDER_DELAY_MS"
       ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/services-fixture.cjs",
+      "sha256": "80b8b0e93f0c144b75043234d221ef3afe1784c4823cf8363e2c5ca6af6df32e",
+      "type": "helper",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "pg"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:crypto",
+        "pg",
+        "../outbox-crypto",
+        "../password-recovery-crypto"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/services-routing.test.cjs",
+      "sha256": "24bfe2539164b3393f5d088bfb315f037ce32353068eda39b4373e94063955ed",
+      "type": "contrato",
+      "group": "contract",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "express"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "express",
+        "../services/gateway/routes.cjs",
+        "../server",
+        "../services/auth/server.cjs",
+        "../services/billing/routes.cjs",
+        "../services/operations/routes.cjs",
+        "../services/notifications/routes.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/services-smoke.cjs",
+      "sha256": "0c607c9e15faacd411097dfc298ad873cc3d77d492bf332304db6324bccf0d20",
+      "type": "integracion",
+      "group": null,
+      "nodeTest": false,
+      "requirements": [
+        "Node22",
+        "pngjs",
+        "ws",
+        "herramientas opt-in indicadas en fuente"
+      ],
+      "dependencies": [
+        "node:assert/strict",
+        "node:http",
+        "node:crypto",
+        "node:child_process",
+        "node:timers/promises",
+        "pngjs",
+        "ws",
+        "../../Frontend/assets/vendor/socket.io.min.js",
+        "./test/services-fixture.cjs"
+      ],
+      "environmentNames": [],
       "legacyNpm": [],
       "referencedBy": [],
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
@@ -1671,7 +1748,7 @@
     },
     {
       "path": "scripts/test/admin-e2e.cjs",
-      "sha256": "5282efbf48df5f912b7162524c3a7a442b190416ac86acfee7c17e5f70cb6bbb",
+      "sha256": "96ad14b922a9ee8fed763c41df49215b93c4be8b76c2250f22ff091f6015ec6e",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": false,
@@ -3349,6 +3426,21 @@
     },
     {
       "path": "Backend/test/resend-fixture.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/services-fixture.cjs",
+      "referencedBy": [],
+      "managedGroup": null
+    },
+    {
+      "path": "Backend/test/services-routing.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "contract"
+    },
+    {
+      "path": "Backend/test/services-smoke.cjs",
       "referencedBy": [],
       "managedGroup": null
     },

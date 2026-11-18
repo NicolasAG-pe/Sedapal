@@ -2,7 +2,7 @@
 
 Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada para listas explícitas; señales estáticas fuera de ellas no acreditan ejecución.
 
-114 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 62. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
+117 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 65. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
 
 | Archivo | Tipo | Grupo nuevo | Requisitos | Riesgo |
 |---|---|---|---|---|
@@ -54,6 +54,9 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `Backend/test/receipt-profile-compat.cjs` | integracion | integration | Node22, pg, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/receipt-schema.cjs` | integracion | integration | Node22, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/resend-fixture.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `Backend/test/services-fixture.cjs` | helper | fuera por defecto | Node22, pg | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `Backend/test/services-routing.test.cjs` | contrato | contract | Node22, express | revisada: mocks/archivos temporales/loopback; guard de red |
+| `Backend/test/services-smoke.cjs` | integracion | fuera por defecto | Node22, pngjs, ws, herramientas opt-in indicadas en fuente | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/start-postgres.cjs` | integracion | fuera por defecto | Node22, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/start.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `Backend/test/totp-crypto.test.js` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
