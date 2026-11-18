@@ -159,6 +159,12 @@ async function main() {
             numero_suministro: supply, periodo: '2026-11', fecha_emision: '2026-11-01',
             fecha_vencimiento: '2026-11-30', monto: 42.55, consumo_m3: 13
         };
+        const receiptPath = '/api/admin/recibos';
+        await request(receiptPath, 401, { method: 'POST', data: receiptData, panel: true });
+        await request(receiptPath, 403, { method: 'POST', token, data: receiptData, panel: true });
+        const invalidReceipt = await request(receiptPath, 400, { method: 'POST', token: admin.token,
+            data: { ...receiptData, fecha_emision: '0206-11-01' }, panel: true });
+        assert.match(invalidReceipt.mensaje, /2000 y 2100/);
         const receiptEvent = nextEvent(socket, 'recibo:nuevo');
         const { recibo } = await request('/api/admin/recibos', 201, { method: 'POST', token: admin.token, data: receiptData, panel: true });
         assert.equal(String((await receiptEvent).id), String(recibo.id_recibo));
@@ -180,6 +186,26 @@ async function main() {
         assert.equal((await request('/api/me/recibos', 200, { token })).recibos.filter(row => row.periodo === race.periodo).length, 1);
         console.log('OK concurrencia de recibos a través de las dos entradas');
 
+
+        const editable = (await request('/api/me/recibos', 200, { token })).recibos.find(row => row.periodo === race.periodo);
+        const editPath = receiptPath + '/' + editable.id_recibo;
+        const invalidDue = await request(editPath, 400, { method: 'PATCH', token: admin.token,
+            data: { ...race, fecha_vencimiento: '2028-10-31' }, panel: true });
+        assert.match(invalidDue.mensaje, /un año/);
+        const [editedEvent, edited] = await Promise.all([
+            nextEvent(socket, 'recibo:actualizado'),
+            request(editPath, 200, { method: 'PATCH', token: admin.token, data: { ...race, monto: 44.55 }, panel: true })
+        ]);
+        assert.equal(String(editedEvent.id), String(editable.id_recibo));
+        assert.equal(Number(edited.recibo.monto), 44.55);
+        const [voidEvent, voided] = await Promise.all([
+            nextEvent(socket, 'recibo:actualizado'),
+            request(editPath + '/anular', 200, { method: 'PATCH', token: admin.token, data: {}, panel: true })
+        ]);
+        assert.equal(String(voidEvent.id), String(editable.id_recibo));
+        assert.equal(voidEvent.estado, 'Anulado');
+        assert.equal(voided.recibo.estado, 'Anulado');
+        console.log('OK permisos, fechas, edición, anulación y eventos de Billing por el gateway');
 
         const payment = { id_recibo: recibo.id_recibo, metodo: 'demostrativo', solicitud_id: randomUUID() };
         await lostResponse('/api/me/operaciones-pago', payment, token, 201);
@@ -207,9 +233,15 @@ async function main() {
         assert.equal((await request(changeRoute, 200, { method: 'PATCH', token: admin.token, data: change })).repetida, true);
         await request('/api/me/incidencias/' + id + '/seguimiento', 200, { token });
         const from = new Date(Date.now() + 3600000).toISOString(), to = new Date(Date.now() + 10800000).toISOString();
-        const cut = await request('/api/admin/cortes', 201, { method: 'POST', token: admin.token, data: {
-            alcance: 'General', motivo: 'Mantenimiento simulado', fecha_inicio: from, fecha_fin: to
-        } });
+        const cutData = { alcance: 'General', motivo: 'Mantenimiento simulado', fecha_inicio: from, fecha_fin: to };
+        const invalidCut = await request('/api/admin/cortes', 400, { method: 'POST', token: admin.token,
+            data: { ...cutData, fecha_inicio: '1999-01-01T00:00:00.000Z' } });
+        assert.match(invalidCut.mensaje, /2000 y 2100/);
+        const cut = await request('/api/admin/cortes', 201, { method: 'POST', token: admin.token, data: cutData });
+        const invalidEdit = await request('/api/admin/cortes/' + cut.corte.id_corte, 400, {
+            method: 'PATCH', token: admin.token, data: { ...cutData, fecha_fin: '2101-01-01T00:00:00.000Z' }
+        });
+        assert.match(invalidEdit.mensaje, /2000 y 2100/);
         assert.ok((await request('/api/me/cortes', 200, { token })).cortes.some(row => row.id_corte === cut.corte.id_corte));
         const support = await request('/api/atencion', 201, { method: 'POST', token, data: {
             categoria: 'Facturación', asunto: 'Consulta de recibo del laboratorio', descripcion: 'Este caso es sintético'

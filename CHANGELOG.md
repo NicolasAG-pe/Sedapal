@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## Hotfix de fechas integrado con microservicios — 1.2.0
+
+- Billing y Operations comparten las reglas del hotfix 94fa05f con el monolito. Recibos y cortes aceptan años de 2000 a 2100. El plazo de los recibos admite hasta 366 días.
+- Las imágenes monolíticas de Docker y Kubernetes local incluyen los módulos de rutas extraídos por el PR #32. Las protecciones transaccionales de recibos y pagos, la migración 015 y los contratos REST y Socket.IO conservan la implementación de main.
+- Los dos proyectos Vercel excluyen main y la rama de integración de despliegues Git. Render oficial sigue en 94fa05f hasta que se autorice un despliegue por separado.
+
 ## Presentación del repositorio para la feria — 2026-11-17
 
 - Reorganizado el README para presentar Android, el panel administrativo, la arquitectura, las instrucciones y las limitaciones del proyecto; sin cambios funcionales ni de versiones.

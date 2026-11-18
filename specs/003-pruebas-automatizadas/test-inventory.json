@@ -1321,7 +1321,7 @@
     },
     {
       "path": "Backend/test/receipt-date.test.js",
-      "sha256": "ac8f5cb42d0354c68283a6f00930e4c4c54a73532d74291a81c4c78942a1d41e",
+      "sha256": "783dda00a367e729c679ecadf3564ddb84bd3d3cc9ef95cea0208861c3636a07",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -1332,10 +1332,8 @@
       "dependencies": [
         "node:test",
         "node:assert/strict",
-        "node:fs",
-        "node:path",
-        "node:vm",
-        "pg/lib/utils"
+        "pg/lib/utils",
+        "../admin-date-validation"
       ],
       "environmentNames": [
         "TZ"
@@ -1348,7 +1346,7 @@
     },
     {
       "path": "Backend/test/receipt-profile-compat.cjs",
-      "sha256": "bc0e598466e392c27d899f2d1b44222da978c126901b2d87c3608afc014792ea",
+      "sha256": "25bcea26ce259b7c5fce3da87b157e178b15c375879938b10402c87c402fff15",
       "type": "integracion",
       "group": "integration",
       "nodeTest": true,
@@ -1467,7 +1465,7 @@
     },
     {
       "path": "Backend/test/services-smoke.cjs",
-      "sha256": "89325109c3e986999c1ead18fa1f80b87cb4f2363d5a09c322a19a4c5cead833",
+      "sha256": "ac245d9ee5dccb3eccf08f93ce55b1e1ec47cf557aa198d45122c886db9667f5",
       "type": "integracion",
       "group": null,
       "nodeTest": false,

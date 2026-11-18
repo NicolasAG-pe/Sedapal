@@ -23,5 +23,9 @@ COPY Backend/package.json Backend/package-lock.json ./
 COPY Backend/start.cjs Backend/server.js Backend/config.js Backend/auth-contract.js Backend/two-factor.js Backend/totp-crypto.js Backend/email-otp.js Backend/resend-mail.js Backend/gmail-mail.js Backend/email-provider.js Backend/mail-envelope.js Backend/email-registration.js Backend/receipt-transactions.js Backend/payment-operations.js Backend/payment-provider.js Backend/yape-pilot.js Backend/outbox-crypto.js Backend/email-outbox.js ./
 COPY Backend/password-recovery.js Backend/password-recovery-crypto.js Backend/password-recovery-worker.js Backend/push.js Backend/push-credentials.js Backend/push-provider.js Backend/push-worker.js Backend/incident-tracking.js ./
 COPY Backend/workers/ ./workers/
-COPY Backend/auth-gateway.cjs ./
+COPY Backend/auth-gateway.cjs Backend/notification-transport.js Backend/admin-date-validation.js ./
+COPY Backend/services/auth/reporting.cjs ./services/auth/
+COPY Backend/services/billing/routes.cjs ./services/billing/
+COPY Backend/services/operations/routes.cjs ./services/operations/
+COPY Backend/services/notifications/routes.cjs ./services/notifications/
 CMD ["node", "start.cjs"]
