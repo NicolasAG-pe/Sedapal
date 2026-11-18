@@ -2496,7 +2496,7 @@
     },
     {
       "path": "scripts/test/hidrobot.test.cjs",
-      "sha256": "e9a278935516447d2926c7dbb7423a35d718dfd15afe8b5d006796a18628266e",
+      "sha256": "3e3446c5a1f2cfb8bf175b763f50096cf2c1db72359894264ebd58707b5bccab",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,

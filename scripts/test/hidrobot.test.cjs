@@ -62,3 +62,46 @@ test('todos los scripts inline mantienen sintaxis válida',()=>{
   }
   assert.ok(html.includes('src="assets/js/sedapal-knowledge.js"'));
 });
+
+function consumo(recibos) {
+  const context = vm.createContext({
+    recibos,
+    hbHuboErrorCarga: () => false,
+    supplyLabel: { textContent: '900000001' },
+    createBotAction: label => label,
+  });
+  for (const name of ['reciboNoAnulado', 'ultimos6', 'promedio6', 'promedioGasto6', 'handleBotIntent']) {
+    const start = html.indexOf('  function ' + name + '(');
+    assert.ok(start >= 0, name);
+    const lineEnd = html.indexOf('\n', start);
+    const end = html.slice(start, lineEnd).trimEnd().endsWith('}')
+      ? lineEnd
+      : html.indexOf('\n  }', start) + 4;
+    vm.runInContext(html.slice(start, end), context);
+  }
+  return {
+    labels: Array.from(context.ultimos6(), r => r.etiqueta),
+    average: context.promedio6(),
+    averageAmount: context.promedioGasto6(),
+    bot: context.handleBotIntent({ intent: 'consumption' }).text,
+  };
+}
+
+test('gráficos y consumo de HidroBot excluyen anulados antes de elegir los seis recientes', () => {
+  const older = Array.from({ length: 7 }, (_, i) => ({
+    etiqueta: String(i), estado: i === 0 ? 'Emitido' : 'Pagado', consumoM3: 11 + i, monto: 25 + i,
+  }));
+  const result = consumo([{ etiqueta: 'Anulado', estado: 'Anulado', consumoM3: 96, monto: 99 }, ...older]);
+  assert.deepEqual(result.labels, ['5', '4', '3', '2', '1', '0']);
+  assert.equal(result.average, 13.5);
+  assert.equal(result.averageAmount, 27.5);
+  assert.match(result.bot, /último consumo registrado es de 11 m³/);
+});
+
+test('HidroBot y los gráficos tratan como vacío un suministro con solo recibos anulados', () => {
+  const result = consumo([{ etiqueta: 'Anulado', estado: 'Anulado', consumoM3: 96, monto: 99 }]);
+  assert.deepEqual(result.labels, []);
+  assert.equal(result.average, 0);
+  assert.equal(result.averageAmount, 0);
+  assert.match(result.bot, /no hay información de consumo disponible/);
+});

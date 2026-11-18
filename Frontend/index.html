@@ -1748,6 +1748,7 @@
   }
   function fmt(n){ return window.HMShared.ui.money(n); }
   function reciboPagable(r){ return !!r && (r.estado==='Emitido' || r.estado==='Pendiente' || r.estado==='Vencido'); }
+  function reciboNoAnulado(r){ return r.estado !== 'Anulado'; }
   function pad(n){ return String(n).padStart(2,'0'); }
 
   /* ---------- Router interno del dashboard: una sola página activa ---------- */
@@ -2092,14 +2093,14 @@
   function actualizarSideCons(){
     const card = document.getElementById('side-cons');
     if(!card) return;
-    if(!recibos.length){
+    const ultimo = recibos.find(reciboNoAnulado);
+    if(!ultimo){
       document.getElementById('side-cons-value').textContent = '—';
       document.getElementById('side-cons-delta').textContent = 'Sin datos de consumo';
       document.getElementById('side-cons-cta').hidden = true;
       card.classList.remove('warn'); card.classList.remove('ok');
       return;
     }
-    const ultimo = recibos[0];
     const prom = promedio6();
     const pct = prom > 0 ? Math.round(((ultimo.consumoM3 - prom) / prom) * 100) : 0;
     const elevado = ultimo.consumoM3 > 20 || pct >= 15;
@@ -2242,7 +2243,7 @@
       if(constB) constB.addEventListener('click', ev=>descargarConstanciaPDF(r, ev.currentTarget));
       cardsEl.appendChild(art);
     });
-    const ultimo = recibos[0];
+    const ultimo = recibos.find(reciboNoAnulado);
     if(ultimo){
       document.getElementById('stat-last').textContent = fmt(ultimo.monto);
       document.getElementById('stat-cons').textContent = ultimo.consumo;
@@ -2326,7 +2327,7 @@
       container.classList.add('chart-anim');
     }
   }
-  function ultimos6(){ return recibos.slice(0,6).reverse(); }
+  function ultimos6(){ return recibos.filter(reciboNoAnulado).slice(0,6).reverse(); }
   function promedio6(){
     const u = ultimos6();
     return u.length ? +(u.reduce((a,r)=>a+r.consumoM3,0)/u.length).toFixed(1) : 0;
@@ -3236,10 +3237,6 @@
       return {text:'Aún no hay recibos disponibles para este suministro.',
         actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
     }
-    if(id === 'consumption' && recibos.length === 0){
-      return {text:'Aún no hay información de consumo disponible para este suministro.',
-        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
-    }
     if((id === 'last_receipt' || id === 'payment' || id === 'pdf') && recibos.length === 0){
       return {text:'Aún no hay recibos disponibles para este suministro.',
         actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
@@ -3290,7 +3287,9 @@
         actions:[createBotAction('Ver historial de pagos', ()=>hbGo('pagos'))]};
     }
     if(id === 'consumption'){
-      const r = recibos[0];
+      const r = recibos.find(reciboNoAnulado);
+      if(!r) return {text:'Aún no hay información de consumo disponible para este suministro.',
+        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
       const prom = promedio6();
       let extra = '';
       if(r.consumoM3 > prom) extra = ' Está por encima del promedio mostrado en tu historial.';
