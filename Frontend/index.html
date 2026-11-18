@@ -918,7 +918,7 @@
   <div><b>Operación completada</b><p id="toast-success-msg">Tutorial completado. Explora tus recibos y tu consumo.</p></div>
 </div>
 
-<!-- ============ HIDROBOT: asistente virtual local (sin backend) ============ -->
+<!-- ============ HIDROBOT: asistente virtual ============ -->
 <div id="hidrobot-root" aria-hidden="true">
   <button id="hb-fab" class="hb-fab" type="button" aria-label="Abrir HidroBot, asistente virtual" aria-haspopup="dialog" aria-expanded="false" aria-controls="hb-panel">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3c3 4.5 6 7.7 6 11a6 6 0 1 1-12 0c0-3.3 3-6.5 6-11z"/><path d="M9.5 13.5h.01M12 13.5h.01M14.5 13.5h.01"/></svg>
@@ -963,6 +963,8 @@
 <script src="shared/password-recovery-ui.js"></script>
 <script src="shared/incident-timeline.js"></script>
 <script src="assets/js/sedapal-knowledge.js"></script>
+<script src="assets/js/hidrobot-conversation.js"></script>
+<script src="assets/js/hidrobot-chat-client.js"></script>
 <!-- Socket.IO cliente vendorizado (v4.8.4, igual que el backend): el script
      absoluto /socket.io/socket.io.js no resuelve en el WebView Android
      (origen capacitor), así que se sirve local. Copiar de nuevo desde
@@ -1154,7 +1156,7 @@
     recibos=[]; incidencias=[]; pagos=[]; cortes=[]; cortesGeneral=[];
     misSolicitudes=[]; notificaciones=[]; notifCargando=null;
     selected=null; payTarget=null; incFotoData=null; incCoords=''; loading=false;
-    recibosEstado='vacio'; payEstado='vacio'; cortesError=false; cortesGeneralError=false;
+    recibosEstado='vacio'; payEstado='vacio'; incidenciasError=false; cortesError=false; cortesGeneralError=false;
     currentFilter='Todos'; searchQuery=''; yearFilter='Todos'; payQuery=''; cortesTab='mios';
     if(incFileReader){ try{incFileReader.abort();}catch(_){} incFileReader=null; }
     if(fotoObjectUrl){URL.revokeObjectURL(fotoObjectUrl); fotoObjectUrl=null;}
@@ -1307,16 +1309,21 @@
 
       if(typeof actualizarSideCons === 'function') actualizarSideCons();
     }catch(e){
-      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
+      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;
+      recibosEstado = 'error';
+    }
   }
   async function rtRecargarIncidencias(){
     let _hmEpoch=sesionCliente.generation();
     if(!obtenerToken() || !sesionCliente.isUser()) return;
     try{
       incidencias = await conSesion(() => (cargarIncidenciasDesdeAPI()), _hmEpoch);
+      incidenciasError = false;
       if(typeof renderInc === 'function') renderInc();
     }catch(e){
-      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
+      if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;
+      incidenciasError = true;
+    }
   }
   async function rtRecargarAtencion(){
     let _hmEpoch=sesionCliente.generation();
@@ -1521,6 +1528,7 @@
   let selected = null;
   let payTarget = null;
   let incidencias = [];
+  let incidenciasError = false;
   let incFotoData = null;
   let incFileReader = null;
   let incCoords = '';
@@ -2037,6 +2045,8 @@
       periodo: etiqueta,
       numRecibo: 'R-' + idStr,
       monto: monto, estado: api.estado,
+      hayMonto: api.monto != null && api.monto !== '' && Number.isFinite(montoNum),
+      hayConsumo: api.consumo_m3 != null && api.consumo_m3 !== '' && Number.isFinite(consumoNum),
       emision: emiValida ? window.HMShared.ui.receiptDate(api.fecha_emision) : '—',
       vencimiento: venValida ? window.HMShared.ui.receiptDate(api.fecha_vencimiento) : '—',
       fechaEmisionISO: api.fecha_emision || null,
@@ -3001,10 +3011,7 @@
      Inicializacion unica via initHidroBot(). Visibilidad via
      syncHidroBotVisibility() llamada desde showView().
      ============================================================ */
-  /* ---------- HidroBot: asistente virtual local (sin backend) ---------- */
-  /* Las claves de servicios de IA nunca deben almacenarse en el
-     JavaScript del navegador. Futura migración: browser -> /api/chat
-     -> backend -> proveedor IA. Por ahora todo es 100% local. */
+  /* ---------- HidroBot: consultas locales y orientación pública opcional en LAB ---------- */
   const hbRoot = document.getElementById('hidrobot-root');
   const hbFab = document.getElementById('hb-fab');
   const hbPanel = document.getElementById('hb-panel');
@@ -3016,6 +3023,19 @@
   let hidroBotInitialized = false;
   let hidroBotTypingTimer = null;
   let hbSessionId = 0;
+  const hbConversation = window.HMHidroBot.createConversation();
+  const hbKnowledgeChat = window.HMHidroBotChat.createKnowledgeChat({
+    knowledge:window.HMSedapalKnowledge,
+    enabled:window.HM_CHAT_LAB === true,
+    identifier:()=>globalThis.crypto?.randomUUID?.(),
+    request:async (body,signal)=>{
+      const response=await apiFetch('/api/chat',{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal
+      });
+      const result=await response.json();
+      return response.ok ? result : null;
+    }
+  });
   const HB_CHIPS = ['Ver último recibo','Recibos pendientes','Consultar consumo','Reportar incidencia','Cortes de servicio','Necesito ayuda'];
 
   /* ---------- HidroBot referencias ---------- */
@@ -3025,7 +3045,10 @@
   function hbSessionActive(){ return viewDash.classList.contains('active') && hbDatosListos(); }
   function hbHuboErrorCarga(){ return recibosEstado === 'error'; }
   function hbTime(){ const d = new Date(); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); }
-  function scrollBotToBottom(){ hbBody.scrollTop = hbBody.scrollHeight; }
+  function scrollBotToBottom(){
+    while(hbBody.childElementCount > 40) hbBody.firstElementChild.remove();
+    hbBody.scrollTop = hbBody.scrollHeight;
+  }
 
   /* ---------- HidroBot renderer ---------- */
   function addUserMessage(text){
@@ -3116,6 +3139,9 @@
     hidroBotState.greeted = true;
   }
   function resetBotChat(opts){
+    hbSessionId++;
+    hbConversation.reset();
+    hbKnowledgeChat.reset();
     const greet = !!(opts && opts.greet);
     if(hidroBotTypingTimer){ clearTimeout(hidroBotTypingTimer); hidroBotTypingTimer = null; }
     const typingEl = document.getElementById('hb-typing');
@@ -3128,6 +3154,8 @@
     if(greet) greetBot();
   }
   function resetHidroBotSession(){
+    hbConversation.reset();
+    hbKnowledgeChat.reset();
     hbSessionId++;
     if(hidroBotTypingTimer){ clearTimeout(hidroBotTypingTimer); hidroBotTypingTimer = null; }
     const typingEl = document.getElementById('hb-typing');
@@ -3145,75 +3173,20 @@
   function normalizeBotText(text){
     return (text || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ').trim();
   }
-  function bw(text, w){ return new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b').test(text); }
-  // Mapa central de intenciones: el orden del arreglo define la prioridad
-  const HIDROBOT_INTENTS = [
-    {id:'cuts_district', desc:'Cortes filtrados por distrito (datos de API)'},
-    {id:'no_water', desc:'Falta de agua (combinable con cortes)'},
-    {id:'low_pressure', desc:'Baja presión'},
-    {id:'leak', desc:'Fuga / rotura / aniego (mapea a categoría del modal)'},
-    {id:'last_receipt', desc:'Último recibo con datos de recibos[0]'},
-    {id:'pending_receipts', desc:'Recibos impagos y deuda acumulada'},
-    {id:'last_payment', desc:'Último pago registrado (datos de API)'},
-    {id:'payments_count', desc:'Cantidad de pagos e historial (datos de API)'},
-    {id:'payment_code', desc:'Código de operación del pago (datos de API)'},
-    {id:'payment', desc:'Flujo de pago en línea'},
-    {id:'pdf', desc:'Copias PDF con jsPDF existente'},
-    {id:'receipts', desc:'Historial genérico de recibos'},
-    {id:'consumption', desc:'Consumo actual vs promedio6()'},
-    {id:'cuts', desc:'Módulo de cortes de servicio'},
-    {id:'cuts_all', desc:'Catálogo general de cortes (datos de API)'},
-    {id:'cuts_end', desc:'Fin del corte más próximo (datos de API)'},
-    {id:'my_incidents', desc:'Incidencias guardadas en el navegador'},
-    {id:'incident', desc:'Registro genérico de incidencia'},
-    {id:'service_status', desc:'Estado actual del suministro'},
-    {id:'customer_service', desc:'Canales de atención'},
-    {id:'tutorial', desc:'Reinicia el tutorial existente'},
-    {id:'context_help', desc:'Ayuda según la página activa'},
-    {id:'greeting', desc:'Saludos'},
-    {id:'thanks', desc:'Agradecimientos'},
-    {id:'unknown', desc:'Fuera de alcance'}
-  ];
-  function districtHit(text){
-    const ds = cortesGeneral.map(c=>c.distrito).filter(v=>v).filter((v,i,a)=>a.indexOf(v)===i);
-    for(const d of ds){
-      const n = normalizeBotText(d);
-      if(n === 'ate' || n === 'callao'){ if(bw(text, n)) return d; }
-      else if(text.indexOf(n) > -1) return d;
-    }
-    return null;
-  }
-  function detectBotIntent(raw){
+  function detectBotGuide(raw){
     const text = normalizeBotText(raw);
-    const has = (...ks)=>ks.some(k=>text.indexOf(k) > -1);
-    const cutWords = has('corte','cortes','mantenimiento','sin servicio','interrupcion');
-    const dist = districtHit(text);
-    if(dist && (cutWords || text.length < 30)) return {intent:'cuts_district', confidence:.95, data:dist};
-    if(has('no tengo agua','falta agua','sin agua','no sale agua','no hay agua')) return {intent:'no_water', confidence:.95};
-    if(has('baja presion','poca presion','sale poca agua','poca agua')) return {intent:'low_pressure', confidence:.93};
-    if(has('fuga','tuberia rota','rotura de tuberia','sale agua','aniego')) return {intent:'leak', confidence:.92};
-    // Consumo explicito ANTES que ultimo recibo: "cuanto consumi este mes" -> consumption
-    if(has('consumo','consumi','consumiste','consumir','metros','cubico','cubicos','agua consumida') || bw(text,'m3') || text.indexOf('m\u00b3') > -1) return {intent:'consumption', confidence:.93};
-    if(has('ultimo recibo','ultima factura','factura actual','recibo actual','factura de este mes','recibo de este mes','factura este mes','recibo este mes','debo este mes','deuda de este mes')) return {intent:'last_receipt', confidence:.92};
-    if(has('cuanto debo','que debo','que recibos debo','pendiente','pendientes','tengo deuda','deuda','vencido','vencidos')) return {intent:'pending_receipts', confidence:.9};
-    if(has('ultimo pago','ultima operacion','ultimo abono','ultimo comprobante')) return {intent:'last_payment', confidence:.92};
-    if(has('cuantos pagos','cuantos abonos','tengo pagos','mis pagos','historial de pagos')) return {intent:'payments_count', confidence:.9};
-    if(has('codigo de operacion','codigo de pago','codigo operacion','mi codigo')) return {intent:'payment_code', confidence:.92};
-    if(has('quiero pagar','cancelar recibo','cancelar un recibo') || bw(text,'pagar') || bw(text,'pago')) return {intent:'payment', confidence:.9};
-    if(has('descargar recibo','descargar pdf','descargar mi recibo','copia','duplicado','comprobante') || bw(text,'pdf')) return {intent:'pdf', confidence:.9};
-    if(has('mis recibos','ver recibos','recibos','historial','facturas') || bw(text,'recibo') || bw(text,'factura')) return {intent:'receipts', confidence:.87};
-    if(has('cuando termina','cuando terminan','cuando acaban','hasta cuando','cuando vuelve','a que hora termina')) return {intent:'cuts_end', confidence:.93};
-    if(has('que cortes hay','cuales cortes hay','lista de cortes','todos los cortes','que cortes existen')) return {intent:'cuts_all', confidence:.92};
-    if(cutWords) return {intent:'cuts', confidence:.88};
-    if(has('mis incidencias','mis reportes','que reporte','tengo incidencias','tengo incidencia','tengo reportes','ver incidencias','incidencias registradas')) return {intent:'my_incidents', confidence:.9};
-    if(has('incidencia','problema','reporte','reportar','falla')) return {intent:'incident', confidence:.85};
-    if(has('tengo agua','mi servicio','estado del suministro','esta activo','servicio activo')) return {intent:'service_status', confidence:.88};
-    if(has('atencion','soporte','reclamo','telefono','necesito ayuda') || bw(text,'ayuda')) return {intent:'customer_service', confidence:.88};
-    if(has('tutorial','como funciona','ensename','guia','como usar','como se usa')) return {intent:'tutorial', confidence:.9};
-    if(has('que puedo hacer','que hay aqui','opciones')) return {intent:'context_help', confidence:.85};
-    if(bw(text,'hola') || bw(text,'buenas') || has('buenos dias','buenas tardes') || bw(text,'hey')) return {intent:'greeting', confidence:.9};
-    if(bw(text,'gracias') || bw(text,'perfecto') || bw(text,'listo')) return {intent:'thanks', confidence:.85};
-    return {intent:'unknown', confidence:.3};
+    if(/\b(?:no tengo agua|falta (?:de )?agua|sin agua|no sale agua|no hay agua)\b/.test(text)) return 'no_water';
+    if(/\b(?:baja presion|poca presion|sale poca agua|poca agua)\b/.test(text)) return 'low_pressure';
+    if(/\b(?:fuga|tuberia rota|rotura de tuberia|aniego)\b/.test(text)) return 'leak';
+    if(/\b(?:reportar|registrar|crear)\b.*\b(?:incidencia|incidente|reporte|averia|falla)\b/.test(text)) return 'incident';
+    if(/\b(?:descargar|pdf|copia|duplicado)\b/.test(text)) return 'pdf';
+    if(/\b(?:pagar|cancelar (?:mi|un) recibo|como pago|donde pago)\b/.test(text)) return 'payment';
+    if(/\b(?:atencion|soporte|mesa de ayuda|necesito ayuda)\b/.test(text)) return 'customer_service';
+    if(/\b(?:tutorial|como funciona|ensename|guia|como usar|como se usa)\b/.test(text)) return 'tutorial';
+    if(/\b(?:que puedo hacer|que hay aqui|opciones)\b/.test(text)) return 'context_help';
+    if(/^(?:hola|buenas|buenos dias|buenas tardes|hey)[!. ]*$/.test(text)) return 'greeting';
+    if(/^(?:gracias|perfecto|listo)[!. ]*$/.test(text)) return 'thanks';
+    return 'unknown';
   }
 
   /* ---------- HidroBot actions ---------- */
@@ -3221,80 +3194,13 @@
     if(window.innerWidth < 700) minimizeBot();
     openDashboardPage(page);
   }
-  function hbUnpaid(){
-    return recibos.filter(reciboPagable);
-  }
-  function handleBotIntent(found, rawText){
-    const id = found.intent;
-    const sup = supplyLabel.textContent;
-    const needData = ['last_receipt','pending_receipts','consumption','payment','pdf'].indexOf(id) > -1;
-    // Array vacío (cantidad 0) = datos cargados sin registros, NO es error.
-    // Solo un fallo real de API produce el mensaje controlado de error.
-    if(needData && hbHuboErrorCarga()){
-      return {text:'No fue posible cargar toda la información del suministro. Puedes seguir usando HidroBot para consultas generales.'};
-    }
-    if(id === 'pending_receipts' && recibos.length === 0){
-      return {text:'Aún no hay recibos disponibles para este suministro.',
-        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
-    }
-    if((id === 'last_receipt' || id === 'payment' || id === 'pdf') && recibos.length === 0){
-      return {text:'Aún no hay recibos disponibles para este suministro.',
-        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
-    }
+  function handleBotGuide(id, rawText){
     if(id === 'greeting'){
       return {text:'Hola. Soy HidroBot. Puedo orientarte sobre Sedapal y ayudarte con recibos, consumo, incidencias y cortes de Hidro Mejora.'};
-    }
-    if(id === 'receipts'){
-      return {text:'En Recibos puedes buscar por mes, filtrar por año o estado, ver el detalle y descargar el PDF de cada recibo.',
-        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
     }
     if(id === 'customer_service'){
       return {text:'Puedes consultar los canales y opciones disponibles en Atención al Cliente.',
         actions:[createBotAction('Ir a Atención al Cliente', ()=>hbGo('ayuda'))]};
-    }
-    if(id === 'last_receipt'){
-      const r = recibos[0];
-      if(!r) return {text:'Aún no hay recibos disponibles para este suministro.'};
-      return {text:'Tu recibo más reciente corresponde a ' + r.etiqueta + '. Monto: ' + fmt(r.monto) +
-        '. Estado: ' + r.estado + '. Consumo: ' + r.consumo + '.',
-        actions:[createBotAction('Ver detalle', (b)=>{ minimizeBot(); abrirDetalle(r, b); }),
-                 createBotAction('Ver recibos', ()=>hbGo('historial'))]};
-    }
-    if(id === 'pending_receipts'){
-      const p = hbUnpaid();
-      const total = p.reduce((a,r)=>a + r.monto, 0);
-      if(!p.length) return {text:'No tienes recibos pendientes o vencidos. Todo al día.',
-        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
-      const uno = p.length === 1 ? 'recibo pendiente o vencido' : 'recibos pendientes o vencidos';
-      return {text:'Tienes ' + p.length + ' ' + uno + ' por un total de ' + fmt(total) + '.',
-        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
-    }
-    if(id === 'last_payment' || id === 'payments_count' || id === 'payment_code'){
-      if(!pagos.length) return {text:'Aún no hay pagos registrados para este suministro.',
-        actions:[createBotAction('Ver historial de pagos', ()=>hbGo('pagos'))]};
-      const ultimo = pagos[0];
-      if(id === 'payments_count'){
-        const totalPagado = pagos.reduce((a,x)=>a + (Number.isFinite(x.monto) ? x.monto : 0), 0);
-        const uno = pagos.length === 1 ? 'pago registrado' : 'pagos registrados';
-        return {text:'Tienes ' + pagos.length + ' ' + uno + ' por un importe registrado de ' + fmt(totalPagado) + '. El registro no implica acreditación financiera.',
-          actions:[createBotAction('Ver historial de pagos', ()=>hbGo('pagos'))]};
-      }
-      if(id === 'payment_code'){
-        return {text:'El código de operación de tu último pago (' + ultimo.periodo + ') es ' + ultimo.codigo + '.',
-          actions:[createBotAction('Ver historial de pagos', ()=>hbGo('pagos'))]};
-      }
-      return {text:'Tu último pago fue de ' + fmt(ultimo.monto) + ' por ' + ultimo.periodo + ' (' + ultimo.metodo + ', ' + ultimo.fecha + '). Código: ' + ultimo.codigo + '.',
-        actions:[createBotAction('Ver historial de pagos', ()=>hbGo('pagos'))]};
-    }
-    if(id === 'consumption'){
-      const r = recibos.find(reciboNoAnulado);
-      if(!r) return {text:'Aún no hay información de consumo disponible para este suministro.',
-        actions:[createBotAction('Ver recibos', ()=>hbGo('historial'))]};
-      const prom = promedio6();
-      let extra = '';
-      if(r.consumoM3 > prom) extra = ' Está por encima del promedio mostrado en tu historial.';
-      return {text:'Tu último consumo registrado es de ' + r.consumoM3 + ' m³. El promedio de los últimos meses es de ' + prom + ' m³.' + extra,
-        actions:[createBotAction('Ver gráfico de consumo', ()=>hbGo('inicio'))]};
     }
     if(id === 'payment'){
       return {text:'Puedes utilizar el flujo de pago de Hidro Mejora. No se procesa dinero ni tarjetas reales.',
@@ -3303,49 +3209,6 @@
     if(id === 'pdf'){
       return {text:'Puedes consultar y descargar los PDF desde Obtener copias.',
         actions:[createBotAction('Obtener copias', (b)=>{ minimizeBot(); abrirCopias(false, b); })]};
-    }
-    if(id === 'cuts_district'){
-      const dName = found.data;
-      if(!cortesGeneral.length) return {text:'No hay cortes activos o programados registrados para ese distrito.'};
-      const rows = cortesGeneral.filter(c=>c.distrito === dName).slice(0, 3);
-      if(!rows.length) return {text:'No hay cortes activos o programados registrados para ese distrito.'};
-      const det = rows.map(c=>[(c.zona || 'Cobertura general'), c.fecha, c.estado].filter(Boolean).join(' · ')).join(' | ');
-      const n = cortesGeneral.filter(c=>c.distrito === dName).length;
-      return {text:'Encontré ' + n + ' registro(s) para ' + dName + ': ' + det + '.',
-        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
-    }
-    if(id === 'cuts_all'){
-      if(!cortesGeneral.length) return {text:'No hay cortes de servicio activos o programados en este momento.',
-        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
-      const resumen = cortesGeneral.slice(0, 3).map(c=>((c.alcance === 'General' ? 'Aviso general' : c.distrito) + ' · ' + c.estado)).join(' | ');
-      const mas = cortesGeneral.length > 3 ? ' Y ' + (cortesGeneral.length - 3) + ' más.' : '';
-      return {text:'Hay ' + cortesGeneral.length + ' aviso(s) activos o programados: ' + resumen + '.' + mas,
-        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
-    }
-    if(id === 'cuts'){
-      if(!cortes.length) return {text:'No hay cortes de servicio activos o programados para tu suministro.',
-        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
-      const resumen = cortes.slice(0, 3).map(c=>((c.alcance === 'General' ? 'Aviso general' : c.distrito) + ' · ' + c.estado)).join(' | ');
-      const mas = cortes.length > 3 ? ' Y ' + (cortes.length - 3) + ' más.' : '';
-      return {text:'Tienes ' + cortes.length + ' aviso(s) vigente(s): ' + resumen + '.' + mas,
-        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
-    }
-    if(id === 'cuts_end'){
-      if(!cortes.length) return {text:'No hay cortes de servicio activos o programados para tu suministro.',
-        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
-      let prox = null;
-      cortes.forEach(c=>{
-        try{
-          const f = new Date(c.fechaFinISO);
-          if(Number.isNaN(f.getTime())) return;
-          if(!prox || f < new Date(prox.fechaFinISO)) prox = c;
-        }catch(e){}
-      });
-      if(!prox) return {text:'Revisa los avisos vigentes en el módulo Cortes de servicio.',
-        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
-      const donde = prox.alcance === 'General' ? 'aviso general' : (prox.distrito + (prox.zona ? ' · ' + prox.zona : ''));
-      return {text:'El corte más próximo en terminar (' + donde + ', ' + prox.motivo + ') finaliza el ' + formatearFechaHoraCorte(prox.fechaFinISO) + '.',
-        actions:[createBotAction('Ver cortes', ()=>hbGo('cortes'))]};
     }
     if(id === 'no_water'){
       const t = normalizeBotText(rawText);
@@ -3368,20 +3231,9 @@
       return {text:'Puedo abrir el formulario de incidencias con la categoría correspondiente.',
         actions:[createBotAction(label, (b)=>{ minimizeBot(); openIncidentModal(tipo, b); })]};
     }
-    if(id === 'my_incidents'){
-      if(!incidencias.length) return {text:'Aún no tienes incidencias registradas para este suministro.',
-        actions:[createBotAction('Reportar incidencia', (b)=>{ minimizeBot(); openIncidentModal(null, b); })]};
-      const last = incidencias[0];
-      return {text:'Tienes ' + incidencias.length + ' incidencia(s) registrada(s) para este suministro. La más reciente: ' +
-        last.code + ' · ' + last.tipo + ' · ' + last.fecha + (last.estado ? ' · Estado: ' + last.estado : '') + '.',
-        actions:[createBotAction('Ver incidencias', ()=>hbGo('incidencias'))]};
-    }
     if(id === 'incident'){
       return {text:'Puedo ayudarte a registrar una incidencia.',
         actions:[createBotAction('Reportar incidencia', (b)=>{ minimizeBot(); openIncidentModal(null, b); })]};
-    }
-    if(id === 'service_status'){
-      return {text:'El estado de tu suministro ' + sup + ' es: Activo.'};
     }
     if(id === 'tutorial'){
       return {text:'Puedo iniciar nuevamente el tutorial completo de Hidro Mejora.',
@@ -3407,24 +3259,56 @@
                createBotAction('Reportar incidencia', (b)=>{ minimizeBot(); openIncidentModal(null, b); }),
                createBotAction('Necesito ayuda', ()=>hbGo('ayuda'))]};
   }
-  // Futura migración: sustituir el cuerpo de getHidroBotResponse por una
-  // llamada segura a un backend propio (POST /api/chat). Nunca exponer
-  // claves ni llamar directo al proveedor desde el navegador.
-  async function getHidroBotResponse(message){
-    let _hmEpoch=sesionCliente.generation();
-    return handleLocalBotMessage(message);
-  }
   function handleLocalBotMessage(message){
-    const found = detectBotIntent(message);
-    // Consultas de la cuenta y emergencias conservan sus acciones y datos.
-    const accountIntents = ['last_receipt','pending_receipts','last_payment','payments_count',
-      'payment_code','payment','pdf','cuts_district','cuts_all','cuts_end','no_water',
-      'low_pressure','leak','my_incidents','service_status'];
-    if(accountIntents.indexOf(found.intent) === -1){
-      const general = window.HMSedapalKnowledge.answer(message);
-      if(general) return general;
+    const session = sesionCliente.generation();
+    const local = hbConversation.answer(message,{
+      receipts:recibos, payments:pagos, incidents:incidencias, cuts:cortes,
+      online:navigator.onLine,
+      errors:{receipts:hbHuboErrorCarga(), payments:payEstado==='error', incidents:incidenciasError, cuts:cortesError}
+    }, session);
+    if(local){
+      const actions = local.actions.map(action=>createBotAction(action.label, opener=>{
+        if(!sesionCliente.isUser() || session!==sesionCliente.generation()) return;
+        if(action.kind==='section') hbGo(action.section);
+        if(action.kind==='ask') submitBotText(action.message);
+        if(action.kind==='receipt'){
+          const row=recibos.find(r=>reciboNoAnulado(r) && String(r.id_recibo)===action.id);
+          if(!row || hbHuboErrorCarga()){
+            addBotMessage('Ese recibo ya no está disponible aquí. Puedes revisar el historial.');
+            return;
+          }
+          minimizeBot();
+          abrirDetalle(row,opener);
+        }
+      }));
+      return {...local,actions};
     }
-    return handleBotIntent(found, message);
+    const guide = detectBotGuide(message);
+    if(!['no_water','low_pressure','leak','incident','payment','pdf'].includes(guide)){
+      const topic = window.HMSedapalKnowledge.match(message);
+      if(topic) return {...window.HMSedapalKnowledge.get(topic),topic};
+    }
+    return handleBotGuide(guide,message);
+  }
+  function handleBotMessage(message){
+    const normalized=normalizeBotText(message);
+    const online=navigator.onLine;
+    if(hbKnowledgeChat.hasTopic() && /^(?:y )?(?:dime mas|cuentame mas|explicame mas|mas detalles|algo mas)[?!. ¿¡]*$/.test(normalized.replace(/^[¿¡]+/,''))){
+      return hbKnowledgeChat.reply({followup:true,online});
+    }
+    const topic=window.HMSedapalKnowledge.match(message);
+    const guide=detectBotGuide(message);
+    if(['saving','read-receipt'].includes(topic) && !['no_water','low_pressure','leak'].includes(guide)){
+      hbConversation.reset();
+      return hbKnowledgeChat.reply({topic,online});
+    }
+    const answer=handleLocalBotMessage(message);
+    if(answer.topic){
+      hbConversation.reset();
+      return hbKnowledgeChat.reply({topic:answer.topic,online});
+    }
+    hbKnowledgeChat.reset();
+    return answer;
   }
   function submitBotText(text){
     if(!sesionCliente.isUser()) return;
@@ -3442,7 +3326,7 @@
       if(sessionAtSend !== hbSessionId) return;
       if(!hbSessionActive()){ hideBotTyping(); return; }
       try{
-        const res = await conSesion(() => (getHidroBotResponse(clean)), _hmEpoch);
+        const res = await conSesion(() => handleBotMessage(clean), _hmEpoch);
         if(sessionAtSend !== hbSessionId) return;
         if(!hbSessionActive()){ hideBotTyping(); return; }
         hideBotTyping();
@@ -4399,7 +4283,7 @@ async function descargarConstanciaPDF(r, btn){
       coords: coords,
       foto: null,
       tieneFoto: api.tiene_foto === true,
-      estado: api.estado || 'Registrada'
+      estado: api.estado || null
     };
   }
   async function cargarIncidenciasDesdeAPI(){
@@ -4566,9 +4450,11 @@ async function descargarConstanciaPDF(r, btn){
       const nueva = adaptarIncidenciaAPI(data.incidencia);
       try{
         incidencias = await conSesion(() => (cargarIncidenciasDesdeAPI()), _hmEpoch);
+        incidenciasError = false;
       }catch(reloadErr){
       if(esAbortado(reloadErr) || _hmEpoch!==sesionCliente.generation())return;
         console.error('No se pudo recargar incidencias, se usa el registro creado.', reloadErr);
+        incidenciasError = true;
         incidencias.unshift(nueva);
       }
       renderInc();
@@ -5544,9 +5430,11 @@ async function descargarConstanciaPDF(r, btn){
     }
     try{
       incidencias = await conSesion(() => (cargarIncidenciasDesdeAPI()), _hmEpoch);
+      incidenciasError = false;
     }catch(err){
       if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
       console.error('No se pudieron cargar las incidencias.', err);
+      incidenciasError = true;
       incidencias = [];
     }
     try{

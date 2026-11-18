@@ -1,4 +1,4 @@
-/* Orientación local verificada el 21/10/2026. Sin consultas ni datos personales.
+/* Orientación pública compartida por la aplicación y el servicio de conversación.
  * Fuentes: https://www.gob.pe/sedapal
  * https://www.gob.pe/12786-llamar-a-sedapal-aquafono
  * https://www.gob.pe/institucion/sedapal/contacto-y-numeros-de-emergencias
@@ -7,7 +7,26 @@
   'use strict';
   const official = 'https://www.gob.pe/sedapal';
   const contact = 'https://www.gob.pe/institucion/sedapal/contacto-y-numeros-de-emergencias';
+  const billing = 'https://www.gob.pe/institucion/vivienda/noticias/1183077-cuidemos-el-agua-sedapal-te-ensena-a-leer-el-consumo-de-agua-potable-en-tu-recibo';
+  const tips = 'https://www.gob.pe/institucion/sedapal/noticias/1178111-sedapal-te-guia-hacia-un-consumo-responsable-y-sostenible-del-agua';
   const topics = [
+    {
+      id:'read-receipt',
+      matches:t=> /\b(?:explicame|explica|entender|leer|interpretar|que significa|que es)\b.{0,75}\b(?:recibo|recivo|factura|boleta|vencimiento|cargo fijo|alcantarillado)\b/.test(t)
+        && !/\b(?:cuanto|cuando|a que hora)\b/.test(t),
+      text:'En el recibo, revisa el periodo, el consumo registrado en m³, el importe y la fecha límite de pago. El consumo y el importe se expresan en unidades distintas. En Hidro-Mejora puedes abrir el detalle para ver los valores registrados.',
+      brief:'Revisa cuatro campos del recibo: periodo, consumo en m³, importe y fecha de vencimiento.',
+      detail:'El periodo indica a qué facturación corresponde el recibo. La fecha de vencimiento indica hasta cuándo se puede pagar dentro del plazo. Para fechas e importes concretos, consulta el detalle del recibo.',
+      url:billing
+    },
+    {
+      id:'saving',
+      matches:t=> /\b(?:ahorrar|ahorro|cuidar|cuidado|desperdiciar|reducir|gastar menos)\b.*\b(?:agua|consumo)\b|\bconsejos\b.*\b(?:consumo|agua)\b/.test(t),
+      text:'Para cuidar el agua, cierra el caño al cepillarte, toma duchas cortas y revisa posibles fugas en caños e inodoros. En Inicio puedes comparar tu consumo para detectar cambios.',
+      brief:'Cierra el caño cuando no lo uses, acorta las duchas y revisa fugas.',
+      detail:'Presta atención a goteos y fugas en caños, inodoros y cisternas. Compara lecturas o consumos de periodos distintos para notar cambios antes de hacer una estimación.',
+      url:tips
+    },
     {
       id:'company',
       matches:t=> /\b(que es|quien es|que significa|a que se dedica|que hace|informacion sobre|hablame de|conoces) sedapal\b/.test(t) || /^(sedapal|sobre sedapal)[?!.]*$/.test(t),
@@ -51,23 +70,24 @@
       url:official
     },
     {
-      id:'saving',
-      matches:t=> /\b(ahorrar|ahorro|cuidar|cuidado|desperdiciar)\b.*\bagua\b|\bconsejos\b.*\b(consumo|agua)\b/.test(t),
-      text:'Para cuidar el agua, cierra el caño al cepillarte, toma duchas cortas y revisa posibles fugas en caños e inodoros. En Inicio puedes comparar tu consumo para detectar cambios.',
-      url:official
-    },
-    {
       id:'aquanet',
       matches:t=> /\b(aquanet|oficina virtual)\b/.test(t),
       text:'Aquanet es la oficina virtual de Sedapal. Accede desde su portal oficial para consultar las gestiones disponibles para tu suministro.',
       url:official
     }
   ];
-  function answer(message){
-    const text = String(message || '').toLowerCase().normalize('NFD')
+  function match(message){
+    const text = String(message || '').slice(0,500).toLowerCase().normalize('NFD')
       .replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
-    const topic = topics.find(topic=>topic.matches(text));
-    return topic ? {text:topic.text, source:topic.url} : null;
+    if (/<\/?[a-z][^>]*>/i.test(text)) return undefined;
+    return topics.find(topic=>topic.matches(text))?.id;
   }
-  root.HMSedapalKnowledge = Object.freeze({answer});
+  function get(id,variant='base'){
+    const topic=topics.find(item=>item.id===id);
+    return topic ? {text:(variant==='detail' ? topic.detail : variant==='brief' ? topic.brief : null) || topic.text,source:topic.url} : null;
+  }
+  function answer(message){ return get(match(message)); }
+  const api=Object.freeze({match,get,answer});
+  if(typeof module==='object' && module.exports) module.exports=api;
+  else root.HMSedapalKnowledge=api;
 })(typeof window === 'undefined' ? globalThis : window);

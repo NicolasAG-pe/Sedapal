@@ -8,5 +8,8 @@ const domains = [
     ['notifications', /^\/api\/(?:notificaciones|push)(?:\/|$)/i],
     ['realtime', /^\/socket\.io\/?$/i]
 ];
-function destination(path) { return domains.find(([, match]) => match.test(path))?.[0]; }
+function destination(path) {
+    if (/^\/api\/chat\/?$/i.test(path)) return 'conversation';
+    return domains.find(([, match]) => match.test(path))?.[0];
+}
 module.exports = { domains, destination };

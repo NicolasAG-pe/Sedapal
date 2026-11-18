@@ -35,6 +35,7 @@
     ],
     "contract": [
       "Backend/test/services-routing.test.cjs",
+      "Backend/test/conversation.test.cjs",
       "scripts/test/public-api-config.test.js",
       "scripts/test/android-upgrade.test.cjs",
       "scripts/test/client-packaging.test.cjs"
@@ -184,6 +185,31 @@
       "legacyNpm": [
         "test:config"
       ],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
+    },
+    {
+      "path": "Backend/test/conversation.test.cjs",
+      "sha256": "ab0270dc780f7a6f150dcfdf52c4590307e5acfee6ff88a84c4bd3d2c621e7bb",
+      "type": "contrato",
+      "group": "contract",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:http",
+        "node:crypto",
+        "../services/gateway/server.cjs",
+        "../services/conversation/server.cjs",
+        "../services/conversation/provider.cjs",
+        "../../Frontend/assets/js/hidrobot-chat-client.js",
+        "../../Frontend/assets/js/sedapal-knowledge.js"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
       "referencedBy": [],
       "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
@@ -2496,7 +2522,7 @@
     },
     {
       "path": "scripts/test/hidrobot.test.cjs",
-      "sha256": "3e3446c5a1f2cfb8bf175b763f50096cf2c1db72359894264ebd58707b5bccab",
+      "sha256": "a65fc20a19f4efcccc8f8b647568c8c9ca4796fc22bf8a5d97a6c7903c27e587",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2507,7 +2533,8 @@
         "node:test",
         "node:assert/strict",
         "node:fs",
-        "node:vm"
+        "node:vm",
+        "../../Frontend/assets/js/hidrobot-conversation.js"
       ],
       "environmentNames": [],
       "legacyNpm": [
@@ -2889,7 +2916,7 @@
     },
     {
       "path": "scripts/test/public-api-config.test.js",
-      "sha256": "711b4e257911b724b9acca877314f6ebff0a491636a77a07a819eb2cdf16a2c7",
+      "sha256": "db8999d71150ef2db99212466ef0bb57f56e7bd1c8c179b2fa36f34112b61fd0",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -3324,6 +3351,11 @@
       "path": "Backend/test/auth-service.test.cjs",
       "referencedBy": [],
       "managedGroup": "unit"
+    },
+    {
+      "path": "Backend/test/conversation.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "contract"
     },
     {
       "path": "Backend/test/email-gmail-worker.cjs",

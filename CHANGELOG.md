@@ -1,5 +1,15 @@
 # Historial de versiones
 
+## HidroBot 3.0 en laboratorio
+
+- Añadido el servicio opcional de conversación con proveedor simulado y respuestas de un catálogo con fuentes oficiales. El cliente mantiene fuera del servicio los mensajes y datos de la cuenta.
+- Se conserva el modo local y se mejora la explicación de recibos, los consejos de ahorro y las referencias temporales de consumo y vencimiento.
+
+## Consultas de HidroBot
+
+- HidroBot reconoce variantes del español, errores de escritura y periodos. Puede consultar recibos vigentes, consumo, vencimientos, pagos, cortes e incidencias del suministro autenticado.
+- Recuerda temporalmente el recibo de la conversación para responder sobre su importe o abrir el detalle. Pide aclaración si hay más de una interpretación y distingue los datos vacíos de los fallos de carga.
+
 ## Consumo después de anular un recibo
 
 - El resumen, los gráficos y la consulta de consumo de HidroBot excluyen los recibos anulados. El historial conserva estos recibos con su estado.
