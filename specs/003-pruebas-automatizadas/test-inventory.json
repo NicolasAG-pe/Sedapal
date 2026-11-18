@@ -36,6 +36,7 @@
     "contract": [
       "Backend/test/services-routing.test.cjs",
       "Backend/test/conversation.test.cjs",
+      "Backend/test/gemini-flash.test.cjs",
       "scripts/test/public-api-config.test.js",
       "scripts/test/android-upgrade.test.cjs",
       "scripts/test/client-packaging.test.cjs"
@@ -190,7 +191,7 @@
     },
     {
       "path": "Backend/test/conversation.test.cjs",
-      "sha256": "ab0270dc780f7a6f150dcfdf52c4590307e5acfee6ff88a84c4bd3d2c621e7bb",
+      "sha256": "9d4e5c61e9e3bc6bc5195730dd4490d3f0b2ba67b788d712bffbd9982854fe7f",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -206,7 +207,8 @@
         "../services/conversation/server.cjs",
         "../services/conversation/provider.cjs",
         "../../Frontend/assets/js/hidrobot-chat-client.js",
-        "../../Frontend/assets/js/sedapal-knowledge.js"
+        "../../Frontend/assets/js/sedapal-knowledge.js",
+        "../services/conversation/gemini-flash.cjs"
       ],
       "environmentNames": [],
       "legacyNpm": [],
@@ -762,6 +764,25 @@
         "Backend/test/auth-service-postgres.cjs"
       ],
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "Backend/test/gemini-flash.test.cjs",
+      "sha256": "508626de858214c7b9c012c8b0ff45b3d2a189bfec5fb685322d0abc11fdfe5e",
+      "type": "contrato",
+      "group": "contract",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "../services/conversation/gemini-flash.cjs"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
       "path": "Backend/test/gmail-fixture.cjs",
@@ -3378,6 +3399,11 @@
         "Backend/test/auth-service-postgres.cjs"
       ],
       "managedGroup": null
+    },
+    {
+      "path": "Backend/test/gemini-flash.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "contract"
     },
     {
       "path": "Backend/test/gmail-fixture.cjs",

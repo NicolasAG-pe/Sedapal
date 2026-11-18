@@ -2,7 +2,7 @@
 
 Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada para listas explícitas; señales estáticas fuera de ellas no acreditan ejecución.
 
-118 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 66. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
+119 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 67. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
 
 | Archivo | Tipo | Grupo nuevo | Requisitos | Riesgo |
 |---|---|---|---|---|
@@ -30,6 +30,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `Backend/test/email-resend.test.js` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `Backend/test/email-schema.cjs` | integracion | fuera por defecto | Node22, pg, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/gateway-fixture.cjs` | helper | fuera por defecto | Node22, ws, pngjs, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `Backend/test/gemini-flash.test.cjs` | contrato | contract | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `Backend/test/gmail-fixture.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `Backend/test/gmail-roles-local.cjs` | integracion | integration | Node22, pg, PostgreSQL sintetico/fixture | opt-in: crea bases hijas y modifica exclusivamente fixtures PG18 |
 | `Backend/test/incident-tracking-fixture.cjs` | helper | fuera por defecto | Node22, pngjs, PostgreSQL sintetico/fixture | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |

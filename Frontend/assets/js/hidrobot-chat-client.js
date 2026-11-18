@@ -28,7 +28,7 @@
         try{
           const response=await request({version:1,conversationId:id,topic:followup?'more':expected},controller.signal);
           if(controller.signal.aborted || response?.version!==1 || response.topic!==expected ||
-            !['simulated','fallback'].includes(response.mode) || ![variant,'brief'].includes(response.variant)) return fallback;
+            !['simulated','fallback','gemini'].includes(response.mode) || ![variant,'brief'].includes(response.variant)) return fallback;
           // Renderizar desde el catálogo compartido. No se aceptan enlaces o texto del proveedor.
           return knowledge.get(expected,response.variant) || fallback;
         }finally{

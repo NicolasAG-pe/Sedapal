@@ -1,5 +1,9 @@
 # Historial de versiones
 
+## Adaptador futuro de HidroBot para Gemini 3.5 Flash-Lite
+
+- Preparado el adaptador de salidas estructuradas para temas públicos. El simulador se mantiene como proveedor del arranque y el catálogo local responde ante fallos o cuotas agotadas.
+
 ## HidroBot 3.0 en laboratorio
 
 - Añadido el servicio opcional de conversación con proveedor simulado y respuestas de un catálogo con fuentes oficiales. El cliente mantiene fuera del servicio los mensajes y datos de la cuenta.

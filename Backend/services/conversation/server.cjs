@@ -104,7 +104,8 @@ function createConversationService({
                     timer = setTimeout(() => { controller.abort(); resolve(null); }, providerMs);
                 })]);
                 if (!variants.includes(selected)) return fallback();
-                return res.json({ version: 1, mode: 'simulated', topic: article, variant: selected });
+                const mode = provider.mode === 'gemini' ? 'gemini' : 'simulated';
+                return res.json({ version: 1, mode, topic: article, variant: selected });
             } catch (_) {
                 return fallback();
             } finally {

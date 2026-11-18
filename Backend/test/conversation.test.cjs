@@ -168,3 +168,41 @@ test('el transporte del cliente resiste red, respuesta engañosa y configuracion
     assert.deepEqual(await local.reply({topic:'saving',online:false}),knowledge.get('saving'));
     assert.deepEqual(await local.reply({followup:true}),knowledge.get('saving','detail'));
 });
+
+test('el adaptador inyectado mantiene el contexto público y usa el catálogo si Gemini falla o agota cuota', async t => {
+    const { createGeminiFlashProvider } = require('../services/conversation/gemini-flash.cjs');
+    let fault;
+    const requests = [];
+    const provider = createGeminiFlashProvider({ apiKey:'gemini-fixture-only',
+        transport:async (url, request) => {
+            assert.ok(url.endsWith('/gemini-3.5-flash-lite:generateContent'));
+            const body = JSON.parse(request.body);
+            const input = JSON.parse(body.contents[0].parts[0].text);
+            requests.push(input);
+            if (fault === 'quota') return new Response('solo-fixture', {status:429});
+            if (fault === 'network') throw Error('sin red');
+            return Response.json({candidates:[{finishReason:'STOP',content:{parts:[
+                {text:JSON.stringify({variant:input.continuation ? 'detail' : 'brief'})}
+            ]}}]});
+        }
+    });
+    const f = await setup(t, {provider});
+    const id = randomUUID();
+    const client = createKnowledgeChat({
+        knowledge, enabled:true, identifier:()=>id,
+        request:async body=>(await f.post(body)).json()
+    });
+    assert.deepEqual(await client.reply({topic:'read-receipt'}), knowledge.get('read-receipt','brief'));
+    const isolated = await f.post(turn('more',id),'fixture-B');
+    assert.equal((await isolated.json()).mode,'clarification');
+    assert.deepEqual(await client.reply({followup:true}), knowledge.get('read-receipt','detail'));
+    for (const error of ['quota','network']) {
+        fault=error;
+        const r=await f.post(turn('more',id));
+        assert.deepEqual(await r.json(),{version:1, mode:'fallback', topic:'read-receipt', variant:'detail'});
+    }
+    assert.deepEqual(requests,[
+        {topic:'read-receipt',continuation:false,variants:['base','brief']},
+        ...Array.from({length:3},()=>({topic:'read-receipt',continuation:true,variants:['detail','brief']}))
+    ]);
+});
