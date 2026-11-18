@@ -137,7 +137,7 @@ async function main() {
     await isolation();
     let apiKey = 'groq-fixture-only';
     if (real) {
-        assert.ok(Number.isInteger(budget) && budget >= 1 && budget <= 20);
+        assert.ok(Number.isInteger(budget) && budget >= 1 && budget <= 3);
         apiKey = fs.readFileSync(secret, 'utf8').trim();
     } else {
         assert.equal(fs.existsSync(secret), false);

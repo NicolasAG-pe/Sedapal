@@ -36,4 +36,4 @@ Documento de apoyo para la exposición. Separa lo que se comprobó con la APK y 
 
 ## Siguiente paso
 
-El lanzador aislado del ensayo de punta a punta ya existe y su ensayo controlado pasa (`docs/HIDROBOT-GROQ-E2E.md`). Falta ejecutarlo una vez en modo real, con la autorización del administrador elegible y una clave nueva. Hasta entonces, no se declara inferencia real en Android.
+El lanzador aislado del ensayo de punta a punta ya existe y su ensayo controlado pasa (`docs/HIDROBOT-GROQ-E2E.md`). Falta ejecutarlo una vez en modo real, limitado a una sola solicitud, con la autorización del administrador elegible y una clave nueva. Hasta entonces, no se declara inferencia real en Android.

@@ -32,6 +32,10 @@ UPSTREAM = ("api.groq.com", 443)
 DEFAULT_AUTH = ("127.0.0.1", 8280)
 DEFAULT_ORIGINS = Path.home() / ".local/share/hidromejora/integration-hotfix-main-ms120/artifacts/android/hidrobot3-lab-593cacd/origins.json"
 SESSIONS = {"Bearer jwt-sintetico-A", "Bearer jwt-sintetico-B"}
+FIXTURE_KEY = "groq-fixture-only"
+MAX_REAL_REQUESTS = 3
+# Todo lo que Android o un cliente recibiría del Gateway durante el ensayo controlado.
+OBSERVED = []
 
 
 def log(message):
@@ -222,9 +226,13 @@ def request(port, token, body):
     call = urllib.request.Request(f"http://127.0.0.1:{port}/api/chat", data=data, headers=headers, method="POST")
     try:
         with urllib.request.urlopen(call, timeout=9) as response:
-            return response.status, json.load(response), response.headers
+            body = json.load(response)
+            OBSERVED.append(json.dumps(body) + str(response.headers))
+            return response.status, body, response.headers
     except urllib.error.HTTPError as error:
-        return error.code, json.load(error), error.headers
+        body = json.load(error)
+        OBSERVED.append(json.dumps(body) + str(error.headers))
+        return error.code, body, error.headers
 
 
 def check(condition, message):
@@ -255,11 +263,14 @@ def rehearse(port):
     status, body, headers = request(port, "jwt-sintetico-A", {"conversationId": ids[0], "topic": "more", "style": "standard"})
     check(status == 200 and body["mode"] == "fallback" and body["variant"] == "detail",
           "pausa por cuota: respaldo sin nueva salida")
+    check(len(OBSERVED) == 7 and not any(FIXTURE_KEY in item or "Bearer" in item for item in OBSERVED),
+          "ninguna respuesta ni encabezado hacia Android contiene la clave del proveedor ni un token")
 
 
-def read_events(process, events):  # events[0] será el hilo lector; el resto son dicts
+def read_events(process, events):  # events mezcla el hilo lector, líneas de texto y dicts
     for line in process.stdout:
         line = line.rstrip()
+        events.append(line)
         if line.startswith("{"):
             try:
                 events.append(json.loads(line))
@@ -309,7 +320,8 @@ def session(real, origins, gateway_port, auth_target, ttl, budget, secret_fd):
                 port = json.loads(gateway.stdout.readline())["puerto"]
                 if real:
                     log(f"Gateway del ensayo en 127.0.0.1:{port}. Servicio real abierto hasta {ttl} s o Ctrl-C.")
-                    log(f"Para Android LAB v10: adb reverse tcp:45689 tcp:{port}")
+                    log("Para Android LAB v10, en otra terminal: scripts/hidrobot-groq/adb-bridge.sh switch")
+                    log("Al terminar se restaura solo el Gateway anterior; manualmente: scripts/hidrobot-groq/adb-bridge.sh rollback")
                     try:
                         process.wait(timeout=ttl + 10)
                     except (subprocess.TimeoutExpired, KeyboardInterrupt):
@@ -341,13 +353,32 @@ def finish(process, events):
     return summary
 
 
+def assert_no_secret(events, secret, where):
+    """La clave no puede aparecer en ningún registro del sandbox ni en lo que imprime el lanzador."""
+    if not secret:
+        raise AssertionError("Comprobación de fugas sin secreto.")
+    if any(secret in (item if isinstance(item, str) else json.dumps(item)) for item in events
+           if not isinstance(item, threading.Thread)):
+        raise AssertionError("El secreto apareció en " + where + ".")
+
+
 def run_session(*args):
     process, events, cleanup = session(*args)
     try:
-        return finish(process, events)
+        return finish(process, events), events
     finally:
         for item in reversed(cleanup):
             item.close()
+
+
+def restore_bridge():
+    """Devuelve la APK LAB al Gateway anterior, incluso si el ensayo falló."""
+    try:
+        result = subprocess.run(["bash", str(HERE / "adb-bridge.sh"), "rollback"], timeout=20,
+                                capture_output=True, text=True)
+        log(("Puente ADB: " if result.returncode == 0 else "Puente ADB sin restaurar. ") + (result.stdout or result.stderr).strip().splitlines()[0])
+    except (OSError, subprocess.SubprocessError, IndexError):
+        log("Puente ADB sin restaurar. Ejecuta: scripts/hidrobot-groq/adb-bridge.sh rollback")
 
 
 def main():
@@ -356,12 +387,15 @@ def main():
     parser.add_argument("--origins", type=Path, default=DEFAULT_ORIGINS, help="origins.json del Gateway LAB (solo --run).")
     parser.add_argument("--gateway-port", type=int, default=8285)
     parser.add_argument("--auth", default="%s:%d" % DEFAULT_AUTH, help="Auth LAB loopback (solo --run).")
-    parser.add_argument("--ttl", type=int, default=600, help="Segundos que queda abierto el servicio real (5-1800).")
-    parser.add_argument("--max-external", type=int, default=6, help="Tope de peticiones a GroqCloud (1-20).")
+    parser.add_argument("--ttl", type=int, default=300, help="Segundos que queda abierto el servicio real (5-1800).")
+    parser.add_argument("--max-external", type=int, default=1,
+                        help="Tope de peticiones a GroqCloud (1-%d). El primer ensayo real usa 1." % MAX_REAL_REQUESTS)
     args = parser.parse_args()
-    ttl, budget = min(1800, max(5, args.ttl)), min(20, max(1, args.max_external))
+    ttl, budget = min(1800, max(5, args.ttl)), min(MAX_REAL_REQUESTS, max(1, args.max_external))
     log("Ensayo controlado: Auth sintético y transporte de Groq simulado, sin salida a Internet.")
-    summary = run_session(False, None, 0, None, 30, 0, None)
+    summary, events = run_session(False, None, 0, None, 30, 0, None)
+    assert_no_secret(events, FIXTURE_KEY, "los registros del sandbox")
+    check(True, "los registros del sandbox no contienen la clave simulada")
     check(summary["intentos_externos"] == 3, "el servicio simulado hizo exactamente tres intentos y la pausa evitó el cuarto")
     check(summary["codigos_backend"] == ["CHAT_PROVIDER_TIMEOUT", "GROQ_QUOTA", "GROQ_QUOTA"],
           "códigos de respaldo acotados y sin detalles")
@@ -374,10 +408,14 @@ def main():
     fd = secret_file()
     try:
         log(f"AUTORIZADO: ensayo real con tope de {budget} peticiones a GroqCloud.")
-        result = run_session(True, args.origins, args.gateway_port, (host, int(port)), ttl, budget, fd)
+        result, events = run_session(True, args.origins, args.gateway_port, (host, int(port)), ttl, budget, fd)
+        os.lseek(fd, 0, os.SEEK_SET)
+        assert_no_secret(events, os.read(fd, 256).decode().strip(), "los registros del sandbox")
         log("Resumen: " + json.dumps(result, ensure_ascii=False))
+        log("Comprobado: la clave no aparece en los registros del sandbox.")
     finally:
         os.close(fd)
+        restore_bridge()
 
 
 if __name__ == "__main__":
