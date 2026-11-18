@@ -180,6 +180,9 @@ test('DB-T07: API real sin piloto conserva 200/409/400/401/403/404 y errores san
         }
         const id = await receipt(ctx.db);
         assert.equal((await request(id, 'editar', admin, { ...body('invalid'), monto: -1 })).status, 400);
+        const invalidDate = await request(id, 'editar', admin, { ...body('invalid'), fecha_vencimiento: '2101-01-01' });
+        assert.equal(invalidDate.status, 400);
+        assert.match(invalidDate.json.mensaje, /2000 y 2100/);
         const previous = await snapshot(ctx.db, id);
         await ctx.db.query('ALTER TABLE pagos RENAME TO fixture_missing_pagos');
         const failure = await request(id, 'anular');

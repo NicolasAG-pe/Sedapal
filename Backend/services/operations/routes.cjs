@@ -1,5 +1,6 @@
 'use strict';
 const { createIncidentTracking, registerIncidentTracking, TrackingError } = require('../../incident-tracking');
+const { validarCorteAdmin } = require('../../admin-date-validation');
 
 function registerRoutes(app, { pool, requiereAuth, requiereAdmin, limitadorGenerico, limiteOperacionesSensibles, puedeVerSuministro, emitirASuministro, emitirAAdmins, emitirAAutenticados, crearNotificacion, sharedStorage = false }) {
     app.get("/api/incidencias/:suministro", requiereAuth, async (req, res) => {
@@ -400,47 +401,6 @@ function registerRoutes(app, { pool, requiereAuth, requiereAdmin, limitadorGener
             });
         }
     });
-
-    function validarCorteAdmin(body){
-        const alcance = String((body || {}).alcance || '').trim();
-        const motivo = String((body || {}).motivo || '').trim();
-        const inicio = new Date((body || {}).fecha_inicio);
-        const fin = new Date((body || {}).fecha_fin);
-
-        if (alcance !== 'Zona' && alcance !== 'General') {
-            return { error: 'Alcance inválido. Debe ser Zona o General.' };
-        }
-
-        if (!motivo || motivo.length > 200) {
-            return { error: 'El motivo es obligatorio (máximo 200 caracteres).' };
-        }
-
-        if (Number.isNaN(inicio.getTime()) || Number.isNaN(fin.getTime())) {
-            return { error: 'Fechas de inicio y fin inválidas.' };
-        }
-
-        if (fin <= inicio) {
-            return { error: 'La fecha de fin debe ser posterior a la fecha de inicio.' };
-        }
-
-        let distrito = null;
-        let zona = null;
-
-        if (alcance === 'Zona') {
-            distrito = String((body || {}).distrito || '').trim();
-            zona = String((body || {}).zona || '').trim();
-
-            if (!distrito || !zona) {
-                return { error: 'Distrito y zona son obligatorios para alcance Zona.' };
-            }
-
-            if (distrito.length > 80 || zona.length > 120) {
-                return { error: 'Distrito o zona demasiado largos.' };
-            }
-        }
-
-        return { alcance, motivo, distrito, zona, inicio, fin };
-    }
 
     function filaCorteAdmin(fila){
         let estado = 'En proceso';

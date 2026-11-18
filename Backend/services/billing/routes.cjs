@@ -1,6 +1,7 @@
 'use strict';
 const { crearServicioRecibos, responderErrorRecibo } = require('../../receipt-transactions');
 const { crearOperacionesPago, responderErrorPago } = require('../../payment-operations');
+const { validarReciboAdmin } = require('../../admin-date-validation');
 
 function registerRoutes(app, { pool, requiereAuth, requiereAdmin, limiteOperacionesSensibles, puedeVerSuministro, emitirASuministro, emitirAAdmins, crearNotificacion, sharedStorage = false }) {
     const servicioRecibos = crearServicioRecibos({ pool, validarRecibo: validarReciboAdmin, sharedStorage });
@@ -141,44 +142,6 @@ function registerRoutes(app, { pool, requiereAuth, requiereAdmin, limiteOperacio
             });
         }
     });
-
-    function validarReciboAdmin(body){
-        const numero = String((body || {}).numero_suministro || '').trim();
-        const periodo = String((body || {}).periodo || '').trim();
-        const emision = new Date((body || {}).fecha_emision);
-        const vencimiento = new Date((body || {}).fecha_vencimiento);
-        const monto = Number((body || {}).monto);
-        const consumo = Number((body || {}).consumo_m3);
-
-        if (!/^\d{9}$/.test(numero)) {
-            return { error: 'El número de suministro debe contener 9 dígitos.' };
-        }
-
-        if (!periodo || periodo.length > 20) {
-            return { error: 'El periodo es obligatorio (máximo 20 caracteres).' };
-        }
-
-        if (Number.isNaN(emision.getTime()) || Number.isNaN(vencimiento.getTime())) {
-            return { error: 'Fechas de emisión y vencimiento inválidas.' };
-        }
-
-        if (vencimiento < emision) {
-            return { error: 'La fecha de vencimiento debe ser igual o posterior a la emisión.' };
-        }
-
-        if (!Number.isFinite(monto) || monto <= 0 || monto > 99999999.99) {
-            return { error: 'Ingresa un monto válido.' };
-        }
-
-        if (!Number.isFinite(consumo) || consumo < 0 || consumo > 99999999.99) {
-            return { error: 'Ingresa un consumo válido.' };
-        }
-
-        // SQL DATE no tiene zona horaria. Evitar que pg convierta medianoche UTC
-        // al día anterior al serializar un Date en America/Lima.
-        return { numero, periodo, emision: emision.toISOString().slice(0, 10),
-            vencimiento: vencimiento.toISOString().slice(0, 10), monto, consumo };
-    }
 
     function filaReciboAdmin(fila){
         return {
