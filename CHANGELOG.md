@@ -1,5 +1,18 @@
 # Historial de versiones
 
+## Presentación del repositorio para la feria — 2026-11-17
+
+- Reorganizado el README para presentar Android, el panel administrativo, la arquitectura, las instrucciones y las limitaciones del proyecto; sin cambios funcionales ni de versiones.
+
+## Documentación alineada con main — 2026-11-11
+
+- Actualizados README, índice técnico, arquitectura, API, base de datos, desarrollo local, CI, despliegue, pruebas y proceso SDD para la referencia main `4f15173`, incluidos los PR #28 y #30.
+- Enlazada la ejecución GitHub Actions 43121800154: ambos jobs aprobados para `3484fe5`, sin atribuir ese resultado al SHA de merge ni certificar producción.
+- Documentado el ejecutor de migraciones locales existente, con alcance limitado y registro SHA-256.
+- Conservados los informes históricos y corregidas las referencias a una rama antigua, publicaciones aún pendientes y exclusiones Vercel supuestamente ausentes.
+- Comprobado el servicio Render conectado: despliegues automáticos y previews desactivados; registradas las referencias previas de despliegue sin modificar proveedores.
+- Excluida `docs/alinear-main` de despliegues Git en ambas raíces Vercel; sin cambios de aplicación, base de datos ni versiones.
+
 ## Validación del laboratorio de Auth y Notifications — MS-04
 
 - Corregidos los orígenes loopback de Socket.IO para cliente y panel. El laboratorio sigue restringido a los puertos locales 8180 y 8181.
@@ -46,15 +59,6 @@
 - Añadidos propuesta de arquitectura, contratos, criterios de laboratorio, validación, riesgos y preparación futura; se distingue expresamente diseño de implementación pendiente.
 - Incorporado MS-01 al proceso SDD, con referencia origin/main `1be9c28` y suite segura ejecutada en Node 22.23.4: 141 pruebas aprobadas, sin modificar expectativas.
 - Excluida únicamente `feature/arquitectura-microservicios-120` de despliegues Git en ambas raíces Vercel. Publicación pendiente de verificar automatizaciones externas; sin cambios funcionales, SQL ni producción.
-
-## Documentación alineada con main — 2026-11-11
-
-- Actualizados README, índice técnico, arquitectura, API, base de datos, desarrollo local, CI, despliegue, pruebas y proceso SDD para la referencia main `4f15173`, incluidos los PR #28 y #30.
-- Enlazada la ejecución GitHub Actions 43121800154: ambos jobs aprobados para `3484fe5`, sin atribuir ese resultado al SHA de merge ni certificar producción.
-- Documentado el ejecutor de migraciones locales existente, con alcance limitado y registro SHA-256.
-- Conservados los informes históricos y corregidas las referencias a una rama antigua, publicaciones aún pendientes y exclusiones Vercel supuestamente ausentes.
-- Comprobado el servicio Render conectado: despliegues automáticos y previews desactivados; registradas las referencias previas de despliegue sin modificar proveedores.
-- Excluida `docs/alinear-main` de despliegues Git en ambas raíces Vercel; sin cambios de aplicación, base de datos ni versiones.
 
 ## Correcciones de interfaz y documentación de despliegue — 2026-11-11
 
