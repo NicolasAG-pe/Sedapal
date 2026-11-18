@@ -6,7 +6,7 @@ test('AES-GCM v2: IV único, binding de usuario, etiqueta/header y encoding estr
  const e=env(),c=crearCifradoTotp(e),one=c.encrypt(secret,1),two=c.encrypt(secret,1);
  assert.notEqual(one,two);assert.ok(!one.includes(secret));assert.equal(c.decrypt(one,1),secret);
  assert.throws(()=>c.decrypt(one,2));assert.throws(()=>crearCifradoTotp(env()).decrypt(one,1));
- for(const index of [0,1,2,3,4]){const p=one.split('.');p[index]='X'+p[index].slice(1);assert.throws(()=>c.decrypt(p.join('.'),1));}
+ for(const index of [0,1,2,3,4]){const p=one.split('.');p[index]=(p[index][0]==='X'?'Y':'X')+p[index].slice(1);assert.notEqual(p.join('.'),one);assert.throws(()=>c.decrypt(p.join('.'),1));}
  assert.throws(()=>c.decrypt(one+'junk',1));assert.throws(()=>c.decrypt(one+'.extra',1));
 });
 test('Lee v1 histórico con clave anterior y escribe solo con la clave actual identificada',()=>{

@@ -13,6 +13,62 @@
 - Comprobado el servicio Render conectado: despliegues automáticos y previews desactivados; registradas las referencias previas de despliegue sin modificar proveedores.
 - Excluida `docs/alinear-main` de despliegues Git en ambas raíces Vercel; sin cambios de aplicación, base de datos ni versiones.
 
+## Laboratorio de servicios separados — MS-05
+
+- Documentados la descarga de dependencias e imágenes, la generación privada de claves y cómo pausar los servicios conservando PostgreSQL en ejecución.
+- La prueba de recuperación mide la revocación de Socket.IO desde la confirmación de la contraseña, después de que el correo simulado y su verificación han terminado.
+- Gateway independiente conserva las 75 rutas públicas y Socket.IO. Auth, Billing, Operations, Notifications y Realtime atienden sus rutas sin arrancar el backend monolítico.
+- PostgreSQL 18 compartido con roles por dominio, vistas de lectura, locks transaccionales acotados y eventos durables. Recibos y pagos conservan un solo escritor.
+- Integrados correo OTP y recuperación simulados, bandeja de avisos y worker push mock. El laboratorio tiene su propia base temporal y los clientes en 8280/8281.
+- Verificados los flujos principales en Firefox, los reintentos de pago e incidencia después de COMMIT, los permisos SQL y la recuperación tras detener servicios. Android nativo y el corte oficial quedan pendientes.
+
+## Validación del laboratorio de Auth y Notifications — MS-04
+
+- Corregidos los orígenes loopback de Socket.IO para cliente y panel. El laboratorio sigue restringido a los puertos locales 8180 y 8181.
+- Corregida la carrera entre la revocación de Socket.IO y la respuesta de 2FA que renueva la sesión y entrega códigos de recuperación. La integración comprueba la desconexión del socket con JWT anterior.
+- Cliente y panel conservan el día de emisión y vencimiento de los recibos cuando PostgreSQL devuelve fechas serializadas con hora.
+- Node 22.23.5: 164 pruebas seguras aprobadas. PostgreSQL 18 aislado: 92 aprobadas, una omisión condicional y cero fallos. Firefox comprobó registro con OTP simulado, roles, recibos, seguimiento de incidencias y revocación de sesiones por contraseña, 2FA y desactivación. Android queda pendiente.
+- Documentado el orden de extracción de Billing. Recibos y pagos permanecen en el Backend para conservar la integridad transaccional.
+
+## Integración local progresiva de Auth y Notifications — MS-04
+
+- El backend conserva `/api` y Socket.IO como entrada común, y delega solo las rutas de Auth a `AUTH_SERVICE_URL` cuando se habilita explícitamente. Sin esa variable, la aplicación oficial conserva el comportamiento monolítico.
+- Cliente web, panel y Android mantienen sus rutas actuales. Recibos, pagos, incidencias, cortes y atención siguen en Backend; los tokens emitidos por Auth se verifican contra PostgreSQL para esas rutas. Cambios de credenciales, MFA o estado de cuenta revalidan y cierran sockets afectados.
+- Añadido `compose.integration.yaml`: laboratorio `hidro-ms120-integration` con PostgreSQL temporal, Auth, Notifications stub, worker, Backend y los clientes en `127.0.0.1:8180/8181`. No reutiliza la base, volumen ni puertos de `compose.yaml`.
+- El worker de correo ya no termina al perder una conexión transitoria de PostgreSQL: espera con retroceso y reanuda desde la outbox, sin repetir directamente una entrega. La prueba con el worker anterior confirmó salida `1`; el corregido se mantuvo activo bajo el mismo corte sintético.
+- Comprobado ahora en Node 22.23.5: suite segura 163 aprobadas; integración PostgreSQL 18 aislada 92 aprobadas, 1 omisión condicional, 0 fallidas. Incluye registro/OTP, Notifications stub, caída y reinicio, recuperación de clave, 2FA, permisos, recibos, incidencias, sesiones Socket.IO y revocación. No se enviaron correos reales ni se compiló APK.
+
+## Laboratorio Compose de microservicios (MS-02/MS-03)
+
+- Añadido `compose.microservices.yaml` con identidad exclusiva `hidro-ms120-lab`: db PostgreSQL 18 sintético, db-init (init.sql + migraciones repetibles 003/006/007/011), auth, notifications y el worker existente de outbox de Auth; sin gateway ni clientes que aún no existen.
+- Ningún puerto publicado y red interna sin salida (`internal: true`); healthchecks propios para auth (`/ready` sobre las 11 tablas), notifications, worker y db; secretos generados localmente en `.env.microservicios` (fuera de Git, con plantilla `.env.microservicios.example` y fallo explícito si falta alguno).
+- La imagen de Auth copia además `workers/email-outbox.cjs` para ejecutar el worker como contenedor independiente; entrega probada vía Notifications en modo stub con control negativo fail-closed y recuperación automática.
+- Comprobado: 5 contenedores (4 en ejecución + db-init terminado), registro OTP → outbox `pendiente` → entrega `aceptado` con id `stub-…`, verificación de correo y login, introspección interna con token manipulado rechazado; la pila del monolito no se modifica ni se detiene.
+
+## Servicio Auth independiente — MS-03
+
+- Extraído el dominio Auth a un proceso Node 22 propio: login/registro de correo, JWT, OTP, 2FA, recuperación de contraseñas, revocación y autorización por rol/suministro, reutilizando los módulos de dominio del monolito sin importar `server.js`.
+- Conservadas las 27 rutas públicas del dominio con paridad verificada por prueba de inventario; ninguna ruta de Billing, Operations, Notifications ni Realtime.
+- Añadido contrato interno `POST /internal/v1/auth/introspect` con el mismo esquema HMAC del transporte de correo, secreto exclusivo obligatorio, un intento por cliente y respuesta fail-closed sin `clave_hash`, OTP ni secretos.
+- La revocación activa sigue fail-closed: cada petición JWT rele usuarios, suministros y usuario_2fa; hooks de cierre de sockets inyectables, por defecto solo registran logs JSON.
+- Arranque exige `AUTH_TOKEN_SECRET`; Dockerfile con `npm ci --omit=dev --ignore-scripts`, usuario node, filesystem de solo lectura y healthchecks `/live` y `/ready` sobre las 11 tablas Auth.
+- Pruebas: 11 unitarias nuevas en la suite segura (158 aprobadas en total con Node 22.23.5) y una integración PostgreSQL 18 aislada que recorre OTP, sesión, 2FA, introspección, cambio de contraseña y revocación con reinicio.
+
+## Notifications independiente — transporte de correo local
+
+- Implementado proceso Notifications con Dockerfile propio, healthchecks, cierre ordenado y contrato HTTP interno autenticado; sin credenciales ni consultas PostgreSQL, JWT u OTP.
+- Worker de Auth puede delegar transporte mediante NOTIFICATIONS_URL; conserva transacciones, activación OTP, leases, cancelación y reintentos. Sin esa variable permanece el modo anterior.
+- Proveedores reales cerrados por defecto; stub restringido a destinatarios .invalid. Pruebas de firma, replay, plazo, errores, caída/reinicio y Gmail ambiguo sin duplicación.
+- Node 22: 147 pruebas seguras aprobadas; PostgreSQL 18 aislado: 90 aprobadas y 1 omisión condicional. Corregida mutación aleatoria nula en prueba TOTP sin relajar expectativas ni cambiar cifrado.
+- Render consultado solo en lectura: auto-deploy y previews desactivados. Se conserva prohibición expresa de push, merge y despliegues.
+
+## Auditoría para migración a microservicios — 2026-11-13
+
+- Inventariadas 75 rutas del código actual y sus dependencias de dominio, permisos, tablas y eventos; documentados locks y triggers que impiden una extracción directa segura.
+- Añadidos propuesta de arquitectura, contratos, criterios de laboratorio, validación, riesgos y preparación futura; se distingue expresamente diseño de implementación pendiente.
+- Incorporado MS-01 al proceso SDD, con referencia origin/main `1be9c28` y suite segura ejecutada en Node 22.23.4: 141 pruebas aprobadas, sin modificar expectativas.
+- Excluida únicamente `feature/arquitectura-microservicios-120` de despliegues Git en ambas raíces Vercel. Publicación pendiente de verificar automatizaciones externas; sin cambios funcionales, SQL ni producción.
+
 ## Correcciones de interfaz y documentación de despliegue — 2026-11-11
 
 - Corregido el drawer móvil del cliente: `app-layout.css` sobrescribía la geometría de `client.css` y el panel abría en `top:88px` con 218px de ancho. Ahora ocupa el alto completo, usa `min(300px,84vw)`, respeta el área segura y su cabecera vuelve a mostrar el borde.

@@ -18,7 +18,7 @@ const publicColumns=pilot=>`o.id,o.id AS codigo_operacion,o.id_recibo,o.monto,o.
  (o.comprobante IS NOT NULL) AS tiene_comprobante,r.periodo,s.numero_suministro,
  false AS acreditacion_financiera`;
 const duplicateColumn=admin=>admin?`EXISTS(SELECT 1 FROM operaciones_pago otra WHERE otra.referencia_hash=o.referencia_hash AND otra.id<>o.id) AS referencia_repetida`:'false AS referencia_repetida';
-function crearOperacionesPago({pool,env=process.env,proveedor=null}){
+function crearOperacionesPago({pool,env=process.env,proveedor=null,sharedStorage=false}){
  const enabled=()=>env.PAYMENTS_MANUAL_ENABLED==='1'&&env.NODE_ENV!=='production';
  async function pilotSchema(c){
   const {rows:[s]}=await c.query(`SELECT to_regclass('public.control_piloto_yape') IS NOT NULL AS control,
@@ -72,7 +72,8 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
  async function locked(c,id,user,admin=false){
   const r=await get(c,id,user,admin);
   // Mismo orden que el servicio de recibos: suministro -> recibo -> operación.
-  await c.query('SELECT 1 FROM suministros WHERE numero_suministro=$1 FOR NO KEY UPDATE',[r.numero_suministro]);
+  if (sharedStorage) await c.query('SELECT * FROM hm_contract.lock_supply(NULL,$1,NULL)',[r.numero_suministro]);
+  else await c.query('SELECT 1 FROM suministros WHERE numero_suministro=$1 FOR NO KEY UPDATE',[r.numero_suministro]);
   await c.query('SELECT 1 FROM recibos WHERE id_recibo=$1 FOR UPDATE',[r.id_recibo]);
   await c.query('SELECT 1 FROM operaciones_pago WHERE id=$1 FOR UPDATE',[id]);return get(c,id,user,admin);
  }
@@ -98,7 +99,8 @@ function crearOperacionesPago({pool,env=process.env,proveedor=null}){
   const opid=crypto.randomUUID();
   return tx(async c=>{
    if(p){await guard(c,p,user,false,{receipt:id});if(!p.synthetic&&body.declaracion_voluntaria!==true)fail(400,'Confirma que declaras voluntariamente una transferencia externa para este piloto.');}
-   const{rows:[s]}=await c.query('SELECT * FROM suministros WHERE id_suministro=$1 AND id_usuario=$2 FOR NO KEY UPDATE',[user.id_suministro,user.id_usuario]);
+   const lock = sharedStorage ? 'SELECT * FROM hm_contract.lock_supply($1,NULL,$2)' : 'SELECT * FROM suministros WHERE id_suministro=$1 AND id_usuario=$2 FOR NO KEY UPDATE';
+   const{rows:[s]}=await c.query(lock,[user.id_suministro,user.id_usuario]);
    if(!s)fail(404,'Recibo no encontrado.');
    const{rows:[r]}=await c.query('SELECT * FROM recibos WHERE id_recibo=$1 AND id_suministro=$2 FOR UPDATE',[id,s.id_suministro]);
    if(!r)fail(404,'Recibo no encontrado.');

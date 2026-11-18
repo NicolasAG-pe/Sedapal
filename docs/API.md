@@ -1,5 +1,9 @@
 # API REST y tiempo real
 
+Inventario posterior sobre `1be9c28` (2026-11-13):
+[75 combinaciones método/ruta](microservices/03-matriz-endpoints.md), contrastadas
+con el registro de Express. No implica una migración ya implementada.
+
 ## Estado de la referencia
 
 Referencia actual: código 1.2.0 de `main` en `4f15173` (2026-11-11). La tabla histórica inferior describe **v1.0.0**; su total de 41 rutas no es el conteo actual. Las rutas efectivas están en [server.js](../Backend/server.js) y módulos existentes; no se generó OpenAPI ni snapshot exhaustivo nuevo.

@@ -41,3 +41,29 @@ npm test
 ```
 
 El lock raíz y `npm ci` se reservan para herramientas Capacitor cuando se necesiten. `npm run build:web` y `npm run build:admin` escriben artefactos locales, no despliegan; revisar siempre su configuración pública de API antes de pruebas de navegador. [TESTING](TESTING.md) separa integración, navegador, Android y pruebas live. No ejecutar scripts históricos de restauración/correo/live como parte del arranque.
+
+## Laboratorio integrado Auth y Notifications
+
+`compose.integration.yaml` sirve para comprobar la migración progresiva sin tocar `compose.yaml`. Crea `hidro-ms120-integration`, PostgreSQL temporal en memoria, Auth, Notifications en modo `stub`, worker de outbox y Backend. Web y Admin solo se publican en `127.0.0.1:8180` y `127.0.0.1:8181`; base, worker, Auth y Notifications permanecen en la red interna.
+
+Crear un archivo privado nuevo `.env.integration` con seis secretos de fixture distintos: `LAB_AUTH_TOKEN_SECRET`, `LAB_EMAIL_OTP_SECRET`, `LAB_EMAIL_OUTBOX_KEY`, `LAB_TOTP_ENCRYPTION_KEY`, `LAB_AUTH_INTERNAL_SECRET` y `LAB_NOTIFICATIONS_INTERNAL_SECRET`. Puede usarse la misma forma de generación descrita en `.env.microservicios.example`; no copiar `.env` ni claves reales.
+
+```bash
+docker compose --env-file .env.integration -f compose.integration.yaml config --quiet
+docker compose --env-file .env.integration -f compose.integration.yaml up -d --no-build --pull never
+docker compose --env-file .env.integration -f compose.integration.yaml ps
+```
+
+El Backend delega las rutas `/api/auth/*`, perfil y cambios administrativos de identidad a Auth mediante `AUTH_SERVICE_URL`. Las demás rutas y Socket.IO siguen en Backend. Si Auth no responde, esas rutas devuelven `503 AUTH_UNAVAILABLE`; no recurren al monolito. El correo del laboratorio acepta únicamente destinatarios `.invalid` y devuelve ids `stub-…`; nunca entrega a proveedores reales.
+
+La prueba manual `Backend/test/microservices-compose.cjs` crea una cuenta sintética. Detén solo el worker antes de ejecutarla y arráncalo cuando indique `fixture_encolado`. Así puede leer el OTP sintético antes de que el worker elimine la carga cifrada al confirmar la entrega. Ejecuta la prueba únicamente en el proyecto `hidro-ms120-integration`.
+
+Para detener todo el laboratorio usa `docker compose --env-file .env.integration -f compose.integration.yaml stop`. PostgreSQL perderá sus fixtures temporales al detenerse. Consulta los [resultados de integración](microservices/06-pruebas-validacion.md) y la [preparación de Billing](microservices/09-preparacion-billing.md).
+
+## Laboratorio sin monolito
+
+`compose.services.yaml` monta el cliente y el panel en `127.0.0.1:8280/8281`.
+Gateway dirige REST y Socket.IO a Auth, Billing, Operations, Notifications y
+Realtime. Usa `.env.services` para secretos locales, correo `.invalid` y push
+simulado. Los demás proyectos de Compose conservan sus puertos y bases.
+Consulta [arranque, contratos y verificación](microservices/10-laboratorio-servicios.md).

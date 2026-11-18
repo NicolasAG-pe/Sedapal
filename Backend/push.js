@@ -70,7 +70,7 @@ const eligibleSQL = `d.activo AND u.activo AND u.rol='usuario' AND s.id_usuario=
  AND (n.push_corte IS NULL OR EXISTS(SELECT 1 FROM cortes_servicio c WHERE c.id_corte=n.push_corte AND NOT c.cancelado AND (c.alcance='General' OR (c.alcance='Zona' AND c.distrito=s.distrito AND c.zona=s.zona) OR (c.alcance IS NULL AND EXISTS(SELECT 1 FROM cortes_suministros cs WHERE cs.id_corte=c.id_corte AND cs.id_suministro=s.id_suministro)))))`;
 const joins = `FROM push_entregas q JOIN push_dispositivos d ON d.id=q.id_dispositivo JOIN notificaciones n ON n.id_notificacion=q.id_notificacion
  JOIN usuarios u ON u.id_usuario=d.id_usuario JOIN suministros s ON s.id_suministro=d.id_suministro LEFT JOIN usuario_2fa m ON m.id_usuario=u.id_usuario`;
-function createPush({ pool, env = process.env }) {
+function createPush({ pool, env = process.env, sharedStorage = false }) {
   const enabled = () => {
     try {
       return !!configuration(env);
@@ -106,6 +106,7 @@ function createPush({ pool, env = process.env }) {
       const {
         rows: [actor],
       } = await c.query(
+        sharedStorage ? 'SELECT * FROM hm_contract.lock_actor($1,true)' :
         `SELECT u.id_usuario,u.rol,u.activo,s.id_suministro,COALESCE(m.version,0) AS version FROM usuarios u JOIN suministros s USING(id_usuario) LEFT JOIN usuario_2fa m USING(id_usuario) WHERE u.id_usuario=$1 FOR UPDATE OF u,s`,
         [user.id_usuario],
       );

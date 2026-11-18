@@ -41,3 +41,52 @@ test('Adaptador no inicia HTTP tras vencer presupuesto SQL/monótono o plazo loc
     await assert.rejects(send({...data,enviarHasta:'invalido'}));
     assert.equal(calls,0);
 });
+
+test('Worker recupera PostgreSQL caído sin repetir directamente el envío y cierra con SIGTERM', async () => {
+    const { EventEmitter } = require('node:events');
+    const signals = new EventEmitter(), pauses = [];
+    let pool, calls = 0, queries = 0, ended = false, out = '', err = '';
+    class PoolFixture extends EventEmitter {
+        constructor() { super(); pool = this; }
+        async query() {
+            if (++queries === 1) throw Object.assign(Error('privado'), { code: 'ECONNREFUSED' });
+            return { rows: [{ nombre: 'hm_email_test' }] };
+        }
+        async end() { ended = true; }
+    }
+    const env = { EMAIL_WORKER_ENABLED: '1', EMAIL_WORKER_DATABASE_URL: 'postgres://fixture@127.0.0.1/hm_email_test',
+        EMAIL_WORKER_EXPECTED_DATABASE: 'hm_email_test', EMAIL_OUTBOX_KEY: crypto.randomBytes(32).toString('base64'),
+        NOTIFICATIONS_URL: 'http://127.0.0.1:3104', NOTIFICATIONS_INTERNAL_SECRET: crypto.randomBytes(32).toString('hex') };
+    const result = await main(['--run'], env, { signals, PoolImpl: PoolFixture,
+        stdout: { write: s => { out += s; } }, stderr: { write: s => { err += s; } },
+        wait: async ms => { pauses.push(ms); },
+        createWorker: () => ({ procesarUno: async () => {
+            if (++calls === 1) {
+                pool.emit('error', Object.assign(Error('privado'), { code: '57P01' }));
+                throw Object.assign(Error('privado'), { code: '57P03' });
+            }
+            signals.emit('SIGTERM'); return { estado: 'vacio' };
+        } }) });
+    assert.equal(result, 0); assert.equal(calls, 2); assert.equal(ended, true);
+    assert.deepEqual(pauses, [1000, 2000]); assert.equal(err, '');
+    assert.match(out, /base_no_disponible/); assert.match(out, /base_recuperada/);
+    assert.doesNotMatch(out, /privado/); assert.equal(signals.listenerCount('SIGTERM'), 0);
+});
+
+test('Worker conserva error en --once y en esquema/permisos inválidos; no reintenta errores permanentes', async () => {
+    const { EventEmitter } = require('node:events');
+    for (const [mode, code] of [['--once', 'ECONNREFUSED'], ['--run', '42P01'], ['--run', '42501']]) {
+        let retries = 0, err = '';
+        class PoolFixture extends EventEmitter {
+            async query() { throw Object.assign(Error('dato privado'), { code }); }
+            async end() {}
+        }
+        assert.equal(await main([mode], { EMAIL_WORKER_ENABLED: '1',
+            EMAIL_WORKER_DATABASE_URL: 'postgres://fixture@127.0.0.1/hm_email_test', EMAIL_WORKER_EXPECTED_DATABASE: 'hm_email_test',
+            EMAIL_OUTBOX_KEY: crypto.randomBytes(32).toString('base64'),
+            NOTIFICATIONS_URL: 'http://127.0.0.1:3104', NOTIFICATIONS_INTERNAL_SECRET: crypto.randomBytes(32).toString('hex') },
+        { PoolImpl: PoolFixture, signals: new EventEmitter(), wait: async () => { retries++; },
+            stdout: { write() {} }, stderr: { write: s => { err += s; } } }), 1);
+        assert.equal(retries, 0); assert.equal(err, ERROR);
+    }
+});

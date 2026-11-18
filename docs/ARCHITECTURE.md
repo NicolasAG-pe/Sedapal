@@ -12,7 +12,12 @@ flowchart LR
 
 El dibujo representa dependencias lógicas, no servicios remotos comprobados. En Compose, ambos Nginx hacen proxy de `/api` y Socket.IO al backend; backend3000 y db5432 son internos. Solo los puertos cliente/Admin se publican al host. Ver [Compose](../compose.yaml), [desarrollo local](LOCAL-DEVELOPMENT.md) y [versiones](VERSIONES.md).
 
-## Estructura Docker de microservicios
+## Estructura Docker actual
+
+Estos contenedores no constituyen servicios de dominio independientes: Auth,
+Billing y Operations siguen compartiendo API y acceso a datos. La
+[auditoría MS-01](microservices/01-auditoria.md) y la
+[propuesta](microservices/02-arquitectura.md) describen su separación pendiente.
 
 `compose.yaml` compone cuatro servicios con una responsabilidad cada uno y dos
 redes separadas. No es un despliegue productivo ni sustituye Render/Vercel/Neon.

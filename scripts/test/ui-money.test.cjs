@@ -11,6 +11,15 @@ vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../../Shared/ui.js'), '
 });
 const money = window.HMShared.ui.money;
 
+test('la fecha civil del recibo conserva el día para DATE e ISO de PostgreSQL', () => {
+  const { date, receiptDate } = window.HMShared.ui;
+  assert.equal(receiptDate('2026-11-01'), date('2026-11-01'));
+  assert.equal(receiptDate('2026-11-01T00:00:00.000Z'), date('2026-11-01'));
+  assert.equal(receiptDate('2026-11-30T05:00:00.000Z'), date('2026-11-30'));
+  assert.equal(receiptDate(null), '—');
+  assert.notEqual(date('2026-11-01T00:00:00.000Z'), receiptDate('2026-11-01T00:00:00.000Z'));
+});
+
 test('los importes conservan dos decimales y separan los miles', () => {
   assert.equal(money(0), 'S/ 0.00');
   assert.equal(money(45), 'S/ 45.00');

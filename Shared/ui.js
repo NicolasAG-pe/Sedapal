@@ -18,6 +18,11 @@
       ...(withTime ? { hour: '2-digit', minute: '2-digit', hour12: false } : {})
     }).format(parsed);
   }
+  function receiptDate(value) {
+    // PostgreSQL DATE puede llegar serializado como ISO con hora.
+    const day = /^\d{4}-\d{2}-\d{2}(?=T|$)/.exec(value || '');
+    return date(day ? day[0] : value);
+  }
   function debounce(fn, milliseconds = 300) {
     let timer;
     function wrapped(...args) { clearTimeout(timer); timer = setTimeout(() => fn(...args), milliseconds); }
@@ -113,7 +118,7 @@
     return Object.hasOwn(labels,value)?labels[value]:String(value??'');
   }
   global.HMShared.ui = {
-    node, date, debounce, paymentAuditMessage, beginForm, clearFormLocks, installFormUX, copyText,
+    node, date, receiptDate, debounce, paymentAuditMessage, beginForm, clearFormLocks, installFormUX, copyText,
     money: value => {
       const amount = Number(value);
       return 'S/ ' + (Number.isFinite(amount) ? amount : 0)
