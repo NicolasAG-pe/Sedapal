@@ -11,7 +11,6 @@ services:
     tmpfs: [/tmp]
     volumes:
       - ./Backend:/app:ro
-      - ./Frontend/assets/js/sedapal-knowledge.js:/Frontend/assets/js/sedapal-knowledge.js:ro
     networks: [lab]
     command: [node, services/conversation/server.cjs]
     environment:

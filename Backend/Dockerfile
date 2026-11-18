@@ -11,6 +11,7 @@ COPY password-recovery.js password-recovery-crypto.js password-recovery-worker.j
 COPY workers/ ./workers/
 COPY notification-transport.js ./
 COPY auth-gateway.cjs admin-date-validation.js ./
+COPY services/conversation/ ./services/conversation/
 COPY services/auth/reporting.cjs ./services/auth/
 COPY services/billing/routes.cjs ./services/billing/
 COPY services/operations/routes.cjs ./services/operations/

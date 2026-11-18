@@ -43,6 +43,7 @@
       "scripts/test/client-packaging.test.cjs"
     ],
     "integration": [
+      "Backend/test/conversation-production.cjs",
       "Backend/test/auth-service-postgres.cjs",
       "Backend/test/notifications-postgres.cjs",
       "Backend/test/receipt-profile-compat.cjs",
@@ -191,21 +192,53 @@
       "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
+      "path": "Backend/test/conversation-production.cjs",
+      "sha256": "e80dd0c45e39e99581613dafd3d25b9576c9799c876b84a4d1b23b97e5486413",
+      "type": "integracion",
+      "group": "integration",
+      "nodeTest": true,
+      "requirements": [
+        "Node22",
+        "jsonwebtoken",
+        "PostgreSQL sintetico/fixture"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:crypto",
+        "jsonwebtoken",
+        "./email-api.cjs",
+        "../services/gateway/server.cjs",
+        "../../Frontend/assets/js/hidrobot-chat-client.js",
+        "../../Frontend/assets/js/sedapal-knowledge.js"
+      ],
+      "environmentNames": [
+        "AUTH_TOKEN_SECRET"
+      ],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "opt-in: crea bases hijas y modifica exclusivamente fixtures PG18"
+    },
+    {
       "path": "Backend/test/conversation.test.cjs",
-      "sha256": "ade16c7d01cf35230835ca47a3e0df199957fbad1649eff2be2b8064e5ecfc20",
+      "sha256": "fcb217145b6cb20ee8c17db649a82ee877c5156e73553e7f5fd9bf11104729a5",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
       "requirements": [
-        "Node22"
+        "Node22",
+        "express"
       ],
       "dependencies": [
         "node:test",
         "node:assert/strict",
         "node:http",
+        "express",
+        "node:fs",
         "node:crypto",
         "../services/gateway/server.cjs",
         "../services/conversation/server.cjs",
+        "../services/conversation/production.cjs",
         "../services/conversation/provider.cjs",
         "../../Frontend/assets/js/hidrobot-chat-client.js",
         "../../Frontend/assets/js/sedapal-knowledge.js"
@@ -245,6 +278,7 @@
       ],
       "referencedBy": [
         "Backend/test/android-session.cjs",
+        "Backend/test/conversation-production.cjs",
         "Backend/test/email-contract.cjs",
         "Backend/test/email-outbox-api.cjs",
         "Backend/test/email-registration-gate.cjs",
@@ -1592,7 +1626,7 @@
     },
     {
       "path": "Backend/test/start.test.cjs",
-      "sha256": "a18cf256f863ae2d4b7f377d2e81089b86a20adc34bf2cdf0e76ea5070007246",
+      "sha256": "d694c7c886bc4408c32a5989247444c4fcb2812b0f4634e67904c56e9e7282d2",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2200,7 +2234,7 @@
     },
     {
       "path": "scripts/test/android-upgrade.test.cjs",
-      "sha256": "62fdf352ce6a18ee6dec9cc40470ff378443568c96c60c2c12683f65b8f7f9da",
+      "sha256": "1fdab820618af0538577a0bce47b6d63054f4e8fb8b3192a6538c307b3b9cf30",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -2216,6 +2250,7 @@
         "node:os",
         "node:child_process",
         "../build-web",
+        "../public-api-config",
         "../verify-client-runtime",
         "./capacitor.config"
       ],
@@ -2962,7 +2997,7 @@
     },
     {
       "path": "scripts/test/public-api-config.test.js",
-      "sha256": "db8999d71150ef2db99212466ef0bb57f56e7bd1c8c179b2fa36f34112b61fd0",
+      "sha256": "37181eccb2c4b14de0fede534911dfc597323b1a37233e317561c55da6932656",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -3397,6 +3432,11 @@
       "path": "Backend/test/auth-service.test.cjs",
       "referencedBy": [],
       "managedGroup": "unit"
+    },
+    {
+      "path": "Backend/test/conversation-production.cjs",
+      "referencedBy": [],
+      "managedGroup": "integration"
     },
     {
       "path": "Backend/test/conversation.test.cjs",

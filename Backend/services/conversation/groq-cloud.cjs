@@ -1,6 +1,6 @@
 'use strict';
 
-const knowledge = require('../../../Frontend/assets/js/sedapal-knowledge.js');
+const knowledge = require('./sedapal-knowledge.js');
 const defaultModel = 'openai/gpt-oss-20b';
 const models = new Set([defaultModel, 'openai/gpt-oss-120b']);
 const endpoint = 'https://api.groq.com/openai/v1/chat/completions';

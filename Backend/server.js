@@ -56,12 +56,16 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Hidro-Auth-Contract'],
     maxAge: 600
 }));
+// Chat aplica su límite de 1 KB antes del parser compartido de negocio.
+const authGateway = require('./auth-gateway.cjs');
+const authGatewayConfig = authGateway.configuration(process.env);
+const { createOfficialConversation } = require('./services/conversation/production.cjs');
+app.use(createOfficialConversation({ authenticate: autenticarSesion, authOrigin: authGatewayConfig?.origin }));
+
 // Límite acotado: fotografías de incidencias hasta 2 MB + overhead base64.
 app.use(express.json({ limit: '3mb' }));
 
 // Opt-in de laboratorio: conserva la entrada /api existente para web y Android.
-const authGateway = require('./auth-gateway.cjs');
-const authGatewayConfig = authGateway.configuration(process.env);
 app.use(authGateway.createGateway(authGatewayConfig, { afterMutation: reconciliarSocketsAuth }));
 
 // Rate limits (por IP, detrás de Nginx gracias a trust proxy = 1).
@@ -370,73 +374,54 @@ registerPasswordRecovery(app,passwordRecovery,{requestLimit:limitadorGenerico(10
 // req.user se reconstruye desde DB (nunca hashes).
 // ==========================================
 
-async function requiereAuth(req, res, next){
-    const autorizacion = req.headers.authorization || '';
+async function autenticarSesion(autorizacion, queryTimeout){
+    const requerida = { status: 401, mensaje: 'Autenticación requerida.' };
+    const denegada = { status: 403, mensaje: 'Acceso denegado.' };
     const partes = autorizacion.split(' ');
 
-    if (partes.length !== 2 || partes[0] !== 'Bearer' || !partes[1]) {
-        return res.status(401).json({
-            estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
-            mensaje: "Autenticación requerida."
-        });
-    }
+    if (partes.length !== 2 || partes[0] !== 'Bearer' || !partes[1]) return requerida;
 
     let datosToken;
     try {
         datosToken = jwt.verify(partes[1], obtenerSecretoAuth());
-    } catch (e) {
-        return res.status(401).json({
-            estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
-            mensaje: "Autenticación requerida."
-        });
+    } catch (_) {
+        return requerida;
     }
 
     const idUsuarioToken = Number(datosToken.id_usuario);
-    if (!Number.isInteger(idUsuarioToken) || idUsuarioToken <= 0) {
-        return res.status(401).json({
-            estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
-            mensaje: "Autenticación requerida."
-        });
-    }
+    if (!Number.isInteger(idUsuarioToken) || idUsuarioToken <= 0) return requerida;
 
-    try {
-        // Sin clave_hash, sin foto, sin secretos. Solo estado y rol actual.
-        const verif = await pool.query(
-            `SELECT u.id_usuario, u.rol, u.activo, COALESCE(m.version,0) AS mfa_version, COALESCE(m.activo,FALSE) AS mfa_activo,
+    // Solo datos necesarios para reconstruir la sesión y comprobar su vigencia.
+    const verif = await pool.query({
+        text: `SELECT u.id_usuario, u.rol, u.activo, COALESCE(m.version,0) AS mfa_version, COALESCE(m.activo,FALSE) AS mfa_activo,
                     s.id_suministro, s.numero_suministro
-             FROM usuarios u
-             LEFT JOIN suministros s ON s.id_usuario = u.id_usuario
-             LEFT JOIN usuario_2fa m ON m.id_usuario=u.id_usuario
-             WHERE u.id_usuario = $1
-             LIMIT 1;`,
-            [idUsuarioToken]
-        );
+               FROM usuarios u
+               LEFT JOIN suministros s ON s.id_usuario = u.id_usuario
+               LEFT JOIN usuario_2fa m ON m.id_usuario = u.id_usuario
+               WHERE u.id_usuario = $1
+               LIMIT 1;`,
+        values: [idUsuarioToken],
+        query_timeout: queryTimeout
+    });
+    const fila = verif.rows[0];
+    if (!fila || fila.activo === false) return denegada;
+    if (!permiteSesion(datosToken, fila)) {
+        return { status: 401, mensaje: 'Inicia sesión nuevamente para verificar tu cuenta.' };
+    }
+    return { user: {
+        id_usuario: fila.id_usuario,
+        id_suministro: fila.id_suministro,
+        numero_suministro: fila.numero_suministro,
+        rol: fila.rol,
+        mfa_version: fila.mfa_version
+    } };
+}
 
-        if (verif.rowCount === 0) {
-            return res.status(403).json({
-                estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
-                mensaje: "Acceso denegado."
-            });
-        }
-
-        const fila = verif.rows[0];
-        if (fila.activo === false) {
-            return res.status(403).json({
-                estado: "error", codigo: "SESSION_REAUTH_REQUIRED",
-                mensaje: "Acceso denegado."
-            });
-        }
-
-        if (!permiteSesion(datosToken, fila)) return res.status(401).json({ estado: 'error', codigo:'SESSION_REAUTH_REQUIRED', mensaje: 'Inicia sesión nuevamente para verificar tu cuenta.' });
-
-        req.user = {
-            id_usuario: fila.id_usuario,
-            id_suministro: fila.id_suministro,
-            numero_suministro: fila.numero_suministro,
-            rol: fila.rol,
-            mfa_version: fila.mfa_version
-        };
-
+async function requiereAuth(req, res, next){
+    try {
+        const { user, status, mensaje } = await autenticarSesion(req.headers.authorization || '');
+        if (!user) return res.status(status).json({ estado: 'error', codigo: 'SESSION_REAUTH_REQUIRED', mensaje });
+        req.user = user;
         return next();
     } catch (e) {
         // En producción, mensaje genérico; detalle solo en log servidor.

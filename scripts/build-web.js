@@ -2,7 +2,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { readApiBase, root } = require('./public-api-config');
+const { readApiBase, root, productionAPI } = require('./public-api-config');
 const historicalImages = new Set(['LogoSedapal.png', 'logo.png', 'sedapal1.png', 'sedapal.jpg']);
 function runtimeText(directory) {
     return fs.readdirSync(directory,{withFileTypes:true}).filter(entry=>entry.name!=='vendor').map(entry=>{
@@ -14,6 +14,7 @@ function runtimeText(directory) {
 function buildWeb(target, env = process.env, outputDirectory) {
     const apiBase = readApiBase(target, env);
     const conversation = target !== 'admin' && env.HM_CHAT_LAB === '1';
+    const officialConversation = target === 'android' && apiBase === productionAPI;
     if (conversation && apiBase && !['http://127.0.0.1:45689','http://127.0.0.1:8280','http://localhost:8280'].includes(apiBase)) {
         throw Error('HidroBot de laboratorio requiere un origen de API local aprobado.');
     }
@@ -67,7 +68,8 @@ function buildWeb(target, env = process.env, outputDirectory) {
     }
     fs.writeFileSync(path.join(output, 'hm-api-config.js'),
         '// Generado desde API_BASE_URL: configuración pública, sin secretos.\n' +
-        `window.HM_API_BASE = ${JSON.stringify(apiBase)};\n` + (conversation ? 'window.HM_CHAT_LAB = true;\n' : ''));
+        `window.HM_API_BASE = ${JSON.stringify(apiBase)};\n` + (conversation ? 'window.HM_CHAT_LAB = true;\n' : '') +
+        (officialConversation ? 'window.HM_CHAT_OFFICIAL = true;\n' : ''));
     return output;
 }
 

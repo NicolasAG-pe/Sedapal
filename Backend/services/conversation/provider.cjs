@@ -1,6 +1,6 @@
 'use strict';
 
-const knowledge = require('../../../Frontend/assets/js/sedapal-knowledge.js');
+const knowledge = require('./sedapal-knowledge.js');
 
 // El proveedor solo decide la variante de un artículo público. No recibe mensajes, cuentas ni el token.
 const simulatedProvider = Object.freeze({

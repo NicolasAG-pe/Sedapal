@@ -2,9 +2,12 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { createServer } = require('node:http');
+const express = require('express');
+const { readFileSync } = require('node:fs');
 const { randomUUID } = require('node:crypto');
 const { createGateway, configuration } = require('../services/gateway/server.cjs');
 const { createConversationService, sessionValidator } = require('../services/conversation/server.cjs');
+const { createOfficialConversation } = require('../services/conversation/production.cjs');
 const { simulatedProvider, configuredProvider } = require('../services/conversation/provider.cjs');
 const { createKnowledgeChat } = require('../../Frontend/assets/js/hidrobot-chat-client.js');
 const knowledge = require('../../Frontend/assets/js/sedapal-knowledge.js');
@@ -38,6 +41,44 @@ async function setup(t, options = {}) {
         })
     };
 }
+
+test('Render y Android empaquetan el mismo catálogo público', () => {
+    const backend = require.resolve('../services/conversation/sedapal-knowledge.js');
+    const client = require.resolve('../../Frontend/assets/js/sedapal-knowledge.js');
+    assert.deepEqual(readFileSync(backend), readFileSync(client));
+});
+
+test('la orientación general en el backend oficial exige activación expresa', async t => {
+    const key = { CHAT_GROQ_API_KEY: 'fixture-controlled-key' };
+    const authenticate = async () => ({ user: { id_usuario: '5', rol: 'usuario', numero_suministro: '900000005' } });
+    const logged = [];
+    let calls = 0;
+    const transport = async () => {
+        calls++;
+        return Response.json({ choices: [{ finish_reason: 'stop', message: { role: 'assistant',
+            content: JSON.stringify({ text: 'En casa, cierra el caño y acorta las duchas para cuidar el agua.', evidence: ['base'] })
+        } }] });
+    };
+    for (const [env, expected] of [
+        [key, 'simulated'],
+        [{ ...key, CHAT_PROVIDER: 'groq' }, 'simulated'],
+        [{ ...key, CHAT_PROVIDER: 'groq', CHAT_GROQ_PUBLIC: '1', CHAT_GROQ_CANARY_USER_ID: '5' }, 'simulated'],
+        [{ ...key, CHAT_PROVIDER: 'groq', CHAT_GROQ_CANARY_USER_ID: '5' }, 'generated'],
+        [{ ...key, CHAT_PROVIDER: 'groq', CHAT_GROQ_PUBLIC: '1' }, 'generated']
+    ]) {
+        const app = express();
+        app.use(createOfficialConversation({ authenticate, env, transport, onProviderError: code => logged.push(code) }));
+        const base = await listening(t, createServer(app));
+        const response = await fetch(new URL('/api/chat', base), {
+            method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer fixture' },
+            body: JSON.stringify(publicTurn('saving', randomUUID()))
+        });
+        assert.equal(response.status, 200);
+        assert.equal((await response.json()).mode, expected);
+    }
+    assert.equal(calls, 2);
+    assert.deepEqual(logged, ['CHAT_PROVIDER_INVALID_CONFIG', 'CHAT_PROVIDER_INVALID_CONFIG']);
+});
 
 test('la configuración por defecto omite chat y rechaza un origen externo', async t => {
     const required = Object.fromEntries(['AUTH','BILLING','OPERATIONS','NOTIFICATIONS','REALTIME'].map(n => [n+'_URL','http://127.0.0.1:3100']));

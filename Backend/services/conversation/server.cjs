@@ -4,8 +4,7 @@ const rateLimit = require('express-rate-limit');
 const { createHash } = require('node:crypto');
 const { createServer } = require('node:http');
 const { simulatedProvider, configuredProvider } = require('./provider.cjs');
-const { listen } = require('../runtime.cjs');
-const knowledge = require('../../../Frontend/assets/js/sedapal-knowledge.js');
+const knowledge = require('./sedapal-knowledge.js');
 
 const continuation = 'more';
 const uuid4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -30,29 +29,31 @@ function sessionValidator(value) {
         !['auth', 'localhost', '127.0.0.1', '[::1]'].includes(origin.hostname)) {
         throw Error('El servicio de conversación exige un Auth local.');
     }
-    const url = new URL('/api/auth/session', origin);
-    return async bearer => {
-        const response = await fetch(url, {
-            headers: { Authorization: bearer },
-            redirect: 'error',
-            signal: AbortSignal.timeout(1500)
-        });
-        if (!response.ok) {
-            await response.body?.cancel();
-            if (response.status === 401 || response.status === 403) return false;
-            throw Error('Auth no disponible');
-        }
-        const { estado, usuario, suministro } = await response.json();
-        return estado === 'ok' && usuario?.rol === 'usuario' && /^\d{9}$/.test(suministro?.numero_suministro || '');
-    };
+    return async bearer => Boolean(await readSession(origin, bearer));
 }
 
-function createConversationService({
+async function readSession(origin, bearer) {
+    const response = await fetch(new URL('/api/auth/session', origin), {
+        headers: { Authorization: bearer },
+        redirect: 'error',
+        signal: AbortSignal.timeout(1500)
+    });
+    if (!response.ok) {
+        await response.body?.cancel();
+        if (response.status === 401 || response.status === 403) return false;
+        throw Error('Auth no disponible');
+    }
+    const { estado, usuario, suministro } = await response.json();
+    if (estado !== 'ok' || usuario?.rol !== 'usuario' || !/^\d{9}$/.test(suministro?.numero_suministro || '')) return null;
+    return { id_usuario: usuario.id_usuario, rol: usuario.rol, numero_suministro: suministro.numero_suministro };
+}
+
+function createConversationRouter({
     validateSession, provider = simulatedProvider, now = Date.now, ttlMs = 5 * 60_000,
     maxConversations = 1000, maxInFlight = 8, providerMs = 750, sessionLimit = 12, ipLimit = 60,
-    onProviderError = () => {}
+    canGenerate = () => true, onProviderError = () => {}
 }) {
-    const app = express();
+    const router = express.Router();
     const conversations = new Map();
     let inFlight = 0;
     const reject = (res, status, code) => res.status(status).json(envelope('error', code));
@@ -60,12 +61,8 @@ function createConversationService({
         windowMs: 60_000, limit, standardHeaders: true, legacyHeaders: false,
         message: envelope('error', 'CHAT_RATE_LIMIT'), ...options
     });
-    app.disable('x-powered-by');
-    // Solo Gateway es vecino en la red privada. El control por sesión es independiente de la IP.
-    app.set('trust proxy', 1);
-    app.use((_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
-    app.get('/ready', (_req, res) => res.json({ status: 'ok', service: 'conversation' }));
-    app.post('/api/chat', limiter(ipLimit), express.json({ limit: '1kb' }),
+    router.post('/api/chat', (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); },
+        limiter(ipLimit), express.json({ limit: '1kb', inflate: false }),
         async (req, res, next) => {
             const { version, conversationId, topic, style } = req.body || {};
             const knownVersion = (version === 1 && Object.keys(req.body).length === 3) ||
@@ -77,19 +74,20 @@ function createConversationService({
             }
             const bearer = req.get('authorization') || '';
             if (!/^Bearer [A-Za-z0-9._-]{1,4096}$/.test(bearer)) return reject(res, 401, 'CHAT_AUTH_REQUIRED');
-            let valid;
+            let identity;
             try {
-                valid = await validateSession(bearer);
+                identity = await validateSession(bearer);
             } catch (_) {
                 if (!res.destroyed) return reject(res, 503, 'CHAT_AUTH_UNAVAILABLE');
                 return;
             }
             if (res.destroyed) return;
-            if (!valid) return reject(res, 403, 'CHAT_AUTH_REQUIRED');
+            if (!identity) return reject(res, 403, 'CHAT_AUTH_REQUIRED');
             req.sessionKey = createHash('sha256').update(bearer).digest('hex');
+            req.chatIdentity = identity;
             return next();
         },
-        limiter(sessionLimit, { keyGenerator: req => req.sessionKey }),
+        limiter(sessionLimit, { keyGenerator: req => typeof req.chatIdentity === 'string' ? req.chatIdentity : req.sessionKey }),
         async (req, res) => {
             const { version, conversationId, topic } = req.body;
             const key = req.sessionKey + ':' + conversationId;
@@ -108,7 +106,7 @@ function createConversationService({
             if (conversations.size >= maxConversations) conversations.delete(conversations.keys().next().value);
             conversations.set(key, { topics: [...history.slice(-3), article], expiresAt: timestamp + ttlMs });
 
-            const useGeneration = version === 2 && typeof provider.generate === 'function';
+            const useGeneration = version === 2 && typeof provider.generate === 'function' && canGenerate(req.chatIdentity);
             const style = req.body.style === 'standard' && followup ? 'detail' : req.body.style;
             const variant = ['simple', 'summary'].includes(style) ? 'brief' : followup || style === 'detail' ? 'detail' : 'base';
             const variants = Object.freeze([variant, 'brief']);
@@ -155,15 +153,26 @@ function createConversationService({
                 res.off('close', cancel);
             }
         });
-    app.use((error, _req, res, _next) => {
+    router.use((error, _req, res, _next) => {
         if (error.type === 'entity.too.large') return reject(res, 413, 'CHAT_REQUEST_TOO_LARGE');
         if (error.status === 400 || error.status === 415) return reject(res, 400, 'CHAT_INVALID_REQUEST');
         return reject(res, 503, 'CHAT_UNAVAILABLE');
     });
+    return router;
+}
+
+function createConversationService(options) {
+    const app = express();
+    app.disable('x-powered-by');
+    // Solo Gateway es vecino de este servicio en el LAB.
+    app.set('trust proxy', 1);
+    app.get('/ready', (_req, res) => res.set('Cache-Control', 'no-store').json({ status: 'ok', service: 'conversation' }));
+    app.use(createConversationRouter(options));
     return app;
 }
 
 if (require.main === module) {
+    const { listen } = require('../runtime.cjs');
     const onProviderError = providerLogger();
     const provider = configuredProvider(process.env, globalThis.fetch, onProviderError);
     const app = createConversationService({ validateSession: sessionValidator(process.env.CHAT_AUTH_URL), provider,
@@ -172,4 +181,4 @@ if (require.main === module) {
     listen('conversation', server, Number(process.env.PORT || 3110), () => new Promise(resolve => server.close(resolve)));
 }
 
-module.exports = { createConversationService, sessionValidator };
+module.exports = { createConversationService, createConversationRouter, sessionValidator, readSession, providerLogger, providerTimeout };

@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## HidroBot 3.0 en Hidro-Mejora
+
+- El backend oficial incorpora `POST /api/chat` con el contrato v2 y la sesión de cliente vigente. Render conserva su entrada API habitual.
+- El proveedor se selecciona en el backend. El catálogo sigue disponible ante indisponibilidad y admite un diagnóstico real limitado a una cuenta autorizada.
+- Android 1.2.1/código 7 activa la orientación pública por la API oficial y mantiene las consultas privadas en el dispositivo.
+
 ## Orientación generativa de HidroBot con GroqCloud
 
 - Si el cliente se desconecta durante Auth, conversación descarta la solicitud antes de guardar contexto o llamar al proveedor. El lanzador se apaga con SIGTERM en segundo plano y el puente ADB vuelve a 8284 incluso si el Gateway de demostración está temporalmente caído.

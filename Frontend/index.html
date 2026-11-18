@@ -3011,7 +3011,7 @@
      Inicializacion unica via initHidroBot(). Visibilidad via
      syncHidroBotVisibility() llamada desde showView().
      ============================================================ */
-  /* ---------- HidroBot: consultas locales y orientación pública opcional en LAB ---------- */
+  /* ---------- HidroBot: consultas locales y orientación pública con respaldo local ---------- */
   const hbRoot = document.getElementById('hidrobot-root');
   const hbFab = document.getElementById('hb-fab');
   const hbPanel = document.getElementById('hb-panel');
@@ -3026,7 +3026,7 @@
   const hbConversation = window.HMHidroBot.createConversation();
   const hbKnowledgeChat = window.HMHidroBotChat.createKnowledgeChat({
     knowledge:window.HMSedapalKnowledge,
-    enabled:window.HM_CHAT_LAB === true,
+    enabled:window.HM_CHAT_OFFICIAL === true || window.HM_CHAT_LAB === true,
     version:2,
     identifier:()=>globalThis.crypto?.randomUUID?.(),
     request:async (body,signal)=>{

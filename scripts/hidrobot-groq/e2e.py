@@ -261,7 +261,6 @@ def sandbox_command(relay_dir, mode, canary, ttl, budget, secret_fd, tls_ca, syn
         "Backend/services/auth/internal-transport.cjs",
         "Backend/config.js",
         "Backend/node_modules",
-        "Frontend/assets/js/sedapal-knowledge.js",
     ):
         command += ["--ro-bind", str((REPO / path).resolve(strict=True)), "/pilot/" + path]
     if secret_fd is not None:

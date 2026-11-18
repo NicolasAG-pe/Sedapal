@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const vm = require('node:vm');
-const { readApiBase, root } = require('../public-api-config');
+const { readApiBase, root, productionAPI } = require('../public-api-config');
 const { buildWeb } = require('../build-web');
 const { verifyClientRuntime } = require('../verify-client-runtime');
 
@@ -76,4 +76,18 @@ test('el transporte de conversación exige activación explícita y origen del L
     vm.runInNewContext(fs.readFileSync(path.join(output,'hm-api-config.js'),'utf8'),context);
     assert.equal(context.window.HM_CHAT_LAB,true);
     assert.ok(fs.existsSync(path.join(output,'assets/js/hidrobot-chat-client.js')));
+});
+
+test('la APK oficial activa conversación v2 usando solo su origen público de API', () => {
+    const output = fs.mkdtempSync(path.join(os.tmpdir(), 'hidro-chat-release-test-'));
+    buildWeb('android', { API_BASE_URL: productionAPI, CHAT_PROVIDER: 'groq', CHAT_GROQ_API_KEY: 'DO_NOT_PUBLISH' }, output);
+    const generated = fs.readFileSync(path.join(output, 'hm-api-config.js'), 'utf8');
+    const context = { window: {} };
+    vm.runInNewContext(generated, context);
+    assert.deepEqual(context.window, { HM_API_BASE: productionAPI, HM_CHAT_OFFICIAL: true });
+    assert.doesNotMatch(generated, /DO_NOT_PUBLISH|api\.groq\.com/);
+    const html = fs.readFileSync(path.join(output, 'index.html'), 'utf8');
+    assert.match(html, /enabled:window\.HM_CHAT_OFFICIAL === true/);
+    assert.match(html, /version:2,/);
+    assert.match(html, /apiFetch\('\/api\/chat'/);
 });

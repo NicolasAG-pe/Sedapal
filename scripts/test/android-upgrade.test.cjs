@@ -3,6 +3,7 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
 const {execFileSync}=require('node:child_process');
 const {buildWeb}=require('../build-web');
+const {productionAPI}=require('../public-api-config');
 const {verifyClientRuntime}=require('../verify-client-runtime');
 const root=path.resolve(__dirname,'../..');
 const old=file=>execFileSync('git',['show','v1.0.0:'+file],{cwd:root,encoding:'utf8'});
@@ -35,7 +36,8 @@ test('Capacitor conserva contenido empaquetado, esquema seguro y sin servidor re
  const c=JSON.parse(execFileSync(process.execPath,['-e',script],{cwd:root,encoding:'utf8'}));
  assert.equal(c.appId,'pe.edu.hidromejora.app');assert.equal(c.server.androidScheme,'https');assert.equal(c.server.url,undefined);
  assert.equal(c.webDir,'artifacts/android/web-runtime');assert.equal(c.server.cleartext,undefined);
- assert.match(current('scripts/build-android-release.cjs'),/https:\/\/hidro-mejora-api\.onrender\.com/);
+ assert.equal(productionAPI,'https://hidro-mejora-api.onrender.com');
+ assert.match(current('scripts/build-android-release.cjs'),/API_BASE_URL: productionAPI/);
  assert.match(current('android/app/build.gradle'),/debuggable false/);
 });
 test('Runtime candidato contiene OTP/rutas propias, recursos cliente y ningún secreto del servidor',()=>{

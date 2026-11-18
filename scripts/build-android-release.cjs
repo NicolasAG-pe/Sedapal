@@ -7,7 +7,7 @@ const { spawnSync } = require('node:child_process');
 const { loadReleaseSigning } = require('./android-release-signing.cjs');
 const { verifyClientRuntime } = require('./verify-client-runtime');
 const root = path.resolve(__dirname, '..');
-const productionAPI = 'https://hidro-mejora-api.onrender.com';
+const { productionAPI } = require('./public-api-config');
 
 function buildRelease(env = process.env) {
   const signing = loadReleaseSigning(env); // Fallar antes de generar/sincronizar recursos.
