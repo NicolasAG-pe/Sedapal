@@ -1,0 +1,29 @@
+# Extensión opt-in para el LAB de microservicios.
+services:
+  conversation:
+    image: node:22-alpine
+    pull_policy: never
+    user: node
+    working_dir: /app
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: [/tmp]
+    volumes:
+      - ./Backend:/app:ro
+      - ./Frontend/assets/js/sedapal-knowledge.js:/Frontend/assets/js/sedapal-knowledge.js:ro
+    networks: [lab]
+    command: [node, services/conversation/server.cjs]
+    environment:
+      NODE_ENV: test
+      PORT: '3110'
+      CHAT_AUTH_URL: http://auth:3100
+    depends_on: {auth: {condition: service_healthy}}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3110/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+  gateway:
+    environment:
+      CONVERSATION_URL: http://conversation:3110

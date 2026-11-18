@@ -66,3 +66,14 @@ test('build publica solo runtime y no modifica la configuración fuente', () => 
     assert.equal(fs.readFileSync(path.join(root, 'Frontend/hm-api-config.js'), 'utf8'), source);
     assert.equal(fs.readFileSync(path.join(output, 'index.html'), 'utf8'), fs.readFileSync(path.join(root, 'Frontend/index.html'), 'utf8'));
 });
+
+test('el transporte de conversación exige activación explícita y origen del LAB', () => {
+    const output = fs.mkdtempSync(path.join(os.tmpdir(), 'hidro-chat-lab-test-'));
+    assert.throws(() => buildWeb('web', { API_BASE_URL: 'https://api.example.invalid', HM_CHAT_LAB: '1' }, output), /origen.*local/);
+    assert.deepEqual(fs.readdirSync(output), []);
+    buildWeb('android', { API_BASE_URL: 'http://127.0.0.1:45689', HM_CHAT_LAB: '1' }, output);
+    const context = { window: {} };
+    vm.runInNewContext(fs.readFileSync(path.join(output,'hm-api-config.js'),'utf8'),context);
+    assert.equal(context.window.HM_CHAT_LAB,true);
+    assert.ok(fs.existsSync(path.join(output,'assets/js/hidrobot-chat-client.js')));
+});

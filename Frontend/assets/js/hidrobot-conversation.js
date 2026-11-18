@@ -19,7 +19,7 @@
     pagos:'pago', abonos:'abono', operaciones:'operacion', transacciones:'transaccion',
     cortes:'corte', interrupciones:'interrupcion', incidencias:'incidencia', reportes:'reporte',
     incidentes:'incidente', averias:'averia', fallas:'falla', setiembre:'septiembre',
-    recivo:'recibo', recivos:'recibo', cosnuno:'consumo', cosnumo:'consumo', consmo:'consumo', concumo:'consumo',
+    recivo:'recibo', recivos:'recibo', voleta:'boleta', cosnuno:'consumo', cosnumo:'consumo', consmo:'consumo', concumo:'consumo',
     pague:'pagado', pagados:'pagado', pagadas:'pagado', coste:'precio', pendientes:'pendiente', vencidos:'vencido'
   };
   const known = new Set([...Object.values(categories).flat(), ...months, 'pendiente', 'pagado', 'promedio', 'comparar']);
@@ -82,7 +82,8 @@
     }
     for (const match of raw.matchAll(/\b(\d{4})-(0[1-9]|1[0-2])\b/g)) times.push({month:Number(match[2]),year:match[1]});
     if (like(/\b(?:este mes|mes en curso)\b/)) times.push({relative:0});
-    if (like(/\bmes pasado\b/)) times.push({relative:-1});
+    if (like(/\b(?:mes (?:pasado|anterior)|hace un mes)\b/)) times.push({relative:-1});
+    if (like(/\bhace (?:dos|2) meses\b/)) times.push({relative:-2});
 
     const groups = Object.entries(categories).filter(([,terms]) => has(...terms)).map(([group]) => group);
     if (usage || (times.length && (amount || due || average || compare))) groups.push('receipt');
@@ -104,7 +105,7 @@
       if (average && times.length) return {kind:'clarify'};
       if (pending && !usage && !due && !amount) return {kind:'pending'};
       if (paid && !usage && !due && !amount) return {kind:'paid'};
-      if (due && !byReference && !times.length && !like(/\b(?:ultimo|reciente)\b/)) return {kind:'next_due'};
+      if (due && !byReference && !times.length && !like(/\b(?:ultimo|reciente)\b/)) return {kind:'next_due',future:has('proximo','siguiente')};
       if (!byReference && !times.length && !usage && !amount && !detail && !due && !average && !compare &&
           !has('ultimo','ultima','reciente','actual','este')) return {kind:'navigate',section:'historial'};
       return {kind:compare ? 'compare' : average ? 'average' : usage ? 'consumption' : amount ? 'amount' : due ? 'due' : detail ? 'detail' : 'receipt', times, byReference};
@@ -234,8 +235,16 @@
         const due=rows.filter(r=>pendingReceipt(r)&&isoMonth(r.fechaVencimientoISO)).slice()
           .sort((a,b)=>a.fechaVencimientoISO.localeCompare(b.fechaVencimientoISO));
         if (!due.length) return result('No hay fechas de vencimiento disponibles en tus recibos por pagar.',receiptsAction);
-        remember(due[0]);
-        return result('La primera fecha de vencimiento pendiente es '+due[0].vencimiento+' ('+due[0].etiqueta+').',detailAction(due[0]),receiptsAction);
+        const parts = new Intl.DateTimeFormat('en-CA',{
+          year:'numeric', month:'2-digit', day:'2-digit', timeZone:'America/Lima'
+        }).formatToParts(new Date(clock()));
+        const fields = Object.fromEntries(parts.map(({type,value})=>[type,value]));
+        const today = fields.year+'-'+fields.month+'-'+fields.day;
+        const next = intent.future ? due.find(row=>row.fechaVencimientoISO.slice(0,10)>=today) : due[0];
+        if (!next) return result('Las fechas registradas de tus recibos por pagar ya pasaron.',receiptsAction);
+        remember(next);
+        const label = intent.future ? 'El próximo vencimiento es ' : 'La primera fecha de vencimiento pendiente es ';
+        return result(label+next.vencimiento+' ('+next.etiqueta+').',detailAction(next),receiptsAction);
       }
       const times=intent.times || [];
       const requested=times.map(spec=>selectMonth(rows,spec,new Date(clock())));

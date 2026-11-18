@@ -13,6 +13,10 @@ function runtimeText(directory) {
 
 function buildWeb(target, env = process.env, outputDirectory) {
     const apiBase = readApiBase(target, env);
+    const conversation = target !== 'admin' && env.HM_CHAT_LAB === '1';
+    if (conversation && apiBase && !['http://127.0.0.1:45689','http://127.0.0.1:8280','http://localhost:8280'].includes(apiBase)) {
+        throw Error('HidroBot de laboratorio requiere un origen de API local aprobado.');
+    }
     if (target === 'android' && !outputDirectory) {
         const generated = path.join(root, 'artifacts/android/staging');
         fs.mkdirSync(generated, { recursive: true });
@@ -63,7 +67,7 @@ function buildWeb(target, env = process.env, outputDirectory) {
     }
     fs.writeFileSync(path.join(output, 'hm-api-config.js'),
         '// Generado desde API_BASE_URL: configuración pública, sin secretos.\n' +
-        `window.HM_API_BASE = ${JSON.stringify(apiBase)};\n`);
+        `window.HM_API_BASE = ${JSON.stringify(apiBase)};\n` + (conversation ? 'window.HM_CHAT_LAB = true;\n' : ''));
     return output;
 }
 

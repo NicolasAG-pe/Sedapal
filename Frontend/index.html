@@ -918,7 +918,7 @@
   <div><b>Operación completada</b><p id="toast-success-msg">Tutorial completado. Explora tus recibos y tu consumo.</p></div>
 </div>
 
-<!-- ============ HIDROBOT: asistente virtual local (sin backend) ============ -->
+<!-- ============ HIDROBOT: asistente virtual ============ -->
 <div id="hidrobot-root" aria-hidden="true">
   <button id="hb-fab" class="hb-fab" type="button" aria-label="Abrir HidroBot, asistente virtual" aria-haspopup="dialog" aria-expanded="false" aria-controls="hb-panel">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3c3 4.5 6 7.7 6 11a6 6 0 1 1-12 0c0-3.3 3-6.5 6-11z"/><path d="M9.5 13.5h.01M12 13.5h.01M14.5 13.5h.01"/></svg>
@@ -964,6 +964,7 @@
 <script src="shared/incident-timeline.js"></script>
 <script src="assets/js/sedapal-knowledge.js"></script>
 <script src="assets/js/hidrobot-conversation.js"></script>
+<script src="assets/js/hidrobot-chat-client.js"></script>
 <!-- Socket.IO cliente vendorizado (v4.8.4, igual que el backend): el script
      absoluto /socket.io/socket.io.js no resuelve en el WebView Android
      (origen capacitor), así que se sirve local. Copiar de nuevo desde
@@ -3010,10 +3011,7 @@
      Inicializacion unica via initHidroBot(). Visibilidad via
      syncHidroBotVisibility() llamada desde showView().
      ============================================================ */
-  /* ---------- HidroBot: asistente virtual local (sin backend) ---------- */
-  /* Las claves de servicios de IA nunca deben almacenarse en el
-     JavaScript del navegador. Futura migración: browser -> /api/chat
-     -> backend -> proveedor IA. Por ahora todo es 100% local. */
+  /* ---------- HidroBot: consultas locales y orientación pública opcional en LAB ---------- */
   const hbRoot = document.getElementById('hidrobot-root');
   const hbFab = document.getElementById('hb-fab');
   const hbPanel = document.getElementById('hb-panel');
@@ -3026,6 +3024,18 @@
   let hidroBotTypingTimer = null;
   let hbSessionId = 0;
   const hbConversation = window.HMHidroBot.createConversation();
+  const hbKnowledgeChat = window.HMHidroBotChat.createKnowledgeChat({
+    knowledge:window.HMSedapalKnowledge,
+    enabled:window.HM_CHAT_LAB === true,
+    identifier:()=>globalThis.crypto?.randomUUID?.(),
+    request:async (body,signal)=>{
+      const response=await apiFetch('/api/chat',{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal
+      });
+      const result=await response.json();
+      return response.ok ? result : null;
+    }
+  });
   const HB_CHIPS = ['Ver último recibo','Recibos pendientes','Consultar consumo','Reportar incidencia','Cortes de servicio','Necesito ayuda'];
 
   /* ---------- HidroBot referencias ---------- */
@@ -3129,7 +3139,9 @@
     hidroBotState.greeted = true;
   }
   function resetBotChat(opts){
+    hbSessionId++;
     hbConversation.reset();
+    hbKnowledgeChat.reset();
     const greet = !!(opts && opts.greet);
     if(hidroBotTypingTimer){ clearTimeout(hidroBotTypingTimer); hidroBotTypingTimer = null; }
     const typingEl = document.getElementById('hb-typing');
@@ -3143,6 +3155,7 @@
   }
   function resetHidroBotSession(){
     hbConversation.reset();
+    hbKnowledgeChat.reset();
     hbSessionId++;
     if(hidroBotTypingTimer){ clearTimeout(hidroBotTypingTimer); hidroBotTypingTimer = null; }
     const typingEl = document.getElementById('hb-typing');
@@ -3272,10 +3285,30 @@
     }
     const guide = detectBotGuide(message);
     if(!['no_water','low_pressure','leak','incident','payment','pdf'].includes(guide)){
-      const general = window.HMSedapalKnowledge.answer(message);
-      if(general) return general;
+      const topic = window.HMSedapalKnowledge.match(message);
+      if(topic) return {...window.HMSedapalKnowledge.get(topic),topic};
     }
     return handleBotGuide(guide,message);
+  }
+  function handleBotMessage(message){
+    const normalized=normalizeBotText(message);
+    const online=navigator.onLine;
+    if(hbKnowledgeChat.hasTopic() && /^(?:y )?(?:dime mas|cuentame mas|explicame mas|mas detalles|algo mas)[?!. ¿¡]*$/.test(normalized.replace(/^[¿¡]+/,''))){
+      return hbKnowledgeChat.reply({followup:true,online});
+    }
+    const topic=window.HMSedapalKnowledge.match(message);
+    const guide=detectBotGuide(message);
+    if(['saving','read-receipt'].includes(topic) && !['no_water','low_pressure','leak'].includes(guide)){
+      hbConversation.reset();
+      return hbKnowledgeChat.reply({topic,online});
+    }
+    const answer=handleLocalBotMessage(message);
+    if(answer.topic){
+      hbConversation.reset();
+      return hbKnowledgeChat.reply({topic:answer.topic,online});
+    }
+    hbKnowledgeChat.reset();
+    return answer;
   }
   function submitBotText(text){
     if(!sesionCliente.isUser()) return;
@@ -3293,7 +3326,7 @@
       if(sessionAtSend !== hbSessionId) return;
       if(!hbSessionActive()){ hideBotTyping(); return; }
       try{
-        const res = await conSesion(() => handleLocalBotMessage(clean), _hmEpoch);
+        const res = await conSesion(() => handleBotMessage(clean), _hmEpoch);
         if(sessionAtSend !== hbSessionId) return;
         if(!hbSessionActive()){ hideBotTyping(); return; }
         hideBotTyping();

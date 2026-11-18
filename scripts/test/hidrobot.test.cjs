@@ -95,6 +95,7 @@ test('comprende fechas absolutas y relativas, compara periodos y usa el promedio
   assert.match(chat.answer('Promedio de consumo',data,1).text,/2 recibos vigentes es 12\.38 m³/);
   assert.match(chat.answer('¿Cuánto consumí el mes pasado?',data,1).text,/No encontré un recibo vigente/);
   assert.match(chat.answer('Consumo en 2026-08',data,1).text,/13\.75 m³/);
+  assert.match(chat.answer('¿Cuánto consumí hace dos meses?',data,1).text,/11 m³/);
   assert.match(chat.answer('Compara consumo', {...data,receipts:[sep]},1).text,/Necesito dos recibos vigentes/);
   const earlier={...sep,id_recibo:'99',etiqueta:'Septiembre 2025',fechaEmisionISO:'2025-09-12'};
   assert.match(chat.answer('Consumo en septiembre',{...data,receipts:[sep,earlier]},1).text,/Dime el mes y el año/);
@@ -134,6 +135,9 @@ test('distingue pagados, pendientes, pagos y fechas de vencimiento',()=>{
   assert.match(chat.answer('Código de operación',snapshot,1).text,/SIM-73/);
   assert.match(chat.answer('Vencimiento de mi recibo de setiembre',snapshot,1).text,/28\/09\/2026/);
   assert.match(chat.answer('¿Cuándo vence mi recibo?',snapshot,1).text,/28\/07\/2026/);
+  assert.match(chat.answer('Próximo vencimiento',snapshot,1).text,/ya pasaron/);
+  const future=receipt(5,'Noviembre 2026','2026-11-01',12,17);
+  assert.match(chat.answer('Próximo vencimiento',{...snapshot,receipts:[future,...snapshot.receipts]},1).text,/28\/11\/2026/);
 });
 
 test('muestra únicamente cortes e incidencias del suministro y señala datos faltantes',()=>{

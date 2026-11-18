@@ -11,12 +11,22 @@ const { domains, destination } = require('./routes.cjs');
 const { listen } = require('../runtime.cjs');
 
 function configuration(env) {
-    return Object.fromEntries(domains.map(([name]) => {
+    const origins = Object.fromEntries(domains.map(([name]) => {
         const origin = new URL(env[name.toUpperCase() + '_URL']);
         if (!['http:', 'https:'].includes(origin.protocol) || origin.href !== origin.origin + '/' ||
             (origin.protocol === 'http:' && env.GATEWAY_ALLOW_LOCAL_HTTP !== '1')) throw Error('Origen inválido de ' + name);
         return [name, origin];
     }));
+    if (env.CONVERSATION_URL) {
+        const origin = new URL(env.CONVERSATION_URL);
+        if (origin.protocol !== 'http:' || origin.href !== origin.origin + '/' ||
+            env.GATEWAY_ALLOW_LOCAL_HTTP !== '1' ||
+            !['conversation', 'localhost', '127.0.0.1', '[::1]'].includes(origin.hostname)) {
+            throw Error('El servicio de conversación solo puede estar en el LAB.');
+        }
+        origins.conversation = origin;
+    }
+    return origins;
 }
 const requestHeaders = ['authorization', 'content-type', 'content-length', 'origin',
     'x-hidro-auth-contract', 'accept', 'accept-encoding', 'if-none-match', 'if-modified-since',
@@ -40,7 +50,7 @@ function createGateway({ origins, allowedOrigins, trustIngress = false }) {
         methods: ['GET', 'POST', 'PATCH', 'OPTIONS'], allowedHeaders: ['Content-Type', 'Authorization', 'X-Hidro-Auth-Contract'],
         maxAge: 600, credentials: true }));
     async function check() {
-        const results = await Promise.all(Object.values(origins).map(async origin => {
+        const results = await Promise.all(Object.entries(origins).filter(([name]) => name !== 'conversation').map(async ([, origin]) => {
             try {
                 const r = await fetch(new URL('/ready', origin), { signal: AbortSignal.timeout(2500), redirect: 'error' });
                 await r.body?.cancel();
@@ -60,14 +70,14 @@ function createGateway({ origins, allowedOrigins, trustIngress = false }) {
     });
     app.use((req, res, next) => {
         const name = destination(req.path);
-        if (!name || !req.url.startsWith('/') || req.url.startsWith('//')) return next();
+        if (!name || !Object.hasOwn(origins, name) || !req.url.startsWith('/') || req.url.startsWith('//')) return next();
         const proxy = requestUpstream(req, origins[name], trustIngress);
         const unavailable = () => {
             if (res.headersSent) return res.destroy();
             res.status(503).json({ estado: 'error', codigo: name === 'auth' ? 'AUTH_UNAVAILABLE' : 'SERVICE_UNAVAILABLE',
                 mensaje: 'Servicio temporalmente no disponible.' });
         };
-        proxy.setTimeout(name === 'realtime' ? 35000 : 15000, () => proxy.destroy(Error('upstream timeout')));
+        proxy.setTimeout(name === 'realtime' ? 35000 : name === 'conversation' ? 3000 : 15000, () => proxy.destroy(Error('upstream timeout')));
         proxy.once('error', unavailable);
         proxy.on('response', upstream => {
             if (!upstream.statusCode) { upstream.resume(); return unavailable(); }
