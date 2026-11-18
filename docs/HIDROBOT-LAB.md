@@ -64,9 +64,20 @@ La validación de esta integración completó 194 pruebas unitarias y de contrat
 
 ## Cuotas y condiciones de activación
 
-- El nivel gratuito publicado para GPT-OSS 20B indica **30 solicitudes por minuto, 1.000 por día, 8.000 tokens por minuto y 200.000 por día**, compartidos por la organización. Verifica los límites y el plan de la cuenta antes de activarlo. [Cuotas y encabezados](https://console.groq.com/docs/rate-limits)
+- La página de cuotas, consultada el 2026-11-18, muestra para GPT-OSS 20B **30 solicitudes por minuto, 1.000 por día, 8.000 tokens por minuto y 200.000 por día** y los presenta como límites base del plan Developer. La fila no indica el nivel gratuito, y la tabla de modelos publica otra cifra de tokens por minuto. Consulta los límites de la organización en la consola y los encabezados de respuesta antes de activarlo. [Cuotas y encabezados](https://console.groq.com/docs/rate-limits)
 - Groq exige 18 años para el acceso o uso directo de sus servicios. El acuerdo contempla integraciones para usuarios finales y atribuye al cliente la responsabilidad de cumplir las leyes aplicables cuando su aplicación se dirige a menores o es probable que accedan. Antes de activar la inferencia para el público previsto, confirma la elegibilidad, la política de uso y los avisos o consentimientos aplicables. Mientras esté pendiente esa revisión, usa el catálogo o el simulador en la feria. [Acuerdo de Groq](https://console.groq.com/docs/legal/services-agreement)
 - Groq indica que la inferencia no se retiene por defecto y que puede registrar temporalmente entradas y salidas para atender incidentes de fiabilidad o abuso. Revisa los controles de datos de la organización. Envía únicamente temas públicos y extractos autorizados, incluso si la organización dispone de retención cero. [Tratamiento de datos](https://console.groq.com/docs/your-data)
+
+## Verificación de condiciones de Groq — 2026-11-18
+
+Lectura de las páginas públicas de Groq, sin ninguna llamada a la API:
+
+- El acuerdo de servicios (modificado el 22 de junio de 2026) exige 18 años y describe el servicio como no destinado al consumidor. La sección 6.3 hace al cliente responsable del cumplimiento legal cuando su aplicación se dirige a menores o es probable que accedan. La 6.2 exige los consentimientos y avisos necesarios, y la 4.3 desaconseja usar las salidas como asesoría médica, legal, financiera o profesional. No se encontró una restricción por país ni una regla específica para chatbots, pero la lectura de las secciones posteriores a la 7 no fue literal.
+- La política de IA prohíbe actividades engañosas y desinformación, exige evaluar la exactitud de las salidas y limita las decisiones automatizadas de alto riesgo sin supervisión humana. No exige avisar de que el usuario habla con IA. HidroBot lo hace de todos modos con el rótulo «Orientación generada».
+- Tratamiento de datos: por defecto no se retienen las entradas de inferencia. Pueden registrarse hasta 30 días solo para fallos de fiabilidad o abuso. La retención cero requiere elegibilidad y se almacena en Estados Unidos.
+- Modelo: `openai/gpt-oss-20b` figura como modelo de producción y con modo estricto de JSON Schema.
+
+Conclusión: el piloto de un administrador adulto sigue siendo la única activación respaldada. La exposición a usuarios finales, entre ellos menores, requiere la decisión del titular de la cuenta sobre los avisos, consentimientos y la jurisdicción. Hasta entonces, la feria usa el catálogo o el simulador.
 
 ## Recorrido corto para la feria
 

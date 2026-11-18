@@ -4,6 +4,9 @@
 
 - Añadido el adaptador backend de GroqCloud para GPT-OSS 20B. La generación usa temas públicos con fuentes controladas y conserva el catálogo como respaldo. El modo local es el predeterminado.
 - Se mantiene el contrato de Android LAB v10 y se documentan la activación autorizada, las cuotas, la reversión y la demostración con el simulador.
+- Añadidas siete pruebas de la cadena Gateway, Auth, conversación y adaptador con transporte controlado: sin JWT ni datos de cuenta hacia el proveedor, plazo vencido, pausa por 429, errores 4xx y 5xx, saturación, desconexión del cliente y aislamiento entre sesiones.
+- Documentada la verificación de condiciones de Groq del 2026-11-18 y corregida la cuota: la página publica los límites como base del plan Developer, sin confirmar el nivel gratuito.
+- La rama queda excluida de despliegues Git en ambos `vercel.json`. Añadidas las evidencias para la feria.
 
 ## HidroBot 3.0 en laboratorio
 
