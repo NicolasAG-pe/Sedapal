@@ -157,3 +157,50 @@ la API. Guardar y desplegar el mismo SHA para aplicar los cambios en Render.
 - Si el problema está en Android, detén la distribución y conserva ambas
   APK. Para instalaciones que ya tengan código 7, una corrección requiere
   la misma firma y un código mayor. [Actualización Android](ANDROID-RELEASE.md).
+
+## Diagnóstico de respuestas generativas
+
+El deploy `dep-dbv378rl550s738ivrpg` estaba live en el commit
+`0a850b75af5a1b417a27b215de71e529b19837e0`. El 18 de noviembre de 2026 a las
+23:27:45 UTC registró `[conversation] GROQ_INVALID_OUTPUT`. El registro
+histórico solo conserva ese código. El motivo exacto del turno de
+producción queda por confirmar. [Servicio en Render](https://dashboard.render.com/web/srv-db3f89qj9qps73fcvfbg).
+
+Con un transporte controlado, un HTTP 200 y JSON válido que repetía el
+extracto de ahorro producía el mismo error por la frase «tu consumo».
+La marca con guion en el extracto de recibos también podía provocar ese
+código. El adaptador ofrecía al modelo oraciones que luego rechazaba.
+Ahora envía oraciones compatibles con los mismos filtros, pide redacción
+impersonal con palabras de los extractos y exige sustento en el subconjunto
+realmente enviado. La APK 1.2.1 sigue aceptando el formato v2 y sus fuentes.
+
+Al rechazar una respuesta, el backend mantiene el catálogo y registra
+`[conversation] GROQ_INVALID_OUTPUT <motivo>` como máximo una vez por
+minuto para cada motivo. Los motivos son constantes del código. Los
+registros excluyen el texto, razonamiento, evidencia devuelta, claves
+y datos de sesión.
+
+| Motivo | Qué revisar |
+|---|---|
+| `HTTP_BODY`, `BODY_SIZE`, `HTTP_JSON`, `ENVELOPE` | Lectura, tamaño, JSON exterior y estructura de la respuesta HTTP |
+| `FINISH_LENGTH`, `FINISH_REASON` | Truncamiento u otro motivo de finalización distinto de `stop` |
+| `MESSAGE`, `MESSAGE_CONTENT`, `CONTENT_JSON` | Rol, rechazo del modelo, herramientas, tamaño o JSON del mensaje |
+| `SCHEMA`, `EVIDENCE`, `TEXT_LENGTH`, `CHARACTERS` | Forma, referencias, extensión y caracteres permitidos |
+| `UNSAFE_TEXT`, `GROUNDING`, `ACCOUNT_FACTS`, `SECRET_ECHO`, `CATALOG` | Contenido prohibido, palabras de los extractos, afirmaciones de cuenta, eco de clave o falta de extractos aptos |
+
+### Comprobación tras un despliegue autorizado
+
+1. Guarda el ID del deploy live para rollback. Despliega el SHA aprobado
+   dentro de una ventana que cubra el tráfico autorizado. Si la configuración
+   actual permite Groq para todos, el nuevo código recibe ese tráfico en
+   cuanto el deploy se pone live.
+2. Verifica `/api/health` y `/api/auth/capabilities`. Con una cuenta autorizada,
+   revisa sesión, recibos y consumos mediante consultas de lectura.
+3. Para la inferencia autorizada, inicia sesión en la APK 1.2.1 con la cuenta
+   de validación y pregunta «¿Cómo ahorrar agua?». Confirma HTTP 200 y
+   `mode=generated` en el cliente de diagnóstico autorizado, o el rótulo
+   «Orientación generada» con «Consultar fuente oficial» en la APK.
+4. Si aparece catálogo, revisa el motivo fijo en Render y conserva la hora.
+   Con `FINISH_LENGTH`, revisa el límite de completado antes de reintentar.
+   Para los demás motivos, usa la tabla y conserva el respaldo. Aplica el
+   procedimiento de reversión de esta guía si falla la API.

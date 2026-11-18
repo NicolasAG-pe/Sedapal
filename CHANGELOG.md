@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## Validación de respuestas de GroqCloud
+
+- El adaptador envía únicamente oraciones públicas que superan los filtros de salida y exige que las respuestas citen los extractos efectivamente enviados.
+- Render registra el motivo fijo de `GROQ_INVALID_OUTPUT` para distinguir truncamiento, formato, contenido y sustento sin registrar el cuerpo de la respuesta.
+- Las regresiones cubren los extractos incompatibles del catálogo anterior, el contrato v2 y la privacidad de los registros.
+
 ## HidroBot 3.0 en Hidro-Mejora
 
 - El backend oficial incorpora `POST /api/chat` con el contrato v2 y la sesión de cliente vigente. Render conserva su entrada API habitual.

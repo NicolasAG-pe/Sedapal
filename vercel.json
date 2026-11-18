@@ -13,6 +13,7 @@
       "feature/hidrobot-contexto-lab120": false,
       "feature/hidrobot-groqcloud-lab120": false,
       "feature/hidrobot-produccion": false,
+      "fix/hidrobot-groq-invalid-output": false,
       "integration/hotfix-main-ms120": false,
       "preparation/backend-avance-23": false,
       "feature/seguridad-totp": false,
