@@ -15,6 +15,8 @@
 
 ## Laboratorio de servicios separados — MS-05
 
+- Documentados la descarga de dependencias e imágenes, la generación privada de claves y cómo pausar los servicios conservando PostgreSQL en ejecución.
+- La prueba de recuperación mide la revocación de Socket.IO desde la confirmación de la contraseña, después de que el correo simulado y su verificación han terminado.
 - Gateway independiente conserva las 75 rutas públicas y Socket.IO. Auth, Billing, Operations, Notifications y Realtime atienden sus rutas sin arrancar el backend monolítico.
 - PostgreSQL 18 compartido con roles por dominio, vistas de lectura, locks transaccionales acotados y eventos durables. Recibos y pagos conservan un solo escritor.
 - Integrados correo OTP y recuperación simulados, bandeja de avisos y worker push mock. El laboratorio tiene su propia base temporal y los clientes en 8280/8281.

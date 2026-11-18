@@ -1467,7 +1467,7 @@
     },
     {
       "path": "Backend/test/services-smoke.cjs",
-      "sha256": "0c607c9e15faacd411097dfc298ad873cc3d77d492bf332304db6324bccf0d20",
+      "sha256": "89325109c3e986999c1ead18fa1f80b87cb4f2363d5a09c322a19a4c5cead833",
       "type": "integracion",
       "group": null,
       "nodeTest": false,

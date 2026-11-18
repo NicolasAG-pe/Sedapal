@@ -221,15 +221,16 @@ async function main() {
         assert.equal(detail.ultimas_incidencias[0].tiene_foto, true);
         console.log('OK incidencia, PNG, reintento de cambio, cortes, atención y detalle compuesto');
 
-        const invalidated = nextEvent(socket, 'sesion:invalidada');
         const recovered = await mockCode('recovery-worker', 'recovery', async () => (await request('/api/auth/password-recovery/request', 202,
             { method: 'POST', data: { correo, solicitud_id: randomUUID() } })).solicitud_id);
         const permission = await request('/api/auth/password-recovery/verify', 200, { method: 'POST',
             data: { solicitud_id: recovered.id, codigo: recovered.code } });
         const newer = 'FixtureServices456';
-        await request('/api/auth/password-recovery/complete', 200, { method: 'POST',
-            data: { solicitud_id: recovered.id, permiso: permission.permiso, password_nueva: newer, password_confirmacion: newer } });
-        await invalidated;
+        await Promise.all([
+            nextEvent(socket, 'sesion:invalidada'),
+            request('/api/auth/password-recovery/complete', 200, { method: 'POST',
+                data: { solicitud_id: recovered.id, permiso: permission.permiso, password_nueva: newer, password_confirmacion: newer } })
+        ]);
         await request('/api/me/recibos', 401, { token });
         const current = await login(supply, newer);
         console.log('OK recuperación con worker de correo independiente y revocación REST/Socket.IO');

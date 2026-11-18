@@ -56,25 +56,89 @@ ejecutable del modo anterior y los procesos nuevos.
 
 ## Arranque y validación
 
-Conservar fuera de Git `.env.services`, generar cada clave según
-[la plantilla](../../.env.services.example) y dar permisos 0600. Se requieren
-dependencias de Backend del lockfile y las imágenes locales Node 22 Alpine,
-nginx stable Alpine y PostgreSQL 18. Generar los dos runtimes con API relativa.
+Se requiere Git, Node.js 22 con npm y Docker con el complemento Compose.
+El laboratorio se verificó con Node 22.23.5, Docker Compose 2.26.1 y
+PostgreSQL 18. Los comandos usan una terminal POSIX en Linux, macOS o WSL2.
+
+Para una copia nueva:
+
+```sh
+git clone --branch main https://github.com/NicolasAG-pe/Sedapal.git
+cd Sedapal
+```
+
+En un clon existente, desde un árbol de trabajo limpio:
+
+```sh
+git switch main
+git pull --ff-only origin main
+```
+
+Desde la raíz, instala las dependencias de Backend y prepara las imágenes
+locales. Las descargas de imágenes solo hacen falta si faltan en Docker.
+
+```sh
+npm ci --prefix Backend --ignore-scripts --no-audit --no-fund
+docker pull node:22-alpine
+docker pull nginx:stable-alpine
+docker pull postgres:18
+```
+
+Ejecuta este bloque una vez para generar claves distintas desde
+[la plantilla](../../.env.services.example). La escritura exclusiva conserva
+cualquier configuración existente. `.env.services` está ignorado por Git y
+solo se usa para el laboratorio.
+
+```sh
+node -e '
+const fs = require("node:fs");
+const { randomBytes } = require("node:crypto");
+const config = fs.readFileSync(".env.services.example", "utf8");
+const local = config.replace(/^(LAB_[A-Z_]+)=$/gm, (_, key) =>
+  key + "=" + randomBytes(32).toString(key.endsWith("_KEY") ? "base64" : "hex")
+);
+fs.writeFileSync(".env.services", local, { flag: "wx", mode: 0o600 });
+'
+```
+
+Genera ambos runtimes con API relativa e inicia el laboratorio:
 
 ```sh
 node -e "const {buildWeb}=require('./scripts/build-web'); for(const name of ['web','admin']) buildWeb(name,{API_BASE_URL:''},require('node:path').resolve('artifacts/microservices',name))"
 docker compose --env-file .env.services -f compose.services.yaml config --quiet
 docker compose --env-file .env.services -f compose.services.yaml up -d --no-build --wait
-node Backend/test/services-smoke.cjs
 ```
 
-Abrir cliente `http://127.0.0.1:8280` y panel `http://127.0.0.1:8281`.
-El smoke comprueba la identidad del proyecto. Durante el ensayo detiene solo
-los workers de correo necesarios para leer el OTP sintético en memoria antes
-de volver a activarlos. Detiene y reinicia Operations y Realtime para
-comprobar el aislamiento. PostgreSQL usa tmpfs sin puerto del host. Parar
-PostgreSQL descarta sus fixtures. El correo requiere destinatarios `.invalid`
-y FCM se sustituye por el mock local.
+Abre el cliente en `http://127.0.0.1:8280` y el panel en `http://127.0.0.1:8281`.
+Consulta el estado y los logs recientes de los servicios:
+
+```sh
+docker compose --env-file .env.services -f compose.services.yaml ps -a
+docker compose --env-file .env.services -f compose.services.yaml logs --tail 40 gateway auth billing operations notifications realtime
+```
+
+La prueba opcional `node Backend/test/services-smoke.cjs` desde la raíz
+crea cuentas sintéticas, comprueba OTP y push simulados y ensaya reinicios
+de servicios. Puede ejecutarse con los clientes abiertos. El correo exige
+destinatarios `.invalid`.
+
+Para pausar el cliente, el panel y los servicios sin perder los datos
+sintéticos, deja `db` en ejecución:
+
+```sh
+docker compose --env-file .env.services -f compose.services.yaml stop web admin gateway auth billing operations notifications realtime email-worker recovery-worker push-worker
+```
+
+Para reanudar usa el mismo comando `up -d --no-build --wait`. PostgreSQL
+usa tmpfs y conserva los fixtures mientras `db` y el motor Docker sigan
+en ejecución. Detener `db` o apagar Docker descarta esa base temporal.
+
+Para consultar la rama de referencia sin cambiar de rama:
+
+```sh
+git fetch origin feature/arquitectura-microservicios-120
+git log --oneline origin/feature/arquitectura-microservicios-120
+```
 
 ## Corte oficial y reversión
 
