@@ -1,5 +1,9 @@
 # Historial de versiones
 
+## Consumo después de anular un recibo
+
+- El resumen, los gráficos y la consulta de consumo de HidroBot excluyen los recibos anulados. El historial conserva estos recibos con su estado.
+
 ## Hotfix de fechas integrado con microservicios — 1.2.0
 
 - Billing y Operations comparten las reglas del hotfix 94fa05f con el monolito. Recibos y cortes aceptan años de 2000 a 2100. El plazo de los recibos admite hasta 366 días.
