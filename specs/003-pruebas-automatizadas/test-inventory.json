@@ -194,7 +194,7 @@
     },
     {
       "path": "Backend/test/conversation-production.cjs",
-      "sha256": "0b1ac5dd800d153959b41c134212332ecba9a192cfea78a03d7641d450de588f",
+      "sha256": "94294aed0ba32299ef870c8a7e52c12995580886932218b819c67eda4ab588b3",
       "type": "integracion",
       "group": "integration",
       "nodeTest": true,
@@ -222,7 +222,7 @@
     },
     {
       "path": "Backend/test/conversation.test.cjs",
-      "sha256": "28d074a015cd6ca95ff1384161e90045e31239570e3c4753458f0626b718ce79",
+      "sha256": "36db6d61fee67bf09cde55b3646ef01d11bae2311be50f8df96573a3fee30e0e",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -849,7 +849,7 @@
     },
     {
       "path": "Backend/test/groq-chain.test.cjs",
-      "sha256": "f673562c28b79153af098be7b83b025aeb9993d6e72089ca130ca1c4a0a46ee5",
+      "sha256": "cf48fd2bab7b1bcc93a96ad30560d3f6da00d989cb3dec74c06f622d3ca5649e",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -873,7 +873,7 @@
     },
     {
       "path": "Backend/test/groq-cloud.test.cjs",
-      "sha256": "02f99f9641e27e311afdb4b10c85e8b1e1d80a6cb69dd90ff73e60dd17450003",
+      "sha256": "1d09ba75cfa0afdea59b362ba50ecde2d1354e450b87196f83d77c6f9d9840d6",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -1336,7 +1336,7 @@
     },
     {
       "path": "Backend/test/push.cjs",
-      "sha256": "afb19916c26caced0e2283added50f833c8aaa86b465953b242e1e9d37745440",
+      "sha256": "e40951f8cec57c3489ab9e96396d3b77311775ac52a2ff3f76a508883e351d21",
       "type": "integracion",
       "group": null,
       "nodeTest": true,
@@ -2364,7 +2364,7 @@
     },
     {
       "path": "scripts/test/client-consumption.test.cjs",
-      "sha256": "7a938fce16126295c4d0cd64d5a4ad0e59cf842a8ce4925e8a2346384a60a49c",
+      "sha256": "7f5964931680a0dac1d858beb9ec4a292aaafeceb3fc58cbddd758fa361a047f",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2523,7 +2523,7 @@
     },
     {
       "path": "scripts/test/documents.test.cjs",
-      "sha256": "477532fc29e43c771a2e448c764b40b8ed8c4b2c6d91151d3a71bd1e10b4cd9f",
+      "sha256": "7aab55289dd012748dd11d3f15b5b500f3c2f57e501d4f59f461c92635ff6506",
       "type": "unitaria/suplementaria",
       "group": null,
       "nodeTest": true,
@@ -2626,7 +2626,7 @@
     },
     {
       "path": "scripts/test/hidrobot.test.cjs",
-      "sha256": "493d5d9dc95a532e7145d045b4238d0cef28bd458fe389c05806551c7fc8ad6f",
+      "sha256": "b2a8ceb23e3d8e44971ba5dca8a76cc8019ee8d632139a33019330f84311ea56",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -3049,7 +3049,7 @@
     },
     {
       "path": "scripts/test/push-event-errors.test.cjs",
-      "sha256": "04f8a22046b93fd6779b032db0e140cd90f4d6beef5813162fe3f33116020a6c",
+      "sha256": "113bedc062f4e321b80c7eeef787458f1ca7e7419208e43b315fe4b896729ee9",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -3198,7 +3198,7 @@
     },
     {
       "path": "scripts/test/secure-session.test.cjs",
-      "sha256": "fa85371a4c2e6aae84cd546c9c9d0d95ea9f285cb721bff05765e83500f42741",
+      "sha256": "2195ab663e432bb25998ce4d469dbd43d157f09ed24914969d24f6d76941c703",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,

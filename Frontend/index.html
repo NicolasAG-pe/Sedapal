@@ -1064,7 +1064,9 @@
   function limpiarSesion(){ return sesionCliente.clear(); }
   function mostrarEstadoSesion(mensaje,reintentar=false,salida=false){
     restauracionBloqueada=true;reintentoSalida=salida;
-    document.getElementById('session-restore').hidden=false;
+    const box=document.getElementById('session-restore');
+    box.hidden=false;
+    box.setAttribute('aria-busy',reintentar?'false':'true');
     document.getElementById('session-restore-message').textContent=mensaje;
     document.getElementById('session-retry').hidden=!reintentar;
     document.getElementById('session-forget').hidden=!reintentar || salida;
@@ -1075,7 +1077,9 @@
   }
   function ocultarEstadoSesion(){
     restauracionBloqueada=false;
-    document.getElementById('session-restore').hidden=true;
+    const box=document.getElementById('session-restore');
+    box.hidden=true;
+    box.removeAttribute('aria-busy');
   }
   function esAbortado(error){ return error && error.name === 'AbortError'; }
   function despuesEnSesion(task, delay){
@@ -1377,7 +1381,10 @@
     element.textContent=state==='offline'?'Sin conexión. Revisa tu red.':state==='online'?'Actualización en vivo':'Reconectando actualizaciones';
   }
   window.addEventListener('offline',()=>actualizarConexionCliente('offline'));
-  window.addEventListener('online',()=>actualizarConexionCliente(socketTiempoReal?.connected?'online':'connecting'));
+  window.addEventListener('online',()=>{
+    actualizarConexionCliente(socketTiempoReal?.connected?'online':'connecting');
+    if(rtSoloSesionActiva() && !socketTiempoReal?.connected) sincronizarTrasReconexion();
+  });
   function registrarEventosTiempoReal(){
     const s = socketTiempoReal;
     if(!s) return;
@@ -1998,32 +2005,16 @@
     let fechaVen = null;
     try{ fechaVen = api.fecha_vencimiento ? new Date(api.fecha_vencimiento) : null; }catch(e){ fechaVen = null; }
     const venValida = fechaVen && !Number.isNaN(fechaVen.getTime());
-    // Año/mes para filtros y gráficos: desde fecha_emision real (YYYY-MM-DD
-    // directo del ISO para evitar desfase por zona horaria), con respaldo
-    // en periodo ("Octubre 2026").
-    let anio = new Date().getFullYear();
-    let mes = 0;
-    let fechaValida = false;
-    try{
-      const m = api.fecha_emision ? String(api.fecha_emision).match(/^(\d{4})-(\d{2})-(\d{2})/) : null;
-      if(m){
-        anio = Number(m[1]); mes = Number(m[2]) - 1; fechaValida = true;
-      } else if(emiValida){
-        anio = fechaEmi.getUTCFullYear(); mes = fechaEmi.getUTCMonth(); fechaValida = true;
-      }
-    }catch(e){}
-    const periodoRaw = (api.periodo != null ? String(api.periodo) : '').trim();
-    if(!fechaValida && periodoRaw){
-      const y = periodoRaw.match(/\b(19|20)\d{2}\b/);
-      if(y) anio = Number(y[0]);
-      const low = periodoRaw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const idx = MESES.findIndex(m=>low.indexOf(m.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')) > -1);
-      if(idx >= 0) mes = idx;
-    }
-    const mesNombre = MESES[mes] || '';
-    const mesShort = MESES_SHORT[mes] || '';
-    const etiqueta = periodoRaw || (mesNombre + ' ' + anio);
-    const idStr = String(api.id_recibo != null ? api.id_recibo : (etiqueta + '|' + anio + '-' + mes));
+    // Año/mes para filtros y gráficos: prioridad al periodo del recibo
+    // ("Febrero 2026", "Enero 2027", "2027-01") y respaldo en fecha_emision
+    // solo si periodo no aporta fecha; nunca fabricar fechas cuando faltan datos.
+    const periodInfo = window.HMShared.ui.parseReceiptPeriod(api.periodo, api.fecha_emision);
+    const anio = periodInfo.anio;
+    const mes = periodInfo.mes;
+    const mesNombre = periodInfo.mesNombre;
+    const mesShort = periodInfo.mesShort;
+    const etiqueta = periodInfo.etiqueta;
+    const idStr = String(api.id_recibo != null ? api.id_recibo : (etiqueta + '|' + (anio ?? '') + '-' + (mes ?? '')));
     return {
       id: idStr,
       id_recibo: idStr,
@@ -2135,7 +2126,7 @@
     const q = searchQuery.trim().toLowerCase();
     return recibos.filter(r =>
       (currentFilter==='Todos' || r.estado===currentFilter) &&
-      (yearFilter==='Todos' || String(r.anio)===yearFilter) &&
+      (yearFilter==='Todos' || (Number.isInteger(r.anio) && String(r.anio)===yearFilter)) &&
       (!q || r.etiqueta.toLowerCase().indexOf(q)>-1 || r.mesNombre.toLowerCase().indexOf(q)>-1)
     );
   }
@@ -2143,7 +2134,7 @@
     if(!filterAnio) return;
     const actual = filterAnio.value || 'Todos';
     const anios = [];
-    recibos.forEach(r=>{ if(anios.indexOf(r.anio)<0) anios.push(r.anio); });
+    recibos.forEach(r=>{ if(Number.isInteger(r.anio) && anios.indexOf(r.anio)<0) anios.push(r.anio); });
     anios.sort((a,b)=>b-a);
     filterAnio.innerHTML = '<option value="Todos">Todos los años</option>';
     anios.forEach(a=>{
@@ -2358,8 +2349,11 @@
   }
   function renderChart(){
     if(!chartEl) return;
-    const items = ultimos6().filter(r=>r.hayConsumo).map(r=>({
-      label:r.mesShort || r.etiqueta, full:r.etiqueta,
+    const recent = ultimos6().filter(r=>r.hayConsumo);
+    const multiYear = new Set(recent.map(r=>r.anio).filter(Number.isInteger)).size > 1;
+    const items = recent.map(r=>({
+      label: r.mesShort ? (multiYear && Number.isInteger(r.anio) ? r.mesShort + ' ' + String(r.anio).slice(-2) : r.mesShort) : r.etiqueta,
+      full:r.etiqueta,
       value:r.consumoM3, tip:r.consumoM3+' m³ consumidos', ref:r
     }));
     const avg = promedio6();
@@ -4861,13 +4855,9 @@ async function descargarConstanciaPDF(r, btn){
     const montoNum = Number(api.monto);
     const monto = Number.isFinite(montoNum) ? montoNum : 0;
     const periodo = (api.periodo != null ? String(api.periodo) : '').trim();
-    let anio = new Date().getFullYear();
-    let mes = 0;
-    const y = periodo.match(/\b(19|20)\d{2}\b/);
-    if(y) anio = Number(y[0]);
-    const low = periodo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const idx = MESES.findIndex(m=>low.indexOf(m.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')) > -1);
-    if(idx >= 0) mes = idx;
+    const periodInfo = window.HMShared.ui.parseReceiptPeriod(periodo, null);
+    const anio = periodInfo.anio;
+    const mes = periodInfo.mes;
     return {
       raw:api, operacion_id:api.id||null, verificacion:paymentLabel(api),
       id_pago: api.id_pago,
@@ -5376,9 +5366,13 @@ async function descargarConstanciaPDF(r, btn){
     }
     btnLogin.disabled = true;
     btnLoginText.textContent = 'Verificando...';
+    const slowLoginTimer = setTimeout(()=>{
+      if(_hmEpoch===sesionCliente.generation() && btnLogin.disabled) btnLoginText.textContent = 'Conectando con el servidor…';
+    }, 5000);
     try{
       const resp = await conSesion(() => (sesionCliente.authFetch('/api/auth/login', {
         method: 'POST',
+        timeoutMs: 30000,
         headers: {
           'Content-Type': 'application/json'
         },
@@ -5387,6 +5381,7 @@ async function descargarConstanciaPDF(r, btn){
           password: pwd
         })
       })), _hmEpoch);
+      clearTimeout(slowLoginTimer);
       if(resp.status === 401){
         try{ await conSesion(() => (resp.json()), _hmEpoch); }catch(e){
       if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
@@ -5436,8 +5431,9 @@ async function descargarConstanciaPDF(r, btn){
       clienteCorreo=authData.usuario.correo || '';
       _hmEpoch = sesionCliente.generation();
     }catch(err){
+      clearTimeout(slowLoginTimer);
       if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
-      showError(err.code==='SECURE_STATE_UNAVAILABLE'?err.message:'No se pudo conectar con el servidor. Inténtalo nuevamente.');
+      showError(err.code==='SECURE_STATE_UNAVAILABLE'?err.message:err.name==='TimeoutError'?'El servidor tardó demasiado en responder. Puede estar iniciando; intenta nuevamente.':navigator.onLine===false?'Sin conexión a internet. Revisa tu red e intenta nuevamente.':'No se pudo conectar con el servidor. Inténtalo nuevamente.');
       btnLogin.disabled = false;
       btnLoginText.textContent = 'Iniciar sesión';
       return;
@@ -5641,11 +5637,22 @@ async function descargarConstanciaPDF(r, btn){
     if(tareaRestauracion)return tareaRestauracion;
     if(!sesionCliente.isNative())return restaurarRegistroDePagina();
     mostrarEstadoSesion('Comprobando tu sesión…');
+    const slowTimer=setTimeout(()=>{
+      if(tareaRestauracion && !sesionCliente.isUser() && restauracionBloqueada){
+        document.getElementById('session-restore-message').textContent='El servidor está iniciando, espera unos segundos…';
+      }
+    },6000);
     const tarea=(async()=>{
       const result=await sesionCliente.restore();
+      clearTimeout(slowTimer);
       if(result.state==='cancelled')return;
       if(result.state==='unavailable'){
-        mostrarEstadoSesion('No pudimos comprobar tu sesión. Revisa tu conexión e intenta nuevamente.',true);
+        const mensaje=navigator.onLine===false
+          ?'Sin conexión a internet. Revisa tu red e intenta nuevamente.'
+          :result.reason==='timeout'
+            ?'El servidor tardó demasiado en responder. Puede estar iniciando; intenta nuevamente.'
+            :'No pudimos comprobar tu sesión. Revisa tu conexión e intenta nuevamente.';
+        mostrarEstadoSesion(mensaje,true);
         return;
       }
       ocultarEstadoSesion();
@@ -5659,8 +5666,8 @@ async function descargarConstanciaPDF(r, btn){
       }
     })();
     tareaRestauracion=tarea;
-    tarea.catch(()=>{if(!sesionCliente.isUser())mostrarEstadoSesion('No pudimos comprobar tu sesión. Reintenta.',true);})
-      .finally(()=>{if(tareaRestauracion===tarea)tareaRestauracion=null;});
+    tarea.catch(()=>{clearTimeout(slowTimer);if(!sesionCliente.isUser())mostrarEstadoSesion('No pudimos comprobar tu sesión. Reintenta.',true);})
+      .finally(()=>{clearTimeout(slowTimer);if(tareaRestauracion===tarea)tareaRestauracion=null;});
     return tarea;
   }
   document.getElementById('session-retry').addEventListener('click',()=>{

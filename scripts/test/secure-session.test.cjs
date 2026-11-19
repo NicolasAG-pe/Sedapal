@@ -70,3 +70,13 @@ test('Cambio explícito de cuenta sustituye la credencial anterior y cancela su 
  const f=fixture();await f.session.establish('accountA.header.signature','usuario');const epoch=f.session.generation();await f.session.clear();await f.session.establish('accountB.header.signature','usuario');
  assert.ok(f.session.generation()>epoch);assert.equal(f.session.token(),'accountB.header.signature');assert.equal(f.durable(),'accountB.header.signature');assert.equal(f.store.size,0);
 });
+test('Restauración ante arranque en frío (timeout) conserva credencial y distingue motivo sin reintentos automáticos',async()=>{
+ let calls=0;
+ const f=fixture({fetch:async()=>{calls++;throw new DOMException('No se confirmó la respuesta a tiempo.','TimeoutError');}});
+ const r=await f.session.restore();
+ assert.equal(r.state,'unavailable');
+ assert.equal(r.reason,'timeout');
+ assert.equal(calls,1);
+ assert.equal(f.durable(),'fixture.header.signature');
+ assert.equal(f.session.isUser(),false);
+});

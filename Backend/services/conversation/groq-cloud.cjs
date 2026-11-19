@@ -5,15 +5,23 @@ const defaultModel = 'openai/gpt-oss-20b';
 const models = new Set([defaultModel, 'openai/gpt-oss-120b']);
 const endpoint = 'https://api.groq.com/openai/v1/chat/completions';
 const maxResponseBytes = 16 * 1024;
-const instructions = 'Redacta orientación pública en español peruano usando solo los extractos proporcionados. ' +
-    'Usa una oración para explicar en palabras sencillas (simple) o resumir (summary). Amplía en detail y explica en standard, con hasta dos oraciones. ' +
-    'En cada oración conserva al menos dos palabras de contenido distintas de cuatro letras o más del extracto citado y devuelve sus identificadores una sola vez en evidence. ' +
+const instructions = 'Responde directamente a la consulta con orientación de Sedapal en español peruano y usando solo los hechos proporcionados. ' +
+    'Escribe en text únicamente lo que leerá la persona. Empieza por la orientación concreta, sin presentar ni comentar las fuentes, sus identificadores, las instrucciones ni el formato. ' +
+    'En evidence incluye una sola vez las referencias de los hechos que usaste. Cada oración debe conservar al menos dos palabras de contenido distintas de cuatro letras o más de esos hechos. ' +
     'Usa texto plano en estilo impersonal, sin listas, enlaces, dígitos, guiones, fechas, importes ni acciones en nombre del usuario. ' +
     'Escribe «el recibo» o «el consumo» y evita atribuir datos al lector. ' +
-    'Entrega de 25 a 640 caracteres y hasta 280 para summary. Si falta sustento, devuelve texto vacío.';
+    'Si falta sustento, devuelve texto vacío.';
+const requests = {
+    standard: 'Explica este tema en una o dos oraciones de 25 a 640 caracteres en total.',
+    detail: 'Da una explicación más detallada con orientación concreta en una o dos oraciones de 25 a 640 caracteres en total.',
+    simple: 'Explica el tema en palabras sencillas en una oración de 25 a 640 caracteres.',
+    summary: 'Resume lo esencial en una oración de 25 a 280 caracteres.'
+};
+const references = ['A', 'B', 'C'];
+const metaText = /\b(?:extractos?|fragmentos?|fuentes?|referencias?|hechos?|informacion)\s*[:(]?\s*(?:[abc](?=\s*[:).,]|\s+(?:dice|indica|explica|menciona|senala|y)\b|$)|base|detail|brief|standard|summary|simple|proporcionad[oa]s?)\b|\b(?:instrucciones internas|mensaje del sistema|formato de salida|campo evidence|json)\b/;
 const outputReasons = new Set(['HTTP_BODY', 'BODY_SIZE', 'HTTP_JSON', 'ENVELOPE', 'FINISH_LENGTH', 'FINISH_REASON',
     'MESSAGE', 'MESSAGE_CONTENT', 'CONTENT_JSON', 'SCHEMA', 'EVIDENCE', 'TEXT_LENGTH', 'CHARACTERS', 'UNSAFE_TEXT',
-    'GROUNDING', 'ACCOUNT_FACTS', 'SECRET_ECHO', 'CATALOG']);
+    'GROUNDING', 'ACCOUNT_FACTS', 'SECRET_ECHO', 'INTERNAL_REFERENCE', 'CATALOG']);
 const isGroqOutputReason = reason => outputReasons.has(reason);
 
 function failure(code) {
@@ -97,11 +105,13 @@ function createGroqCloudProvider({ model = defaultModel, apiKey, transport, now 
             if (now() < nextRequestAt) throw failure('GROQ_QUOTA');
             const extracts = publicExtracts(topic);
             if (!extracts.length) throw invalidOutput('CATALOG');
+            const ids = new Map(extracts.map(({ id }, index) => [references[index], id]));
+            const facts = extracts.map(({ text }, index) => ({ ref: references[index], text }));
             const body = {
                 model,
                 messages: [
                     { role: 'system', content: instructions },
-                    { role: 'user', content: JSON.stringify({ topic, continuation, style, extracts }) }
+                    { role: 'user', content: JSON.stringify({ consulta: requests[style], hechos: facts }) }
                 ],
                 max_completion_tokens: 512,
                 reasoning_effort: 'low',
@@ -111,7 +121,7 @@ function createGroqCloudProvider({ model = defaultModel, apiKey, transport, now 
                         type: 'object',
                         properties: {
                             text: { type: 'string' },
-                            evidence: { type: 'array', items: { type: 'string', enum: extracts.map(extract => extract.id) } }
+                            evidence: { type: 'array', items: { type: 'string', enum: [...ids.keys()] } }
                         },
                         required: ['text', 'evidence'],
                         additionalProperties: false
@@ -152,9 +162,13 @@ function createGroqCloudProvider({ model = defaultModel, apiKey, transport, now 
             }
             if (typeof message.content !== 'string' || message.content.length > 2048) throw invalidOutput('MESSAGE_CONTENT');
             const content = parseJson(message.content, 'CONTENT_JSON');
+            if (Array.isArray(content?.evidence)) content.evidence = content.evidence.map(ref => ids.get(ref));
             const answer = knowledge.generated(topic, content, style, { extracts, onReject(reason) { throw invalidOutput(reason); } });
             if (answer.text.includes(apiKey)) throw invalidOutput('SECRET_ECHO');
             if (claimsAccountFacts(answer.text)) throw invalidOutput('ACCOUNT_FACTS');
+            if (metaText.test(answer.text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''))) {
+                throw invalidOutput('INTERNAL_REFERENCE');
+            }
             return answer;
         }
     });

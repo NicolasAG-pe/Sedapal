@@ -8,28 +8,40 @@ const bodies = {
   incidencias: "Tu incidencia tiene una actualización.",
   cortes: "Nuevo aviso de corte de servicio.",
 };
-function payload(event, category) {
-  if (!/^[a-f0-9-]{36}$/i.test(event) || !bodies[category])
-    throw Error("Evento push inválido.");
+function androidPayload(event, ttl) {
+  if (!/^[a-f0-9-]{36}$/i.test(event)) throw Error("Evento push inválido.");
   return {
-    notification: { title: "Hidro-Mejora", body: bodies[category] },
-    data: { hm_event: event },
-    android: {
-      priority: "high",
-      ttl: "3600s",
-      restricted_package_name: "pe.edu.hidromejora.app",
-      notification: {
-        channel_id: "hm_updates",
-        icon: "hm_notification",
-        tag: event,
-        visibility: "PRIVATE",
-      },
+    priority: "high",
+    ttl,
+    restricted_package_name: "pe.edu.hidromejora.app",
+    notification: {
+      channel_id: "hm_updates",
+      icon: "hm_notification",
+      tag: event,
+      visibility: "PRIVATE",
     },
   };
 }
-function createPushWorker({ pool, send, env = process.env, deliveryId = null, singleAttempt = false }) {
+function payload(event, category) {
+  if (!bodies[category]) throw Error("Evento push inválido.");
+  return {
+    notification: { title: "Hidro-Mejora", body: bodies[category] },
+    data: { hm_event: event },
+    android: androidPayload(event, "3600s"),
+  };
+}
+function validationPayload(event) {
+  return {
+    notification: {
+      title: "Hidro-Mejora · Prueba",
+      body: "Prueba de notificaciones. No requiere ninguna acción.",
+    },
+    android: androidPayload(event, "60s"),
+  };
+}
+function createPushWorker({ pool, send, env = process.env, deliveryId = null, singleAttempt = false, validationNotice = false }) {
   if ((deliveryId !== null && !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(deliveryId)) ||
-      (singleAttempt && !deliveryId)) throw Error('Destino de prueba push inválido.');
+      (singleAttempt && !deliveryId) || (validationNotice && !singleAttempt)) throw Error('Destino de prueba push inválido.');
   const cfg = configuration(env);
   if (!cfg || typeof send !== "function")
     throw Error("Worker push no configurado.");
@@ -107,7 +119,7 @@ function createPushWorker({ pool, send, env = process.env, deliveryId = null, si
         try {
           outcome = await send({
             token: job.token,
-            message: payload(job.event, job.categoria),
+            message: validationNotice ? validationPayload(job.event) : payload(job.event, job.categoria),
           });
         } catch (_) {
           outcome = { kind: "ambiguo" };

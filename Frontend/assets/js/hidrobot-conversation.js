@@ -145,11 +145,15 @@
     }
     return rows.filter(row => {
       const period=normalize(row.periodo || row.etiqueta);
-      const year=period.match(/\b\d{4}\b/)?.[0];
-      const numeric=period.match(/\b(\d{4})-(0[1-9]|1[0-2])\b/);
-      const month=(period.match(/[a-z]+/g)||[]).map(token).find(word=>months.includes(word));
-      const issued=isoMonth(row.fechaEmisionISO);
-      const actualMonth=numeric ? Number(numeric[2]) : month ? months.indexOf(month)+1 : Number(issued?.[2]);
+      const ym=period.match(/(?:^|[^\d])((?:19|20|21)\d{2})[-/](0?[1-9]|1[0-2])(?=$|[^\d])/);
+      const my=!ym && period.match(/(?:^|[^\d])(0?[1-9]|1[0-2])[-/]((?:19|20|21)\d{2})(?=$|[^\d])/);
+      const shortMap={ene:'enero',feb:'febrero',mar:'marzo',abr:'abril',may:'mayo',jun:'junio',jul:'julio',ago:'agosto',sep:'septiembre',sept:'septiembre',set:'septiembre',oct:'octubre',nov:'noviembre',dic:'diciembre'};
+      const year=ym ? ym[1] : my ? my[2] : period.match(/(?:^|[^\d])((?:19|20|21)\d{2})(?=$|[^\d])/)?.[1];
+      const monthWords=(period.match(/[a-z]+/g)||[]).map(w=>shortMap[w]||token(w)).filter(word=>months.includes(word));
+      const month=monthWords.length===1 ? monthWords[0] : undefined;
+      const fromPeriod=Boolean(ym || my || month || year);
+      const issued=fromPeriod ? null : isoMonth(row.fechaEmisionISO);
+      const actualMonth=ym ? Number(ym[2]) : my ? Number(my[1]) : month ? months.indexOf(month)+1 : Number(issued?.[2]);
       const actualYear=year || issued?.[1];
       return actualMonth===spec.month && (!spec.year || actualYear===spec.year);
     });

@@ -75,7 +75,7 @@ function scriptedTransport() {
         assert.equal(url, destination);
         const step = steps[external++];
         if (step === 'ok') {
-            return completion({ text: 'Para cuidar el agua en casa, revisa los caños y acorta las duchas.', evidence: ['base'] });
+            return completion({ text: 'Para cuidar el agua en casa, revisa los caños y acorta las duchas.', evidence: ['A'] });
         }
         if (step === 'quota') return new Response('{}', { status: 429, headers: { 'Retry-After': '30' } });
         if (step === 'hang') {
