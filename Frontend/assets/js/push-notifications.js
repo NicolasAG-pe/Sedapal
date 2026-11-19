@@ -96,6 +96,14 @@
         return false;
       }
     }
+    function activeStatus() {
+      const hasCustomPreferences = Object.keys(generalCategories).some(
+        (category) => state.categories?.[category] === false,
+      );
+      return hasCustomPreferences
+        ? "Se conservan los tipos de aviso que elegiste antes. Pulsa Activar notificaciones para recibirlos todos."
+        : "Activadas en este dispositivo. Los avisos no muestran datos privados.";
+    }
     async function bind(token, e) {
       if (!current(e) || !state?.enabled || !ready || !available) return;
       await request("/api/push/devices", {
@@ -107,14 +115,7 @@
       });
       if (!current(e)) return;
       fcmToken = token;
-      const hasCustomPreferences = Object.keys(generalCategories).some(
-        (category) => state.categories?.[category] === false,
-      );
-      status(
-        hasCustomPreferences
-          ? "Se conservan los tipos de aviso que elegiste antes. Pulsa Activar notificaciones para recibirlos todos."
-          : "Activadas en este dispositivo. Los avisos no muestran datos privados.",
-      );
+      status(activeStatus());
       render();
     }
     async function handleEvent(id, tap) {
@@ -253,6 +254,7 @@
           visibility: 0,
         });
         if (!fcmToken) await plugin.register();
+        else status(activeStatus());
       }
       if (
         state.enabled &&
