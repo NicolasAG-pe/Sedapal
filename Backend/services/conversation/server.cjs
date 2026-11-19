@@ -5,21 +5,26 @@ const { createHash } = require('node:crypto');
 const { createServer } = require('node:http');
 const { simulatedProvider, configuredProvider } = require('./provider.cjs');
 const knowledge = require('./sedapal-knowledge.js');
+const { isGroqOutputReason } = require('./groq-cloud.cjs');
 
 const continuation = 'more';
 const uuid4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 const envelope = (status, code) => ({ status, code });
 const providerTimeout = 6000;
 const providerErrors = new Set(['GROQ_AUTH', 'GROQ_QUOTA', 'GROQ_REQUEST', 'GROQ_UNAVAILABLE', 'GROQ_INVALID_OUTPUT',
-    'GROQ_CANCELLED', 'CHAT_PROVIDER_TIMEOUT', 'CHAT_PROVIDER_INVALID_OUTPUT', 'CHAT_PROVIDER_ERROR']);
+    'GROQ_CANCELLED', 'CHAT_PROVIDER_TIMEOUT', 'CHAT_PROVIDER_INVALID_OUTPUT', 'CHAT_PROVIDER_ERROR',
+    'GROQ_INVALID_CONFIG', 'CHAT_PROVIDER_INVALID_CONFIG']);
 const timeout = Symbol('provider timeout');
 
 function providerLogger() {
     const last = new Map();
-    return code => {
-        if (Date.now() - (last.get(code) || 0) < 60_000) return;
-        last.set(code, Date.now());
-        console.warn('[conversation]', code);
+    return (code, reason) => {
+        const safeCode = providerErrors.has(code) ? code : 'CHAT_PROVIDER_ERROR';
+        const fields = safeCode === 'GROQ_INVALID_OUTPUT' && isGroqOutputReason(reason) ? [safeCode, reason] : [safeCode];
+        const key = fields.join(' ');
+        if (Date.now() - (last.get(key) || 0) < 60_000) return;
+        last.set(key, Date.now());
+        console.warn('[conversation]', ...fields);
     };
 }
 
@@ -146,7 +151,9 @@ function createConversationRouter({
                 return res.json({ version, mode: 'simulated', topic: article, variant: selected });
             } catch (error) {
                 if (res.destroyed) return;
-                onProviderError(providerErrors.has(error?.code) ? error.code : 'CHAT_PROVIDER_ERROR');
+                const code = providerErrors.has(error?.code) ? error.code : 'CHAT_PROVIDER_ERROR';
+                const reason = code === 'GROQ_INVALID_OUTPUT' && isGroqOutputReason(error.reason) ? error.reason : undefined;
+                onProviderError(code, reason);
                 return fallback();
             } finally {
                 clearTimeout(timer);

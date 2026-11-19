@@ -26,7 +26,10 @@ test('usa el contrato oficial de Groq con token separado y solo extractos públi
         assert.equal(body.reasoning_effort, 'low');
         assert.equal(body.include_reasoning, false);
         assert.deepEqual(body.messages.map(message => message.role), ['system', 'user']);
-        assert.deepEqual(JSON.parse(body.messages[1].content), { ...context, extracts: knowledge.evidence('saving') });
+        const catalog = knowledge.evidence('saving');
+        const base = { id:'base', text:'Para cuidar el agua, cierra el caño al cepillarte, toma duchas cortas y revisa posibles fugas en caños e inodoros.' };
+        assert.deepEqual(JSON.parse(body.messages[1].content), { ...context, extracts: [base, ...catalog.slice(1)] });
+        assert.match(body.messages[0].content, /dos palabras de contenido distintas.*estilo impersonal/);
         assert.equal(body.response_format.type, 'json_schema');
         const format = body.response_format.json_schema;
         assert.equal(format.strict, true);
@@ -91,32 +94,75 @@ test('clasifica errores 4xx, 5xx y fallos de transporte sin repetir ni exponer d
     }
 });
 
-test('rechaza texto ajeno a las fuentes, valores de cuenta y envolturas inesperadas', async () => {
-    const unknownAnswers = [
-        { ...prose, evidence: ['fuente-ajena'] },
-        { ...prose, text: 'Para cuidar el agua, visita sitio.pe.' },
-        { ...prose, text: 'Para cuidar el agua envía tu DNI y usa los caños.' },
-        { ...prose, text: 'Para cuidar el agua revisa <b>los caños</b>.' },
-        { ...prose, text: `Para cuidar el agua, revisa los caños y anota ${apiKey}.` },
-        { ...prose, text: 'La tarifa por cuidar el agua y usar los caños es de ochenta soles.' },
-        { ...prose, text: 'Para cuidar el agua revisa el consumo de once metros cúbicos en los caños.' },
-        { ...prose, text: 'Tu consumo de agua en caños y duchas fue 96 m³.' },
-        { ...prose, text: 'Los partidos se juegan mañana en el estadio.' },
-        { ...prose, text: prose.text.repeat(14) },
-        { ...prose, tool: 'buscar' }
+test('identifica el motivo exacto de cada HTTP 200 rechazado', async () => {
+    const cases = [
+        ['EVIDENCE', { ...prose, evidence: ['fuente-ajena'] }],
+        ['EVIDENCE', { ...prose, evidence: ['base', 'base'] }],
+        ['EVIDENCE', { ...prose, evidence: [] }],
+        ['UNSAFE_TEXT', { ...prose, text: 'Para cuidar el agua, visita sitio.pe.' }],
+        ['UNSAFE_TEXT', { ...prose, text: 'Para cuidar el agua envía tu DNI y usa los caños.' }],
+        ['CHARACTERS', { ...prose, text: 'Para cuidar el agua revisa <b>los caños</b>.' }],
+        ['CHARACTERS', { ...prose, text: `Para cuidar el agua, revisa los caños y anota ${apiKey}.` }],
+        ['ACCOUNT_FACTS', { ...prose, text: 'La tarifa por cuidar el agua y usar los caños es de ochenta soles.' }],
+        ['ACCOUNT_FACTS', { ...prose, text: 'Para cuidar el agua revisa el consumo de once metros cúbicos en los caños.' }],
+        ['ACCOUNT_FACTS', { ...prose, text: 'Para cuidar el agua, compara tu consumo y revisa posibles fugas en caños.' }],
+        ['CHARACTERS', { ...prose, text: 'Tu consumo de agua en caños y duchas fue 96 m³.' }],
+        ['GROUNDING', { ...prose, text: 'Procura no desperdiciar líquido en el aseo diario.' }],
+        ['GROUNDING', { ...prose, text: 'Comparar el consumo permite detectar cambios.' }],
+        ['CHARACTERS', { ...prose, text: 'Hidro-Mejora ayuda a cuidar el agua y a revisar los caños.' }],
+        ['TEXT_LENGTH', { ...prose, text: prose.text.repeat(14) }],
+        ['SCHEMA', { ...prose, tool: 'buscar' }],
+        ['SCHEMA', { ...prose, text: null }],
+        ['CONTENT_JSON', () => completion('no es JSON fixture-privado')],
+        ['FINISH_LENGTH', () => completion(JSON.stringify(prose), {}, 'length')],
+        ['FINISH_REASON', () => completion(JSON.stringify(prose), {}, 'fixture-privado')],
+        ['MESSAGE', () => completion(JSON.stringify(prose), { refusal: 'bloqueado' })],
+        ['MESSAGE', () => completion(JSON.stringify(prose), { tool_calls: [{ id: 'fixture' }] })],
+        ['MESSAGE_CONTENT', () => completion(null)],
+        ['ENVELOPE', () => Response.json({ choices: [] })],
+        ['ENVELOPE', () => Response.json(null)],
+        ['HTTP_JSON', () => new Response('{"raw":fixture-privado')],
+        ['HTTP_BODY', () => new Response(new Uint8Array([255]))],
+        ['BODY_SIZE', () => new Response(' '.repeat(20_000))]
     ];
-    const responses = [
-        ...unknownAnswers.map(answer => () => completion(JSON.stringify(answer))),
-        () => completion('no es JSON'),
-        () => completion(JSON.stringify(prose), {}, 'length'),
-        () => completion(JSON.stringify(prose), { refusal: 'bloqueado' }),
-        () => completion(JSON.stringify(prose), { tool_calls: [{ id: 'fixture' }] }),
-        () => Response.json({ choices: [] }),
-        () => new Response(' '.repeat(20_000))
-    ];
-    for (const transport of responses) {
+    for (const [reason, answer] of cases) {
+        const transport = typeof answer === 'function' ? answer : () => completion(JSON.stringify(answer));
         const provider = createGroqCloudProvider({ apiKey, transport });
-        await assert.rejects(provider.generate(context, options()), { code: 'GROQ_INVALID_OUTPUT' });
+        await assert.rejects(provider.generate(context, options()), {
+            code: 'GROQ_INVALID_OUTPUT', message: 'GROQ_INVALID_OUTPUT', reason
+        });
+    }
+    const secret = 'FixtureCredential';
+    const provider = createGroqCloudProvider({ apiKey: secret, transport: () =>
+        completion(JSON.stringify({ ...prose, text: prose.text.replace('Para', secret) })) });
+    await assert.rejects(provider.generate(context, options()), {
+        code: 'GROQ_INVALID_OUTPUT', message: 'GROQ_INVALID_OUTPUT', reason: 'SECRET_ECHO'
+    });
+});
+
+test('cada tema público ofrece extractos compatibles con el validador y la APK vigente', async () => {
+    const topics = ['read-receipt', 'saving', 'read-consumption', 'detect-leaks', 'water-outage-guide', 'company',
+        'contact', 'coverage', 'offices', 'supply', 'claims', 'connection', 'aquanet'];
+    for (const topic of topics) {
+        for (const style of knowledge.styles) {
+            const provider = createGroqCloudProvider({ apiKey, transport: (_url, request) => {
+                const body = JSON.parse(request.body);
+                const input = JSON.parse(body.messages[1].content);
+                assert.ok(input.extracts.length > 0, topic);
+                assert.deepEqual(body.response_format.json_schema.schema.properties.evidence.items.enum,
+                    input.extracts.map(extract => extract.id));
+                const original = knowledge.evidence(topic);
+                for (const { id, text } of input.extracts) {
+                    assert.doesNotMatch(text, /\btu (?:consumo|recibo|suministro)\b|Hidro-Mejora|\d/i);
+                    assert.ok(text.split(/(?<=[.!?])\s+/).every(sentence =>
+                        original.find(fact => fact.id === id).text.includes(sentence)));
+                }
+                const [{ id, text }] = input.extracts;
+                return completion(JSON.stringify({ text: text.split(/(?<=[.!?])\s+/)[0], evidence: [id] }));
+            } });
+            const answer = await provider.generate({ topic, continuation: false, style }, options());
+            assert.deepEqual(knowledge.generated(topic, answer, style), answer);
+        }
     }
 });
 

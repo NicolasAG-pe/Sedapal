@@ -193,7 +193,7 @@
     },
     {
       "path": "Backend/test/conversation-production.cjs",
-      "sha256": "e80dd0c45e39e99581613dafd3d25b9576c9799c876b84a4d1b23b97e5486413",
+      "sha256": "0b1ac5dd800d153959b41c134212332ecba9a192cfea78a03d7641d450de588f",
       "type": "integracion",
       "group": "integration",
       "nodeTest": true,
@@ -848,7 +848,7 @@
     },
     {
       "path": "Backend/test/groq-chain.test.cjs",
-      "sha256": "8f4440204f8d538f69e05254ff0374cab37641ed59ba1a95b69daaf7fc4ce850",
+      "sha256": "f673562c28b79153af098be7b83b025aeb9993d6e72089ca130ca1c4a0a46ee5",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -872,7 +872,7 @@
     },
     {
       "path": "Backend/test/groq-cloud.test.cjs",
-      "sha256": "37faaab29f3b6680181b934ec7d5870bfd339112cf07eef2e7f383371fd4efeb",
+      "sha256": "02f99f9641e27e311afdb4b10c85e8b1e1d80a6cb69dd90ff73e60dd17450003",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
