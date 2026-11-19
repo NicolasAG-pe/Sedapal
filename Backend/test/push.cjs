@@ -154,6 +154,29 @@ test('CLI de validación compartida procesa una entrega, permanece inactivo y no
   }
   await drain();
 });
+test('el aviso de prueba dirigido es neutro, breve y no lleva datos de navegación', async () => {
+  const u = await user(), d = device();
+  await bind(u, d);
+  const first = await notice(u), selected = await notice(u, 'incidencia');
+  const deliveryId = (await ctx.db.query('SELECT id FROM push_entregas WHERE id_notificacion=$1', [selected.id_notificacion])).rows[0].id;
+  const sent = [];
+  const workerOptions = { pool: ctx.db, deliveryId, validationNotice: true,
+    send: async ({ message }) => { sent.push(message); return { kind: 'aceptado' }; } };
+  assert.throws(() => createPushWorker(workerOptions));
+  const validation = createPushWorker({ ...workerOptions, singleAttempt: true });
+  assert.equal((await validation.processOne()).estado, 'aceptado');
+  assert.equal((await validation.processOne()).estado, 'vacio');
+  assert.equal(sent.length, 1);
+  assert.deepEqual(sent[0].notification, { title: 'Hidro-Mejora · Prueba', body: 'Prueba de notificaciones. No requiere ninguna acción.' });
+  assert.equal(sent[0].data, undefined);
+  assert.equal(sent[0].android.ttl, '60s');
+  assert.equal(sent[0].android.restricted_package_name, 'pe.edu.hidromejora.app');
+  assert.equal(sent[0].android.notification.channel_id, 'hm_updates');
+  assert.equal(sent[0].android.notification.tag, selected.push_evento);
+  const untouched = (await ctx.db.query('SELECT estado,intentos FROM push_entregas WHERE id_notificacion=$1', [first.id_notificacion])).rows[0];
+  assert.deepEqual(untouched, { estado: 'pendiente', intentos: 0 });
+  await drain();
+});
 test("cerrado por defecto, sin autenticación/consentimiento/admin no registra; clave independiente", async () => {
   delete process.env.PUSH_ENABLED;
   assert.equal((await api("/api/push/capabilities")).data.disponible, false);

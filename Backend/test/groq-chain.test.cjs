@@ -11,7 +11,7 @@ const { createGroqCloudProvider } = require('../services/conversation/groq-cloud
 const knowledge = require('../../Frontend/assets/js/sedapal-knowledge.js');
 
 const apiKey = 'groq-fixture-only';
-const prose = { text: 'Para cuidar el agua en casa, revisa los caños y acorta las duchas.', evidence: ['base'] };
+const prose = { text: 'Para cuidar el agua en casa, revisa los caños y acorta las duchas.', evidence: ['A'] };
 const completion = content => Response.json({
     choices: [{ finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify(content) } }]
 });
@@ -100,8 +100,9 @@ test('los errores 401, 403, 5xx, red y contenido inválido usan el catálogo con
         [() => new Response('{}', { status: 400 }), 'GROQ_REQUEST'],
         [() => new Response('{}', { status: 503 }), 'GROQ_UNAVAILABLE'],
         [() => { throw Error('detalle de red confidencial'); }, 'GROQ_UNAVAILABLE'],
-        [() => completion({ text: 'Tu consumo de agua fue de noventa y seis litros hoy.', evidence: ['base'] }), 'GROQ_INVALID_OUTPUT'],
-        [() => completion({ text: 'Mira https://ejemplo.invalid/agua para cuidar el agua en casa.', evidence: ['base'] }), 'GROQ_INVALID_OUTPUT'],
+        [() => completion({ text: 'El extracto detail explica cómo cuidar el agua con duchas cortas.', evidence: ['A'] }), 'GROQ_INVALID_OUTPUT'],
+        [() => completion({ text: 'Tu consumo de agua fue de noventa y seis litros hoy.', evidence: ['A'] }), 'GROQ_INVALID_OUTPUT'],
+        [() => completion({ text: 'Mira https://ejemplo.invalid/agua para cuidar el agua en casa.', evidence: ['A'] }), 'GROQ_INVALID_OUTPUT'],
         [() => new Response('no es json', { status: 200 }), 'GROQ_INVALID_OUTPUT']
     ];
     let current;
@@ -112,7 +113,7 @@ test('los errores 401, 403, 5xx, red y contenido inválido usan el catálogo con
         assert.equal(result.status, 200);
         const text = await result.text();
         assert.deepEqual(JSON.parse(text), fallbackBrief);
-        assert.doesNotMatch(text, /confidencial|ejemplo\.invalid|noventa/);
+        assert.doesNotMatch(text, /confidencial|ejemplo\.invalid|noventa|extracto/);
         assert.equal(f.logs.at(-1), code);
     }
     assert.equal(f.logs.length, cases.length);
@@ -125,7 +126,7 @@ test('el respaldo conserva el contrato y los logs solo contienen el código y el
     const conversationId = randomUUID();
     for (let i = 0; i < 2; i++) {
         reply = completion({ text: 'Para cuidar el agua usa los caños. Contacto privado sintetico@example.invalid.',
-            evidence:['base'] });
+            evidence:['A'] });
         assert.deepEqual(await (await f.post({ conversationId })).json(), fallbackBrief);
     }
     reply = new Response(JSON.stringify({ choices: [{ finish_reason: 'length',
@@ -224,7 +225,7 @@ test('dos sesiones usan conversaciones separadas y la continuación no cruza cue
     assert.equal((await (await f.post({ conversationId }, 'A')).json()).mode, 'generated');
     assert.equal((await (await f.post({ conversationId, topic: 'more' }, 'B')).json()).mode, 'clarification');
     assert.equal((await (await f.post({ conversationId, topic: 'more' }, 'A')).json()).mode, 'generated');
-    assert.deepEqual(seen.map(({ continuation }) => continuation), [false, true]);
-    assert.deepEqual(seen[0].extracts, seen[1].extracts);
-    assert.equal(seen[0].extracts[0].text, knowledge.evidence('saving')[0].text.split(' En Inicio')[0]);
+    assert.deepEqual(seen.map(({ consulta }) => consulta), Array(2).fill('Resume lo esencial en una oración de 25 a 280 caracteres.'));
+    assert.deepEqual(seen[0].hechos, seen[1].hechos);
+    assert.equal(seen[0].hechos[0].text, knowledge.evidence('saving')[0].text.split(' En Inicio')[0]);
 });

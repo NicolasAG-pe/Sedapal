@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## Integraciones de Hidro-Mejora 1.2.4
+
+- HidroBot pide orientación directa a GroqCloud, traduce las referencias de evidencia en el backend y usa el catálogo oficial si la respuesta contiene referencias internas.
+- El worker de FCM puede enviar un aviso neutro de un solo intento a una instalación concreta desde una base local de validación. El aviso abre la aplicación al tocarlo.
+
 ## Océano Claro · Preparación de 1.2.3
 
 - La rama de integración visual queda fuera de los despliegues Git automáticos de ambos proyectos Vercel.

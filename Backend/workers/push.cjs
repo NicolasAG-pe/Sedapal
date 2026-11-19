@@ -41,6 +41,9 @@ async function main(args = process.argv.slice(2), env = process.env) {
       throw Error();
     const localFixture = ["127.0.0.1", "localhost"].includes(url.hostname) ||
       (env.PUSH_LAB_DOCKER === "1" && url.hostname === "db" && env.PUSH_EXPECTED_DATABASE === "hm_micro_lab");
+    const validationNotice = env.PUSH_VALIDATION_NOTICE === '1';
+    if (validationNotice && (!validation || !localFixture || env.NODE_ENV !== 'test' ||
+      !/^hm_email_fcm_validation_[a-f0-9]{16}$/.test(env.PUSH_EXPECTED_DATABASE))) throw Error();
     if (env.PUSH_PROVIDER === "mock" && (!localFixture || env.NODE_ENV !== "test"))
       throw Error();
     pool = new Pool({
@@ -66,7 +69,7 @@ async function main(args = process.argv.slice(2), env = process.env) {
       if (validation) console.log(JSON.stringify({ event: 'push_validation_provider', kind: result.kind, httpStatus: result.httpStatus || null }));
       return result;
     };
-    const worker = createPushWorker({ pool, env, send, ...validation });
+    const worker = createPushWorker({ pool, env, send, ...validation, validationNotice });
     const schema = await pool.query("SELECT to_regclass('public.push_dispositivos') IS NOT NULL AND to_regclass('public.push_entregas') IS NOT NULL AS ready");
     if (!schema.rows[0].ready) throw Error();
     process.once("SIGTERM", halt);
