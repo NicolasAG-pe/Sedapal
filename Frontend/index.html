@@ -26,9 +26,8 @@
       </div>
     </div>
 
-    <p class="auth-eyebrow">Tu suministro, a tu alcance</p>
-    <h1 id="login-title">Bienvenido a Hidro-Mejora</h1>
-    <p class="subtitle">Consulta tus recibos, pagos, consumo y solicitudes desde un solo lugar.</p>
+    <h1 id="login-title">Iniciar sesión</h1>
+    <p class="subtitle" id="login-intro">Accede con tu número de suministro y contraseña.</p>
 
     <div id="form-error" class="form-error" role="alert"></div>
 
@@ -114,7 +113,7 @@
     <div class="auth-switch" id="auth-to-login" hidden>¿Ya tienes una cuenta? <a href="#" id="show-login">Iniciar sesión</a></div>
 
     <div id="password-recovery" hidden></div>
-    <div class="login-foot"><a href="#" id="forgot-link">¿Olvidaste tu contraseña?</a> · <a href="#" id="help-link">Ayuda</a></div>
+    <div class="login-foot"><a href="#" id="forgot-link">¿Olvidaste tu contraseña?</a> <a href="#" id="help-link">Ayuda</a></div>
   </div>
   <div class="login-foot-brand">Hidro-Mejora · Proyecto universitario</div>
   </div>
@@ -221,24 +220,31 @@
     <main class="dashboard" id="main-content">
       <!-- INICIO -->
       <div class="dash-sec active" id="sec-inicio" aria-label="Resumen">
-        <div class="page-header">
-          <div>
-            <div class="page-crumb">Hidro Mejora</div>
-            <h2 class="page-title" tabindex="-1">Inicio</h2>
-            <p class="page-desc">Resumen general de tu suministro.</p>
-          </div>
-        </div>
         <div class="hero client-greeting">
           <div>
-            <h2>Tu agua, en un vistazo</h2>
-            <p>Suministro <span id="supply-hello">—</span> · Resumen de tu cuenta</p>
+            <h2 class="page-title" tabindex="-1">Mi suministro</h2>
+            <p class="supply-summary"><span>N.º <b id="supply-hello">—</b></span><span class="supply-state">Estado de cuenta <b id="stat-serv">—</b></span></p>
           </div>
           <button class="btn btn-sky" id="btn-replay-tutorial" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg>Ver tutorial</button>
         </div>
 
         <button class="home-alert" id="home-alert" type="button" hidden data-open-section="notificaciones"><span data-icon="bell"></span><span id="home-alert-text"></span><span data-icon="arrow"></span></button>
         <div class="stats account-overview" aria-label="Resumen de cuenta">
-          <div class="stat stat-priority balance-card"><div class="balance-main"><small>Deuda actual · Total de recibos por pagar</small><strong id="stat-debt">—</strong><span class="balance-state"><span data-icon="receipt"></span><span id="home-balance-state">Consultando recibos</span></span><div class="balance-due"><span data-icon="clock"></span><div><small>Próximo vencimiento pendiente</small><strong class="stat-date" id="stat-due">—</strong><span class="stat-note" id="stat-due-note">Consultando fechas</span></div></div></div><div class="balance-actions"><button class="quick-card" id="home-pay-action" type="button" data-action="pagar" data-icon="payment"><span>Pagar recibos</span></button><button class="quick-card secondary" type="button" data-action="copias" data-icon="download"><span>Mis documentos</span></button></div></div>
+          <div class="stat stat-priority balance-card">
+            <div class="balance-main">
+              <small>Saldo pendiente</small>
+              <strong id="stat-debt">—</strong>
+              <span class="balance-state"><span data-icon="receipt"></span><span id="home-balance-state">Consultando recibos</span></span>
+              <div class="balance-due">
+                <div><small>Próximo vencimiento</small><strong class="stat-date" id="stat-due">—</strong><span class="stat-note" id="stat-due-note">Consultando fechas</span></div>
+                <div><small>Recibos pendientes</small><strong class="stat-date" id="stat-pend">—</strong></div>
+              </div>
+            </div>
+            <div class="balance-actions">
+              <button class="quick-card" id="home-pay-action" type="button" data-action="pagar" data-icon="payment"><span>Pagar recibos</span></button>
+              <button class="quick-card secondary" type="button" data-action="copias" data-icon="download"><span>Mis documentos</span></button>
+            </div>
+          </div>
           <div class="stat" id="stat-total-box">
             <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2M18 14h.01"/></svg></span><small>Último recibo</small></div>
             <strong id="stat-last">S/ 0.00</strong>
@@ -247,22 +253,11 @@
             <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c3 4.2 6 7.6 6 11a6 6 0 1 1-12 0c0-3.4 3-6.8 6-11z"/></svg></span><small>Consumo último recibo</small></div>
             <strong id="stat-cons">0 m³</strong>
           </div>
-          <div class="stat stat-orange">
-            <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/></svg></span><small>Recibos pendientes</small></div>
-            <strong id="stat-pend">0</strong>
-          </div>
-          <div class="stat stat-green">
-            <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/></svg></span><small>Estado de la cuenta</small></div>
-            <strong id="stat-serv">Activo</strong>
-          </div>
-          </div>
+        </div>
 
         <section aria-label="Acciones rápidas">
           <div class="section-head">
-            <div>
-              <h3>Acciones rápidas</h3>
-              <p style="font-size:.82rem;color:var(--muted);margin-top:.15rem">Gestiona tu suministro desde un solo lugar</p>
-            </div>
+            <h3>Acciones rápidas</h3>
           </div>
           <div class="quick-grid">
             <button class="quick-card" type="button" data-action="pagar">
@@ -4271,7 +4266,7 @@ async function descargarConstanciaPDF(r, btn){
       const code = document.createElement('span'); code.className = 'inc-code'; code.textContent = tipoTxt + (nt.alcance === 'General' ? ' · GENERAL' : '');
       const badge = document.createElement('span'); badge.className = 'badge ' + (nt.leida ? '' : 'info'); badge.textContent = nt.leida ? 'LEÍDA' : 'NUEVA';
       row.appendChild(code); row.appendChild(badge);
-      const t = document.createElement('div'); t.className = 'inc-desc'; t.textContent = nt.titulo;
+      const t = document.createElement('strong'); t.className = 'notification-title'; t.textContent = nt.titulo;
       const m = document.createElement('div'); m.className = 'inc-desc'; m.textContent = nt.mensaje;
       const meta = document.createElement('div'); meta.className = 'inc-meta'; meta.textContent = fmtFechaLarga(nt.fecha_registro);
       d.appendChild(row); d.appendChild(t); d.appendChild(m); d.appendChild(meta);

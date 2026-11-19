@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## Interfaz para la feria
+
+- Inicio reúne el suministro, el estado de la cuenta, el saldo y los vencimientos. El acceso y el historial mejoran la lectura y las áreas táctiles. HidroBot adapta el panel al espacio disponible al escribir.
+- Admin distingue la navegación del área de trabajo, alinea los indicadores y amplía los controles de filtros y tablas.
+
 ## Notificaciones generales
 
 - En Perfil, una sola preferencia permite activar o desactivar los avisos de recibos, vencimientos, incidencias y cortes en Android. Al actualizar la app, las selecciones anteriores se conservan hasta que se activen las notificaciones generales.

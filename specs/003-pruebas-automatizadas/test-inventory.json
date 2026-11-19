@@ -2973,7 +2973,7 @@
     },
     {
       "path": "scripts/test/profile-navigation.test.cjs",
-      "sha256": "f9e233798268ce0164ecd4a2ccddad496156a280393cc5474602f0436a520d96",
+      "sha256": "72dcb7bc7ef1c0739a46d35d652c8a90e1ef9fa1336dd0246b65534acc492b2a",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": true,
