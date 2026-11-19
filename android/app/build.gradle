@@ -28,8 +28,8 @@ android {
         buildConfigField "boolean", "HM_PUSH_CONFIGURED", (file('google-services.json').isFile() && System.getenv('HM_PUSH_ANDROID_ENABLED') == '1').toString()
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 9
-        versionName "1.2.3"
+        versionCode 10
+        versionName "1.2.4"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
