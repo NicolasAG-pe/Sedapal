@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## Océano Claro · Cuadros de acción en Admin
+
+- Los formularios administrativos usan un panel lateral en escritorio y un cuadro de pantalla completa en tablet y móvil. Los historiales y la fotografía usan un modal ancho en escritorio.
+- El cierre conserva la posición y el foco de la tabla, protege los cambios sin guardar y espera a que terminen las operaciones en curso.
+
 ## Océano Claro · Android 1.2.3 (9) y panel administrativo
 
 - Inicio reúne saldo, vencimiento, suministro y consumo de los últimos seis recibos vigentes. El detalle y el resumen comparan el consumo con su promedio real y distinguen los datos ausentes.

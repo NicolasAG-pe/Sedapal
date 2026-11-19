@@ -73,10 +73,6 @@
 .payment-table{border-radius:14px;overflow:hidden;border:1px solid var(--border)}
 .payment-table th{background:var(--sky-mist);color:var(--primary)}
 .hm-table tbody tr:nth-child(even){background:var(--sky-mist)}
-.payment-dialog{border-color:var(--border);border-radius:20px}
-.payment-dialog header,.dialog-head{background:var(--primary);color:var(--white)}
-.payment-dialog header h3,.dialog-head h3,.dialog-head p{color:var(--white)}
-.payment-dialog header .icon-btn{background:var(--white);color:var(--primary)}
 @media(max-width:650px){
  .admin-login-brand{margin:-24px -24px 24px;padding:22px 24px}
  .payment-table{border:0;background:transparent;overflow:visible}.payment-filters{padding:12px}

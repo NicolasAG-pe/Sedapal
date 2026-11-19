@@ -1,0 +1,128 @@
+html.admin-dialog-gutter {scrollbar-gutter:stable}
+html.admin-dialog-open {overflow:hidden}
+
+.admin-dialog {
+  position:fixed;
+  inset:0;
+  box-sizing:border-box;
+  width:min(100% - 48px, 640px);
+  max-width:none;
+  max-height:calc(100dvh - 48px);
+  margin:auto;
+  padding:0;
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  background:var(--surface);
+  color:var(--text);
+  box-shadow:var(--shadow-modal);
+  overflow:hidden;
+}
+.admin-dialog[open], .admin-dialog-frame, .admin-dialog-form {
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+.admin-dialog::backdrop {background:#05263c99}
+.admin-dialog--drawer {
+  inset:0 calc(100% - 100dvw) 0 auto;
+  width:min(550px, 100dvw);
+  height:100dvh;
+  max-height:none;
+  margin:0;
+  border-width:0 0 0 1px;
+  border-radius:var(--radius-lg) 0 0 var(--radius-lg);
+}
+.admin-dialog--drawer :is(.admin-dialog-form,.admin-dialog-frame,.admin-dialog-body) {flex:1 1 auto}
+.admin-dialog--wide {width:min(100% - 48px, 820px)}
+
+.admin-dialog-head, .admin-dialog-foot {
+  flex:none;
+  padding:16px 24px;
+}
+.admin-dialog-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  padding-top:max(16px, env(safe-area-inset-top));
+  background:var(--primary);
+  color:var(--white);
+}
+.admin-dialog-head h3 {margin:0;font-size:1.125rem;line-height:1.35;overflow-wrap:anywhere}
+.admin-dialog-head p {margin:4px 0 0;color:inherit;font-size:var(--text-sm)}
+.admin-dialog-head .icon-btn {flex:none;width:44px;height:44px;background:var(--white);color:var(--primary)}
+.admin-dialog-head :focus-visible {outline-color:var(--sky-soft)}
+.admin-dialog-body {
+  min-height:0;
+  overflow:auto;
+  overscroll-behavior:contain;
+  padding:16px 24px;
+  overflow-wrap:anywhere;
+}
+.admin-dialog-body > :first-child {margin-top:0}
+.admin-dialog-foot {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  align-items:center;
+  gap:8px;
+  padding-bottom:max(16px, env(safe-area-inset-bottom));
+  border-top:1px solid var(--border);
+  background:var(--surface);
+}
+.admin-dialog-foot .btn {min-height:44px}
+.admin-dialog .form-error {scroll-margin:16px}
+.admin-dialog-status {margin:0}
+.admin-dialog-status:not(:empty) {padding:8px 24px;color:var(--muted);font-size:var(--text-sm)}
+#operation-error:not(:empty), #admin-security-dialog #two-factor-settings-error:not(:empty) {background:var(--red-bg);color:var(--red-ink)}
+.admin-dialog:not(:has([aria-busy="true"])) .admin-dialog-wait {display:none}
+#two-factor-controls:not(:has(#two-factor-confirm:not([hidden]))) #two-factor-activate,
+#two-factor-controls:has(#two-factor-confirm:not([hidden])) :is(#two-factor-manage,#two-factor-setup),
+#two-factor-controls:has(#two-factor-codes:not([hidden])) :is(#two-factor-manage,#two-factor-recovery,#two-factor-disable) {
+  display:none;
+}
+.admin-dialog .foto-full {max-height:none;max-width:100%;object-fit:contain}
+
+/* El historial compartido conserva su estado y marcado dentro del cuadro Admin. */
+.admin-dialog .incident-history-modal.overlay.open {
+  position:static;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  padding:0;
+  background:none;
+}
+.admin-dialog .incident-history-modal .incident-history-dialog {
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  width:100%;
+  max-height:none;
+  padding:0;
+  overflow:hidden;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+  animation:none;
+}
+.admin-dialog .incident-history-dialog .admin-dialog-body {padding:16px 24px}
+.admin-dialog .incident-history-change {margin-top:16px}
+.admin-dialog .incident-history-dialog .admin-dialog-head p {color:var(--white)}
+
+@media (max-width:1024px) {
+  .admin-dialog:not(.admin-dialog--compact) {
+    inset:0 auto 0 0;
+    width:100dvw;
+    height:100dvh;
+    max-height:none;
+    border:0;
+    margin:0;
+    border-radius:0;
+  }
+  .admin-dialog:not(.admin-dialog--compact) :is(.admin-dialog-body,.admin-dialog-form,.incident-history-modal,.incident-history-dialog) {flex:1 1 auto}
+}
+@media (max-width:560px) {
+  .admin-dialog-head, .admin-dialog-foot, .admin-dialog-body,
+  .admin-dialog .incident-history-dialog .admin-dialog-body {padding-inline:16px}
+  .admin-dialog--compact {width:calc(100% - 24px)}
+}

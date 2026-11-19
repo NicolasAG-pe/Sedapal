@@ -1853,7 +1853,7 @@
     },
     {
       "path": "scripts/test/admin-e2e.cjs",
-      "sha256": "7600c4ca94072c728d2983fdfeaeeb6bec93e4418c431736ce640bf98e520bef",
+      "sha256": "66fc2b0203e3e55ce0284d5bc8619e495308e3ed8f460a528f39707feff5d68a",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": false,
@@ -1871,6 +1871,7 @@
         "node:child_process",
         "node:module",
         "./visual-checks.cjs",
+        "../../Backend/totp-crypto",
         "./client-checks.cjs"
       ],
       "environmentNames": [
@@ -2697,7 +2698,7 @@
     },
     {
       "path": "scripts/test/incident-tracking-flow.cjs",
-      "sha256": "bcf1169daf9e6daa782251b35a257c3ca55c68eed087edd7b651a8a603f2a7a1",
+      "sha256": "38c9429791ee9842e8edec376bc636d27ec0f222ac2a12ea40857999cf660782",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": true,
@@ -2796,7 +2797,7 @@
     },
     {
       "path": "scripts/test/payment-audit-flow.cjs",
-      "sha256": "4cc90c68a3b744461ec40b3fa22587b9c3bae50554fd8b0eae87976e040ceb10",
+      "sha256": "52410f1079ecdc5e7b5eedeaf3709001780d6b6ba0cf4827743b4a16415885f3",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": true,

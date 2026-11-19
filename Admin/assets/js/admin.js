@@ -3,6 +3,7 @@
 (function () {
   'use strict';
   const shared = window.HMShared;
+  const dialogs = window.HMAdminDialog;
   const session = shared.createSession('hm_admin');
   const login = document.getElementById('admin-login');
   const panel = document.getElementById('admin-panel');
@@ -15,16 +16,46 @@
   let page = 'admin', attempt = 0;
   const allowedPages = ['admin', 'admin-usuarios', 'admin-recibos', 'admin-cortes',
     'admin-incidencias', 'admin-pagos', 'admin-atencion', 'admin-cuenta'];
-  const api = shared.createApi(session, () => logout('Sesión terminada o acceso denegado. Inicia sesión nuevamente.'));
+  const api = shared.createApi(session, () => security.onSessionInvalidated(() =>
+    logout('Sesión terminada o acceso denegado. Inicia sesión nuevamente.')));
   const security=window.createHMTwoFactorUI({session:{token:session.token,authFetch:authRequest},apiFetch:api.fetch,
     showLogin:message=>logout(message || ''),
     showChallenge:()=>{document.getElementById('admin-forgot-wrap').hidden=true;loginForm.hidden=true;document.getElementById('admin-password').value='';},
     authenticated:async data=>{
       const epoch=attempt;
+      // El cambio de 2FA revoca el JWT anterior. Cancela lecturas de esa sesión antes de validar la nueva.
+      api.cancel();
       realtime.stop();
       try{await completeAdminLogin(data,epoch);}
       catch(error){if(epoch===attempt&&!shared.ui.isAborted(error))logout('No se pudo confirmar la sesión. Inicia sesión nuevamente.');throw error;}
     },showProfile:()=>navigate('admin-cuenta')});
+  const securityDialog = document.getElementById('admin-security-dialog');
+  const securityOpen = document.getElementById('two-factor-open');
+  const securityClose = document.getElementById('two-factor-close');
+  const securityControls = document.getElementById('two-factor-controls');
+  const recoveryCodes = document.getElementById('two-factor-codes');
+  dialogs.register(securityDialog, {
+    initialFocus:'#two-factor-password',
+    dirty:() => !recoveryCodes.hidden || !document.getElementById('two-factor-confirm').hidden ||
+      [...securityControls.querySelectorAll('input')].some(field => field.value),
+    discardMessage:() => recoveryCodes.hidden
+      ? 'La configuración todavía no se ha guardado. ¿Quieres salir?'
+      : 'Guarda tus códigos de recuperación antes de salir. Solo se muestran en este momento.',
+    onClose:() => securityClose.click()
+  });
+  securityOpen.addEventListener('click', event => dialogs.open(securityDialog, event.currentTarget));
+  securityClose.addEventListener('click', event => {
+    if (!securityDialog.open) return;
+    event.stopImmediatePropagation();
+    dialogs.dismiss(securityDialog);
+  }, true);
+  // El vencimiento del QR oculta los controles privados en la interfaz compartida.
+  new MutationObserver(() => {
+    if (securityControls.hidden && securityDialog.open) dialogs.close(securityDialog);
+  }).observe(securityControls, {attributes:true, attributeFilter:['hidden']});
+  new MutationObserver(() => {
+    if (dialogs.top() === securityDialog && !recoveryCodes.hidden) document.getElementById('two-factor-codes-list').focus();
+  }).observe(recoveryCodes, {attributes:true, attributeFilter:['hidden']});
   const realtime = shared.createRealtime(session, {
     events: ['incidencia:nueva', 'incidencia:actualizada', 'atencion:nueva',
       'atencion:actualizada', 'recibo:nuevo', 'recibo:actualizado', 'pago:nuevo', 'corte:actualizado'],
@@ -58,6 +89,7 @@
   function logout(message = '', success = false) {
     attempt++;
     passwordRecovery.clear();document.getElementById('admin-forgot-wrap').hidden=false;
+    dialogs.close(securityDialog, {restore:false});
     security.clear();
     if (loginController) loginController.abort();
     authControllers.forEach(c=>c.abort());authControllers.clear();
@@ -77,7 +109,6 @@
     document.getElementById('admin-toast').textContent = '';
     document.getElementById('admin-toast').hidden = true;
     clearTimeout(toastTimer);
-    document.body.classList.remove('modal-open');
     history.replaceState(null, '', location.pathname + location.search);
     loginForm.reset();
     loginForm.hidden=false;
@@ -94,6 +125,10 @@
   function navigate(next) {
     if (!session.isAdmin() || !modules) {
       if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+      return;
+    }
+    if (next !== page && dialogs.top()) {
+      history.replaceState(null, '', '#' + page);
       return;
     }
     page = allowedPages.includes(next) ? next : 'admin';
@@ -123,17 +158,6 @@
   document.getElementById('admin-logout').addEventListener('click', () => logout());
   document.getElementById('admin-supply').addEventListener('input', event => {
     event.target.value = event.target.value.replace(/\D/g, '').slice(0, 9);
-  });
-  document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && modules) modules.closeDialogs();
-    if (event.key === 'Tab') {
-      const modal = main.querySelector('.overlay.open');
-      if (!modal) return;
-      const items = [...modal.querySelectorAll('button:not([disabled]),input,select,textarea,[tabindex="0"]')];
-      if (!items.length) return;
-      if (event.shiftKey && document.activeElement === items[0]) { event.preventDefault(); items.at(-1).focus(); }
-      else if (!event.shiftKey && document.activeElement === items.at(-1)) { event.preventDefault(); items[0].focus(); }
-    }
   });
   loginForm.addEventListener('submit', async event => {
     event.preventDefault();
@@ -202,7 +226,7 @@
   logout();
 
   function createAdminModules() {
-    let disposed = false, photoUrl = null, photoRequest = 0, lastFocus = null;
+    let disposed = false, photoUrl = null, photoRequest = 0;
     const esAdmin = () => !disposed && session.isAdmin();
     const obtenerRol = () => session.role();
     const apiFetch = (path, options) => {
@@ -217,7 +241,7 @@
     const incidentChanges=new Map(),pendingIncidentChanges=new Set();
     const incidentTimeline=window.createHMIncidentReview({container:main,apiFetch,
       path:(id,cursor)=>'/api/admin/incidencias/'+id+'/seguimiento?limite=30'+(cursor?'&despues='+cursor:''),
-      isActive:esAdmin,openDialog:openModal,closeDialog:closeModal,
+      isActive:esAdmin,
       change:(id,state,comment)=>cambiarEstadoIncidencia(id,state,null,comment)
     });
     const confirmModal = document.getElementById('confirm-modal');
@@ -229,46 +253,61 @@
       pairs.forEach(([key, value]) => { const div = nodo('div'); div.append(nodo('dt', null, key), nodo('dd', null, value)); dl.append(div); });
       section.append(dl); return section;
     }
-    function openModal(modal) {
-      if (!esAdmin()) return;
-      lastFocus = document.activeElement;
-      modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false');
-      document.body.classList.add('modal-open');
-      modal.querySelector('button').focus();
-    }
-    function closeModal(modal) {
-      if(modal.hmOnClose)modal.hmOnClose();
-      modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true');
-      if (modal === fotoModal) {
-        photoRequest++;
-        document.getElementById('foto-img').removeAttribute('src');
-        document.getElementById('foto-sub').textContent = '';
-        if (photoUrl) URL.revokeObjectURL(photoUrl);
-        photoUrl = null;
-      }
-      if (!main.querySelector('.overlay.open')) document.body.classList.remove('modal-open');
-      if (lastFocus && lastFocus.isConnected) lastFocus.focus();
-    }
-    function closeDialogs() { confirmarAccion = null; closeModal(confirmModal); closeModal(fotoModal); incidentTimeline.clear(); }
-    async function abrirFotoProtegida(path, title) {
-      closeModal(fotoModal);
+    const receiptDialog = dialogs.register(document.getElementById('admin-recibo-form-card'), {
+      watch:true, onClose:resetRecibo, fallback:() => document.getElementById('btn-nuevo-recibo')
+    });
+    const cutDialog = dialogs.register(document.getElementById('admin-corte-form-card'), {
+      watch:true, onClose:resetCorte, fallback:() => document.getElementById('btn-nuevo-corte')
+    });
+    const responseDialog = dialogs.register(document.getElementById('admin-ate-resp-card'), {
+      watch:true, onClose:() => { adminAteSel = null; document.getElementById('admin-ate-resp-form').reset(); }
+    });
+    const accountDialog = dialogs.register(document.getElementById('admin-usu-det-card'), {
+      busy:() => accountSaving, onClose:() => { accountRequest++; adminUsuDetalle = null; }
+    });
+    const locationDialog = dialogs.register(document.getElementById('admin-ubi-dialog'), {
+      watch:true, onClose:() => document.getElementById('admin-ubi-form').reset()
+    });
+    let accountRequest = 0, accountSaving = false;
+
+    dialogs.register(confirmModal, {
+      initialFocus:'#confirm-cancel', onClose:() => { confirmarAccion = null; }
+    });
+    dialogs.register(fotoModal, {onClose:() => {
+      photoRequest++;
+      document.getElementById('foto-img').removeAttribute('src');
+      if (photoUrl) URL.revokeObjectURL(photoUrl);
+      photoUrl = null;
+    }});
+    async function abrirFotoProtegida(path, title, opener) {
       const request = ++photoRequest;
+      const img = document.getElementById('foto-img');
+      const status = document.getElementById('foto-load');
+      img.hidden = true;
+      status.textContent = 'Cargando fotografía…';
+      status.hidden = false;
       document.getElementById('foto-sub').textContent = title;
-      openModal(fotoModal);
+      dialogs.open(fotoModal, opener);
       try {
         const response = await apiFetch(path);
         if (!response.ok) throw new Error('Fotografía no disponible.');
         const blob = await response.blob();
         if (!esAdmin() || request !== photoRequest) return;
         photoUrl = URL.createObjectURL(blob);
-        document.getElementById('foto-img').src = photoUrl;
+        img.src = photoUrl;
+        img.hidden = false;
+        status.hidden = true;
       } catch (error) {
         if (esAbortado(error) || !esAdmin() || request !== photoRequest) return;
-        closeModal(fotoModal); showToast('No se pudo cargar la fotografía.');
+        status.textContent = 'No se pudo cargar la fotografía.';
       }
     }
-    ['foto-close', 'foto-done'].forEach(id => document.getElementById(id).addEventListener('click', () => closeModal(fotoModal)));
-    fotoModal.addEventListener('click', event => { if (event.target === fotoModal) closeModal(fotoModal); });
+
+    function formError(box, message) {
+      box.textContent = message;
+      box.classList.add('show');
+      box.scrollIntoView({block:'nearest'});
+    }
     main.querySelectorAll('[data-limite-inteligente]').forEach(input => input.addEventListener('input', () => {
       if (input.dataset.limiteInteligente === 'suministro') input.value = input.value.replace(/\D/g, '').slice(0, 9);
       else if (/^\d+$/.test(input.value)) input.value = input.value.slice(0, 9);
@@ -282,22 +321,17 @@
   let adminCortes = [];
   let adminEditId = null;
   let confirmarAccion = null;
-  function pedirConfirmacion(titulo, texto, alAceptar){
+  function pedirConfirmacion(titulo, texto, alAceptar, opener){
     document.getElementById('confirm-title').textContent = titulo;
-    document.getElementById('confirm-sub').textContent = 'Panel administrativo';
     document.getElementById('confirm-text').textContent = texto;
     confirmarAccion = alAceptar;
-    openModal(confirmModal);
+    dialogs.open(confirmModal, opener);
   }
-  document.getElementById('confirm-close').addEventListener('click', ()=>{ confirmarAccion = null; closeModal(confirmModal); });
-  document.getElementById('confirm-cancel').addEventListener('click', ()=>{ confirmarAccion = null; closeModal(confirmModal); });
   document.getElementById('confirm-ok').addEventListener('click', ()=>{
     const fn = confirmarAccion;
-    confirmarAccion = null;
-    closeModal(confirmModal);
+    dialogs.close(confirmModal);
     if(fn) fn();
   });
-  confirmModal.addEventListener('click', e=>{ if(e.target===confirmModal){ confirmarAccion = null; closeModal(confirmModal); } });
   function limaInputValor(iso){
     try{
       const d = new Date(iso);
@@ -319,18 +353,16 @@
     if(new Date(d.getTime() - 5 * 60 * 60 * 1000).toISOString().slice(0,16) !== valor) return null;
     return d.toISOString();
   }
-  function mostrarFormCorte(editar){
+  function mostrarFormCorte(editar, opener){
     const button = document.getElementById('admin-corte-submit');
     button.dataset.busy = '0'; button.disabled = false;
-    document.getElementById('admin-corte-form-card').hidden = false;
     document.getElementById('admin-corte-error').classList.remove('show');
     document.getElementById('admin-corte-form-title').textContent = editar ? 'Editar corte de servicio' : 'Nuevo corte de servicio';
     document.getElementById('admin-corte-submit-text').textContent = editar ? 'Guardar cambios' : 'Publicar corte';
     aplicarAlcanceCorte();
-    document.getElementById('adm-motivo').focus();
+    dialogs.open(cutDialog, opener);
   }
-  function ocultarFormCorte(){
-    document.getElementById('admin-corte-form-card').hidden = true;
+  function resetCorte(){
     document.getElementById('admin-corte-form').reset();
     adminEditId = null;
   }
@@ -341,12 +373,11 @@
     document.getElementById('adm-distrito-wrap').style.opacity = esGeneral ? '.5' : '1';
     document.getElementById('adm-zona-wrap').style.opacity = esGeneral ? '.5' : '1';
   }
-  document.getElementById('btn-nuevo-corte').addEventListener('click', ()=>{
+  document.getElementById('btn-nuevo-corte').addEventListener('click', event=>{
     adminEditId = null;
     document.getElementById('admin-corte-form').reset();
-    mostrarFormCorte(false);
+    mostrarFormCorte(false, event.currentTarget);
   });
-  document.getElementById('admin-corte-cancel').addEventListener('click', ocultarFormCorte);
   document.getElementById('adm-alcance').addEventListener('change', aplicarAlcanceCorte);
   async function cargarAdminCortes(){
     if(!esAdmin()) return;
@@ -404,12 +435,13 @@
       if(!c.cancelado){
         const bE = document.createElement('button');
         bE.type = 'button'; bE.className = 'btn-sm detail'; bE.textContent = 'Editar';
-        bE.addEventListener('click', ()=>editarCorteAdmin(c.id_corte));
+        bE.dataset.dialogTrigger = 'editar-corte-' + c.id_corte;
+        bE.addEventListener('click', ()=>editarCorteAdmin(c.id_corte, bE));
         box.appendChild(bE);
         if(c.estado !== 'Finalizado'){
           const bC = document.createElement('button');
           bC.type = 'button'; bC.className = 'btn-sm payb'; bC.textContent = 'Cancelar';
-          bC.addEventListener('click', ()=>pedirConfirmacion('¿Cancelar el aviso de corte #'+c.id_corte+'?', c.motivo, ()=>cancelarCorteAdmin(c.id_corte)));
+          bC.addEventListener('click', ()=>pedirConfirmacion('¿Cancelar el aviso de corte #'+c.id_corte+'?', c.motivo, ()=>cancelarCorteAdmin(c.id_corte), bC));
           box.appendChild(bC);
         }
       }
@@ -418,7 +450,7 @@
     });
     window.HMAdminTable(list);
   }
-  function editarCorteAdmin(id){
+  function editarCorteAdmin(id, opener){
     const c = adminCortes.find(x=>String(x.id_corte) === String(id));
     if(!c) return;
     adminEditId = c.id_corte;
@@ -428,7 +460,7 @@
     document.getElementById('adm-motivo').value = c.motivo || '';
     document.getElementById('adm-inicio').value = limaInputValor(c.fecha_inicio);
     document.getElementById('adm-fin').value = limaInputValor(c.fecha_fin);
-    mostrarFormCorte(true);
+    mostrarFormCorte(true, opener);
   }
   async function cancelarCorteAdmin(id){
     if(!esAdmin()) return;
@@ -436,7 +468,6 @@
       const resp = await apiFetch('/api/admin/cortes/' + encodeURIComponent(String(id)) + '/cancelar', {method: 'PATCH'});
       if(!resp.ok) throw new Error('No se pudo cancelar el aviso (código ' + resp.status + ')');
       showSuccess('Aviso de corte cancelado.');
-      ocultarFormCorte();
       await cargarAdminCortes();
     }catch(err){
       if(esAbortado(err) || !esAdmin()) return;
@@ -468,8 +499,7 @@
     else if(new Date(finISO) <= new Date(inicioISO)) msg = '⚠ El fin debe ser posterior al inicio.';
     else if(alcance === 'Zona' && (!distrito || !zona)) msg = '⚠ Distrito y zona son obligatorios.';
     if(msg){
-      errBox.textContent = msg;
-      errBox.classList.add('show');
+      formError(errBox, msg);
       return;
     }
     btn.dataset.busy = '1';
@@ -492,21 +522,19 @@
       });
       const data = await resp.json().catch(err=>{ if(esAbortado(err)) throw err; return null; });
       if(!resp.ok || !data || data.estado !== 'ok'){
-        errBox.textContent = '⚠ ' + ((data && data.mensaje) || 'No se pudo guardar el aviso.');
-        errBox.classList.add('show');
+        formError(errBox, '⚠ ' + ((data && data.mensaje) || 'No se pudo guardar el aviso.'));
         btn.dataset.busy = '0';
         btn.disabled = false;
         document.getElementById('admin-corte-submit-text').textContent = esEdicion ? 'Guardar cambios' : 'Publicar corte';
         return;
       }
-      ocultarFormCorte();
       showSuccess(esEdicion ? 'Aviso actualizado correctamente.' : 'Aviso publicado correctamente.');
       await cargarAdminCortes();
+      if (esAdmin()) dialogs.close(cutDialog);
     }catch(err){
       if(esAbortado(err) || !esAdmin()) return;
       console.error('No se pudo guardar el aviso de corte.', err);
-      errBox.textContent = '⚠ No se pudo conectar con el servidor.';
-      errBox.classList.add('show');
+      formError(errBox, '⚠ No se pudo conectar con el servidor.');
       btn.dataset.busy = '0';
       btn.disabled = false;
       document.getElementById('admin-corte-submit-text').textContent = adminEditId ? 'Guardar cambios' : 'Publicar corte';
@@ -654,22 +682,32 @@
       const box = document.createElement('div'); box.className = 'tbl-actions';
       const bV = document.createElement('button');
       bV.type = 'button'; bV.className = 'btn-sm detail'; bV.textContent = 'Ver detalle';
-      bV.addEventListener('click', ()=>verDetalleUsuario(u.id_usuario));
+      bV.dataset.dialogTrigger = 'cuenta-' + u.id_usuario;
+      bV.addEventListener('click', ()=>verDetalleUsuario(u.id_usuario, bV));
       box.appendChild(bV);
       d.appendChild(box);
       list.appendChild(d);
     });
     window.HMAdminTable(list);
   }
-  async function verDetalleUsuario(idUsuario){
+  async function verDetalleUsuario(idUsuario, opener){
     if(!esAdmin()) return;
+    const request = ++accountRequest;
+    const body = document.getElementById('admin-usu-det-body');
+    const actions = document.getElementById('admin-usu-det-actions');
+    body.textContent = 'Cargando detalle de la cuenta…';
+    body.setAttribute('aria-busy', 'true');
+    actions.hidden = true;
+    const title = document.getElementById('admin-usu-det-title');
+    if (accountDialog.open) title.focus({preventScroll:true});
+    else title.textContent = 'Detalle de cuenta';
+    dialogs.open(accountDialog, opener);
     try{
       const resp = await apiFetch('/api/admin/usuarios/' + encodeURIComponent(String(idUsuario)));
       if(!resp.ok) throw new Error('No se pudo cargar el detalle (código ' + resp.status + ')');
       const data = await resp.json();
+      if (request !== accountRequest || !accountDialog.open) return;
       adminUsuDetalle = { id: idUsuario, suministro: data.suministro };
-      const body = document.getElementById('admin-usu-det-body');
-      const card = document.getElementById('admin-usu-det-card');
       const toggleBtn = document.getElementById('admin-usu-toggle');
       const activo = !!(data.cuenta && data.cuenta.activo);
       document.getElementById('admin-usu-det-title').textContent = 'Detalle de cuenta · ' + (data.cuenta ? data.cuenta.correo : '');
@@ -692,31 +730,30 @@
       ]));
       toggleBtn.textContent = activo ? 'Desactivar cuenta' : 'Reactivar cuenta';
       toggleBtn.dataset.activo = activo ? '0' : '1';
-      document.getElementById('admin-ubi-form').hidden = true;
-      card.hidden = false;
+      document.getElementById('admin-usu-edit-ubi').hidden = !data.suministro;
+      actions.hidden = false;
     }catch(err){
-      if(esAbortado(err) || !esAdmin()) return;
-      console.error('No se pudo cargar el detalle.', err);
-      showToast('No se pudo cargar el detalle del usuario.');
+      if(esAbortado(err) || !esAdmin() || request !== accountRequest) return;
+      const retry = nodo('button', 'btn btn-ghost', 'Reintentar');
+      retry.type = 'button';
+      retry.addEventListener('click', () => verDetalleUsuario(idUsuario, opener));
+      body.replaceChildren(nodo('p', null, 'No se pudo cargar el detalle de la cuenta.'), retry);
+    } finally {
+      if (request === accountRequest) body.removeAttribute('aria-busy');
     }
   }
   document.getElementById('adm-usu-search').addEventListener('input', ev=>{ admUsuSearch = ev.target.value; renderAdminUsuarios(); });
   document.getElementById('adm-usu-rol').addEventListener('change', ev=>{ admUsuRol = ev.target.value; renderAdminUsuarios(); });
   document.getElementById('adm-usu-estado').addEventListener('change', ev=>{ admUsuEstado = ev.target.value; renderAdminUsuarios(); });
-  document.getElementById('admin-usu-det-close').addEventListener('click', ()=>{
-    document.getElementById('admin-usu-det-card').hidden = true;
-    adminUsuDetalle = null;
+  document.getElementById('admin-usu-edit-ubi').addEventListener('click', event=>{
+    const supply = adminUsuDetalle?.suministro;
+    if (!supply || accountSaving) return;
+    document.getElementById('adm-ubi-distrito').value = supply.distrito || '';
+    document.getElementById('adm-ubi-zona').value = supply.zona || '';
+    document.getElementById('admin-ubi-supply').textContent = 'Suministro ' + supply.numero_suministro;
+    document.getElementById('admin-ubi-error').classList.remove('show');
+    dialogs.open(locationDialog, event.currentTarget);
   });
-  document.getElementById('admin-usu-edit-ubi').addEventListener('click', ()=>{
-    if(!adminUsuDetalle) return;
-    const f = document.getElementById('admin-ubi-form');
-    f.hidden = !f.hidden;
-    if(!f.hidden && adminUsuDetalle.suministro){
-      document.getElementById('adm-ubi-distrito').value = adminUsuDetalle.suministro.distrito || '';
-      document.getElementById('adm-ubi-zona').value = adminUsuDetalle.suministro.zona || '';
-    }
-  });
-  document.getElementById('admin-ubi-cancel').addEventListener('click', ()=>{ document.getElementById('admin-ubi-form').hidden = true; });
   document.getElementById('admin-ubi-form').addEventListener('submit', async ev=>{
     ev.preventDefault();
     const _releaseForm=window.HMShared.ui.beginForm(ev.currentTarget);
@@ -727,6 +764,9 @@
     if(!adminUsuDetalle) return;
     if(!adminUsuDetalle.suministro) return;
     const idSum = adminUsuDetalle.suministro.id_suministro;
+    const account = adminUsuDetalle.id;
+    const errorBox = document.getElementById('admin-ubi-error');
+    errorBox.classList.remove('show');
     try{
       const resp = await apiFetch('/api/admin/suministros/' + encodeURIComponent(String(idSum)) + '/ubicacion', {
         method: 'PATCH', headers: {'Content-Type':'application/json'},
@@ -734,39 +774,49 @@
       });
       const data = await resp.json().catch(err=>{ if(esAbortado(err)) throw err; return null; });
       if(!resp.ok || !data || data.estado !== 'ok'){
-        showToast('⚠ ' + ((data && data.mensaje) || 'No se pudo guardar la ubicación.'));
+        formError(errorBox, data?.mensaje || 'No se pudo guardar la ubicación.');
         return;
       }
       showSuccess('Ubicación actualizada correctamente.');
-      document.getElementById('admin-ubi-form').hidden = true;
       await cargarAdminUsuarios();
-      await verDetalleUsuario(adminUsuDetalle.id);
+      if (!esAdmin()) return;
+      dialogs.close(locationDialog);
+      await verDetalleUsuario(account);
     }catch(err){
-      if(esAbortado(err) || !esAdmin()) return; showToast('No se pudo guardar la ubicación.'); }
+      if(esAbortado(err) || !esAdmin()) return; formError(errorBox, 'No se pudo guardar la ubicación.'); }
 
     }finally{_releaseForm();}
   });
   document.getElementById('admin-usu-toggle').addEventListener('click', ()=>{
-    if(!adminUsuDetalle) return;
+    if(!adminUsuDetalle || accountSaving) return;
+    const account = adminUsuDetalle.id;
     const activar = document.getElementById('admin-usu-toggle').dataset.activo === '1';
     pedirConfirmacion(activar ? 'Reactivar cuenta' : 'Desactivar cuenta',
-      '¿Deseas continuar? No se borrará información relacionada.',
+      'Se conservará la información relacionada con esta cuenta.',
       async ()=>{
+        accountSaving = true;
+        const status = accountDialog.querySelector('[data-dialog-status]');
+        status.textContent = 'Guardando estado de la cuenta…';
         try{
-          const resp = await apiFetch('/api/admin/usuarios/' + encodeURIComponent(String(adminUsuDetalle.id)) + '/estado', {
+          const resp = await apiFetch('/api/admin/usuarios/' + encodeURIComponent(String(account)) + '/estado', {
             method: 'PATCH', headers: {'Content-Type':'application/json'},
             body: JSON.stringify({activo: activar})
           });
           const data = await resp.json().catch(err=>{ if(esAbortado(err)) throw err; return null; });
           if(!resp.ok || !data || data.estado !== 'ok'){
-            showToast('⚠ ' + ((data && data.mensaje) || 'No se pudo actualizar el estado.'));
+            status.textContent = data?.mensaje || 'No se pudo actualizar el estado.';
             return;
           }
           showSuccess(activar ? 'Cuenta reactivada.' : 'Cuenta desactivada.');
           await cargarAdminUsuarios();
-          await verDetalleUsuario(adminUsuDetalle.id);
+          if (!esAdmin()) return;
+          status.textContent = '';
+          await verDetalleUsuario(account);
         }catch(err){
-      if(esAbortado(err) || !esAdmin()) return; showToast('No se pudo actualizar el estado.'); }
+          if (!esAbortado(err) && esAdmin()) status.textContent = 'No se pudo actualizar el estado.';
+        } finally {
+          accountSaving = false;
+        }
       });
   });
 
@@ -869,15 +919,16 @@
         bF.type = 'button'; bF.className = 'btn-sm detail'; bF.textContent = 'Ver fotografía';
         bF.addEventListener('click', ()=>abrirFotoProtegida(
           '/api/admin/incidencias/' + encodeURIComponent(String(i.id_incidencia)) + '/foto',
-          'Incidencia #' + i.id_incidencia + ' · ' + i.tipo
+          'Incidencia #' + i.id_incidencia + ' · ' + i.tipo, bF
         ));
+        bF.dataset.dialogTrigger = 'foto-' + i.id_incidencia;
         box.appendChild(bF);
       } else {
         const sin = document.createElement('span');
         sin.className = 'inc-meta'; sin.textContent = 'Sin fotografía adjunta';
         box.appendChild(sin);
       }
-      const historyButton=nodo('button','btn-sm detail','Ver historial');historyButton.type='button';historyButton.dataset.historyId=i.id_incidencia;historyButton.setAttribute('aria-label','Ver historial de incidencia '+i.id_incidencia);historyButton.addEventListener('click',()=>incidentTimeline.open(i.id_incidencia,historyButton));box.append(historyButton);
+      const historyButton=nodo('button','btn-sm detail','Ver historial');historyButton.type='button';historyButton.dataset.historyId=i.id_incidencia;historyButton.dataset.dialogTrigger='incidencia-'+i.id_incidencia;historyButton.setAttribute('aria-label','Ver historial de incidencia '+i.id_incidencia);historyButton.addEventListener('click',()=>incidentTimeline.open(i.id_incidencia,historyButton, i));box.append(historyButton);
       const sel = document.createElement('select');
       sel.className = 'year-select';
       sel.setAttribute('aria-label', 'Cambiar estado de incidencia ' + i.id_incidencia);
@@ -994,12 +1045,13 @@
       if(!r.tiene_pago){
         const bE = document.createElement('button');
         bE.type = 'button'; bE.className = 'btn-sm detail'; bE.textContent = 'Editar';
-        bE.addEventListener('click', ()=>editarReciboAdmin(r.id_recibo));
+        bE.dataset.dialogTrigger = 'editar-recibo-' + r.id_recibo;
+        bE.addEventListener('click', ()=>editarReciboAdmin(r.id_recibo, bE));
         box.appendChild(bE);
         if(r.estado !== 'Anulado'){
           const bA = document.createElement('button');
           bA.type = 'button'; bA.className = 'btn-sm dangerb'; bA.textContent = 'Anular';
-          bA.addEventListener('click', ()=>pedirConfirmacion('¿Anular el recibo R-'+r.id_recibo+'?', 'El recibo seguirá en el historial y ya no podrá pagarse.', ()=>anularReciboAdmin(r.id_recibo)));
+          bA.addEventListener('click', ()=>pedirConfirmacion('¿Anular el recibo R-'+r.id_recibo+'?', 'El recibo seguirá en el historial y ya no podrá pagarse.', ()=>anularReciboAdmin(r.id_recibo), bA));
           box.appendChild(bA);
         }
       } else {
@@ -1012,8 +1064,7 @@
     });
     window.HMAdminTable(list);
   }
-  function mostrarFormRecibo(editar){
-    document.getElementById('admin-recibo-form-card').hidden = false;
+  function mostrarFormRecibo(editar, opener){
     document.getElementById('admin-recibo-error').classList.remove('show');
     document.getElementById('admin-recibo-form-title').textContent = editar ? 'Editar recibo' : 'Nuevo recibo';
     document.getElementById('adm-rec-suministro').disabled = !!editar;
@@ -1022,8 +1073,7 @@
     btn.disabled = false;
     document.getElementById('admin-recibo-submit-text').textContent = editar ? 'Guardar cambios' : 'Publicar recibo';
     actualizarBotonRecibo();
-    const foco = editar ? document.getElementById('adm-rec-periodo') : document.getElementById('adm-rec-suministro');
-    if(foco) foco.focus();
+    dialogs.open(receiptDialog, opener);
   }
   function validarCamposRecibo(){
     const suministro = document.getElementById('adm-rec-suministro').value.trim();
@@ -1053,20 +1103,18 @@
     document.getElementById(id).addEventListener('input', actualizarBotonRecibo);
     document.getElementById(id).addEventListener('change', actualizarBotonRecibo);
   });
-  function ocultarFormRecibo(){
-    document.getElementById('admin-recibo-form-card').hidden = true;
+  function resetRecibo(){
     document.getElementById('admin-recibo-form').reset();
     document.getElementById('adm-rec-suministro').disabled = false;
     adminRecEditId = null;
   }
-  document.getElementById('btn-nuevo-recibo').addEventListener('click', ()=>{
+  document.getElementById('btn-nuevo-recibo').addEventListener('click', event=>{
     adminRecEditId = null;
     document.getElementById('admin-recibo-form').reset();
     document.getElementById('adm-rec-suministro').disabled = false;
-    mostrarFormRecibo(false);
+    mostrarFormRecibo(false, event.currentTarget);
   });
-  document.getElementById('admin-recibo-cancel').addEventListener('click', ocultarFormRecibo);
-  function editarReciboAdmin(id){
+  function editarReciboAdmin(id, opener){
     const r = adminRecibos.find(x=>String(x.id_recibo) === String(id));
     if(!r || r.tiene_pago) return;
     adminRecEditId = r.id_recibo;
@@ -1076,7 +1124,7 @@
     document.getElementById('adm-rec-vencimiento').value = String(r.fecha_vencimiento || '').slice(0, 10);
     document.getElementById('adm-rec-consumo').value = r.consumo_m3;
     document.getElementById('adm-rec-monto').value = r.monto;
-    mostrarFormRecibo(true);
+    mostrarFormRecibo(true, opener);
   }
   async function anularReciboAdmin(id){
     if(!esAdmin()) return;
@@ -1122,8 +1170,7 @@
     else if(!Number.isFinite(monto) || monto <= 0) msg = '⚠ El monto debe ser mayor a 0.';
     else if(!Number.isFinite(consumo) || consumo < 0) msg = '⚠ El consumo debe ser mayor o igual a 0.';
     if(msg){
-      errBox.textContent = msg;
-      errBox.classList.add('show');
+      formError(errBox, msg);
       return;
     }
     btn.dataset.busy = '1';
@@ -1142,21 +1189,19 @@
       });
       const data = await resp.json().catch(err=>{ if(esAbortado(err)) throw err; return null; });
       if(!resp.ok || !data || data.estado !== 'ok'){
-        errBox.textContent = '⚠ ' + ((data && data.mensaje) || 'No se pudo guardar el recibo.');
-        errBox.classList.add('show');
+        formError(errBox, '⚠ ' + ((data && data.mensaje) || 'No se pudo guardar el recibo.'));
         btn.dataset.busy = '0';
         btn.disabled = false;
         document.getElementById('admin-recibo-submit-text').textContent = esEdicion ? 'Guardar cambios' : 'Publicar recibo';
         return;
       }
-      ocultarFormRecibo();
       showSuccess(esEdicion ? 'Recibo actualizado correctamente.' : 'Recibo publicado correctamente.');
       await cargarAdminRecibos();
+      if (esAdmin()) dialogs.close(receiptDialog);
     }catch(err){
       if(esAbortado(err) || !esAdmin()) return;
       console.error('No se pudo guardar el recibo.', err);
-      errBox.textContent = '⚠ No se pudo conectar con el servidor.';
-      errBox.classList.add('show');
+      formError(errBox, '⚠ No se pudo conectar con el servidor.');
       btn.dataset.busy = '0';
       btn.disabled = false;
       document.getElementById('admin-recibo-submit-text').textContent = adminRecEditId ? 'Guardar cambios' : 'Publicar recibo';
@@ -1350,14 +1395,15 @@
       const box = document.createElement('div'); box.className = 'tbl-actions';
       const bR = document.createElement('button');
       bR.type = 'button'; bR.className = 'btn-sm detail'; bR.textContent = 'Responder / Actualizar';
-      bR.addEventListener('click', ()=>abrirRespuestaAtencion(sol.id_solicitud));
+      bR.dataset.dialogTrigger = 'responder-' + sol.id_solicitud;
+      bR.addEventListener('click', ()=>abrirRespuestaAtencion(sol.id_solicitud, bR));
       box.appendChild(bR);
       d.appendChild(box);
       list.appendChild(d);
     });
     window.HMAdminTable(list);
   }
-  function abrirRespuestaAtencion(id){
+  function abrirRespuestaAtencion(id, opener){
     const sol = adminSolicitudes.find(x=>String(x.id_solicitud) === String(id));
     if(!sol) return;
     adminAteSel = sol;
@@ -1368,12 +1414,10 @@
     respBody.appendChild(nodo('p', null, sol.descripcion));
     document.getElementById('adm-ate-estado-new').value = sol.estado;
     document.getElementById('adm-ate-resp-text').value = sol.respuesta || '';
-    document.getElementById('admin-ate-resp-card').hidden = false;
+    document.getElementById('admin-ate-resp-error').classList.remove('show');
+    document.getElementById('adm-ate-resp-count').textContent = (sol.respuesta || '').length + ' / 2000';
+    dialogs.open(responseDialog, opener);
   }
-  document.getElementById('admin-ate-resp-cancel').addEventListener('click', ()=>{
-    document.getElementById('admin-ate-resp-card').hidden = true;
-    adminAteSel = null;
-  });
   document.getElementById('admin-ate-resp-form').addEventListener('submit', async ev=>{
     ev.preventDefault();
     const _releaseForm=window.HMShared.ui.beginForm(ev.currentTarget);
@@ -1382,6 +1426,8 @@
 
     ev.preventDefault();
     if(!adminAteSel) return;
+    const errorBox = document.getElementById('admin-ate-resp-error');
+    errorBox.classList.remove('show');
     try{
       const resp = await apiFetch('/api/admin/atencion/' + encodeURIComponent(String(adminAteSel.id_solicitud)), {
         method: 'PATCH', headers: {'Content-Type':'application/json'},
@@ -1389,16 +1435,15 @@
       });
       const data = await resp.json().catch(err=>{ if(esAbortado(err)) throw err; return null; });
       if(!resp.ok || !data || data.estado !== 'ok'){
-        showToast('⚠ ' + ((data && data.mensaje) || 'No se pudo guardar la respuesta.'));
+        formError(errorBox, data?.mensaje || 'No se pudo guardar la respuesta.');
         return;
       }
       showSuccess('Solicitud actualizada a ' + data.solicitud.estado + '.');
-      document.getElementById('admin-ate-resp-card').hidden = true;
-      adminAteSel = null;
       cacheResumenAte = { ts: 0, todas: null };
       await cargarAdminAtencion();
+      if (esAdmin()) dialogs.close(responseDialog);
     }catch(err){
-      if(esAbortado(err) || !esAdmin()) return; showToast('No se pudo guardar la respuesta.'); }
+      if(esAbortado(err) || !esAdmin()) return; formError(errorBox, 'No se pudo guardar la respuesta.'); }
 
     }finally{_releaseForm();}
   });
@@ -1429,14 +1474,13 @@
           if(!disposed && version===loadVersion)status.textContent='';
         }
       },
-      closeDialogs,
       dispose() {
         incidentTimeline.destroy();incidentChanges.clear();pendingIncidentChanges.clear();
         disposed = true;operationManager.dispose();
         cargarAdminPagosDebounced.cancel(); cargarAdminAtencionDebounced.cancel();
         if (ctrlPagosAdmin) ctrlPagosAdmin.abort();
         if (ctrlAtencionAdmin) ctrlAtencionAdmin.abort();
-        closeDialogs();
+        main.querySelectorAll('dialog[open]').forEach(dialog => dialogs.close(dialog, {restore:false}));
         adminCortes = []; adminUsuarios = []; adminRecibos = []; adminIncidencias = [];
         adminPagos = []; adminSolicitudes = [];
         adminUsuDetalle = null; adminAteSel = null; adminEditId = null; adminRecEditId = null;

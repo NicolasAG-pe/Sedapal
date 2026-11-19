@@ -213,7 +213,7 @@ test(
       await a
         .locator("#incident-history-comment")
         .fill("Inspección programada. <texto público>");
-      await a.locator("#incident-history-change button").click();
+      await a.locator('button[form="incident-history-change"]').click();
       await a
         .locator("#incident-history-change-result")
         .getByText(/No se confirmó/)
@@ -226,7 +226,7 @@ test(
       ok(
         "Cambio confirmado en PostgreSQL aparece en la pantalla cliente por Socket.IO, sin recarga",
       );
-      await a.locator("#incident-history-change button").click();
+      await a.locator('button[form="incident-history-change"]').click();
       await a
         .locator("#incident-history-change-result")
         .getByText(/Cambio registrado/)
@@ -243,7 +243,7 @@ test(
       await a
         .locator("#incident-history-comment")
         .fill("Trabajo finalizado en el laboratorio.");
-      await a.locator("#incident-history-change button").click();
+      await a.locator('button[form="incident-history-change"]').click();
       await p
         .locator("#incident-history-current")
         .getByText("Estado actual: Resuelta", { exact: true })
@@ -274,8 +274,21 @@ test(
             .evaluate((e) => (e.scrollTop = 0));
           const contrast = await pg
             .locator("#incident-history-current")
-            .evaluate((e) => getComputedStyle(e).color);
-          assert.equal(contrast, "rgb(20, 41, 59)");
+            .evaluate(e => {
+              const parse = color => color.match(/[\d.]+/g).map(Number);
+              const light = ([r,g,b]) => [r,g,b].map(channel => {
+                const n = channel / 255;
+                return n <= .04045 ? n / 12.92 : ((n + .055) / 1.055) ** 2.4;
+              }).reduce((sum, value, i) => sum + value * [.2126, .7152, .0722][i], 0);
+              let background = [255, 255, 255];
+              for (let node = e; node; node = node.parentElement) {
+                const candidate = parse(getComputedStyle(node).backgroundColor);
+                if ((candidate[3] ?? 1) === 1) { background = candidate; break; }
+              }
+              const colors = [light(parse(getComputedStyle(e).color)), light(background)];
+              return (Math.max(...colors) + .05) / (Math.min(...colors) + .05);
+            });
+          assert.ok(contrast >= 4.5, name + " contraste del estado actual");
           const box = await pg
             .locator(".incident-history-dialog")
             .boundingBox();
@@ -353,6 +366,7 @@ test(
       await p.locator("#inc-submit").click();
       const reg=await registration;assert.equal(reg.status(),201);const newIncident=(await reg.json()).incidencia;
       await p.locator("#inc-ok").waitFor();await p.locator("#inc-view").click();
+      await a.locator('#incident-history-change[aria-busy="true"]').waitFor({state:'hidden'});
       await a.keyboard.press("Escape");
       await a.locator('[data-history-id="'+newIncident.id_incidencia+'"]').waitFor();
       await p.locator('[data-history-id="'+newIncident.id_incidencia+'"]').click();
