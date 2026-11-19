@@ -37,6 +37,8 @@
       active = false,
       state = null,
       fcmToken = "",
+      pendingToken = "",
+      registering = false,
       available = false,
       ready = false,
       busy = false,
@@ -67,7 +69,7 @@
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-        signal: AbortSignal.timeout(7000),
+        signal: AbortSignal.timeout(15000),
       };
       const r = authenticated
         ? await session.fetch(path, opts)
@@ -104,8 +106,14 @@
         ? "Se conservan los tipos de aviso que elegiste antes. Pulsa Activar notificaciones para recibirlos todos."
         : "Activadas en este dispositivo. Los avisos no muestran datos privados.";
     }
-    async function bind(token, e) {
+    async function bind(token, e, force = false) {
       if (!current(e) || !state?.enabled || !ready || !available) return;
+      if (!force && fcmToken === token) {
+        pendingToken = "";
+        status(activeStatus());
+        render();
+        return;
+      }
       await request("/api/push/devices", {
         installation_id: state.installation_id,
         proof: state.proof,
@@ -115,6 +123,7 @@
       });
       if (!current(e)) return;
       fcmToken = token;
+      pendingToken = "";
       status(activeStatus());
       render();
     }
@@ -166,13 +175,16 @@
       registered = true;
       await plugin.addListener("registration", (event) => {
         const e = epoch;
-        if (typeof event.value !== "string") return;
+        registering = false;
+        if (typeof event.value !== "string" || !event.value) return;
+        if (current(e)) pendingToken = event.value;
         serialize(() => bind(event.value, e)).catch(() => {
           if (current(e))
             status("No se pudo autorizar el dispositivo. Revisa tu conexión.");
         });
       });
       await plugin.addListener("registrationError", () => {
+        registering = false;
         if (active)
           status(
             "No se pudo registrar el dispositivo. Verifica la configuración y tu conexión.",
@@ -216,10 +228,12 @@
       if (!current(e)) return;
       ready = config.configured === true;
       const response = await fetch(
-          global.HMShared.apiUrl("/api/push/capabilities"),
-          { signal: AbortSignal.timeout(7000), cache: "no-store" },
-        ),
-        caps = await response.json();
+        global.HMShared.apiUrl("/api/push/capabilities"),
+        { signal: AbortSignal.timeout(15000), cache: "no-store" },
+      );
+      if (response.ok === false)
+        throw Error("No se pudo consultar push.");
+      const caps = await response.json();
       if (!current(e)) return;
       available = caps.disponible === true;
       const permission = await plugin.checkPermissions();
@@ -235,9 +249,17 @@
           ? "Firebase pendiente de configuración autorizada. No se enviarán notificaciones remotas."
           : !available
             ? "Entrega push desactivada en el servidor."
-            : state.enabled
-              ? "Comprobando dispositivo…"
-              : "Puedes activar avisos después de leer la explicación.",
+            : !state.enabled
+              ? "Puedes activar avisos después de leer la explicación."
+              : permission.receive === "granted"
+                ? fcmToken
+                  ? activeStatus()
+                  : "Comprobando dispositivo…"
+                : ["denied", "prompt-with-rationale"].includes(
+                      permission.receive,
+                    )
+                  ? "Permiso denegado. Puedes cambiarlo en los ajustes Android; tu centro de notificaciones continúa disponible."
+                  : "Permiso Android pendiente. Pulsa Activar notificaciones para completar la activación.",
       );
       render();
       if (
@@ -253,8 +275,25 @@
           importance: 3,
           visibility: 0,
         });
-        if (!fcmToken) await plugin.register();
-        else status(activeStatus());
+        if (!current(e)) return;
+        if (fcmToken) {
+          status(activeStatus());
+        } else if (pendingToken) {
+          try {
+            await bind(pendingToken, e);
+          } catch (_) {
+            if (current(e))
+              status("No se pudo autorizar el dispositivo. Revisa tu conexión.");
+          }
+        } else if (!registering) {
+          registering = true;
+          try {
+            await plugin.register();
+          } catch (error) {
+            registering = false;
+            throw error;
+          }
+        }
       }
       if (
         state.enabled &&
@@ -284,6 +323,8 @@
     }
     async function disable(show = true) {
       fcmToken = "";
+      pendingToken = "";
+      registering = false;
       if (!native || !state) return;
       state = await store.flags({
         enabled: false,
@@ -340,7 +381,18 @@
             importance: 3,
             visibility: 0,
           });
-          await plugin.register();
+          if (!current(e)) return;
+          if (fcmToken || pendingToken) {
+            await bind(fcmToken || pendingToken, e, true);
+          } else {
+            registering = true;
+            try {
+              await plugin.register();
+            } catch (error) {
+              registering = false;
+              throw error;
+            }
+          }
         });
       }),
     );
@@ -412,6 +464,8 @@
         authGeneration = session.generation();
         const e = ++epoch;
         fcmToken = "";
+        pendingToken = "";
+        registering = false;
         seen.clear();
         return serialize(() => initialize(e)).catch(() => {
           if (current(e))
@@ -424,6 +478,8 @@
         active = false;
         epoch++;
         fcmToken = "";
+        pendingToken = "";
+        registering = false;
         pendingEvent = null;
         seen.clear();
         if (!native || !plugin) return Promise.resolve();
