@@ -206,3 +206,21 @@ test('HidroBot y gráficos tratan como vacío un suministro con solo recibos anu
   assert.equal(result.averageAmount,0);
   assert.match(result.bot,/no hay información de consumo disponible/);
 });
+
+test('el chat contiene su overscroll y congela Inicio mientras HidroBot está expandido',()=>{
+  const css=fs.readFileSync('Frontend/assets/css/client.css','utf8');
+  assert.match(css,/\.hb-body\{[^}]*overscroll-behavior-y:contain/);
+  assert.match(css,/\.hb-panel\{[^}]*overscroll-behavior:contain/);
+  assert.match(css,/body\.hidrobot-open\{overflow:hidden\}/);
+  const open=extractFunction('openHidroBot');
+  const minimize=extractFunction('minimizeBot');
+  const lock=extractFunction('lockPageForHidroBot');
+  const unlock=extractFunction('unlockPageForHidroBot');
+  assert.ok(open.indexOf('lockPageForHidroBot()') > open.indexOf('hidroBotState.open = true'));
+  assert.match(minimize,/unlockPageForHidroBot\(\)/);
+  // Guarda la posición antes de tocar estilos y la reafirma sin animación.
+  assert.match(lock,/hbPageScrollY = window\.scrollY/);
+  assert.match(unlock,/behavior:'instant'/);
+  // El bloqueo no intercepta gestos: el chat, chips, campo y botón siguen operativos.
+  assert.doesNotMatch(lock,/touchmove|preventDefault/);
+});

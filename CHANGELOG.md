@@ -1,5 +1,11 @@
 # Historial de versiones
 
+## Corrección del desplazamiento de HidroBot en Android
+
+- Inicio conserva la posición exacta mientras HidroBot está expandido: el historial contiene su propio overscroll y el documento se congela solo durante el chat, sin interceptar gestos táctiles.
+- Al minimizar o cerrar, la posición se restaura de inmediato y el dashboard vuelve a desplazarse. Se conservan las respuestas rápidas, el campo de texto, el teclado y el botón de enviar.
+- Validado en Chromium con emulación móvil: historial largo y corto, ambos extremos, foco del campo, envío, minimizar y reabrir. La WebView Android y el teclado nativo quedan pendientes de comprobación física.
+
 ## HidroBot 3.0 en Hidro-Mejora
 
 - El backend oficial incorpora `POST /api/chat` con el contrato v2 y la sesión de cliente vigente. Render conserva su entrada API habitual.
