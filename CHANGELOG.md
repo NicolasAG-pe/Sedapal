@@ -1,5 +1,9 @@
 # Historial de versiones
 
+## HidroBot
+
+- El backend solicita orientación directa a GroqCloud y aplica el catálogo oficial si la respuesta incluye referencias internas.
+
 ## Océano Claro · Preparación de 1.2.3
 
 - La rama de integración visual queda fuera de los despliegues Git automáticos de ambos proyectos Vercel.

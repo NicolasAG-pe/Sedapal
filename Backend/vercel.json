@@ -9,6 +9,7 @@
       "feature/verificacion-correo": false,
       "integration/avance-18": false,
       "main": false,
+      "fix/hidrobot-groq-referencias-124": false,
       "feature/oceano-claro-implementacion": false,
       "fix/lab-consumo-recibos-anulados": false,
       "fix/hidrobot-scroll-android": false,

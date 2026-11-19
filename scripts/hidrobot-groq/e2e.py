@@ -203,9 +203,9 @@ def tls_fixture(directory, hostname):
             public = json.loads(json.loads(data)["messages"][1]["content"])
             calls.append(self.path == "/openai/v1/chat/completions" and self.headers["Host"] == UPSTREAM[0]
                          and self.headers["Authorization"] == "Bearer " + FIXTURE_KEY
-                         and set(public) == {"topic", "continuation", "style", "extracts"}
-                         and public["topic"] == "saving" and b"jwt-sintetico" not in data)
-            content = {"text": "Para cuidar el agua en casa, revisa los caños y acorta las duchas.", "evidence": ["base"]}
+                         and set(public) == {"consulta", "hechos"}
+                         and "Para cuidar el agua" in public["hechos"][0]["text"] and b"jwt-sintetico" not in data)
+            content = {"text": "Para cuidar el agua en casa, revisa los caños y acorta las duchas.", "evidence": ["A"]}
             body = json.dumps({"choices": [{"finish_reason": "stop", "message": {
                 "role": "assistant", "content": json.dumps(content)}}]}).encode()
             self.send_response(200)

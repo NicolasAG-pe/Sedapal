@@ -23,7 +23,7 @@ test('Render y Gateway usan login oficial y solo el canario llega al transporte 
         calls.push(options);
         if (quota) return Response.json({}, { status: 429, headers: { 'Retry-After': '2' } });
         return Response.json({ choices: [{ finish_reason: 'stop', message: {
-            role: 'assistant', content: JSON.stringify({ text, evidence: ['base'] })
+            role: 'assistant', content: JSON.stringify({ text, evidence: ['A'] })
         } }] });
     };
     let ctx;
@@ -82,9 +82,10 @@ test('Render y Gateway usan login oficial y solo el canario llega al transporte 
     for (const outgoing of calls) {
         assert.deepEqual(outgoing.headers, { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key });
         const { messages } = JSON.parse(outgoing.body);
-        const { extracts, ...publicContext } = JSON.parse(messages[1].content);
-        assert.deepEqual(publicContext, { topic: 'saving', continuation: false, style: 'standard' });
-        assert.equal(extracts[0].text, knowledge.evidence('saving')[0].text.split(' En Inicio')[0]);
+        const input = JSON.parse(messages[1].content);
+        assert.deepEqual(Object.keys(input), ['consulta', 'hechos']);
+        assert.equal(input.consulta, 'Explica este tema en una o dos oraciones de 25 a 640 caracteres en total.');
+        assert.equal(input.hechos[0].text, knowledge.evidence('saving')[0].text.split(' En Inicio')[0]);
         for (const secret of [first.token, first.suministro.numero_suministro, first.usuario.correo, id, key]) {
             assert.equal(outgoing.body.includes(secret), false);
         }
