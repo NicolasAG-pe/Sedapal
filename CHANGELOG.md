@@ -1,5 +1,9 @@
 # Historial de versiones
 
+## Notificaciones generales
+
+- En Perfil, una sola preferencia permite activar o desactivar los avisos de recibos, vencimientos, incidencias y cortes en Android. Al actualizar la app, las selecciones anteriores se conservan hasta que se activen las notificaciones generales.
+
 ## HidroBot 3.0 en Hidro-Mejora
 
 - El backend oficial incorpora `POST /api/chat` con el contrato v2 y la sesión de cliente vigente. Render conserva su entrada API habitual.

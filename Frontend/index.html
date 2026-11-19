@@ -494,17 +494,14 @@
           </dl>
         </div>
         <section id="push-settings" class="support-card" aria-labelledby="push-title">
-          <h4 id="push-title">Notificaciones de Hidro-Mejora</h4>
-          <p>Recibe avisos de recibos, incidencias y cortes sin abrir la app. Son opcionales y no muestran importes ni datos personales en la pantalla bloqueada.</p>
+          <h4 id="push-title">Notificaciones generales</h4>
+          <p>Activa en conjunto los avisos de recibos, vencimientos, incidencias y cortes. Los avisos llegan aunque la app esté cerrada y no muestran importes ni datos personales en la pantalla bloqueada.</p>
           <p id="push-status" role="status" aria-live="polite">Consulta la disponibilidad en este dispositivo.</p>
           <p id="push-permission" class="muted">El permiso Android se solicitará solo al pulsar Activar.</p>
-          <fieldset class="push-categories"><legend>Tipos de aviso</legend>
-            <label><input type="checkbox" id="push-recibos" checked> Recibos nuevos</label>
-            <label><input type="checkbox" id="push-vencimientos" checked> Vencimientos próximos</label>
-            <label><input type="checkbox" id="push-incidencias" checked> Incidencias</label>
-            <label><input type="checkbox" id="push-cortes" checked> Cortes de servicio</label>
-          </fieldset>
-          <div class="push-actions"><button class="btn btn-sky" id="push-enable" type="button" disabled>Activar notificaciones</button><button class="btn btn-ghost" id="push-save" type="button" disabled>Guardar preferencias</button><button class="btn btn-ghost" id="push-disable" type="button" disabled>Desactivar</button></div>
+          <div class="push-actions">
+            <button class="btn btn-sky" id="push-enable" type="button" disabled>Activar notificaciones</button>
+            <button class="btn btn-ghost" id="push-disable" type="button" disabled>Desactivar</button>
+          </div>
           <small>La entrega depende de Android y de tu conexión. El centro de notificaciones conserva los avisos.</small>
         </section>
         <div class="support-card" aria-label="Seguridad de la cuenta">

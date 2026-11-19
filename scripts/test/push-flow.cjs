@@ -172,6 +172,12 @@ test(
           !document.body.classList.contains("tutorial-open"),
       );
       await nav("perfil");
+      const settings = p.locator("#push-settings");
+      await settings
+        .getByRole("heading", { name: "Notificaciones generales" })
+        .waitFor();
+      assert.equal(await settings.getByRole("checkbox").count(), 0);
+      assert.equal(await settings.getByRole("button").count(), 2);
       await p
         .locator("#push-status")
         .getByText(/únicamente/)
@@ -274,6 +280,10 @@ test(
             mock,
             callbacks,
             getState: () => state,
+            restorePreferences: (categories) => {
+              state = { ...state, categories };
+              return controller.start(supply);
+            },
           };
           return controller.start(supply);
         },
@@ -317,6 +327,38 @@ test(
       );
       ok(
         "Consentimiento, registro y token cifrado; sin secretos en Web Storage",
+      );
+      const generalCategories = {
+        recibos: true,
+        vencimientos: true,
+        incidencias: true,
+        cortes: true,
+      };
+      const savedCategories = async () =>
+        (
+          await ctx.db.query(
+            "SELECT recibos, vencimientos, incidencias, cortes FROM push_dispositivos WHERE activo",
+          )
+        ).rows[0];
+      assert.deepEqual(await savedCategories(), generalCategories);
+      const previousCategories = { ...generalCategories, vencimientos: false };
+      await p.evaluate(
+        (categories) => __pushLab.restorePreferences(categories),
+        previousCategories,
+      );
+      await p.locator("#push-status").getByText(/Se conservan/).waitFor();
+      assert.deepEqual(await savedCategories(), previousCategories);
+      await p.locator("#push-enable").click();
+      await p.locator("#push-status").getByText(/Activadas/).waitFor();
+      assert.deepEqual(await savedCategories(), generalCategories);
+      await p.locator("#push-disable").click();
+      await p.locator("#push-status").getByText(/desactivadas/).waitFor();
+      assert.equal(await savedCategories(), undefined);
+      await p.locator("#push-enable").click();
+      await p.locator("#push-status").getByText(/Activadas/).waitFor();
+      assert.deepEqual(await savedCategories(), generalCategories);
+      ok(
+        "General activa y desactiva el conjunto, conservando las preferencias anteriores hasta la activación explícita",
       );
       assert.equal(
         await p.evaluate(() =>
