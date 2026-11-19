@@ -114,25 +114,31 @@
   }
   // Solo se reconocen turnos completos sin un tema explícito. Los complementos
   // admitidos remiten al turno anterior y no aceptan texto libre.
-  const followupOpening = /^(?:(?:y|entonces|bueno|a ver|por favor|porfa|no (?:lo )?(?:entendi|entiendo|comprendi|comprendo))[ ,.!?¿¡]+)+/;
+  const followupOpening = /^(?:(?:y|entonces|bueno|a ver|ok|okey|por favor|porfa|no (?:lo )?(?:entendi|entiendo|comprendi|comprendo))[ ,.!?¿¡]+)+/;
   const followupCourtesy = /,? (?:por favor|porfa)$/;
   const followupPurpose = /,? para (?:hacerlo|aplicarlo|entenderlo(?: mejor)?|poder (?:hacerlo|aplicarlo|entenderlo)|que (?:lo entienda|pueda hacerlo))$/;
-  const followupReference = /,? (?:(?:(?:sobre|de|acerca de) )?(?:eso|esto|lo anterior|lo que (?:dijiste|explicaste)|ese (?:punto|tema)|esa parte)|al respecto)$/;
+  const followupReference = /,? (?:(?:(?:sobre|de|acerca de|en) )?(?:eso|esto|lo anterior|lo que (?:dijiste|explicaste)|ese (?:punto|tema)|esa parte)|al respecto)$/;
   const followupAuxiliary = /^(?:(?:me lo|me|lo) )?(?:puedes|podrias) /;
-  const followupVerb = /^(?:di|decir|cuenta|contar|explica|explicar|aclara|aclarar)(?:melo|me|lo)? /;
+  const followupVerb = /^(?:(?:di|decir|cuenta|contar|explica|explicar|aclara|aclarar|da|dar|brinda|brindar|muestra|mostrar|amplia|ampliar|detalla|detallar|profundiza|profundizar)(?:melo|me|lo)?|me (?:das|dices|cuentas|explicas|brindas|muestras)|(?:quiero|quisiera|necesito)(?: saber| ver| leer)?) /;
   const simplerWording = /^(?:(?:un poco )?mas (?:sencillo|simple|facil|claro)|(?:con|en) palabras (?:mas )?(?:sencillas|simples|claras)|con otras palabras|de otra (?:manera|forma)|de (?:manera|forma) (?:mas )?(?:sencilla|simple|facil|clara))$/;
+  const detailWording = /^(?:(?:un poco )?mas(?: (?:de )?(?:detalle|detalles|informacion|info)| al detalle)?|algo mas|paso a paso|(?:en|al) detalle|con(?: un poco)? mas (?:de )?detalle(?:s)?|(?:la |esa )?informacion|(?:el )?detalle|(?:con )?(?:un|otro) ejemplo)$/;
   function followupStyle(message){
-    const request = normalize(message).replace(/^[¿¡]+|[?!.]+$/g,'').trim()
+    const raw = normalize(message);
+    if (/<\/?[a-z][^>]*>/i.test(raw)) return undefined;
+    const request = raw.replace(/^[¿¡]+|[?!.]+$/g,'').trim()
       .replace(followupOpening,'').replace(followupCourtesy,'').replace(followupPurpose,'')
       .replace(followupReference,'').replace(followupAuxiliary,'');
     if (/^(?:resum(?:e|ir)(?:melo|me|lo)?|(?:haz|hacer|da|dar)(?:me)? un resumen)$/.test(request)) return 'summary';
     if (/^(?:(?:da|dar|pon|poner|muestra|mostrar)(?:me)? |me (?:das|pones|muestras) )?(?:un|otro) ejemplo$/.test(request) ||
-        /^(?:amplia|ampliar|desarrolla|desarrollar)(?:me|lo|melo)?$/.test(request)) return 'detail';
+        /^(?:amplia|ampliar|desarrolla|desarrollar|profundiza|profundizar|detalla|detallar)(?:me|lo|melo)?$/.test(request)) return 'detail';
 
     const modifier = request.replace(followupVerb,'');
     if (simplerWording.test(modifier) || (modifier === 'mejor' && modifier !== request)) return 'simple';
     if (/^(?:un resumen|en resumen|en pocas palabras|en breve|mas (?:corto|breve))$/.test(modifier)) return 'summary';
-    if (/^(?:mas(?: detalles| informacion)?|algo mas|paso a paso|en detalle|con mas detalle(?:s)?|(?:con )?(?:un|otro) ejemplo)$/.test(modifier)) return 'detail';
+    if (detailWording.test(modifier)) {
+      if (/^(?:(?:la |esa )?informacion|(?:el )?detalle)$/.test(modifier) && modifier === request) return undefined;
+      return 'detail';
+    }
   }
   function evidence(id){
     const article=get(id);
