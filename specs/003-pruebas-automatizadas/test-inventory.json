@@ -2603,7 +2603,7 @@
     },
     {
       "path": "scripts/test/hidrobot.test.cjs",
-      "sha256": "a65fc20a19f4efcccc8f8b647568c8c9ca4796fc22bf8a5d97a6c7903c27e587",
+      "sha256": "1d662c06f5ed37c604c336e7318709a2111cea7fd2362ab4bc935db68213ac56",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -3044,7 +3044,7 @@
     },
     {
       "path": "scripts/test/push-flow.cjs",
-      "sha256": "94a0a9fbbff77767572abaadf61c1652fb83c4d503200a92d5a8a583e8e147bf",
+      "sha256": "23567764aa4062bc93bf32df20c84fd32316c908d058ecd8382c577f0743bf0e",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": true,

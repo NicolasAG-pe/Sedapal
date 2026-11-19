@@ -1,7 +1,12 @@
 /* Push es un aviso: autorización y datos se consultan siempre en PostgreSQL/API. */
 (function (global) {
   "use strict";
-  const categories = ["recibos", "vencimientos", "incidencias", "cortes"],
+  const generalCategories = {
+      recibos: true,
+      vencimientos: true,
+      incidencias: true,
+      cortes: true,
+    },
     valid = (id) =>
       typeof id === "string" &&
       /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id);
@@ -15,8 +20,7 @@
     plugin,
     configured,
   } = {}) {
-    const root = document.getElementById("push-settings"),
-      el = (id) => document.getElementById("push-" + id);
+    const el = (id) => document.getElementById("push-" + id);
     const native = platform?.getPlatform?.() === "android";
     plugin = plugin || platform?.Plugins?.PushNotifications;
     store = store || {
@@ -54,12 +58,9 @@
       sequence = p.catch(() => {});
       return p;
     };
-    const prefs = () =>
-      Object.fromEntries(categories.map((k) => [k, el(k).checked]));
     function render() {
       el("enable").disabled = busy || !native || !available || !ready;
       el("disable").disabled = busy || !state?.enabled;
-      el("save").disabled = busy || !state?.enabled || !fcmToken;
     }
     async function request(path, body, authenticated = true) {
       const opts = {
@@ -106,8 +107,13 @@
       });
       if (!current(e)) return;
       fcmToken = token;
+      const hasCustomPreferences = Object.keys(generalCategories).some(
+        (category) => state.categories?.[category] === false,
+      );
       status(
-        "Activadas en este dispositivo. Los avisos no muestran datos privados.",
+        hasCustomPreferences
+          ? "Se conservan los tipos de aviso que elegiste antes. Pulsa Activar notificaciones para recibirlos todos."
+          : "Activadas en este dispositivo. Los avisos no muestran datos privados.",
       );
       render();
     }
@@ -195,11 +201,9 @@
           enabled: false,
           pending: state.pending,
           owner,
-          categories: Object.fromEntries(categories.map((k) => [k, true])),
+          categories: generalCategories,
         });
       }
-      for (const k of categories)
-        el(k).checked = state.categories?.[k] !== false;
       if (!(await flush())) {
         status(
           "Desactivación pendiente de sincronizar. Conéctate antes de volver a activar.",
@@ -324,7 +328,7 @@
           state = await store.flags({
             enabled: true,
             pending: false,
-            categories: prefs(),
+            categories: generalCategories,
             owner,
           });
           await plugin.createChannel({
@@ -340,21 +344,6 @@
     );
     el("disable").addEventListener("click", () =>
       run(() => serialize(() => disable())),
-    );
-    el("save").addEventListener("click", () =>
-      run(async () => {
-        const e = epoch;
-        await serialize(async () => {
-          if (!current(e) || !fcmToken) return;
-          state = await store.flags({
-            enabled: true,
-            pending: false,
-            categories: prefs(),
-            owner,
-          });
-          await bind(fcmToken, e);
-        });
-      }),
     );
     window.addEventListener("online", () => {
       if (active && session.isUser())
