@@ -3292,7 +3292,7 @@
   function handleBotMessage(message){
     const online=navigator.onLine;
     const style=window.HMSedapalKnowledge.followupStyle(message);
-    if(style && hbKnowledgeChat.hasTopic()){
+    if(style){
       return hbKnowledgeChat.reply({followup:true,style,online});
     }
     const topic=window.HMSedapalKnowledge.match(message);

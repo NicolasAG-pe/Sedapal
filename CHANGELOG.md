@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## Candidata local integrada para la feria
+
+- HidroBot conserva el último tema público para reformular, resumir o ampliar una respuesta desde la interfaz modernizada. Si falta el contexto o ha caducado, pide precisar el tema.
+- La referencia Android 1.2.2 (código 8) corresponde a la candidata anterior. La integración queda preparada para validación local antes de asignar una versión de distribución.
+
 ## Interfaz para la feria
 
 - Inicio reúne el suministro, el estado de la cuenta, el saldo y los vencimientos. El acceso y el historial mejoran la lectura y las áreas táctiles. HidroBot adapta el panel al espacio disponible al escribir.

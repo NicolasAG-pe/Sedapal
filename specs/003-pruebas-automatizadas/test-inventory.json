@@ -221,7 +221,7 @@
     },
     {
       "path": "Backend/test/conversation.test.cjs",
-      "sha256": "fcb217145b6cb20ee8c17db649a82ee877c5156e73553e7f5fd9bf11104729a5",
+      "sha256": "28d074a015cd6ca95ff1384161e90045e31239570e3c4753458f0626b718ce79",
       "type": "contrato",
       "group": "contract",
       "nodeTest": true,
@@ -2603,7 +2603,7 @@
     },
     {
       "path": "scripts/test/hidrobot.test.cjs",
-      "sha256": "1d662c06f5ed37c604c336e7318709a2111cea7fd2362ab4bc935db68213ac56",
+      "sha256": "bd6547dcf0a6b9a6bb278659b88bd8865d49a09cd19bf08ed4e84475f1a6a476",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2615,7 +2615,9 @@
         "node:assert/strict",
         "node:fs",
         "node:vm",
-        "../../Frontend/assets/js/hidrobot-conversation.js"
+        "../../Frontend/assets/js/hidrobot-conversation.js",
+        "../../Frontend/assets/js/hidrobot-chat-client.js",
+        "../../Frontend/assets/js/sedapal-knowledge.js"
       ],
       "environmentNames": [],
       "legacyNpm": [

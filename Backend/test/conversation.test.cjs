@@ -239,7 +239,9 @@ test('v2 genera texto y contexto público a través de Gateway sin activar GroqC
     assert.equal(result.text,'En casa, cierra el caño y acorta las duchas para cuidar el agua.');
     assert.equal(result.source,knowledge.get('saving').source);
     assert.equal((await (await f.post(publicTurn('more',id),'fixture-B')).json()).mode,'clarification');
-    assert.equal((await chat.reply({followup:true,style:'simple'})).text,'Revisa los caños y acorta las duchas para ahorrar agua.');
+    const style = knowledge.followupStyle('Dímelo más sencillo para hacerlo.');
+    assert.equal(style,'simple');
+    assert.equal((await chat.reply({followup:true,style})).text,'Revisa los caños y acorta las duchas para ahorrar agua.');
     assert.deepEqual(seen.map(({style,continuation})=>[style,continuation]), [['standard',false],['simple',true]]);
     assert.deepEqual(seen.map(Object.keys),Array(2).fill(['topic','continuation','style','extracts']));
     chat.reset();
