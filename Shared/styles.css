@@ -1,13 +1,16 @@
 /* Identidad Hidro-Mejora: controles comunes, sin dependencias ni fuentes remotas. */
 :root {
-  --navy:#0F4C81; --navy-dark:#103B61; --navy-soft:#1E6BA8;
-  --primary:#0F4C81; --secondary:#1E6BA8; --sky:#4DA8DA; --sky-dark:#1E6BA8;
-  --sky-soft:#EAF4FB; --sky-mist:#F5FAFE; --bg:#EAF4FB;
-  --white:#FFFFFF; --surface:#FFFFFF; --text:#243746; --muted:#4C6275;
-  --green:#2E8B57; --green-ink:#21663F; --green-bg:#EAF6EF;
-  --red:#C94C4C; --red-ink:#983535; --red-bg:#FFF1F1;
-  --orange:#D9A441; --orange-ink:#76531B; --orange-bg:#FFF5DF; --border:#D9E2EC;
-  --font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+  --navy:#0A2540; --navy-dark:#071C31; --navy-soft:#114770;
+  --primary:#0A2540; --secondary:#086375; --sky:#1496AC; --sky-dark:#086375;
+  --sky-soft:#E5F5F8; --sky-mist:#F7FAFD; --bg:#EEF3F8;
+  --white:#FFFFFF; --surface:#FFFFFF; --text:#14293B; --muted:#556D80;
+  --green:#1E9460; --green-ink:#146340; --green-bg:#E5F6EE;
+  --red:#CC3F47; --red-ink:#9E2F36; --red-bg:#FCECED;
+  --orange:#D38B20; --orange-ink:#84520B; --orange-bg:#FEF4E2; --border:#D7E3EE;
+  --brand-header:linear-gradient(150deg,#0A2540,#0E3558 72%,#114770);
+  --brand-action:linear-gradient(110deg,#0E3558,#08778A);
+  --display:'Quicksand','Cantarell',system-ui,sans-serif;
+  --font-family:'Cantarell','Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
   --text-xs:.78rem; --text-sm:.875rem; --text-base:1rem; --text-lg:1.25rem;
   --space-1:.25rem; --space-2:.5rem; --space-3:.75rem; --space-4:1rem;
   --space-5:1.25rem; --space-6:1.5rem; --space-8:2rem;
@@ -17,7 +20,8 @@
   --ease-standard:cubic-bezier(.4,0,.2,1); --ease-out:cubic-bezier(.22,1,.36,1);
   --ease-in:cubic-bezier(.55,0,1,.45); --duration-fast:140ms;
   --duration-normal:220ms; --duration-slow:300ms; --transition:160ms ease;
-  --water-foam:#D7ECFA; --water-ring:#4DA8DA25;
+  --canvas:#EEF3F8; --aqua:#0B8298; --field-edge:#74899A;
+  --water-foam:#E7EFF6; --water-ring:#4DA8DA25;
   --shadow-modal:0 24px 75px #0F4C8133;
   --glass:#ffffff; --glass-border:var(--border);
   --touch-target:44px; --touch-primary:48px;
@@ -27,7 +31,7 @@
   --breakpoint-phone:640px; --breakpoint-app:900px; --breakpoint-desktop:1100px;
 }
 * {box-sizing:border-box}
-body {font-family:var(--font-family);color:var(--text);background:var(--bg);line-height:1.55}
+body {font-family:var(--font-family);color:var(--text);background:var(--canvas);line-height:1.55}
 [hidden] {display:none!important}
 button,input,select,textarea {font-family:inherit}
 button,input,select,textarea,a {touch-action:manipulation}
@@ -38,26 +42,27 @@ button,input,select,textarea,a {touch-action:manipulation}
 .btn,.btn-sm,.icon-btn {min-height:44px;border-radius:11px;font-weight:650;line-height:1.3;transition:background var(--transition),border-color var(--transition),box-shadow var(--transition)}
 .btn {padding:.75rem 1rem}
 .btn-sm {padding:.6rem .8rem;font-size:var(--text-sm)}
-.btn-primary {background:linear-gradient(120deg,var(--primary),var(--secondary));color:var(--white);border-color:var(--primary);box-shadow:0 4px 12px #0f4c8133}
+.btn-primary {background:var(--brand-action);color:var(--white);border-color:var(--primary);box-shadow:var(--shadow-xs)}
 .btn-primary:hover,.btn-primary:focus-visible {background:var(--navy-dark);transform:none;box-shadow:var(--shadow-sm)}
 .btn-sky {background:var(--secondary);color:white;border-color:var(--secondary)}
 .btn-sky:hover {background:var(--sky-dark)}
 .btn-ghost {background:#eef3f7;color:var(--navy);border-color:var(--border)}
 .btn-danger,.dangerb {color:var(--red-ink);background:var(--red-bg);border-color:#edc9cc}
-button:disabled {opacity:.65;cursor:wait;transform:none!important}
+button:disabled {opacity:.65;cursor:not-allowed;transform:none!important}
 .dialog-actions .btn-primary {width:auto}
 .icon-btn {min-width:44px;display:inline-grid;place-items:center;flex-shrink:0}
 .field label {font-size:var(--text-sm);font-weight:650;line-height:1.4;margin-bottom:var(--space-2)}
 .field input,.field select,.field textarea,.search-input,.year-select {
-  min-height:44px;border:1px solid var(--border);background:var(--surface);color:var(--text);
+  min-height:var(--touch-target);border:1px solid var(--field-edge);background:var(--surface);color:var(--text);
   border-radius:var(--radius-sm);font-size:1rem;line-height:1.5;padding:.65rem .8rem;
 }
 .field input:focus,.field select:focus,.field textarea:focus,.search-input:focus,.year-select:focus {border-color:var(--primary);outline:2px solid var(--primary);outline-offset:2px;box-shadow:none}
 input:disabled,input[readonly] {background:var(--bg)}
 textarea {resize:vertical;min-height:100px}
 .hint,.page-desc {color:var(--muted);line-height:1.6}
+h1,h2,h3,h4,.brand strong{font-family:var(--display)}
 .page-title {color:var(--navy);letter-spacing:-.025em;font-weight:700}
-.badge {display:inline-flex;align-items:center;min-height:26px;padding:4px 9px;border-radius:6px;font-size:.73rem;font-weight:700;line-height:1.3;letter-spacing:.015em}
+.badge {display:inline-flex;align-items:center;min-height:26px;padding:4px 9px;border-radius:999px;font-size:.73rem;font-weight:700;line-height:1.3;letter-spacing:.015em}
 .badge.Pagado {color:var(--green-ink);background:var(--green-bg)}
 .badge.Emitido,.badge.info {color:var(--primary);background:#e8f2fa}
 .badge.Pendiente {color:var(--orange-ink);background:var(--orange-bg)}

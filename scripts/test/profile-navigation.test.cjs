@@ -61,7 +61,6 @@ async function fixture(t, hash = 'inicio') {
   await page.locator('#password').fill('Fixture123');
   await page.locator('#btn-login').click();
   await page.waitForFunction(() => document.getElementById('view-dashboard').classList.contains('active') && document.getElementById('stat-debt').textContent === 'S/ 0.00');
-  await page.waitForTimeout(700); // termina el bloqueo de navegación de 600 ms
   const count = () => requests.filter(r => r.name === '/api/me/perfil').length;
   const populated = async () => {
     await page.waitForFunction(d => document.getElementById('sec-perfil').classList.contains('active') && document.getElementById('pf-correo').textContent === d.correo && document.getElementById('pf-suministro').textContent === d.numero_suministro && document.getElementById('pf-fecha').textContent === window.HMShared.ui.date(d.fecha_registro), profile, { timeout: 5000 });
@@ -110,4 +109,46 @@ test('Logout cancela Perfil pendiente y el hash no restaura datos ni sesión', a
   await f.page.waitForTimeout(200);
   assert.equal(f.count(), n, 'No peticiones de Perfil sin sesión');
   assert.equal(await f.page.evaluate(() => ['pf-correo', 'pf-suministro', 'pf-fecha'].every(id => document.getElementById(id).textContent === '—') && !document.getElementById('view-dashboard').classList.contains('active') && sessionStorage.getItem('hm_token') === null), true);
+});
+
+test('HidroBot en Perfil conserva la navegación y el campo de escritura con teclado móvil', async t => {
+  const { page } = await fixture(t, 'perfil');
+  const fab = page.locator('#hb-fab');
+  const accountTab = page.locator('.mobile-tabs [data-sec="perfil"]');
+  for (const width of [360, 390, 412]) {
+    await page.setViewportSize({ width, height: 844 });
+    const tabBox = await accountTab.boundingBox();
+    const fabBox = await fab.boundingBox();
+    const navigation = await page.locator('.mobile-tabs').boundingBox();
+    assert.ok(fabBox.y + fabBox.height <= navigation.y, 'HidroBot deja libre toda la barra de navegación');
+    assert.ok(tabBox.width >= 44 && fabBox.width >= 44);
+  }
+
+  await fab.click();
+  const input = page.locator('#hb-input');
+  await input.fill('Mi consulta');
+  // Android puede reducir únicamente visualViewport mientras innerHeight se conserva.
+  await page.evaluate(() => {
+    Object.defineProperty(visualViewport, 'height', { value: 400, configurable: true });
+    Object.defineProperty(visualViewport, 'offsetTop', { value: 16, configurable: true });
+    visualViewport.dispatchEvent(new Event('resize'));
+  });
+  await page.waitForFunction(() => document.body.dataset.keyboardOpen === '1');
+  const panelBox = await page.locator('#hb-panel').boundingBox();
+  const sendBox = await page.locator('#hb-send').boundingBox();
+  assert.ok(panelBox.y >= 16 && panelBox.y + panelBox.height <= 416);
+  assert.ok(sendBox.y + sendBox.height <= 416 && sendBox.height >= 44);
+  assert.ok((await page.locator('#hb-body').boundingBox()).height >= 44);
+  assert.equal(await input.inputValue(), 'Mi consulta');
+
+  await page.evaluate(() => {
+    delete visualViewport.height;
+    delete visualViewport.offsetTop;
+    visualViewport.dispatchEvent(new Event('resize'));
+  });
+  await page.locator('#hb-close').click();
+  await fab.click();
+  assert.equal(await input.inputValue(), 'Mi consulta');
+  await page.locator('#hb-close').click();
+  assert.match(await accountTab.getAttribute('class'), /\bactive\b/);
 });

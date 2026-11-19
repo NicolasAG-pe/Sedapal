@@ -1,5 +1,32 @@
 # Historial de versiones
 
+## Océano Claro · Preparación de 1.2.3
+
+- La rama de integración visual queda fuera de los despliegues Git automáticos de ambos proyectos Vercel.
+- Se ajustó la prueba de revocación 2FA para interceptar la configuración de consulta que usa PostgreSQL y fallar con un plazo explícito si no alcanza la lectura esperada.
+
+## Océano Claro · Cuadros de acción en Admin
+
+- Los formularios administrativos usan un panel lateral en escritorio y un cuadro de pantalla completa en tablet y móvil. Los historiales y la fotografía usan un modal ancho en escritorio.
+- El cierre conserva la posición y el foco de la tabla, protege los cambios sin guardar y espera a que terminen las operaciones en curso.
+
+## Océano Claro · Android 1.2.3 (9) y panel administrativo
+
+- Inicio reúne saldo, vencimiento, suministro y consumo de los últimos seis recibos vigentes. El detalle y el resumen comparan el consumo con su promedio real y distinguen los datos ausentes.
+- Se actualizaron la navegación, el área de escritura de HidroBot, las pantallas de cuenta y servicio, las tablas de Admin y los textos de las operaciones demostrativas.
+- El cliente genera recibos y constancias A4 con la nueva identidad. Las constancias distinguen el código, el identificador interno y la referencia declarada.
+- Se corrigió la pérdida de la última navegación durante una transición y se incorporaron pruebas de consumos, navegación y revisión manual. La guía de revisión local incluye la aplicación, el panel y las evidencias.
+
+## Candidata local integrada para la feria
+
+- HidroBot conserva el último tema público para reformular, resumir o ampliar una respuesta desde la interfaz modernizada. Si falta el contexto o ha caducado, pide precisar el tema.
+- La referencia Android 1.2.2 (código 8) corresponde a la candidata anterior. La integración queda preparada para validación local antes de asignar una versión de distribución.
+
+## Interfaz para la feria
+
+- Inicio reúne el suministro, el estado de la cuenta, el saldo y los vencimientos. El acceso y el historial mejoran la lectura y las áreas táctiles. HidroBot adapta el panel al espacio disponible al escribir.
+- Admin distingue la navegación del área de trabajo, alinea los indicadores y amplía los controles de filtros y tablas.
+
 ## Notificaciones generales
 
 - En Perfil, una sola preferencia permite activar o desactivar los avisos de recibos, vencimientos, incidencias y cortes en Android. Al actualizar la app, las selecciones anteriores se conservan hasta que se activen las notificaciones generales.

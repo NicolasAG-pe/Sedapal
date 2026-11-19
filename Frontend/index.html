@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es-PE">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<meta name="theme-color" content="#0F4C81" />
+<meta name="theme-color" content="#0A2540" />
 <meta name="description" content="Hidro-Mejora: recibos, consumo y atención de tu suministro de agua. Proyecto universitario." />
 <title>Hidro-Mejora · Mi suministro</title>
 <link rel="icon" type="image/svg+xml" href="shared/assets/hm-symbol.svg">
@@ -21,14 +21,13 @@
     <div class="brand" aria-label="Hidro-Mejora">
       <img src="shared/assets/hm-symbol.svg" alt="Hidro-Mejora" class="brand-logo" width="72" height="72">
       <div class="brand-text">
-        <strong>HIDRO MEJORA</strong>
+        <strong>HIDRO-MEJORA</strong>
         <span>Gestión de servicios de agua</span>
       </div>
     </div>
 
-    <p class="auth-eyebrow">Tu suministro, a tu alcance</p>
-    <h1 id="login-title">Bienvenido a Hidro-Mejora</h1>
-    <p class="subtitle">Consulta tus recibos, pagos, consumo y solicitudes desde un solo lugar.</p>
+    <h1 id="login-title">Iniciar sesión</h1>
+    <p class="subtitle" id="login-intro">Accede con tu número de suministro y contraseña.</p>
 
     <div id="form-error" class="form-error" role="alert"></div>
 
@@ -40,7 +39,7 @@
 
     <form id="login-form" novalidate>
       <div class="field">
-        <label for="suministro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c3 4.2 6 7.6 6 11a6 6 0 1 1-12 0c0-3.4 3-6.8 6-11z"/></svg>Número de Suministro</label>
+        <label for="suministro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c3 4.2 6 7.6 6 11a6 6 0 1 1-12 0c0-3.4 3-6.8 6-11z"/></svg>Número de suministro</label>
         <input type="text" id="suministro" name="suministro" inputmode="numeric" autocomplete="username"
                placeholder="Ej. 676767676" maxlength="9" minlength="9" pattern="[0-9]{9}" required />
         <div class="hint">Ingresa tu código de suministro de 9 dígitos.</div>
@@ -52,7 +51,7 @@
       </div>
       <button type="submit" class="btn btn-primary" id="btn-login">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
-        <span id="btn-login-text">Iniciar Sesión</span>
+        <span id="btn-login-text">Iniciar sesión</span>
       </button>
     </form>
 
@@ -81,13 +80,13 @@
         <input type="password" id="reg-pass2" name="reg-pass2" autocomplete="new-password"
                placeholder="Repite tu contraseña" minlength="8" maxlength="128" required />
       </div>
-      <div class="proto-note">El registro del suministro se realiza con los datos de tu cuenta.</div>
+      <div class="proto-note">Tu suministro quedará vinculado a este correo.</div>
       <button type="submit" class="btn btn-primary" id="btn-register">
         <span id="btn-register-text">Crear cuenta</span>
       </button>
     </form>
     <form id="verify-email-form" novalidate hidden>
-      <p class="verification-intro">Solicitamos un código para tu correo. Cuando llegue, revísalo también en spam y escríbelo aquí para terminar de crear tu cuenta.</p>
+      <p class="verification-intro">Enviamos un código de 6 dígitos a tu correo (revisa también spam). Ingrésalo aquí para activar tu cuenta.</p>
       <div id="verify-error" class="form-error" role="alert"></div>
       <div class="field">
         <label for="verify-code">Código de verificación</label>
@@ -114,9 +113,9 @@
     <div class="auth-switch" id="auth-to-login" hidden>¿Ya tienes una cuenta? <a href="#" id="show-login">Iniciar sesión</a></div>
 
     <div id="password-recovery" hidden></div>
-    <div class="login-foot"><a href="#" id="forgot-link">¿Olvidaste tu contraseña?</a> · <a href="#" id="help-link">Ayuda</a></div>
+    <div class="login-foot"><a href="#" id="forgot-link">¿Olvidaste tu contraseña?</a> <a href="#" id="help-link">Ayuda</a></div>
   </div>
-  <div class="login-foot-brand">Hidro-Mejora · Proyecto universitario</div>
+  <div class="login-foot-brand"><strong>Hidro-Mejora · Proyecto universitario</strong><br>Propuesta académica independiente. Sin afiliación oficial con SEDAPAL.</div>
   </div>
   <div class="login-visual" aria-hidden="true"><h2>Conecta con tu servicio de agua.</h2><p>Recibos, consumo y atención en un mismo lugar. Una experiencia pensada para tu día a día.</p><img src="shared/assets/water-pattern.svg" alt="" width="600" height="460"></div>
 </section>
@@ -131,7 +130,7 @@
       <div class="mini-brand">
         <img src="shared/assets/hm-symbol.svg" alt="" class="topbar-logo" width="36" height="36">
         <div class="mini-brand-text">
-          <strong>HIDRO MEJORA</strong>
+          <strong>HIDRO-MEJORA</strong>
           <span class="mini-brand-sub"><small>Plataforma de servicios</small></span>
         </div>
       </div>
@@ -147,13 +146,13 @@
   <div class="shell" id="shell">
     <aside class="sidebar" id="sidebar" aria-label="Navegación principal">
       <div class="drawer-head">
-        <div class="drawer-brand"><strong>HIDRO MEJORA</strong><small>Menú principal</small></div>
+        <div class="drawer-brand"><strong>HIDRO-MEJORA</strong><small>Menú principal</small></div>
         <button id="btn-drawer-close" class="drawer-close" type="button" aria-label="Cerrar menú de navegación">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
       <div class="side-head">
-        <div class="side-title">Hidro Mejora</div>
+        <div class="side-title">Hidro-Mejora</div>
         <div class="side-supply">Suministro <b id="side-supply">—</b></div>
         <div class="side-status"><span class="dot" aria-hidden="true"></span>Cuenta activa</div>
       </div>
@@ -171,6 +170,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
             <span>Recibos</span>
           </button>
+          <button class="nav-item" data-sec="consumos" data-tip="Consumos" data-icon="chart" type="button"><span>Consumos</span></button>
           <button class="nav-item" data-sec="incidencias" data-tip="Incidencias" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3L2 21h20L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>
             <span>Incidencias</span>
@@ -210,7 +210,7 @@
         </div>
       </nav>
       <div class="side-cons ok" id="side-cons" aria-live="polite">
-        <div class="side-cons-title">Consumo último recibo</div>
+        <div class="side-cons-title">Consumo del último recibo</div>
         <div class="side-cons-value" id="side-cons-value">—</div>
         <div class="side-cons-delta" id="side-cons-delta">—</div>
         <button class="side-cta" id="side-cons-cta" type="button" hidden>Revisar consumo →</button>
@@ -221,64 +221,58 @@
     <main class="dashboard" id="main-content">
       <!-- INICIO -->
       <div class="dash-sec active" id="sec-inicio" aria-label="Resumen">
-        <div class="page-header">
-          <div>
-            <div class="page-crumb">Hidro Mejora</div>
-            <h2 class="page-title" tabindex="-1">Inicio</h2>
-            <p class="page-desc">Resumen general de tu suministro.</p>
-          </div>
-        </div>
         <div class="hero client-greeting">
           <div>
-            <h2>Tu agua, en un vistazo</h2>
-            <p>Suministro <span id="supply-hello">—</span> · Resumen de tu cuenta</p>
+            <h2 class="page-title" tabindex="-1">Mi suministro</h2>
+            <p class="supply-summary"><span>N.º <b id="supply-hello">—</b></span><span class="supply-state"><b id="stat-serv">—</b></span></p>
           </div>
           <button class="btn btn-sky" id="btn-replay-tutorial" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg>Ver tutorial</button>
         </div>
 
-        <button class="home-alert" id="home-alert" type="button" hidden data-open-section="notificaciones"><span data-icon="bell"></span><span id="home-alert-text"></span><span data-icon="arrow"></span></button>
-        <div class="stats account-overview" aria-label="Resumen de cuenta">
-          <div class="stat stat-priority balance-card"><div class="balance-main"><small>Deuda actual · Total de recibos por pagar</small><strong id="stat-debt">—</strong><span class="balance-state"><span data-icon="receipt"></span><span id="home-balance-state">Consultando recibos</span></span><div class="balance-due"><span data-icon="clock"></span><div><small>Próximo vencimiento pendiente</small><strong class="stat-date" id="stat-due">—</strong><span class="stat-note" id="stat-due-note">Consultando fechas</span></div></div></div><div class="balance-actions"><button class="quick-card" id="home-pay-action" type="button" data-action="pagar" data-icon="payment"><span>Pagar recibos</span></button><button class="quick-card secondary" type="button" data-action="copias" data-icon="download"><span>Mis documentos</span></button></div></div>
-          <div class="stat" id="stat-total-box">
-            <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2M18 14h.01"/></svg></span><small>Último recibo</small></div>
-            <strong id="stat-last">S/ 0.00</strong>
-          </div>
-          <div class="stat stat-sky">
-            <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c3 4.2 6 7.6 6 11a6 6 0 1 1-12 0c0-3.4 3-6.8 6-11z"/></svg></span><small>Consumo último recibo</small></div>
-            <strong id="stat-cons">0 m³</strong>
-          </div>
-          <div class="stat stat-orange">
-            <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/></svg></span><small>Recibos pendientes</small></div>
-            <strong id="stat-pend">0</strong>
-          </div>
-          <div class="stat stat-green">
-            <div class="stat-top"><span class="stat-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/></svg></span><small>Estado de la cuenta</small></div>
-            <strong id="stat-serv">Activo</strong>
-          </div>
-          </div>
 
-        <section aria-label="Acciones rápidas">
-          <div class="section-head">
-            <div>
-              <h3>Acciones rápidas</h3>
-              <p style="font-size:.82rem;color:var(--muted);margin-top:.15rem">Gestiona tu suministro desde un solo lugar</p>
+        <div class="stats account-overview" aria-label="Resumen de cuenta">
+          <div class="stat stat-priority balance-card" id="stat-total-box">
+            <div class="balance-main">
+              <small>Saldo pendiente</small>
+              <strong id="stat-debt">—</strong>
+              <span class="balance-state"><span data-icon="receipt"></span><b id="stat-pend">—</b><span id="home-balance-state">Cargando recibos…</span></span>
+              <div class="balance-due">
+                <div><small>Próximo vencimiento</small><strong class="stat-date" id="stat-due">—</strong><span class="stat-note" id="stat-due-note">Verificando vencimiento…</span></div>
+                <div><small>Último recibo</small><strong class="stat-date" id="stat-last">—</strong></div>
+              </div>
+            </div>
+            <div class="balance-actions">
+              <button class="quick-card" id="home-pay-action" type="button" data-action="pagar" data-icon="payment"><span>Pagar recibos</span></button>
+              <button class="quick-card secondary" type="button" data-action="copias" data-icon="download"><span>Mis documentos</span></button>
             </div>
           </div>
+        </div>
+
+        <button class="home-alert" id="home-alert" type="button" hidden data-open-section="notificaciones"><span data-icon="bell"></span><span id="home-alert-text"></span><span data-icon="arrow"></span></button>
+        <div id="home-consumption"><section class="chart-card" aria-label="Gráfico de consumo histórico">
+          <div class="chart-head">
+            <div>
+              <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Consumo histórico</h3>
+              <p>Últimos seis recibos · Último consumo <b id="stat-cons">—</b></p>
+            </div>
+            <span class="chart-avg-chip" id="consumption-avg-chip">Promedio: —</span>
+          </div>
+          <div class="chart-pro">
+            <div class="y-axis" id="consumption-y" aria-hidden="true"><span><b>30</b> m³</span><span><b>20</b></span><span><b>10</b></span><span><b>0</b></span></div>
+            <div id="chart" class="chart" role="group" aria-label="Consumo de los últimos seis recibos; cada barra abre su detalle"></div>
+          </div>
+
+          <div class="chart-legend">
+            <span><i style="background:var(--sky)"></i>Consumo mensual (m³)</span>
+            <span><i style="background:var(--orange)"></i><span id="consumption-legend">Línea promedio —</span></span>
+          </div>
+        </section></div>
+        <button class="text-action" id="view-consumption" type="button">Ver consumo por periodo →</button>
+        <section aria-label="Acciones rápidas">
+          <div class="section-head">
+            <h3>Acciones rápidas</h3>
+          </div>
           <div class="quick-grid">
-            <button class="quick-card" type="button" data-action="pagar">
-              <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></svg></span>
-              <span class="quick-body">
-              <span><b>Pagar</b><small>Registra pagos de tus recibos.</small></span>
-                <svg class="quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-              </span>
-            </button>
-            <button class="quick-card" type="button" data-action="copias">
-              <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 2h9l5 5v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/><path d="M14 2v6h6"/></svg></span>
-              <span class="quick-body">
-              <span><b>Documentos</b><small>Consulta y descarga tus recibos.</small></span>
-                <svg class="quick-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-              </span>
-            </button>
             <button class="quick-card" type="button" data-action="consultar">
               <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></span>
               <span class="quick-body">
@@ -308,24 +302,7 @@
           <div class="activity-panel"><div class="activity-head"><h3>Tu servicio</h3><button type="button" data-open-section="incidencias"><span id="home-open-incidents">—</span> abiertas</button></div><div id="home-service-list"><p class="activity-empty">Consultando cortes e incidencias</p></div></div>
           <div class="activity-panel"><div class="activity-head"><h3>Notificaciones importantes</h3><button type="button" data-open-section="notificaciones"><span id="home-unread-count">—</span> sin leer</button></div><div id="home-notification-list"><p class="activity-empty">Consultando notificaciones</p></div></div>
         </section>
-        <section class="chart-card" aria-label="Gráfico de consumo histórico">
-          <div class="chart-head">
-            <div>
-              <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/></svg>Consumo histórico</h3>
-              <p>Metros cúbicos registrados · últimos 6 recibos · eje Y en m³</p>
-            </div>
-            <span class="chart-avg-chip" id="consumption-avg-chip">Promedio: —</span>
-          </div>
-          <div class="chart-pro">
-            <div class="y-axis" id="consumption-y" aria-hidden="true"><span><b>30</b> m³</span><span><b>20</b></span><span><b>10</b></span><span><b>0</b></span></div>
-            <div id="chart" class="chart" role="group" aria-label="Consumo de los últimos seis recibos; cada barra abre su detalle"></div>
-          </div>
-          <div class="x-axis-label">Meses · eje X</div>
-          <div class="chart-legend">
-            <span><i style="background:var(--sky)"></i>Consumo mensual (m³)</span>
-            <span><i style="background:var(--orange)"></i><span id="consumption-legend">Línea promedio —</span></span>
-          </div>
-        </section>
+
 
         <section class="chart-card" aria-label="Evolución del gasto" style="margin-top:1rem">
           <div class="chart-head">
@@ -339,7 +316,7 @@
             <div class="y-axis" id="spend-y" aria-hidden="true"></div>
             <div id="chart-spend" class="chart" role="img" aria-label="Gráfico de barras del gasto mensual en soles de los últimos 6 meses"></div>
           </div>
-          <div class="x-axis-label">Meses · eje X</div>
+
           <div class="chart-legend">
             <span><i style="background:var(--navy)"></i>Gasto mensual (S/)</span>
             <span><i style="background:var(--orange)"></i><span id="spend-legend">Línea promedio</span></span>
@@ -347,13 +324,21 @@
         </section>
       </div>
 
+      <section class="dash-sec" id="sec-consumos" aria-label="Consumos">
+        <header class="page-header"><div><div class="page-crumb">Mi suministro</div>
+          <h2 class="page-title" tabindex="-1">Resumen de consumo</h2>
+          <p class="page-desc">Compara los consumos e importes de tus últimos seis recibos.</p></div></header>
+        <div id="period-chart"></div>
+        <section class="activity-panel"><h3>Comparativa por periodo</h3><div id="period-list"></div></section>
+      </section>
+
       <!-- HISTORIAL -->
       <div class="dash-sec" id="sec-historial" aria-label="Historial de recibos">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Recibos</div>
+            <div class="page-crumb">Hidro-Mejora / Recibos</div>
             <h2 class="page-title" tabindex="-1">Recibos</h2>
-            <p class="page-desc">Consulta y administra tu historial de facturación.</p>
+            <p class="page-desc">Revisa tus recibos y descarga copias en PDF.</p>
           </div>
           <div class="page-actions">
             <button class="btn btn-sky" id="btn-copies-head" type="button">Obtener copias</button>
@@ -393,7 +378,7 @@
       <div class="dash-sec" id="sec-incidencias" aria-label="Incidencias reportadas">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Incidencias</div>
+            <div class="page-crumb">Hidro-Mejora / Incidencias</div>
             <h2 class="page-title" tabindex="-1">Incidencias</h2>
             <p class="page-desc">Gestiona los reportes relacionados con tu suministro.</p>
           </div>
@@ -406,7 +391,7 @@
           <div class="mod-stat"><small>Con foto</small><strong id="inc-stat-foto">0</strong></div>
           <div class="mod-stat"><small>Con ubicación</small><strong id="inc-stat-geo">0</strong></div>
         </div>
-        <div class="disclaimer">Tu registro se almacena de forma segura en los sistemas de Hidro Mejora.</div>
+        <div class="disclaimer">Tu registro se almacena de forma segura en los sistemas de Hidro-Mejora.</div>
         <div id="inc-list" class="support-grid" role="list"></div>
         <div id="inc-empty" class="empty">Aún no registras incidencias. Usa “Reportar incidencia” para crear la primera.</div>
       </div>
@@ -415,7 +400,7 @@
       <div class="dash-sec" id="sec-cortes" aria-label="Cortes de servicio">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Cortes</div>
+            <div class="page-crumb">Hidro-Mejora / Cortes</div>
             <h2 class="page-title" tabindex="-1">Cortes de servicio</h2>
             <p class="page-desc">Consulta interrupciones y trabajos programados.</p>
           </div>
@@ -454,9 +439,9 @@
       <div class="dash-sec" id="sec-pagos" aria-label="Historial de pagos">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Pagos</div>
+            <div class="page-crumb">Hidro-Mejora / Pagos</div>
             <h2 class="page-title" tabindex="-1">Historial de pagos</h2>
-            <p class="page-desc">Consulta las operaciones registradas para tu suministro.</p>
+            <p class="page-desc">Operaciones registradas para tu suministro.</p>
           </div>
         </div>
         <div class="mod-stats" aria-label="Resumen de pagos" style="grid-template-columns:repeat(3,1fr)">
@@ -479,9 +464,9 @@
       <div class="dash-sec" id="sec-perfil" aria-label="Mi perfil">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Cuenta</div>
+            <div class="page-crumb">Hidro-Mejora / Cuenta</div>
             <h2 class="page-title" tabindex="-1">Mi perfil</h2>
-            <p class="page-desc">Consulta los datos de tu cuenta.</p>
+            <p class="page-desc">Datos de cuenta, avisos y seguridad.</p>
           </div>
         </div>
         <div class="profile-overview">
@@ -547,7 +532,7 @@
       <div class="dash-sec" id="sec-ayuda" aria-label="Atención al cliente">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Ayuda</div>
+            <div class="page-crumb">Hidro-Mejora / Ayuda</div>
             <h2 class="page-title" tabindex="-1">Atención al Cliente</h2>
             <p class="page-desc">Encuentra el canal adecuado para resolver tu consulta.</p>
           </div>
@@ -622,14 +607,14 @@
         </div>
         <div class="section-head" style="margin-top:1.2rem"><h3>Mis solicitudes</h3></div>
         <div id="ate-list" class="support-grid" role="list"></div>
-        <div id="ate-empty" class="empty">Aún no tienes solicitudes. Crea la primera con el formulario superior.</div>
+        <div id="ate-empty" class="empty">Todavía no envías solicitudes. Usa el formulario de arriba para escribirnos.</div>
       </div>
 
       <!-- NOTIFICACIONES -->
       <div class="dash-sec" id="sec-notificaciones" aria-label="Notificaciones">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Notificaciones</div>
+            <div class="page-crumb">Hidro-Mejora / Notificaciones</div>
             <h2 class="page-title" tabindex="-1">Notificaciones</h2>
             <p class="page-desc">Consulta avisos sobre recibos, incidencias, atención y cortes de servicio.</p>
           </div>
@@ -682,11 +667,11 @@
         <li><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Fecha de emisión</span><span class="v" id="d-emision">—</span></li>
         <li><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>Fecha de vencimiento</span><span class="v" id="d-vencimiento">—</span></li>
         <li><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3c3 4.2 6 7.6 6 11a6 6 0 1 1-12 0c0-3.4 3-6.8 6-11z"/></svg>Lecturas del medidor</span><span class="v" id="d-lecturas">—</span></li>
-        <li><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>Estado de la cuenta</span><span class="v"><span class="badge Pagado" id="d-estado">—</span></span></li>
+        <li><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>Estado del recibo</span><span class="v"><span class="badge Pagado" id="d-estado">—</span></span></li>
       </ul>
 
       <details class="invoice" aria-label="Información demostrativa">
-        <summary>Distribución demostrativa · información opcional</summary><p class="hint">Estimación del prototipo: no representa tarifas ni impuestos oficiales. El importe total sí procede del recibo registrado.</p>
+        <summary>Distribución estimada del importe</summary><p class="hint">Los porcentajes son ilustrativos. No representan tarifas ni impuestos oficiales. El total corresponde al recibo registrado.</p>
         <div class="inv-track" aria-hidden="true">
           <i class="t-agua" id="d-bar-agua" style="width:60%"></i><i class="t-alc" id="d-bar-alc" style="width:22%"></i><i class="t-igv" id="d-bar-igv" style="width:18%"></i>
         </div>
@@ -704,7 +689,7 @@
         </div>
         <span id="d-semaforo" class="semaforo green">● Normal</span>
       </div>
-      <div id="d-alerta" class="alert-leak" role="alert" hidden><span data-icon="incident"></span> <b>Consumo elevado según el umbral del prototipo:</b> supera los 20 m³. Esta alerta no confirma una fuga.</div>
+      <div id="d-alerta" class="alert-leak" role="alert" hidden><span data-icon="incident"></span> <b>Consumo mayor de 20 m³:</b> revisa si cambió tu uso de agua. Esta alerta no confirma una fuga.</div>
 
       <div class="dialog-actions">
         <button class="btn btn-ghost" id="detail-close-2" type="button">Cerrar</button>
@@ -730,9 +715,9 @@
         <div class="pay-amount"><span>Monto a pagar</span><strong id="pay-monto">S/ 0.00</strong></div>
         <div class="pay-methods" role="radiogroup" aria-label="Tipo de operación">
           <label class="pay-opt sel"><input type="radio" name="pay-method" value="demostrativo" checked /><span><b>Registro directo</b><small>Registro informativo; no cancela deuda</small></span></label>
-          <label class="pay-opt"><input type="radio" name="pay-method" value="yape_manual" disabled /><span><b>Pago con Yape</b><small>Disponible únicamente en laboratorio autorizado</small></span></label>
+          <label class="pay-opt"><input type="radio" name="pay-method" value="yape_manual" disabled /><span><b>Pago con Yape</b><small>Disponible cuando la revisión manual está habilitada</small></span></label>
         </div>
-        <p id="pay-notice" class="pay-note" role="status">Una operación registrada requiere revisión; la confirmación de Yape no es automática.</p>
+        <p id="pay-notice" class="pay-note" role="status">El registro directo es demostrativo. La confirmación de Yape requiere revisión manual.</p>
         <button id="pay-existing-history" class="btn btn-ghost" type="button" hidden>Ver estado e historial</button>
         <div id="pay-existing-state" role="status" aria-live="polite" hidden></div>
         <div id="pay-yape-fields" hidden>
@@ -747,7 +732,7 @@
         <p id="pay-feedback" role="alert" aria-live="polite"></p>
         <div class="dialog-actions">
           <button class="btn btn-ghost" id="pay-cancel" type="button">Cancelar</button>
-          <button class="btn btn-primary" id="pay-confirm" type="button">Confirmar pago</button>
+          <button class="btn btn-primary" id="pay-confirm" type="button">Confirmar registro de prueba</button>
         </div>
       </div>
       <div id="pay-processing" hidden style="text-align:center">
@@ -774,13 +759,13 @@
 <div id="copies-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="copies-title" aria-hidden="true">
   <div class="dialog dialog-wide">
     <div class="dialog-head">
-      <div><h3 id="copies-title">Obtener copias</h3><p id="copies-sub">Consulta y descarga tus últimos recibos</p></div>
+      <div><h3 id="copies-title">Mis documentos</h3><p id="copies-sub">Consulta y descarga tus últimos recibos</p></div>
       <button class="icon-btn" id="copies-close" type="button" aria-label="Cerrar copias" data-icon="close"></button>
     </div>
     <div class="dialog-body">
       <div class="tbl-wrap">
         <table class="tbl">
-          <thead><tr><th>Mes</th><th>Periodo</th><th>Estado</th><th style="text-align:right">Monto</th><th>Acciones</th></tr></thead>
+          <thead><tr><th>Periodo</th><th>Vencimiento</th><th>Estado</th><th style="text-align:right">Monto</th><th>Acciones</th></tr></thead>
           <tbody id="copies-tbody"></tbody>
         </table>
       </div>
@@ -919,14 +904,14 @@
 <div id="hidrobot-root" aria-hidden="true">
   <button id="hb-fab" class="hb-fab" type="button" aria-label="Abrir HidroBot, asistente virtual" aria-haspopup="dialog" aria-expanded="false" aria-controls="hb-panel">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3c3 4.5 6 7.7 6 11a6 6 0 1 1-12 0c0-3.3 3-6.5 6-11z"/><path d="M9.5 13.5h.01M12 13.5h.01M14.5 13.5h.01"/></svg>
-    <span class="hb-dot" aria-hidden="true" title="Asistente disponible"></span>
+    <span>HidroBot</span><span class="hb-dot" aria-hidden="true" title="Asistente disponible"></span>
   </button>
   <section id="hb-panel" class="hb-panel" role="dialog" aria-labelledby="hb-title" aria-hidden="true">
     <header class="hb-head">
       <span class="hb-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3c3 4.5 6 7.7 6 11a6 6 0 1 1-12 0c0-3.3 3-6.5 6-11z"/><path d="M9.5 13.5h.01M12 13.5h.01M14.5 13.5h.01"/></svg></span>
       <div class="hb-id">
         <b id="hb-title">HidroBot</b>
-        <small>Asistente virtual de Hidro Mejora</small>
+        <small>Asistente virtual de Hidro-Mejora</small>
         <span class="hb-status"><i aria-hidden="true"></i>Disponible</span>
       </div>
       <button id="hb-clear" class="hb-iconbtn" type="button" aria-label="Limpiar conversación"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6.5 7l.8 13a1 1 0 0 0 1 .9h7.4a1 1 0 0 0 1-.9l.8-13"/></svg></button>
@@ -1129,7 +1114,7 @@
       const bl = document.getElementById('btn-login');
       const bt = document.getElementById('btn-login-text');
       if(bl){ bl.disabled = false; bl.classList.remove('login-success'); }
-      if(bt) bt.textContent = 'Iniciar Sesión';
+      if(bt) bt.textContent = 'Iniciar sesión';
       document.body.classList.remove('dash-enter');
     }catch(e){}
     showView(viewLogin);
@@ -1163,7 +1148,7 @@
       form.reset();form.dataset.busy='0';form.querySelectorAll('button').forEach(button=>{button.disabled=false;button.dataset.busy='0';});
     });
     clientDefaults.forEach((markup,id)=>{const element=document.getElementById(id);if(element)element.innerHTML=markup;});
-    ['cards','chart','chart-spend','inc-list','cortes-list','pay-list','ate-list','notif-list','copies-tbody'].forEach(id=>document.getElementById(id)?.replaceChildren());
+    ['cards','period-list','chart','chart-spend','inc-list','cortes-list','pay-list','ate-list','notif-list','copies-tbody'].forEach(id=>document.getElementById(id)?.replaceChildren());
     ['chart-y','chart-spend-y'].forEach(id=>{const element=document.getElementById(id);if(element)element.replaceChildren();});
     document.getElementById('cortes-distrito').innerHTML='<option value="Todos">Todos los distritos</option>';
     if(filterAnio)filterAnio.innerHTML='<option value="Todos">Todos los años</option>';
@@ -1469,9 +1454,9 @@
       icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0-2-2V9a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v2M18 14h.01"/></svg>',
       title:'Resumen de tu suministro', text:'Aquí puedes revisar de forma rápida el monto de tu último recibo, tu consumo reciente, los recibos pendientes y el estado actual del suministro.' },
     { sec:'inicio', getTarget: ()=>document.querySelector('#sec-inicio .quick-grid'),
-      getTargetMobile: ()=>document.querySelector('#sec-inicio .quick-card'),
+      getTargetMobile: ()=>document.querySelector('#sec-inicio .quick-grid .quick-card'),
       icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h7"/></svg>',
-      title:'Acciones rápidas', text:'Desde este panel puedes pagar recibos, obtener copias, consultar tu historial, reportar incidencias y revisar cortes de servicio sin buscar cada función en el menú.' },
+      title:'Acciones rápidas', text:'Consulta tus recibos, reporta una incidencia o revisa los cortes.' },
     { sec:'inicio', getTarget: ()=>document.getElementById('chart'),
       getTargetLandscape: ()=>{ const c = document.getElementById('chart'); const h = c && c.closest('.chart-card') ? c.closest('.chart-card').querySelector('.chart-head') : null; return h || c; },
       icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
@@ -1537,7 +1522,7 @@
   let loading = false;
   // Estado de la fuente real de recibos (API). Sin fallback simulado.
   let recibosEstado = 'ok'; // 'cargando' | 'ok' | 'vacio' | 'error'
-  const MSG_CARGANDO_RECIBOS = 'Consultando recibos...';
+  const MSG_CARGANDO_RECIBOS = 'Cargando recibos…';
   const MSG_SIN_RECIBOS = 'No se encontraron recibos para este suministro.';
   const MSG_ERROR_RECIBOS = 'No se pudo obtener la información de los recibos. Inténtalo nuevamente.';
   const MSG_FILTRO_VACIO = 'No hay recibos con ese estado. Prueba con otro filtro.';
@@ -1757,11 +1742,12 @@
   function pad(n){ return String(n).padStart(2,'0'); }
 
   /* ---------- Router interno del dashboard: una sola página activa ---------- */
-  const HASH_SEC = {inicio:'inicio', historial:'recibos', incidencias:'incidencias', cortes:'cortes', pagos:'pagos', perfil:'perfil', notificaciones:'notificaciones', ayuda:'atencion'};
+  const HASH_SEC = {inicio:'inicio', historial:'recibos', consumos:'consumos', incidencias:'incidencias', cortes:'cortes', pagos:'pagos', perfil:'perfil', notificaciones:'notificaciones', ayuda:'atencion'};
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   const isReduced = ()=>reduceMotion.matches;
   const mainContent = document.getElementById('main-content');
   let navLock = false;
+  let navigationRequest = 0;
   let lastFocus = null;
   let kbNav = false;
   document.addEventListener('keydown', e=>{
@@ -1874,12 +1860,17 @@
     const tutorialMode = o.tutorial === true;
     const target = document.getElementById('sec-' + pageName);
     if(!target) return Promise.resolve(null);
+    const request = ++navigationRequest;
     const current = document.querySelector('.dash-sec.active');
     const finish = (resolve)=>{
       if(pageEpoch !== sesionCliente.generation() || !sesionCliente.isUser()) { navLock = false; return resolve(null); }
       document.querySelectorAll('.dash-sec').forEach(s=>{
         s.classList.remove('active','page-exit','page-enter');
       });
+      if(pageName === 'inicio' || pageName === 'consumos'){
+        const container = document.getElementById(pageName === 'inicio' ? 'home-consumption' : 'period-chart');
+        container.append(chartEl.closest('.chart-card'));
+      }
       target.classList.add('active');
       // Perfil se carga desde la ruta común: menú, Cuenta móvil y hash.
       if(pageName==='perfil') cargarPerfil();
@@ -1896,14 +1887,15 @@
     };
 
     if(current === target){
+      navLock = false;
+      current.classList.remove('page-exit');
       if(tutorialMode){
         // Idempotente total: solo estado, sin tocar scroll ni animaciones.
         syncSidebar(pageName);
         updateHash(pageName);
         return Promise.resolve(target);
       }
-      // Misma sección: mantener visible, sin page-exit; micro-entrada + scroll suave; anti-taps rápidos.
-      if(navLock) return Promise.resolve(target);
+      // Al volver a la sección actual, cancela la salida pendiente.
       if(pageName==='perfil') cargarPerfil();
       closeMobileNav({restore:false});
       syncSidebar(pageName);
@@ -1916,10 +1908,7 @@
       else if(kbNav) setTimeout(()=>focusPageTitle(target), 60);
       return Promise.resolve(target);
     }
-    if(navLock) return Promise.resolve(target);
     navLock = true;
-    // Seguridad: nunca dejar navLock activo más de 600ms aunque una transición falle.
-    setTimeout(()=>{ navLock = false; }, 600);
     closeMobileNav({restore:false});
     syncSidebar(pageName);
     updateHash(pageName);
@@ -1928,7 +1917,7 @@
       if(current && !isReduced() && !tutorialMode){
         current.classList.add('page-exit');
         setTimeout(()=>{
-          if(pageEpoch !== sesionCliente.generation() || !sesionCliente.isUser())return resolve(null);
+          if(request !== navigationRequest || pageEpoch !== sesionCliente.generation() || !sesionCliente.isUser())return resolve(null);
           current.classList.remove('active','page-exit');
           finish(resolve);
         }, 140);
@@ -1950,7 +1939,9 @@
       openDashboardPage(n.dataset.sec);
     });
   });
-  document.getElementById('side-cons-cta').addEventListener('click', ()=>openDashboardPage('inicio'));
+  for(const id of ['side-cons-cta', 'view-consumption']){
+    document.getElementById(id).addEventListener('click', ()=>openDashboardPage('consumos'));
+  }
   btnMenu.addEventListener('click', ()=>{
     if(isMobileViewport()){
       if(shell.classList.contains('nav-open')) closeMobileNav();
@@ -2000,7 +1991,7 @@
     const montoNum = Number(api.monto);
     const consumoNum = Number(api.consumo_m3);
     const monto = Number.isFinite(montoNum) ? montoNum : 0;
-    const consumoM3 = Number.isFinite(consumoNum) ? consumoNum : 0;
+    const consumoM3 = api.consumo_m3 != null && String(api.consumo_m3).trim() && Number.isFinite(consumoNum) ? consumoNum : null;
     let fechaEmi = null;
     try{ fechaEmi = api.fecha_emision ? new Date(api.fecha_emision) : null; }catch(e){ fechaEmi = null; }
     const emiValida = fechaEmi && !Number.isNaN(fechaEmi.getTime());
@@ -2048,7 +2039,7 @@
       vencimiento: venValida ? window.HMShared.ui.receiptDate(api.fecha_vencimiento) : '—',
       fechaEmisionISO: api.fecha_emision || null,
       fechaVencimientoISO: api.fecha_vencimiento || null,
-      consumoM3: consumoM3, consumo: consumoM3 + ' m³',
+      consumoM3: consumoM3, consumo: consumoM3 === null ? 'No disponible' : consumoM3 + ' m³',
       // La API actual no provee lecturas de medidor.
       lecturaAnterior: null, lecturaActual: null, paymentCode: null
     };
@@ -2109,13 +2100,11 @@
       return;
     }
     const prom = promedio6();
-    const pct = prom > 0 ? Math.round(((ultimo.consumoM3 - prom) / prom) * 100) : 0;
-    const elevado = ultimo.consumoM3 > 20 || pct >= 15;
+    const comparison = HMClientHome.compareConsumption(ultimo.consumoM3, prom);
+    const elevado = comparison === 'Sobre el promedio';
     document.getElementById('side-cons-value').textContent = ultimo.consumo;
-    document.getElementById('side-cons-delta').textContent = elevado
-      ? '↑ ' + pct + '% vs. promedio (' + prom + ' m³)'
-      : 'Dentro del promedio (' + prom + ' m³)';
-    document.getElementById('side-cons-cta').hidden = !elevado;
+    document.getElementById('side-cons-delta').textContent = comparison;
+    document.getElementById('side-cons-cta').hidden = false;
     card.classList.toggle('warn', elevado);
     card.classList.toggle('ok', !elevado);
   }
@@ -2167,7 +2156,7 @@
   }
   function actualizarInicio(){
     if(!sesionCliente.isUser())return;
-    window.HMClientHome.render({receipts:recibos,payments:pagos,cuts:cortes,incidents:incidencias,notifications:notificaciones,
+    window.HMClientHome.render({pendingCount:recibos.filter(reciboPagable).length,payments:pagos,cuts:cortes,incidents:incidencias,notifications:notificaciones,
       debt:recibos.filter(reciboPagable).reduce((sum,r)=>sum+r.monto,0),receiptError:recibosEstado==='error',paymentError:payEstado==='error',cutError:cortesError});
   }
   document.getElementById('home-activity').addEventListener('click',ev=>{
@@ -2218,7 +2207,7 @@
       btnAbrir.appendChild(top);
       const monto = document.createElement('span'); monto.className = 'card-amount';
       monto.appendChild(document.createTextNode(fmt(r.monto) + ' '));
-      monto.appendChild(nodo('small', null, '/ mes'));
+
       btnAbrir.appendChild(monto);
       const meta = document.createElement('span'); meta.className = 'card-meta';
       meta.appendChild(nodo('span', null, 'Vence: ' + r.vencimiento + ' · ' + r.consumo));
@@ -2264,7 +2253,6 @@
     document.getElementById('stat-due').textContent=conFecha[0]?.vencimiento || (recibosEstado==='error'?'No disponible':'Sin vencimientos');
     document.getElementById('stat-due-note').textContent=conFecha[0]?conFecha[0].etiqueta:'No hay recibos pendientes con fecha disponible';
     document.getElementById('stat-pend').textContent=porPagar.length;
-    document.getElementById('stat-serv').textContent = 'Activo';
     document.getElementById('rec-total').textContent = recibos.length;
     document.getElementById('rec-paid').textContent = recibos.filter(r=>r.estado==='Pagado').length;
     // Emitido es impago no vencido: se agrupa con Pendiente para no perderlo en el resumen.
@@ -2274,6 +2262,16 @@
     document.getElementById('ate-last').textContent = ultimo ? (ultimo.etiqueta + ' · ' + fmt(ultimo.monto)) : '—';
     document.getElementById('ate-serv').textContent = 'Activo';
     actualizarSideCons();
+    const periods = document.getElementById('period-list');
+    periods.replaceChildren();
+    for(const receipt of ultimos6().reverse()){
+      const button = nodo('button', 'activity-row');
+      button.type = 'button';
+      button.append(nodo('strong','activity-copy',receipt.etiqueta), nodo('span','',receipt.consumo + ' · ' + fmt(receipt.monto)));
+      button.addEventListener('click',()=>abrirDetalle(receipt,button));
+      periods.append(button);
+    }
+    if(!periods.childElementCount) periods.textContent = recibosEstado === 'error' ? 'No pudimos cargar los recibos.' : 'Todavía no hay recibos.';
     renderChart();
     renderSpendChart();
     animateStats();
@@ -2281,7 +2279,7 @@
     loading = false;
     syncHidroBotVisibility();
     btnLogin.disabled = false;
-    btnLoginText.textContent = 'Iniciar Sesión';
+    btnLoginText.textContent = 'Iniciar sesión';
   }
 
   /* ---------- Gráficos de barras reutilizables ---------- */
@@ -2297,13 +2295,13 @@
     const avgPct = max > 0 ? Math.min(100,(opts.avg/max)*100) : 0;
     const line = document.createElement('div');
     line.className = 'chart-avg-line';
-    line.style.bottom = 'calc(34px + ' + (avgPct*1.5).toFixed(1) + 'px)';
+    line.style.bottom = 'calc(var(--chart-label-height) + var(--chart-plot-height) * ' + (avgPct / 100) + ')';
     const averageLabel=document.createElement('span');averageLabel.textContent=opts.avgLabel;line.appendChild(averageLabel);
     container.appendChild(line);
     let top = -Infinity, topIdx = 0;
     items.forEach((d,i)=>{ if(d.value>top){top=d.value;topIdx=i;} });
     items.forEach((d,i)=>{
-      const h = Math.max(8,(d.value/max)*100);
+      const h = max ? d.value / max * 100 : 0;
       const col = document.createElement('div');
       col.className = 'bar-col';
       const wrap = document.createElement('div');
@@ -2316,7 +2314,7 @@
       bar.setAttribute('aria-label', d.full + ': ' + d.tip + '. Eje Y en ' + opts.unit + ', eje X recibos.');
       const tip=document.createElement('span');tip.className='bar-tip';tip.setAttribute('aria-hidden','true');tip.textContent=d.full;
       const tipDetail=document.createElement('small');tipDetail.textContent=d.tip;tip.appendChild(tipDetail);bar.appendChild(tip);
-      if(opts.onBarClick) bar.addEventListener('click', ()=>opts.onBarClick(d));
+      if(opts.onBarClick) bar.addEventListener('click', ev=>opts.onBarClick(d,ev.currentTarget));
       wrap.appendChild(bar);
       col.appendChild(wrap);
       const val = document.createElement('div');
@@ -2325,6 +2323,7 @@
       const lab = document.createElement('div');
       lab.className = 'bar-label';
       lab.textContent = d.label;
+      lab.title = d.full;
       col.appendChild(val);
       col.appendChild(lab);
       container.appendChild(col);
@@ -2336,8 +2335,7 @@
   }
   function ultimos6(){ return recibos.filter(reciboNoAnulado).slice(0,6).reverse(); }
   function promedio6(){
-    const u = ultimos6();
-    return u.length ? +(u.reduce((a,r)=>a+r.consumoM3,0)/u.length).toFixed(1) : 0;
+    return HMClientHome.averageConsumption(ultimos6());
   }
   function promedioGasto6(){
     const u = ultimos6();
@@ -2360,20 +2358,28 @@
   }
   function renderChart(){
     if(!chartEl) return;
-    const items = ultimos6().map(r=>({
-      label:r.etiqueta, full:r.etiqueta,
+    const items = ultimos6().filter(r=>r.hayConsumo).map(r=>({
+      label:r.mesShort || r.etiqueta, full:r.etiqueta,
       value:r.consumoM3, tip:r.consumoM3+' m³ consumidos', ref:r
     }));
     const avg = promedio6();
+    if(!items.length){
+      chartEl.textContent = recibosEstado === 'error' ? 'No pudimos cargar el consumo.' : 'Todavía no hay consumo registrado.';
+      document.getElementById('consumption-avg-chip').textContent = 'Sin promedio';
+      document.getElementById('consumption-legend').textContent = 'Sin promedio';
+      chartEl.setAttribute('aria-label',chartEl.textContent);
+      return;
+    }
+    const averageLabel = HMClientHome.formatAverage(avg);
     const maxVal = Math.max.apply(null, items.map(d=>d.value).concat([avg, 10]));
     renderConsumptionY(maxVal);
     const chip = document.getElementById('consumption-avg-chip');
-    if(chip) chip.textContent = 'Promedio: ' + avg + ' m³';
+    if(chip) chip.textContent = 'Promedio: ' + averageLabel;
     const legend = document.getElementById('consumption-legend');
-    if(legend) legend.textContent = 'Línea promedio ' + avg + ' m³';
-    chartEl.setAttribute('aria-label', 'Consumo de los '+items.length+' recibos recientes. Promedio: ' + avg + ' metros cúbicos.');
-    renderBarChart(chartEl, items, {avg:avg, avgLabel:avg + ' m³ prom.', unit:'m³', maxFloor:niceCeil(maxVal),
-      onBarClick:d=>showToast(d.ref.etiqueta + ': ' + d.ref.consumoM3 + ' m³')});
+    if(legend) legend.textContent = 'Línea promedio: ' + averageLabel;
+    chartEl.setAttribute('aria-label', 'Consumo de los '+items.length+' recibos recientes. Promedio: ' + averageLabel);
+    renderBarChart(chartEl, items, {avg:avg, avgLabel:averageLabel, unit:'m³', maxFloor:niceCeil(maxVal),
+      onBarClick:(d,button)=>abrirDetalle(d.ref,button)});
   }
   function renderSpendChart(){
     if(!chartSpendEl) return;
@@ -3134,11 +3140,11 @@
   }
   function greetBot(){
     if(hbHuboErrorCarga()){
-      addBotMessage('Hola, soy HidroBot. No fue posible cargar toda la información de tu suministro, pero puedes seguir utilizándome para consultas generales y navegación dentro de la plataforma.');
+      addBotMessage('No pude cargar todos los datos de tu suministro. Puedo ayudarte con consultas generales.');
     } else if(recibos.length === 0){
-      addBotMessage('Hola, soy HidroBot, el asistente virtual de Hidro Mejora. Tu suministro está registrado correctamente, pero todavía no hay recibos ni datos de consumo disponibles. Puedo ayudarte con incidencias, cortes de servicio y navegación dentro de la plataforma. También puedes preguntarme sobre Sedapal. ¿En qué puedo ayudarte?');
+      addBotMessage('Todavía no hay recibos para tu suministro. ¿Quieres revisar tus incidencias o los cortes de servicio?');
     } else {
-      addBotMessage('Hola, soy HidroBot, el asistente virtual de Hidro Mejora. Ya cargué la información de tu suministro y puedo ayudarte con tus recibos, consumo, incidencias, cortes de servicio y navegación dentro de la plataforma. También puedes preguntarme sobre Sedapal. ¿En qué puedo ayudarte?');
+      addBotMessage('Hola, soy HidroBot. ¿Quieres revisar un recibo o consultar algo sobre tu servicio?');
     }
     hidroBotState.greeted = true;
   }
@@ -3200,14 +3206,14 @@
   }
   function handleBotGuide(id, rawText){
     if(id === 'greeting'){
-      return {text:'Hola. Soy HidroBot. Puedo orientarte sobre Sedapal y ayudarte con recibos, consumo, incidencias y cortes de Hidro Mejora.'};
+      return {text:'Hola. Soy HidroBot. Puedo orientarte sobre Sedapal y ayudarte con recibos, consumo, incidencias y cortes de Hidro-Mejora.'};
     }
     if(id === 'customer_service'){
       return {text:'Puedes consultar los canales y opciones disponibles en Atención al Cliente.',
         actions:[createBotAction('Ir a Atención al Cliente', ()=>hbGo('ayuda'))]};
     }
     if(id === 'payment'){
-      return {text:'Puedes utilizar el flujo de pago de Hidro Mejora. No se procesa dinero ni tarjetas reales.',
+      return {text:'Puedes utilizar el flujo de pago de Hidro-Mejora. No se procesa dinero ni tarjetas reales.',
         actions:[createBotAction('Ver recibos por pagar', (b)=>{ minimizeBot(); abrirCopias(true, b); })]};
     }
     if(id === 'pdf'){
@@ -3240,7 +3246,7 @@
         actions:[createBotAction('Reportar incidencia', (b)=>{ minimizeBot(); openIncidentModal(null, b); })]};
     }
     if(id === 'tutorial'){
-      return {text:'Puedo iniciar nuevamente el tutorial completo de Hidro Mejora.',
+      return {text:'Puedo iniciar nuevamente el tutorial completo de Hidro-Mejora.',
         actions:[createBotAction('Iniciar tutorial', ()=>{ minimizeBot(); startTutorial(); })]};
     }
     if(id === 'context_help'){
@@ -3256,7 +3262,7 @@
       return {text:map[key] || map['sec-inicio']};
     }
     if(id === 'thanks'){
-      return {text:'Con gusto. Si necesitas revisar otra función de Hidro Mejora, puedes preguntarme.'};
+      return {text:'Con gusto. Si necesitas revisar otra función de Hidro-Mejora, puedes preguntarme.'};
     }
     return {text:'Puedo orientarte sobre Sedapal, sus canales, sedes y trámites, además de tus recibos, consumo y cortes. Prueba con «¿Qué es Sedapal?» o «¿Cómo contacto a Sedapal?».',
       actions:[createBotAction('Ver recibos', ()=>hbGo('historial')),
@@ -3297,7 +3303,7 @@
   function handleBotMessage(message){
     const online=navigator.onLine;
     const style=window.HMSedapalKnowledge.followupStyle(message);
-    if(style && hbKnowledgeChat.hasTopic()){
+    if(style){
       return hbKnowledgeChat.reply({followup:true,style,online});
     }
     const topic=window.HMSedapalKnowledge.match(message);
@@ -3582,19 +3588,21 @@
     document.getElementById('d-bar-agua').style.width = '60%';
     document.getElementById('d-bar-alc').style.width = '22%';
     document.getElementById('d-bar-igv').style.width = '18%';
-    document.getElementById('d-deuda').textContent = r.estado==='Pagado' ? fmt(0) + ' (cancelado)' : fmt(r.monto);
+    document.getElementById('d-deuda').textContent = r.estado==='Anulado' ? 'No corresponde' : r.estado==='Pagado' ? fmt(0) + ' (pagado)' : fmt(r.monto);
     // La API real no envía lecturas de medidor: mostrar "No disponible" sin romper el detalle.
     document.getElementById('d-lecturas').textContent = (Number.isFinite(r.lecturaAnterior) && Number.isFinite(r.lecturaActual))
       ? (Number(r.lecturaAnterior).toFixed(1) + ' → ' + Number(r.lecturaActual).toFixed(1) + ' m³')
       : 'No disponible';
     document.getElementById('d-consumo').textContent = r.consumo;
     const promRef = document.getElementById('d-promedio-ref');
-    if(promRef) promRef.textContent = 'Promedio referencial: ' + promedio6() + ' m³';
+    const average = promedio6();
+    promRef.textContent = 'Promedio histórico: ' + HMClientHome.formatAverage(average);
     const sem = document.getElementById('d-semaforo');
     const alerta = document.getElementById('d-alerta');
-    if(r.consumoM3 > 20){ sem.className = 'semaforo red'; sem.textContent = '● Alto consumo'; alerta.hidden = false; }
-    else if(r.consumoM3 > 15){ sem.className = 'semaforo orange'; sem.textContent = '● Sobre el promedio'; alerta.hidden = true; }
-    else { sem.className = 'semaforo green'; sem.textContent = '● Normal'; alerta.hidden = true; }
+    const comparison = HMClientHome.compareConsumption(r.consumoM3, average);
+    sem.textContent = comparison;
+    sem.className = 'semaforo ' + (comparison === 'Sobre el promedio' ? 'orange' : 'neutral');
+    alerta.hidden = !(r.consumoM3 > 20);
     const payBtn = document.getElementById('btn-pay-detail');
     const constBtn = document.getElementById('btn-constancia');
     if(r.estado==='Pagado'){ payBtn.hidden = true; constBtn.hidden = false; }
@@ -3648,7 +3656,7 @@
     }catch(e){}
   })();
 
-  /* ---------- PDF con jsPDF: comprobante demostrativo Hidro Mejora ---------- */
+  /* ---------- PDF con jsPDF: comprobante demostrativo Hidro-Mejora ---------- */
   let _logoCache = undefined;
   let _logoPromise = null;
   function getImageFitDimensions(nw, nh, maxW, maxH){
@@ -3701,12 +3709,12 @@
   async function descargarReciboPDF(r, btn){
     let _hmEpoch=sesionCliente.generation();
     if(!window.jspdf || typeof window.jspdf.jsPDF !== 'function'){
-      showToast('No se pudo cargar el generador PDF. Recarga la pagina e intentalo otra vez.');
+      showToast('No se pudo cargar el generador PDF. Recarga la página e inténtalo de nuevo.');
       return;
     }
     if(btn && btn.dataset.busy === '1') return;
-    if(!r || !Number.isFinite(r.monto) || r.monto < 0 || !Number.isFinite(r.consumoM3)){
-      showToast('El recibo contiene datos invalidos.');
+    if(!r || !Number.isFinite(r.monto) || r.monto < 0 || !r.hayMonto){
+      showToast('El recibo tiene datos inválidos.');
       return;
     }
     const label = btn ? btn.textContent : null;
@@ -3722,7 +3730,7 @@
     }catch(error){
       if(esAbortado(error) || _hmEpoch!==sesionCliente.generation())return;
       console.error('No se pudo generar el recibo PDF.', error);
-      showToast('No se pudo generar el PDF. Intentalo nuevamente.');
+      showToast('No se pudo generar el PDF. Inténtalo de nuevo.');
     }finally{
       if(btn){
         btn.disabled = false; btn.dataset.busy = '0'; btn.removeAttribute('aria-busy'); if(label !== null) btn.textContent = label;
@@ -3732,7 +3740,7 @@
 async function descargarConstanciaPDF(r, btn){
     let _hmEpoch=sesionCliente.generation();
     if(!window.jspdf || typeof window.jspdf.jsPDF !== 'function'){
-      showToast('No se pudo cargar el generador PDF. Recarga la pagina e intentalo otra vez.');
+      showToast('No se pudo cargar el generador PDF. Recarga la página e inténtalo de nuevo.');
       return;
     }
     if(btn && btn.dataset.busy === '1') return;
@@ -3770,7 +3778,7 @@ async function descargarConstanciaPDF(r, btn){
     }catch(error){
       if(esAbortado(error) || _hmEpoch!==sesionCliente.generation())return;
       console.error('No se pudo generar la constancia PDF.', error);
-      showToast('No se pudo generar la constancia. Intentalo nuevamente.');
+      showToast('No se pudo generar la constancia. Inténtalo de nuevo.');
     }finally{
       if(btn){
         btn.disabled = false; btn.dataset.busy = '0'; btn.removeAttribute('aria-busy'); if(label !== null) btn.textContent = label;
@@ -3832,7 +3840,7 @@ async function descargarConstanciaPDF(r, btn){
     document.getElementById('pay-yape-fields').hidden=true;document.getElementById('pay-feedback').textContent='';
     document.getElementById('pay-sub').textContent='Suministro '+supplyLabel.textContent.trim()+' · '+(r.periodo||r.etiqueta);
     document.getElementById('pay-monto').textContent=fmt(r.monto);
-    const btn=document.getElementById('pay-confirm');btn.textContent='Registrar pago';btn.disabled=false;delete btn.dataset.busy;
+    const btn=document.getElementById('pay-confirm');btn.textContent='Confirmar registro de prueba';btn.disabled=false;delete btn.dataset.busy;
     showPayState('main');openModal(payModal,opener);
     const yape=document.querySelector('input[name="pay-method"][value="yape_manual"]');yape.disabled=true;
     try{
@@ -3859,7 +3867,7 @@ async function descargarConstanciaPDF(r, btn){
     document.querySelectorAll('.pay-opt').forEach(o=>o.classList.toggle('sel',o.querySelector('input').checked));
     const manual=document.querySelector('input[name="pay-method"]:checked').value==='yape_manual';
     document.getElementById('pay-voluntary-label').hidden=!(manual&&paymentPilot&&!paymentPilotSynthetic);
-    document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual?(paymentPilotSynthetic?'Registrar pago':'Enviar a verificación manual'):'Registrar pago';
+    document.getElementById('pay-yape-fields').hidden=!manual;document.getElementById('pay-confirm').textContent=manual?'Enviar a revisión manual':'Confirmar registro de prueba';
   }));
   document.getElementById('pay-confirm').addEventListener('click',async ev=>{
     const btn=ev.currentTarget,epoch=sesionCliente.generation(),target=payTarget,view=paymentViewVersion;
@@ -3909,7 +3917,7 @@ async function descargarConstanciaPDF(r, btn){
   /* ---------- Obtener copias / Pagar (mismo componente, contexto distinto) ---------- */
   function abrirCopias(soloPendientes, opener){
     renderCopies(!!soloPendientes);
-    document.getElementById('copies-title').textContent = soloPendientes ? 'Pagar recibos' : 'Obtener copias';
+    document.getElementById('copies-title').textContent = soloPendientes ? 'Selecciona un recibo' : 'Mis documentos';
     document.getElementById('copies-sub').textContent = soloPendientes
       ? 'Selecciona un recibo pendiente o vencido para pagarlo'
       : 'Consulta y descarga tus últimos recibos';
@@ -3923,7 +3931,12 @@ async function descargarConstanciaPDF(r, btn){
     tb.innerHTML = '';
     const rows = soloPendientes ? recibos.filter(reciboPagable) : recibos;
     if(!rows.length){
-      tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted)">Sin recibos pendientes. Todo al día.</td></tr>';
+      const tr = document.createElement('tr');
+      const message = recibosEstado === 'error' ? 'No pudimos cargar tus recibos.' : soloPendientes ? 'No tienes recibos pendientes.' : 'Todavía no tienes recibos.';
+      const cell = nodo('td','activity-empty',message);
+      cell.colSpan = 5;
+      tr.append(cell);
+      tb.append(tr);
       return;
     }
     rows.forEach((r,ri)=>{
@@ -3932,7 +3945,7 @@ async function descargarConstanciaPDF(r, btn){
       const tdEtiq = document.createElement('td');
       tdEtiq.appendChild(nodo('b', null, r.etiqueta));
       tr.appendChild(tdEtiq);
-      tr.appendChild(nodo('td', null, r.periodo));
+      tr.appendChild(nodo('td', 'copy-due', r.vencimiento));
       const tdEst = document.createElement('td');
       tdEst.appendChild(nodo('span', 'badge ' + r.estado, r.estado));
       tr.appendChild(tdEst);
@@ -3941,7 +3954,7 @@ async function descargarConstanciaPDF(r, btn){
       const box = document.createElement('div'); box.className = 'tbl-actions';
       const bV = mk('Ver','detail','Ver detalle de ' + r.etiqueta);
       bV.addEventListener('click', ev=>{ const op = ev.currentTarget; closeModal(copiesModal); despuesEnSesion(()=>abrirDetalle(r, op), isReduced() ? 0 : 200); });
-      const bP = mk('Recibo','pdfb','Descargar recibo de ' + r.etiqueta);
+      const bP = mk('PDF','pdfb','Descargar recibo de ' + r.etiqueta);
       bP.addEventListener('click', ev=>descargarReciboPDF(r, ev.currentTarget));
       box.appendChild(bV); box.appendChild(bP);
       if(reciboPagable(r)){
@@ -4133,7 +4146,7 @@ async function descargarConstanciaPDF(r, btn){
     }
     list.innerHTML = '';
     if(!misSolicitudes.length){
-      if(emptyEl){ emptyEl.textContent = 'Aún no tienes solicitudes. Crea la primera con el formulario superior.'; emptyEl.classList.add('show'); }
+      if(emptyEl){ emptyEl.textContent = 'Todavía no envías solicitudes. Usa el formulario de arriba para escribirnos.'; emptyEl.classList.add('show'); }
       return;
     }
     if(emptyEl) emptyEl.classList.remove('show');
@@ -4271,7 +4284,7 @@ async function descargarConstanciaPDF(r, btn){
       const code = document.createElement('span'); code.className = 'inc-code'; code.textContent = tipoTxt + (nt.alcance === 'General' ? ' · GENERAL' : '');
       const badge = document.createElement('span'); badge.className = 'badge ' + (nt.leida ? '' : 'info'); badge.textContent = nt.leida ? 'LEÍDA' : 'NUEVA';
       row.appendChild(code); row.appendChild(badge);
-      const t = document.createElement('div'); t.className = 'inc-desc'; t.textContent = nt.titulo;
+      const t = document.createElement('strong'); t.className = 'notification-title'; t.textContent = nt.titulo;
       const m = document.createElement('div'); m.className = 'inc-desc'; m.textContent = nt.mensaje;
       const meta = document.createElement('div'); meta.className = 'inc-meta'; meta.textContent = fmtFechaLarga(nt.fecha_registro);
       d.appendChild(row); d.appendChild(t); d.appendChild(m); d.appendChild(meta);
@@ -4553,10 +4566,9 @@ async function descargarConstanciaPDF(r, btn){
     document.getElementById('inc-form').hidden = false;
     document.getElementById('inc-ok').hidden = true;
   });
-  // Espera al fin de la animación de cierre antes de navegar
   document.getElementById('inc-view').addEventListener('click', ()=>{
     closeModal(incModal);
-    setTimeout(()=>openDashboardPage('incidencias'), isReduced() ? 0 : 210);
+    openDashboardPage('incidencias');
   });
 
   /* ---------- Cortes de servicio (PostgreSQL, entorno demostrativo) ---------- */
@@ -4689,7 +4701,7 @@ async function descargarConstanciaPDF(r, btn){
       if(emptyEl){
         emptyEl.textContent = cortesError
           ? 'No fue posible actualizar los cortes. Inténtalo nuevamente.'
-          : 'No hay cortes de servicio registrados para este suministro. Consulta los avisos vigentes en Hidro Mejora.';
+          : 'No hay cortes de servicio registrados para este suministro. Consulta los avisos vigentes en Hidro-Mejora.';
         emptyEl.classList.add('show');
       }
       return;
@@ -5380,7 +5392,7 @@ async function descargarConstanciaPDF(r, btn){
       if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
         showError('Número de suministro o contraseña incorrectos.');
         btnLogin.disabled = false;
-        btnLoginText.textContent = 'Iniciar Sesión';
+        btnLoginText.textContent = 'Iniciar sesión';
         return;
       }
       if(resp.status === 403){
@@ -5389,25 +5401,25 @@ async function descargarConstanciaPDF(r, btn){
       if(esAbortado(e) || _hmEpoch!==sesionCliente.generation())return;}
         showError(mj);
         btnLogin.disabled = false;
-        btnLoginText.textContent = 'Iniciar Sesión';
+        btnLoginText.textContent = 'Iniciar sesión';
         return;
       }
       if(!resp.ok){
         showError('No se pudo iniciar sesión. Inténtalo nuevamente.');
         btnLogin.disabled = false;
-        btnLoginText.textContent = 'Iniciar Sesión';
+        btnLoginText.textContent = 'Iniciar sesión';
         return;
       }
       const authData = await conSesion(() => (resp.json()), _hmEpoch);
       if(resp.status===202 && authData?.estado==='segundo_factor'){
-        if(authData.rol!=='usuario'){showError('Esta aplicación es exclusiva para clientes. Usa el panel administrativo.');btnLogin.disabled=false;btnLoginText.textContent='Iniciar Sesión';return;}
+        if(authData.rol!=='usuario'){showError('Esta aplicación es exclusiva para clientes. Usa el panel administrativo.');btnLogin.disabled=false;btnLoginText.textContent='Iniciar sesión';return;}
         interfaz2fa.challenge(authData);
-        btnLogin.disabled=false;btnLoginText.textContent='Iniciar Sesión';return;
+        btnLogin.disabled=false;btnLoginText.textContent='Iniciar sesión';return;
       }
       if(!authData || authData.estado !== 'ok'){
         showError('No se pudo iniciar sesión. Inténtalo nuevamente.');
         btnLogin.disabled = false;
-        btnLoginText.textContent = 'Iniciar Sesión';
+        btnLoginText.textContent = 'Iniciar sesión';
         return;
       }
       if(!authData.usuario || authData.usuario.rol !== 'usuario'){
@@ -5427,7 +5439,7 @@ async function descargarConstanciaPDF(r, btn){
       if(esAbortado(err) || _hmEpoch!==sesionCliente.generation())return;
       showError(err.code==='SECURE_STATE_UNAVAILABLE'?err.message:'No se pudo conectar con el servidor. Inténtalo nuevamente.');
       btnLogin.disabled = false;
-      btnLoginText.textContent = 'Iniciar Sesión';
+      btnLoginText.textContent = 'Iniciar sesión';
       return;
     }
     // Feedback de éxito ~150ms antes del dashboard (sin ralentizar; omitido en reduced-motion).

@@ -10,7 +10,7 @@ const groups = {
         'Backend/test/email-live.test.js', 'Backend/test/email-otp.test.js', 'Backend/test/email-outbox.test.js',
         'Backend/test/email-resend.test.js', 'Backend/test/receipt-date.test.js', 'Backend/test/start.test.cjs',
         'Backend/test/totp-crypto.test.js', 'Backend/test/push-credentials.cjs',
-        'scripts/test/client-session.test.cjs', 'scripts/test/realtime.test.cjs', 'scripts/test/registration-state.test.cjs',
+        'scripts/test/client-consumption.test.cjs', 'scripts/test/client-session.test.cjs', 'scripts/test/realtime.test.cjs', 'scripts/test/registration-state.test.cjs',
         'scripts/test/secure-session.test.cjs', 'scripts/test/ui-money.test.cjs', 'scripts/test/hidrobot.test.cjs',
         'scripts/test/identity-palette.test.cjs', 'scripts/test/android-release-signing.test.cjs',
         'scripts/test/admin-date-validation.test.cjs', 'scripts/test/docker-context.test.cjs', 'scripts/test/push-event-errors.test.cjs',

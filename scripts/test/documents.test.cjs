@@ -56,8 +56,8 @@ for(const [state,label]of Object.entries({demostrativa:'CONSTANCIA DE OPERACIÓN
  test('constancia preserva estado real '+state+' y no atribuye acreditación financiera',()=>{
   const payment={id:'00000000-0000-4000-8000-000000000042',id_recibo:42,monto:123.45,metodo:state==='demostrativa'?'demostrativo':'yape_manual',estado:state,entorno:'simulado',codigo_operacion:'OPERACION-42',fecha_pago:'2026-10-25T15:00:00Z',referencia:'SIM-DECLARADA-42',revisado_por:900,revisado_en:state==='verificada_manual'?'2026-10-25T15:05:00Z':null};
   const result=inspect(api.payment(payment,receipt,context),'state-'+state);
-  for(const value of [label,'SIN ACREDITACIÓN FINANCIERA','SIM-DECLARADA-42','00000000-0000-4000-8000-000000000042','America/Lima','SEDAPAL','SUNAT'])assert.ok(result.text.includes(value),value);
-  assert.ok(!result.text.includes('Pago exitoso'));assert.match(result.info,/A4/);assert.match(result.text,/Entorno de pruebas · Sin cobros reales/);assert.match(result.text,/No se recibió dinero/);assert.doesNotMatch(result.text,/ensayo|sintétic|simulación|Código de prueba|Número de operación de Yape/iu);assert.match(result.text,/Código de operación/);
+  for(const value of [label,'SIN ACREDITACIÓN FINANCIERA','OPERACION-42','SIM-DECLARADA-42','00000000-0000-4000-8000-000000000042','America/Lima','SEDAPAL','SUNAT'])assert.ok(result.text.includes(value),value);
+  assert.doesNotMatch(result.text,/\bPEN\b/);assert.ok(!result.text.includes('Pago exitoso'));assert.match(result.info,/A4/);assert.match(result.text,/Entorno de pruebas · Sin cobros reales/);assert.match(result.text,/No se recibió dinero/);assert.doesNotMatch(result.text,/ensayo|sintétic|simulación|Código de prueba|Número de operación de Yape/iu);assert.match(result.text,/Código de operación/);
  });
 }
 test('motivos extensos y referencias largas se conservan sin inventar QR',()=>{

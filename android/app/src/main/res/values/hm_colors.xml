@@ -3,4 +3,6 @@
     <color name="hm_brand_navy">#103E60</color>
     <color name="hm_brand_blue">#075D91</color>
     <color name="hm_brand_teal">#087E9E</color>
+    <color name="hm_ocean_header">#0A2540</color>
+    <color name="hm_ocean_accent">#086375</color>
 </resources>

@@ -142,10 +142,12 @@ async function browser(executable) {
     await new Promise(resolve => web.listen(0, '127.0.0.1', resolve));
     const origin = 'http://127.0.0.1:' + web.address().port;
     const outboxKey=crypto.randomBytes(32).toString('base64');
+    const totpKey=crypto.randomBytes(32).toString('base64');
     backend = spawn(process.execPath, ['--require', path.join(root,'Backend/test/resend-fixture.cjs'), 'server.js'], { cwd: path.join(root, 'Backend'), stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, PORT: String(backendPort), DATABASE_URL: '', DB_HOST: '127.0.0.1', DB_PORT: String(port),
         POSTGRES_DB: database, POSTGRES_USER: 'hm_fixture', POSTGRES_PASSWORD: 'fixture-only-not-production',
         AUTH_TOKEN_SECRET: 'isolated-e2e-fixture-secret-not-production', NODE_ENV: 'development', CORS_ALLOWED_ORIGINS: origin,
+        TOTP_ADMIN_ENROLLMENT_ENABLED:'1', TOTP_ENCRYPTION_KEY:totpKey,
         EMAIL_REGISTRATION_ENABLED:'1', EMAIL_OUTBOX_KEY:outboxKey, EMAIL_OTP_SECRET: crypto.randomBytes(32).toString('hex'), RESEND_API_KEY:'fixture-provider-key',
         RESEND_FROM:'correo@fixture.invalid', HIDRO_TEST_MAILBOX:mailbox } });
     backend.stdout.on('data', data => { serverOutput += data; }); backend.stderr.on('data', data => { serverOutput += data; });
@@ -168,7 +170,7 @@ async function browser(executable) {
       await request('POST', '/api/auth/verify-email', null, {registro_id:pending.registro_id,codigo:message.codigo}, 201);
     }
     await pool.query("UPDATE usuarios SET rol='admin' WHERE correo='admin@fixture.invalid'");
-    const admin = await request('POST', '/api/auth/login', null, { numero_suministro: adminSupply, password }, 200);
+    let admin = await request('POST', '/api/auth/login', null, { numero_suministro: adminSupply, password }, 200);
     const user = await request('POST', '/api/auth/login', null, { numero_suministro: userSupply, password }, 200);
     const jwt=requireBackend('jsonwebtoken');
     const claims=jwt.decode(user.token);delete claims.iat;delete claims.exp;
@@ -198,12 +200,14 @@ async function browser(executable) {
     ok('Datos de prueba creados únicamente en hm_admin_test');
 
     chrome = await browser(process.env.HIDRO_TEST_CHROME || '/home/nico/.cache/puppeteer/chrome-headless-shell/linux-154.0.8037.57/chrome-headless-shell-linux64/chrome-headless-shell');
-    await chrome.goto('http://localhost:8081/');
-    assert.equal(await chrome.evaluate('document.getElementById("admin-login").hidden'), false);
-    await chrome.screenshot(path.join(output, 'admin-local-login.png'));
-    assert.equal((await fetch('http://localhost:8080/')).status, 200);
-    assert.equal((await fetch('http://localhost:8081/api/health')).status, 200);
-    ok('8080 conserva Frontend; 8081 sirve login Admin y proxy /api/health con PostgreSQL local');
+    if (process.env.HIDRO_TEST_COMPOSE_SMOKE !== '0') {
+      await chrome.goto('http://localhost:8081/');
+      assert.equal(await chrome.evaluate('document.getElementById("admin-login").hidden'), false);
+      await chrome.screenshot(path.join(output, 'admin-local-login.png'));
+      assert.equal((await fetch('http://localhost:8080/')).status, 200);
+      assert.equal((await fetch('http://localhost:8081/api/health')).status, 200);
+      ok('8080 conserva Frontend; 8081 sirve login Admin y proxy /api/health con PostgreSQL local');
+    }
     await chrome.goto(origin + '/');
     await require('./visual-checks.cjs').matrix(chrome,output,'admin-login','admin');
     await chrome.evaluate(`window.__sockets=[];const originalIO=window.io;window.io=Object.assign((...args)=>{const socket=originalIO(...args);window.__sockets.push(socket);return socket;},originalIO);void 0;`);
@@ -226,6 +230,7 @@ async function browser(executable) {
     await require('./visual-checks.cjs').matrix(chrome,output,'admin-dashboard','admin');
 
     async function nav(name, selector) {
+      await wait(() => chrome.evaluate('!document.querySelector("dialog[open]")'), 'cuadros cerrados antes de navegar');
       await chrome.click('[data-sec="' + name + '"]');
       if (selector) await wait(() => chrome.evaluate('document.querySelector(' + JSON.stringify(selector) + ') !== null'), 'módulo ' + name);
       await wait(()=>chrome.evaluate('document.querySelector(".dash-sec.active")?.getAttribute("aria-busy")!=="true"'),'carga administrativa '+name);
@@ -235,6 +240,9 @@ async function browser(executable) {
     async function cardButton(list, text, label) {
       await chrome.evaluate(`(() => {const card=[...document.querySelectorAll(${JSON.stringify(list + ' .inc-item')})].find(n=>n.textContent.includes(${JSON.stringify(text)}));const button=card&&[...card.querySelectorAll('button')].find(b=>b.textContent===${JSON.stringify(label)});if(!button)throw Error('Botón no encontrado');button.click();})()`);
     }
+    async function pressEscape() {
+      for (const type of ['keyDown','keyUp']) await chrome.command('Input.dispatchKeyEvent',{type,key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+    }
     async function dbValue(sql, params = []) { return (await pool.query(sql, params)).rows[0]; }
     await nav('admin-usuarios', '#admin-usu-list .inc-item');
     await require('./visual-checks.cjs')(chrome,output,'admin-usuarios-mobile',390,844);
@@ -242,7 +250,7 @@ async function browser(executable) {
     await chrome.command('Input.dispatchKeyEvent',{type:'keyUp',key:'Tab',code:'Tab',windowsVirtualKeyCode:9});
     assert.equal(await chrome.evaluate('document.activeElement.id'),'adm-usu-search','Tab desde el título enfocado llega al buscador');
     await cardButton('#admin-usu-list', 'cliente@fixture.invalid', 'Ver detalle');
-    await wait(() => chrome.evaluate('!document.getElementById("admin-usu-det-card").hidden'), 'detalle usuario');
+    await wait(() => chrome.evaluate('document.getElementById("admin-usu-det-card").open && !document.getElementById("admin-usu-det-actions").hidden'), 'detalle usuario');
     await chrome.click('#admin-usu-toggle');
     await require('./visual-checks.cjs')(chrome,output,'admin-confirm-modal',768,900);
     await chrome.evaluate('document.getElementById("confirm-ok").focus()');
@@ -251,27 +259,44 @@ async function browser(executable) {
     assert.equal(await chrome.evaluate('document.activeElement.id'),'confirm-close','El foco permanece dentro de la confirmación');
     await chrome.click('#confirm-ok');
     await wait(async () => (await dbValue('SELECT activo FROM usuarios WHERE id_usuario=$1', [userId])).activo === false, 'desactivar usuario');
-    await wait(() => chrome.evaluate('document.getElementById("admin-usu-toggle").textContent==="Reactivar cuenta"'), 'detalle desactivado');
+    await wait(() => chrome.evaluate('!document.getElementById("admin-usu-det-actions").hidden && document.getElementById("admin-usu-toggle").textContent==="Reactivar cuenta"'), 'detalle desactivado');
     await chrome.click('#admin-usu-toggle'); await chrome.click('#confirm-ok');
     await wait(async () => (await dbValue('SELECT activo FROM usuarios WHERE id_usuario=$1', [userId])).activo === true, 'reactivar usuario');
-    await wait(() => chrome.evaluate('document.getElementById("admin-usu-toggle").textContent==="Desactivar cuenta"'), 'detalle reactivado');
+    await wait(() => chrome.evaluate('!document.getElementById("admin-usu-det-actions").hidden && document.getElementById("admin-usu-toggle").textContent==="Desactivar cuenta"'), 'detalle reactivado');
     await chrome.click('#admin-usu-edit-ubi');
     await require('./visual-checks.cjs').matrix(chrome,output,'admin-suministro-form','admin');
     await chrome.fill('#adm-ubi-distrito', 'Distrito fixture'); await chrome.fill('#adm-ubi-zona', 'Zona fixture'); await chrome.submit('#admin-ubi-form');
     await wait(async () => (await dbValue('SELECT zona FROM suministros WHERE id_suministro=$1', [supplyId])).zona === 'Zona fixture', 'ubicación suministro');
+    await wait(() => chrome.evaluate('!document.getElementById("admin-ubi-dialog").open && !document.getElementById("admin-usu-det-actions").hidden'), 'ubicación visible en el detalle');
+    await chrome.click('#admin-usu-det-close');
     ok('Usuarios: lista, detalle, desactivar/reactivar; suministro: editar ubicación y persistir');
 
     await nav('admin-recibos', '#admin-rec-list .inc-item');
     await chrome.click('#btn-nuevo-recibo');
+    assert.equal(await chrome.evaluate('document.getElementById("admin-recibo-form-card").matches(":modal")'), true);
+    await chrome.fill('#adm-rec-periodo', 'Borrador');
+    await chrome.evaluate('document.getElementById("adm-rec-periodo").focus()');
+    await pressEscape();
+    await chrome.click('#admin-keep-editing');
+    assert.equal(await chrome.evaluate('document.activeElement.id'), 'adm-rec-periodo');
+    assert.equal(await chrome.evaluate('document.activeElement.value'), 'Borrador');
+    await pressEscape();
+    await chrome.click('#admin-discard-changes');
+    assert.equal(await chrome.evaluate('document.activeElement.id'), 'btn-nuevo-recibo');
+    await chrome.click('#btn-nuevo-recibo');
+    assert.equal(await chrome.evaluate('document.getElementById("adm-rec-periodo").value'), '');
+    ok('Recibos: Escape protege cambios, conserva el borrador y restaura el foco');
     await require('./visual-checks.cjs').matrix(chrome,output,'admin-recibo-form','admin');
     for (const [id, value] of Object.entries({ 'adm-rec-suministro': userSupply, 'adm-rec-periodo': 'Recibo UI fixture', 'adm-rec-emision': '2026-01-01', 'adm-rec-vencimiento': '2026-02-01', 'adm-rec-consumo': '18', 'adm-rec-monto': '72.50' })) await chrome.fill('#' + id, value);
     await chrome.submit('#admin-recibo-form');
     await wait(async () => !!(await dbValue("SELECT id_recibo FROM recibos WHERE periodo='Recibo UI fixture'")), 'crear recibo');
     await wait(() => chrome.evaluate('document.getElementById("admin-rec-list").textContent.includes("Recibo UI fixture")'), 'render recibo');
+    await wait(() => chrome.evaluate('!document.getElementById("admin-recibo-form-card").open'), 'cerrar creación de recibo');
     await cardButton('#admin-rec-list', 'Recibo UI fixture', 'Editar');
     await chrome.fill('#adm-rec-monto', '80'); await chrome.submit('#admin-recibo-form');
     await wait(async () => Number((await dbValue("SELECT monto FROM recibos WHERE periodo='Recibo UI fixture'")).monto) === 80, 'editar recibo');
     await wait(() => chrome.evaluate('document.getElementById("admin-rec-list").textContent.includes("80.00")'), 'render edición');
+    await wait(() => chrome.evaluate('!document.getElementById("admin-recibo-form-card").open'), 'cerrar edición de recibo');
     await cardButton('#admin-rec-list', 'Recibo UI fixture', 'Anular'); await chrome.click('#confirm-ok');
     await wait(async () => (await dbValue("SELECT estado FROM recibos WHERE periodo='Recibo UI fixture'")).estado === 'Anulado', 'anular recibo');
     ok('Recibos: listar, crear, editar y anular desde la interfaz hasta PostgreSQL');
@@ -283,9 +308,11 @@ async function browser(executable) {
     await chrome.submit('#admin-corte-form');
     await wait(async () => !!(await dbValue("SELECT id_corte FROM cortes_servicio WHERE motivo='Corte UI fixture'")), 'crear corte');
     await wait(() => chrome.evaluate('document.getElementById("admin-cortes-list").textContent.includes("Corte UI fixture")'), 'render corte');
+    await wait(() => chrome.evaluate('!document.getElementById("admin-corte-form-card").open'), 'cerrar creación de corte');
     await cardButton('#admin-cortes-list', 'Corte UI fixture', 'Editar'); await chrome.fill('#adm-motivo', 'Corte editado fixture'); await chrome.submit('#admin-corte-form');
     await wait(async () => !!(await dbValue("SELECT id_corte FROM cortes_servicio WHERE motivo='Corte editado fixture'")), 'editar corte');
     await wait(() => chrome.evaluate('document.getElementById("admin-cortes-list").textContent.includes("Corte editado fixture")'), 'render edición corte');
+    await wait(() => chrome.evaluate('!document.getElementById("admin-corte-form-card").open'), 'cerrar edición de corte');
     await cardButton('#admin-cortes-list', 'Corte editado fixture', 'Cancelar'); await chrome.click('#confirm-ok');
     await wait(async () => (await dbValue("SELECT cancelado FROM cortes_servicio WHERE motivo='Corte editado fixture'")).cancelado === true, 'cancelar corte');
     ok('Cortes: listar, crear, editar y cancelar desde la interfaz hasta PostgreSQL');
@@ -323,6 +350,65 @@ async function browser(executable) {
     assert.equal(await chrome.evaluate('__sockets.filter(s=>s.connected).length'), 1);
     ok('Cuenta administrativa y un solo socket después de navegar por todos los módulos');
 
+    await wait(() => chrome.evaluate('!document.getElementById("two-factor-open").disabled'), 'configuración 2FA disponible');
+    await chrome.click('#two-factor-open');
+    assert.equal(await chrome.evaluate('document.getElementById("admin-security-dialog").matches(":modal")'), true);
+    await chrome.fill('#two-factor-password', 'Clave incorrecta de prueba');
+    await chrome.submit('#two-factor-manage');
+    await wait(() => chrome.evaluate('document.getElementById("two-factor-settings-error").textContent.length > 0'), 'contraseña incorrecta dentro del cuadro');
+    await chrome.fill('#two-factor-password', password);
+    await chrome.submit('#two-factor-manage');
+    await wait(() => chrome.evaluate('document.getElementById("two-factor-qr").naturalWidth>0'), 'QR privado visible');
+    const pendingFactor = await dbValue('SELECT pendiente_secreto FROM usuario_2fa WHERE id_usuario=$1',[admin.usuario.id_usuario]);
+    const {crearCifradoTotp} = require('../../Backend/totp-crypto');
+    const {TOTP, Secret} = requireBackend('otpauth');
+    const secret = crearCifradoTotp({TOTP_ENCRYPTION_KEY:totpKey}).decrypt(pendingFactor.pendiente_secreto,admin.usuario.id_usuario);
+    await chrome.fill('#two-factor-confirm-code', new TOTP({secret:Secret.fromBase32(secret)}).generate());
+    await chrome.submit('#two-factor-confirm');
+    await wait(() => chrome.evaluate('document.getElementById("admin-security-dialog").open && !document.getElementById("two-factor-codes").hidden && !document.getElementById("two-factor-controls").hasAttribute("aria-busy")'), 'códigos visibles después de rotar sesión');
+    assert.equal((await dbValue('SELECT activo FROM usuario_2fa WHERE id_usuario=$1',[admin.usuario.id_usuario])).activo,true);
+    const oneTimeRecovery = await chrome.evaluate('document.getElementById("two-factor-codes-list").textContent.split(String.fromCharCode(10))[0]');
+    await pressEscape();
+    await wait(() => chrome.evaluate('document.getElementById("admin-discard-dialog").open'), 'protección de los códigos de recuperación');
+    await chrome.click('#admin-discard-changes');
+    assert.equal(await chrome.evaluate('document.getElementById("two-factor-codes-list").textContent'), '');
+    assert.equal(await chrome.evaluate('document.getElementById("two-factor-qr").hasAttribute("src")'), false);
+    // Un GET que coincidió con el cambio puede llegar con el JWT recién revocado.
+    await chrome.evaluate(`(() => {
+      const original = window.fetch;
+      let release, lateProfile;
+      const gate = new Promise(resolve => { release = resolve; });
+      window.fetch = async (url, options) => {
+        if (String(url).endsWith('/api/me/perfil') && !lateProfile) {
+          lateProfile = gate.then(async () => {
+            const response = await original(url, options);
+            window.__oldProfileStatus = response.status;
+            return response;
+          });
+          return lateProfile;
+        }
+        if (String(url).endsWith('/api/auth/2fa/disable')) {
+          const response = await original(url, options);
+          window.fetch = original;
+          release();
+          await lateProfile;
+          await new Promise(resolve => setTimeout(resolve, 40));
+          return response;
+        }
+        return original(url, options);
+      };
+      document.querySelector('#admin-nav [data-sec="admin-cuenta"]').click();
+    })()`);
+    await chrome.click('#two-factor-open');
+    await chrome.fill('#two-factor-password', password);
+    await chrome.fill('#two-factor-existing-code', oneTimeRecovery);
+    await chrome.click('#two-factor-disable');
+    await wait(() => chrome.evaluate('document.getElementById("two-factor-status").textContent.startsWith("Desactivada") && !document.getElementById("two-factor-controls").hasAttribute("aria-busy")'), 'desactivar 2FA en fixture');
+    assert.equal(await chrome.evaluate('window.__oldProfileStatus'), 401);
+    await chrome.click('#two-factor-close');
+    ok('2FA de Admin: error visible, QR, activación, rotación de sesión, protección de códigos y desactivación');
+
+    const socketsBeforeLogout = await chrome.evaluate('__sockets.length');
     // Respuesta ya iniciada, pero entregada al código tras cerrar sesión.
     await chrome.evaluate(`const originalFetch=window.fetch;window.fetch=async(...args)=>{const response=await originalFetch(...args);if(String(args[0]).includes('/api/admin/usuarios'))await new Promise(resolve=>setTimeout(resolve,900));return response;};`);
     await nav('admin-usuarios'); await pause(100); await chrome.click('#admin-logout'); await pause(1100);
@@ -337,10 +423,11 @@ async function browser(executable) {
     await login(adminSupply);
     await wait(() => chrome.evaluate('!document.getElementById("admin-panel").hidden'), 'segundo login');
     await wait(() => chrome.evaluate('__sockets.filter(s=>s.connected).length===1'), 'socket segundo login');
-    assert.equal(await chrome.evaluate('__sockets.length'), 2);
+    assert.equal(await chrome.evaluate('__sockets.length'), socketsBeforeLogout + 1);
     await chrome.click('#admin-logout');
     ok('Segundo login crea una conexión nueva y no conserva conexiones anteriores');
 
+    admin = await request('POST', '/api/auth/login', null, {numero_suministro:adminSupply, password}, 200);
     await require('./client-checks.cjs')({ chrome, origin, output, pool, request, admin, user, password,
       adminSupply, userSupply, supplyId, png, wait, pause, ok, expiredToken, mailbox });
 

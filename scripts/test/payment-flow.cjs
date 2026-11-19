@@ -65,6 +65,16 @@ test('Admin: motivo, revisión separada, historial y resultado visibles para el 
  const f=await fixture(t,true);await f.page.locator('#admin-nav [data-sec="admin-pagos"]').click();
  const card=f.page.locator('[data-operation]').filter({hasText:'UI-TEST-1234'});await card.waitFor();
  await card.getByRole('button',{name:'Revisar',exact:true}).click();await f.page.locator('#operation-history details').waitFor();await f.page.locator('#operation-history summary').click();
+ for (const [width, height] of [[1024, 768], [1440, 900]]) {
+  await f.page.setViewportSize({width, height});
+  const dialog = f.page.locator('.payment-dialog');
+  const bounds = await dialog.boundingBox();
+  assert.ok(bounds.x >= 0 && bounds.y >= 0 && bounds.x + bounds.width <= width + 1 && bounds.y + bounds.height <= height + 1);
+  const confirmation = dialog.getByRole('button', {name:'Confirmar operación', exact:true});
+  await confirmation.scrollIntoViewIfNeeded();
+  await confirmation.click({trial:true});
+  await dialog.screenshot({path:path.join(out, 'revision-manual-' + width + '.png')});
+ }
  await f.page.locator('#operation-review textarea').fill('Ensayo sintético revisado en laboratorio');await f.page.getByRole('button',{name:'Confirmar operación',exact:true}).click();
  await f.page.locator('#operation-error').getByText(/Confirma la comprobación/).waitFor();
  await f.page.locator('#operation-review input[type="checkbox"]').check();await f.page.getByRole('button',{name:'Confirmar operación',exact:true}).click();await f.page.locator('.payment-dialog').waitFor({state:'hidden'});

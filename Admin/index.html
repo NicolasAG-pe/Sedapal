@@ -1,19 +1,20 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-PE">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0F4C81">
+  <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
+  <meta name="theme-color" content="#0A2540">
   <title>Hidro-Mejora · Administración</title>
   <link rel="stylesheet" href="assets/css/admin.css">
   <link rel="stylesheet" href="shared/styles.css">
   <link rel="stylesheet" href="assets/css/workspace.css">
+  <link rel="stylesheet" href="assets/css/dialogs.css">
   <link rel="icon" href="shared/assets/hm-symbol.svg" type="image/svg+xml">
 </head>
 <body>
   <a class="skip" href="#admin-content">Saltar al contenido administrativo</a>
   <section id="admin-login" class="login-screen" aria-labelledby="login-title">
-    <div class="admin-login-story"><img src="shared/assets/hm-symbol.svg" alt="Hidro-Mejora" width="56" height="56"><h2>Una visión clara de la operación.</h2><p>Gestiona cuentas, recibos e incidencias desde un espacio de trabajo compartido.</p><ul><li data-icon="users">Usuarios y suministros</li><li data-icon="receipt">Recibos y pagos registrados</li><li data-icon="support">Atención y seguimiento</li></ul></div>
+    <div class="admin-login-story"><img src="shared/assets/hm-symbol.svg" alt="Hidro-Mejora" width="56" height="56"><h2>Gestión del servicio de agua</h2><p>Gestiona cuentas, recibos e incidencias desde un espacio de trabajo compartido.</p><ul><li data-icon="users">Usuarios y suministros</li><li data-icon="receipt">Recibos y pagos registrados</li><li data-icon="support">Atención y seguimiento</li></ul></div>
     <div class="login-card">
       <div class="admin-login-brand"><img src="shared/assets/hm-symbol.svg" class="login-logo" alt="Hidro-Mejora" width="48" height="48">
       <p class="eyebrow">HIDRO-MEJORA</p></div>
@@ -65,31 +66,41 @@
             <p>Necesitarás un cliente compatible en todos tus dispositivos y tu aplicación autenticadora para volver a iniciar sesión.</p>
             <p id="two-factor-status" role="status">Consulta el estado de protección de tu cuenta.</p>
             <button class="btn btn-ghost" type="button" id="two-factor-open">Configurar verificación en dos pasos</button>
-            <div id="two-factor-controls" hidden>
-              <form id="two-factor-manage">
-                <div class="field"><label for="two-factor-password">Confirma tu contraseña actual</label>
-                  <input id="two-factor-password" type="password" autocomplete="current-password" maxlength="128" required /></div>
-                <div class="field" id="two-factor-existing" hidden><label for="two-factor-existing-code">Código del factor actual o de recuperación</label>
-                  <input id="two-factor-existing-code" aria-describedby="two-factor-settings-error" type="text" autocomplete="one-time-code" maxlength="35" /></div>
-                <button class="btn btn-sky" id="two-factor-setup" type="submit">Preparar activación</button>
-                <button class="btn btn-ghost" id="two-factor-recovery" type="button" hidden>Generar nuevos códigos de recuperación</button>
-                <button class="btn btn-ghost" id="two-factor-disable" type="button" hidden>Desactivar verificación en dos pasos</button>
-              </form>
-              <form id="two-factor-confirm" hidden>
-                <p>Escanea este QR con una aplicación autenticadora. Si estás usando el mismo teléfono, abre esta sección en otro dispositivo para escanearlo. Confirma antes de cinco minutos.</p>
-                <img id="two-factor-qr" width="300" height="300" alt="QR privado para vincular tu autenticador" />
-                <div class="field"><label for="two-factor-confirm-code">Código de seis dígitos</label>
-                  <input id="two-factor-confirm-code" aria-describedby="two-factor-settings-error" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required /></div>
-                <button class="btn btn-sky" type="submit">Activar y guardar códigos</button>
-              </form>
-              <div id="two-factor-codes" hidden>
-                <p>Guarda estos códigos en un lugar privado fuera de Hidro-Mejora. Solo se muestran ahora y cada uno sirve una vez.</p>
-                <pre id="two-factor-codes-list" tabindex="0" aria-label="Códigos de recuperación"></pre>
+            <dialog class="admin-dialog admin-dialog--drawer" id="admin-security-dialog" aria-labelledby="two-factor-config-title">
+              <header class="admin-dialog-head"><div><h3 id="two-factor-config-title" data-dialog-title tabindex="-1">Verificación en dos pasos</h3></div>
+                <button class="icon-btn" data-dialog-close type="button" aria-label="Cerrar cuadro"><span aria-hidden="true">×</span></button>
+              </header>
+              <div id="two-factor-controls" class="admin-dialog-frame" hidden>
+                <div class="admin-dialog-body">
+                  <form id="two-factor-manage">
+                    <div class="field"><label for="two-factor-password">Confirma tu contraseña actual</label>
+                      <input id="two-factor-password" type="password" autocomplete="current-password" maxlength="128" required /></div>
+                    <div class="field" id="two-factor-existing" hidden><label for="two-factor-existing-code">Código del factor actual o de recuperación</label>
+                      <input id="two-factor-existing-code" aria-describedby="two-factor-settings-error" type="text" autocomplete="one-time-code" maxlength="35" /></div>
+                  </form>
+                  <form id="two-factor-confirm" hidden>
+                    <p>Escanea este QR con una aplicación autenticadora. Si estás usando el mismo teléfono, abre esta sección en otro dispositivo para escanearlo. Confirma antes de cinco minutos.</p>
+                    <img id="two-factor-qr" width="300" height="300" alt="QR privado para vincular tu autenticador" />
+                    <div class="field"><label for="two-factor-confirm-code">Código de seis dígitos</label>
+                      <input id="two-factor-confirm-code" aria-describedby="two-factor-settings-error" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required /></div>
+                  </form>
+                  <div id="two-factor-codes" hidden>
+                    <p>Guarda estos códigos en un lugar privado fuera de Hidro-Mejora. Solo se muestran ahora y cada uno sirve una vez.</p>
+                    <pre id="two-factor-codes-list" tabindex="0" aria-label="Códigos de recuperación"></pre>
+                  </div>
+                  <p>Si perdiste tu autenticador, usa contraseña y recuperación para desactivar y volver a configurarlo. Para generar códigos nuevos necesitas tu autenticador.</p>
+                </div>
+                <p id="two-factor-settings-error" class="admin-dialog-status" role="alert"></p>
+                <p class="admin-dialog-status" data-dialog-status role="status"></p>
+                <footer class="admin-dialog-foot">
+                  <button class="btn btn-ghost" type="button" id="two-factor-close">Cerrar</button>
+                  <button class="btn btn-sky" id="two-factor-setup" type="submit" form="two-factor-manage">Preparar activación</button>
+                  <button class="btn btn-ghost" id="two-factor-recovery" type="button" hidden>Generar nuevos códigos</button>
+                  <button class="btn btn-danger" id="two-factor-disable" type="button" hidden>Desactivar verificación</button>
+                  <button id="two-factor-activate" class="btn btn-sky" type="submit" form="two-factor-confirm">Activar y guardar códigos</button>
+                </footer>
               </div>
-              <p>Si perdiste tu autenticador, usa contraseña y recuperación para desactivar y volver a configurarlo. Para generar códigos nuevos necesitas tu autenticador.</p>
-              <p id="two-factor-settings-error" role="alert"></p>
-              <button class="btn btn-ghost" type="button" id="two-factor-close">Cerrar y ocultar datos privados</button>
-            </div>
+            </dialog>
           </section></div></div>
     </div>
   </div>
@@ -98,13 +109,13 @@
       <div class="dash-sec" id="sec-admin" aria-label="Resumen administrativo">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Administración</div>
+            <div class="page-crumb">Hidro-Mejora / Administración</div>
             <h2 class="page-title" tabindex="-1">Resumen administrativo</h2>
-            <p class="page-desc">Resumen operativo de tu servicio.</p>
+            <p class="page-desc">Cuentas, facturación, cortes y solicitudes de atención.</p>
           </div>
         </div>
         <div class="mod-stats admin-overview" aria-label="Resumen administrativo">
-          <div class="mod-stat priority"><div class="kpi-top"><small>Usuarios activos</small><span data-icon="users"></span></div><strong id="adm-dash-usu">—</strong><span class="kpi-note" id="adm-dash-user-total">Consultando cuentas</span></div>
+          <div class="mod-stat"><div class="kpi-top"><small>Usuarios activos</small><span data-icon="users"></span></div><strong id="adm-dash-usu">—</strong><span class="kpi-note" id="adm-dash-user-total">Consultando cuentas</span></div>
           <div class="mod-stat"><div class="kpi-top"><small>Recibos registrados</small><span data-icon="receipt"></span></div><strong id="adm-dash-rec">—</strong><span class="kpi-note">Todos los estados</span></div>
           <div class="mod-stat"><div class="kpi-top"><small>Pagos históricos</small><span data-icon="payment"></span></div><strong id="adm-dash-pay">—</strong><span class="kpi-note" id="adm-dash-payment-total">Consultando importe</span><span class="kpi-note">Sin acreditación bancaria atribuida</span></div>
           <div class="mod-stat"><div class="kpi-top"><small>Incidencias pendientes</small><span data-icon="incident"></span></div><strong id="adm-dash-inc">—</strong><span class="kpi-note">Registradas y en revisión</span></div>
@@ -123,7 +134,7 @@
           </button>
           <button class="quick-card" data-action="adm-pagos" type="button">
             <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 10h20M6 15h4"/></svg></span>
-            <span class="quick-body"><span><b>Consultar pagos</b><small>Solo lectura.</small></span></span>
+            <span class="quick-body"><span><b>Consultar pagos</b><small>Revisión manual e historial.</small></span></span>
           </button>
           <button class="quick-card" data-action="adm-cortes" type="button">
             <span class="quick-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg></span>
@@ -144,7 +155,7 @@
       <div class="dash-sec" id="sec-admin-recibos" aria-label="Gestión de recibos">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Administración / Recibos</div>
+            <div class="page-crumb">Hidro-Mejora / Administración / Recibos</div>
             <h2 class="page-title" tabindex="-1">Recibos</h2>
             <p class="page-desc">Publica y administra los recibos de los usuarios.</p>
           </div>
@@ -159,41 +170,45 @@
           <div class="mod-stat"><small>Pagados</small><strong id="adm-rec-pag">0</strong></div>
           <div class="mod-stat"><small>Anulados</small><strong id="adm-rec-anu">0</strong></div>
         </div>
-        <div class="support-card" id="admin-recibo-form-card" hidden aria-label="Formulario de recibo">
-          <h4 id="admin-recibo-form-title">Nuevo recibo</h4>
-          <div id="admin-recibo-error" class="form-error" role="alert"></div>
-          <form id="admin-recibo-form" novalidate>
-            <div class="field">
-              <label for="adm-rec-suministro">Número de suministro</label>
-              <input type="text" id="adm-rec-suministro" inputmode="numeric" maxlength="9" minlength="9" pattern="[0-9]{9}" placeholder="Ej. 676767676" required />
+        <dialog id="admin-recibo-form-card" class="admin-dialog admin-dialog--drawer" aria-labelledby="admin-recibo-form-title">
+          <header class="admin-dialog-head"><div><h3 id="admin-recibo-form-title" data-dialog-title tabindex="-1">Nuevo recibo</h3></div>
+            <button class="icon-btn" data-dialog-close type="button" aria-label="Cerrar cuadro"><span aria-hidden="true">×</span></button></header>
+          <form id="admin-recibo-form" class="admin-dialog-form" novalidate>
+            <div class="admin-dialog-body">
+              <div id="admin-recibo-error" class="form-error" role="alert"></div>
+              <div class="field">
+                <label for="adm-rec-suministro">Número de suministro</label>
+                <input type="text" id="adm-rec-suministro" inputmode="numeric" maxlength="9" minlength="9" pattern="[0-9]{9}" placeholder="Ej. 676767676" required />
+              </div>
+              <div class="field">
+                <label for="adm-rec-periodo">Periodo</label>
+                <input type="text" id="adm-rec-periodo" maxlength="20" placeholder="Ej. Diciembre 2026" required />
+              </div>
+              <div class="field">
+                <label for="adm-rec-emision">Fecha de emisión</label>
+                <input type="date" id="adm-rec-emision" required />
+              </div>
+              <div class="field">
+                <label for="adm-rec-vencimiento">Fecha de vencimiento</label>
+                <input type="date" id="adm-rec-vencimiento" required />
+              </div>
+              <div class="field">
+                <label for="adm-rec-consumo">Consumo m³</label>
+                <input type="number" id="adm-rec-consumo" min="0" max="99999999.99" step="0.01" placeholder="Ej. 18.4" required />
+              </div>
+              <div class="field">
+                <label for="adm-rec-monto">Monto S/</label>
+                <input type="number" id="adm-rec-monto" min="0.01" max="99999999.99" step="0.01" placeholder="Ej. 72.50" required />
+              </div>
+              <p id="admin-recibo-hint" class="hint" aria-live="polite"></p>
             </div>
-            <div class="field">
-              <label for="adm-rec-periodo">Periodo</label>
-              <input type="text" id="adm-rec-periodo" maxlength="20" placeholder="Ej. Diciembre 2026" required />
-            </div>
-            <div class="field">
-              <label for="adm-rec-emision">Fecha de emisión</label>
-              <input type="date" id="adm-rec-emision" required />
-            </div>
-            <div class="field">
-              <label for="adm-rec-vencimiento">Fecha de vencimiento</label>
-              <input type="date" id="adm-rec-vencimiento" required />
-            </div>
-            <div class="field">
-              <label for="adm-rec-consumo">Consumo m³</label>
-              <input type="number" id="adm-rec-consumo" min="0" max="99999999.99" step="0.01" placeholder="Ej. 18.4" required />
-            </div>
-            <div class="field">
-              <label for="adm-rec-monto">Monto S/</label>
-              <input type="number" id="adm-rec-monto" min="0.01" max="99999999.99" step="0.01" placeholder="Ej. 72.50" required />
-            </div>
-            <div class="dialog-actions">
-              <button class="btn btn-ghost" id="admin-recibo-cancel" type="button">Cancelar</button>
+            <p class="admin-dialog-status" data-dialog-status role="status"></p>
+            <footer class="admin-dialog-foot">
+              <button class="btn btn-ghost" id="admin-recibo-cancel" data-dialog-close type="button">Cancelar</button>
               <button class="btn btn-primary" id="admin-recibo-submit" type="submit"><span id="admin-recibo-submit-text">Publicar recibo</span></button>
-            </div>
-            <p id="admin-recibo-hint" class="hint" aria-live="polite"></p>
+            </footer>
           </form>
-        </div>
+        </dialog>
         <div class="section-head">
           <h3 style="font-size:.9rem">Filtrar recibos</h3>
           <div class="toolbar">
@@ -216,7 +231,7 @@
       <div class="dash-sec" id="sec-admin-cortes" aria-label="Gestión de cortes">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Administración / Cortes</div>
+            <div class="page-crumb">Hidro-Mejora / Administración / Cortes</div>
             <h2 class="page-title" tabindex="-1">Cortes de servicio</h2>
             <p class="page-desc">Publica y administra los avisos de servicio.</p>
           </div>
@@ -231,43 +246,47 @@
           <div class="mod-stat"><small>Finalizados</small><strong id="adm-stat-fin">0</strong></div>
           <div class="mod-stat"><small>Cancelados</small><strong id="adm-stat-canc">0</strong></div>
         </div>
-        <div class="support-card" id="admin-corte-form-card" hidden aria-label="Formulario de corte">
-          <h4 id="admin-corte-form-title">Nuevo corte de servicio</h4>
-          <div id="admin-corte-error" class="form-error" role="alert"></div>
-          <form id="admin-corte-form" novalidate>
-            <div class="field">
-              <label for="adm-alcance">Alcance</label>
-              <select id="adm-alcance" required>
-                <option value="Zona">Zona</option>
-                <option value="General">General</option>
-              </select>
+        <dialog id="admin-corte-form-card" class="admin-dialog admin-dialog--drawer" aria-labelledby="admin-corte-form-title">
+          <header class="admin-dialog-head"><div><h3 id="admin-corte-form-title" data-dialog-title tabindex="-1">Nuevo corte de servicio</h3></div>
+            <button class="icon-btn" data-dialog-close type="button" aria-label="Cerrar cuadro"><span aria-hidden="true">×</span></button></header>
+          <form id="admin-corte-form" class="admin-dialog-form" novalidate>
+            <div class="admin-dialog-body">
+              <div id="admin-corte-error" class="form-error" role="alert"></div>
+              <div class="field">
+                <label for="adm-alcance">Alcance</label>
+                <select id="adm-alcance" required>
+                  <option value="Zona">Zona</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+              <div class="field" id="adm-distrito-wrap">
+                <label for="adm-distrito">Distrito</label>
+                <input type="text" id="adm-distrito" maxlength="80" placeholder="Ej. Ate" />
+              </div>
+              <div class="field" id="adm-zona-wrap">
+                <label for="adm-zona">Zona</label>
+                <input type="text" id="adm-zona" maxlength="120" placeholder="Ej. Santa Clara" />
+              </div>
+              <div class="field">
+                <label for="adm-motivo">Motivo</label>
+                <input type="text" id="adm-motivo" maxlength="200" placeholder="Ej. Mantenimiento preventivo" required />
+              </div>
+              <div class="field">
+                <label for="adm-inicio">Fecha/hora inicio</label>
+                <input type="datetime-local" id="adm-inicio" required />
+              </div>
+              <div class="field">
+                <label for="adm-fin">Fecha/hora fin</label>
+                <input type="datetime-local" id="adm-fin" required />
+              </div>
             </div>
-            <div class="field" id="adm-distrito-wrap">
-              <label for="adm-distrito">Distrito</label>
-              <input type="text" id="adm-distrito" maxlength="80" placeholder="Ej. Ate" />
-            </div>
-            <div class="field" id="adm-zona-wrap">
-              <label for="adm-zona">Zona</label>
-              <input type="text" id="adm-zona" maxlength="120" placeholder="Ej. Santa Clara" />
-            </div>
-            <div class="field">
-              <label for="adm-motivo">Motivo</label>
-              <input type="text" id="adm-motivo" maxlength="200" placeholder="Ej. Mantenimiento preventivo" required />
-            </div>
-            <div class="field">
-              <label for="adm-inicio">Fecha/hora inicio</label>
-              <input type="datetime-local" id="adm-inicio" required />
-            </div>
-            <div class="field">
-              <label for="adm-fin">Fecha/hora fin</label>
-              <input type="datetime-local" id="adm-fin" required />
-            </div>
-            <div class="dialog-actions">
-              <button class="btn btn-ghost" id="admin-corte-cancel" type="button">Cancelar</button>
+            <p class="admin-dialog-status" data-dialog-status role="status"></p>
+            <footer class="admin-dialog-foot">
+              <button class="btn btn-ghost" id="admin-corte-cancel" data-dialog-close type="button">Cancelar</button>
               <button class="btn btn-primary" id="admin-corte-submit" type="submit"><span id="admin-corte-submit-text">Publicar corte</span></button>
-            </div>
+            </footer>
           </form>
-        </div>
+        </dialog>
         <div id="admin-cortes-list" class="support-grid" role="list"></div>
         <div id="admin-cortes-empty" class="empty">Sin cortes registrados.</div>
         </div>
@@ -277,7 +296,7 @@
       <div class="dash-sec" id="sec-admin-incidencias" aria-label="Gestión de incidencias">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Administración / Incidencias</div>
+            <div class="page-crumb">Hidro-Mejora / Administración / Incidencias</div>
             <h2 class="page-title" tabindex="-1">Incidencias</h2>
             <p class="page-desc">Revisa reportes, fotografías y estados.</p>
           </div>
@@ -311,7 +330,7 @@
       <div class="dash-sec" id="sec-admin-usuarios" aria-label="Usuarios y suministros">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Administración / Usuarios</div>
+            <div class="page-crumb">Hidro-Mejora / Administración / Usuarios</div>
             <h2 class="page-title" tabindex="-1">Usuarios y suministros</h2>
             <p class="page-desc">Consulta y administra las cuentas y suministros registrados.</p>
           </div>
@@ -341,37 +360,45 @@
         </div>
         <div id="admin-usu-list" class="support-grid" role="list"></div>
         <div id="admin-usu-empty" class="empty">Sin usuarios registrados.</div>
-        <div class="support-card" id="admin-usu-det-card" hidden aria-label="Detalle de usuario">
-          <h4 id="admin-usu-det-title">Detalle de cuenta</h4>
-          <div id="admin-usu-det-body"></div>
-          <div class="dialog-actions">
-            <button class="btn btn-ghost" id="admin-usu-det-close" type="button">Cerrar</button>
+        <dialog id="admin-usu-det-card" class="admin-dialog admin-dialog--drawer" aria-labelledby="admin-usu-det-title">
+          <header class="admin-dialog-head"><div><h3 id="admin-usu-det-title" data-dialog-title tabindex="-1">Detalle de cuenta</h3></div>
+            <button class="icon-btn" data-dialog-close type="button" aria-label="Cerrar cuadro"><span aria-hidden="true">×</span></button></header>
+          <div id="admin-usu-det-body" class="admin-dialog-body" aria-live="polite"></div><p class="admin-dialog-status" data-dialog-status role="status"></p><footer class="admin-dialog-foot" id="admin-usu-det-actions" hidden>
+            <button class="btn btn-ghost" id="admin-usu-det-close" data-dialog-close type="button">Cerrar</button>
             <button class="btn btn-sky" id="admin-usu-edit-ubi" type="button">Editar ubicación</button>
             <button class="btn btn-danger" id="admin-usu-toggle" type="button">Desactivar cuenta</button>
+          </footer>
+        </dialog>
+        <dialog id="admin-ubi-dialog" class="admin-dialog admin-dialog--drawer" aria-labelledby="admin-ubi-title">
+          <header class="admin-dialog-head"><div><h3 id="admin-ubi-title" data-dialog-title tabindex="-1">Editar ubicación</h3></div>
+            <button class="icon-btn" data-dialog-close type="button" aria-label="Cerrar cuadro"><span aria-hidden="true">×</span></button></header>
+          <form id="admin-ubi-form" class="admin-dialog-form" novalidate>
+            <div class="admin-dialog-body">
+              <p id="admin-ubi-supply" class="hint"></p><div id="admin-ubi-error" class="form-error" role="alert"></div>
+              <div class="field">
+                <label for="adm-ubi-distrito">Distrito (vacío para limpiar)</label>
+                <input type="text" id="adm-ubi-distrito" maxlength="100" placeholder="Ej. Comas" />
+              </div>
+              <div class="field">
+                <label for="adm-ubi-zona">Zona (vacío para limpiar)</label>
+                <input type="text" id="adm-ubi-zona" maxlength="150" placeholder="Ej. La Pascana" />
+              </div>
+
+              <p class="hint">Al cambiar ubicación, los cortes por zona se reflejan automáticamente en la siguiente consulta.</p>
           </div>
-          <form id="admin-ubi-form" hidden novalidate style="margin-top:.8rem">
-            <div class="field">
-              <label for="adm-ubi-distrito">Distrito (vacío para limpiar)</label>
-              <input type="text" id="adm-ubi-distrito" maxlength="100" placeholder="Ej. Comas" />
-            </div>
-            <div class="field">
-              <label for="adm-ubi-zona">Zona (vacío para limpiar)</label>
-              <input type="text" id="adm-ubi-zona" maxlength="150" placeholder="Ej. La Pascana" />
-            </div>
-            <div class="dialog-actions">
-              <button class="btn btn-ghost" id="admin-ubi-cancel" type="button">Cancelar</button>
+            <p class="admin-dialog-status" data-dialog-status role="status"></p><footer class="admin-dialog-foot">
+              <button class="btn btn-ghost" id="admin-ubi-cancel" data-dialog-close type="button">Cancelar</button>
               <button class="btn btn-primary" id="admin-ubi-save" type="submit">Guardar ubicación</button>
-            </div>
-            <p class="hint">Al cambiar ubicación, los cortes por zona se reflejan automáticamente en la siguiente consulta.</p>
+            </footer>
           </form>
-        </div>
+        </dialog>
       </div>
 
       <!-- ADMIN PAGOS (solo consulta) -->
       <div class="dash-sec" id="sec-admin-pagos" aria-label="Pagos registrados">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Administración / Pagos</div>
+            <div class="page-crumb">Hidro-Mejora / Administración / Pagos</div>
             <h2 class="page-title" tabindex="-1">Pagos</h2>
             <p class="page-desc">Consulta las operaciones registradas por los usuarios.</p>
           </div>
@@ -407,7 +434,7 @@
       <div class="dash-sec" id="sec-admin-atencion" aria-label="Atención al cliente">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Administración / Atención</div>
+            <div class="page-crumb">Hidro-Mejora / Administración / Atención</div>
             <h2 class="page-title" tabindex="-1">Atención al cliente</h2>
             <p class="page-desc">Gestiona y responde las solicitudes de atención de los usuarios.</p>
           </div>
@@ -435,38 +462,43 @@
         </div>
         <div id="admin-ate-list" class="support-grid" role="list"></div>
         <div id="admin-ate-empty" class="empty">Sin solicitudes registradas.</div>
-        <div class="support-card" id="admin-ate-resp-card" hidden aria-label="Responder solicitud">
-          <h4 id="admin-ate-resp-title">Responder solicitud</h4>
-          <div id="admin-ate-resp-body"></div>
-          <form id="admin-ate-resp-form" novalidate style="margin-top:.6rem">
-            <div class="field">
-              <label for="adm-ate-estado-new">Estado</label>
-              <select id="adm-ate-estado-new">
-                <option value="Registrada">Registrada</option>
-                <option value="En atención">En atención</option>
-                <option value="Respondida">Respondida</option>
-                <option value="Cerrada">Cerrada</option>
-              </select>
+        <dialog id="admin-ate-resp-card" class="admin-dialog admin-dialog--drawer" aria-labelledby="admin-ate-resp-title">
+          <header class="admin-dialog-head"><div><h3 id="admin-ate-resp-title" data-dialog-title tabindex="-1">Responder solicitud</h3></div>
+            <button class="icon-btn" data-dialog-close type="button" aria-label="Cerrar cuadro"><span aria-hidden="true">×</span></button></header>
+          <form id="admin-ate-resp-form" class="admin-dialog-form" novalidate>
+            <div class="admin-dialog-body">
+              <div id="admin-ate-resp-body"></div>
+            <div id="admin-ate-resp-error" class="form-error" role="alert"></div>
+              <div class="field">
+                <label for="adm-ate-estado-new">Estado</label>
+                <select id="adm-ate-estado-new">
+                  <option value="Registrada">Registrada</option>
+                  <option value="En atención">En atención</option>
+                  <option value="Respondida">Respondida</option>
+                  <option value="Cerrada">Cerrada</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="adm-ate-resp-text">Respuesta del operador</label>
+                <textarea id="adm-ate-resp-text" rows="3" maxlength="2000" data-contador="adm-ate-resp-count" placeholder="Escribe la respuesta visible para el usuario…" style="width:100%;padding:.7rem .8rem;border:2px solid var(--border);border-radius:10px;font-family:inherit"></textarea><small class="char-count" id="adm-ate-resp-count">0 / 2000</small>
+              </div>
             </div>
-            <div class="field">
-              <label for="adm-ate-resp-text">Respuesta del operador</label>
-              <textarea id="adm-ate-resp-text" rows="3" maxlength="2000" data-contador="adm-ate-resp-count" placeholder="Escribe la respuesta visible para el usuario…" style="width:100%;padding:.7rem .8rem;border:2px solid var(--border);border-radius:10px;font-family:inherit"></textarea><small class="char-count" id="adm-ate-resp-count">0 / 2000</small>
-            </div>
-            <div class="dialog-actions">
-              <button class="btn btn-ghost" id="admin-ate-resp-cancel" type="button">Cancelar</button>
+            <p class="admin-dialog-status" data-dialog-status role="status"></p>
+            <footer class="admin-dialog-foot">
+              <button class="btn btn-ghost" id="admin-ate-resp-cancel" data-dialog-close type="button">Cancelar</button>
               <button class="btn btn-primary" type="submit">Guardar respuesta</button>
-            </div>
+            </footer>
           </form>
-        </div>
+        </dialog>
       </div>
 
       <!-- ADMIN CUENTA -->
       <div class="dash-sec" id="sec-admin-cuenta" aria-label="Mi cuenta">
         <div class="page-header">
           <div>
-            <div class="page-crumb">Hidro Mejora / Administración / Cuenta</div>
+            <div class="page-crumb">Hidro-Mejora / Administración / Cuenta</div>
             <h2 class="page-title" tabindex="-1">Mi cuenta</h2>
-            <p class="page-desc">Información básica de la cuenta administradora.</p>
+            <p class="page-desc">Información de la cuenta administradora y verificación en dos pasos.</p>
           </div>
         </div>
         <div class="pre-contact" aria-label="Datos de la cuenta administradora">
@@ -480,39 +512,25 @@
       </div>
 
 <!-- ============ MODAL: FOTO DE INCIDENCIA ============ -->
-<div id="foto-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="foto-title" aria-hidden="true">
-  <div class="dialog">
-    <div class="dialog-head">
-      <div><h3 id="foto-title">Fotografía de la incidencia</h3><p id="foto-sub">—</p></div>
-      <button class="icon-btn" id="foto-close" type="button" aria-label="Cerrar fotografía" data-icon="close"></button>
-    </div>
-    <div class="dialog-body">
-      <img id="foto-img" class="foto-full" alt="Fotografía de la incidencia" />
-      <div class="dialog-actions">
-        <button class="btn btn-ghost" id="foto-done" type="button">Cerrar</button>
-      </div>
-    </div>
-  </div>
-</div>
+<dialog id="foto-modal" class="admin-dialog admin-dialog--wide" aria-labelledby="foto-title">
+          <header class="admin-dialog-head"><div><h3 id="foto-title" data-dialog-title tabindex="-1">Fotografía de la incidencia</h3><p id="foto-sub"></p></div>
+            <button class="icon-btn" id="foto-close" data-dialog-close type="button" aria-label="Cerrar cuadro"><span aria-hidden="true">×</span></button></header>
+          <div class="admin-dialog-body"><p id="foto-load" role="status"></p><img id="foto-img" class="foto-full" alt="Fotografía de la incidencia" hidden></div><footer class="admin-dialog-foot"><button class="btn btn-ghost" id="foto-done" type="button" data-dialog-close>Cerrar</button></footer>
+        </dialog>
 
 <!-- ============ MODAL: CONFIRMACIÓN GENÉRICA ============ -->
-<div id="confirm-modal" class="overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-hidden="true">
-  <div class="dialog">
-    <div class="dialog-head">
-      <div><h3 id="confirm-title">Confirmar acción</h3><p id="confirm-sub">—</p></div>
-      <button class="icon-btn" id="confirm-close" type="button" aria-label="Cerrar confirmación" data-icon="close"></button>
-    </div>
-    <div class="dialog-body">
-      <p id="confirm-text" style="font-size:.9rem;color:var(--text)">¿Deseas continuar?</p>
-      <div class="dialog-actions">
-        <button class="btn btn-ghost" id="confirm-cancel" type="button">Cancelar</button>
-        <button class="btn btn-primary" id="confirm-ok" type="button">Aceptar</button>
-      </div>
-    </div>
-  </div>
-</div>
+<dialog id="confirm-modal" class="admin-dialog admin-dialog--compact" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+          <header class="admin-dialog-head"><div><h3 id="confirm-title" data-dialog-title tabindex="-1">Confirmar acción</h3></div>
+            <button class="icon-btn" id="confirm-close" data-dialog-close type="button" aria-label="Cerrar cuadro"><span aria-hidden="true">×</span></button></header>
+          <div class="admin-dialog-body"><p id="confirm-text"></p></div><footer class="admin-dialog-foot"><button class="btn btn-ghost" id="confirm-cancel" type="button" data-dialog-close>Cancelar</button><button class="btn btn-primary" id="confirm-ok" type="button">Aceptar</button></footer>
+        </dialog>
 
   </template>
+  <dialog id="admin-discard-dialog" class="admin-dialog admin-dialog--compact" aria-labelledby="admin-discard-title" aria-describedby="admin-discard-text">
+          <header class="admin-dialog-head"><div><h3 id="admin-discard-title" data-dialog-title tabindex="-1">¿Salir sin guardar?</h3></div>
+            <button class="icon-btn" data-dialog-close type="button" aria-label="Cerrar cuadro"><span aria-hidden="true">×</span></button></header>
+          <div class="admin-dialog-body"><p id="admin-discard-text"></p></div><footer class="admin-dialog-foot"><button class="btn btn-ghost" id="admin-keep-editing" type="button" data-dialog-close>Seguir editando</button><button class="btn btn-danger" id="admin-discard-changes" type="button">Salir del cuadro</button></footer>
+        </dialog>
   <script src="hm-api-config.js"></script>
   <script src="assets/vendor/socket.io.min.js"></script>
   <script src="shared/session.js"></script>
@@ -523,6 +541,7 @@
   <script src="shared/two-factor-ui.js"></script>
   <script src="shared/password-recovery-ui.js"></script>
   <script src="shared/incident-timeline.js"></script>
+  <script src="assets/js/admin-dialog.js"></script>
   <script src="assets/js/incident-review.js"></script>
   <script src="assets/js/admin-table.js"></script>
   <script src="assets/js/payment-management.js"></script>

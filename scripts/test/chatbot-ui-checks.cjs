@@ -15,7 +15,7 @@ module.exports=async function({client:c,wait,ok}) {
   assert.equal(general.source,'https://www.gob.pe/sedapal');
   const personal=await ask('Mi último recibo de Sedapal',/recibo/i);
   assert.equal(personal.source,null,'Consulta personal no reemplazada por orientación general');
-  await ask('<script>window.hidroInjected=true</script>',/orientarte/);
+  await ask('<script>window.hidroInjected=true</script>',/Te refieres a un recibo/);
   assert.equal(await c.evaluate('Boolean(window.hidroInjected)||document.querySelectorAll("#hb-body script").length>0'),false);
   assert.equal(await c.evaluate('document.querySelectorAll("#hb-body .hb-msg.user")[document.querySelectorAll("#hb-body .hb-msg.user").length-1].textContent.includes("<script>")'),true);
   await c.click('#hb-close');

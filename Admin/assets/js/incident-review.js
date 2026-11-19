@@ -2,6 +2,10 @@
 (function (global) {
   "use strict";
   global.createHMIncidentReview = function (options) {
+    const dialogs = global.HMAdminDialog;
+    const dialog = document.createElement("dialog");
+    dialog.className = "admin-dialog admin-dialog--wide";
+    dialog.setAttribute("aria-labelledby", "incident-history-title");
     const form = document.createElement("form");
     form.id = "incident-history-change";
     form.className = "incident-history-change";
@@ -9,34 +13,81 @@
     const el = (id) => form.querySelector("#incident-history-" + id);
     let version = 0,
       writing = false,
-      dirty = false;
+      initialState = "";
     const view = global.createHMIncidentTimeline({
       ...options,
+      openDialog(modal, opener) {
+        modal.classList.add("open");
+        modal.removeAttribute("aria-hidden");
+        dialogs.open(dialog, opener);
+      },
+      closeDialog() { dialogs.close(dialog, {restore:false}); },
       onSnapshot: (data) => {
-        if (!writing && !dirty)
+        if (!writing && (!initialState || el("state").value === initialState))
           el("state").value = data.incidencia.estado_actual;
+        initialState = data.incidencia.estado_actual;
+        form.hidden = false;
+        if (!writing) submit.disabled = false;
       },
       onClosed: () => {
         version++;
-        writing = dirty = false;
+        writing = false;
+        initialState = "";
+        form.hidden = true;
+        form.removeAttribute("aria-busy");
         form.reset();
+        submit.disabled = true;
+        context.replaceChildren();
         el("change-result").textContent = "";
         form
           .querySelectorAll("button,select,textarea")
           .forEach((c) => (c.disabled = false));
       },
     });
+    const modal = view.modal;
+    modal.removeAttribute("role");
+    modal.removeAttribute("aria-modal");
+    const frame = modal.querySelector(".incident-history-dialog");
+    const head = frame.querySelector(".dialog-head");
+    head.className = "admin-dialog-head";
+    head.querySelector("h3").setAttribute("data-dialog-title", "");
+    head.querySelector("h3").tabIndex = -1;
+    head.querySelector("button").addEventListener("click", event => {
+      event.stopImmediatePropagation();
+      dialogs.dismiss(dialog);
+    }, true);
+    const footer = document.createElement("footer");
+    footer.className = "admin-dialog-foot";
+    footer.innerHTML = '<button type="button" class="btn btn-ghost" data-dialog-close>Cerrar</button>';
+    const submit = form.querySelector('[type="submit"]');
+    submit.setAttribute("form", form.id);
+    submit.disabled = true;
+    footer.append(submit);
+    const status = document.createElement("p");
+    status.className = "admin-dialog-status";
+    status.dataset.dialogStatus = "";
+    status.setAttribute("role", "status");
+    const context = document.createElement("div");
+    view.body.classList.add("admin-dialog-body");
+    view.body.prepend(context);
     view.body.append(form);
-    el("state").addEventListener("change", () => {
-      dirty = true;
-    });
-    el("comment").addEventListener("input", () => {
-      dirty = true;
+    frame.append(status, footer);
+    dialog.append(modal);
+    options.container.append(dialog);
+    dialogs.register(dialog, {
+      dirty: () => !!initialState && (el("state").value !== initialState || !!el("comment").value),
+      onClose: () => {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+        modal.hmOnClose();
+      }
     });
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (writing || !view.currentId() || !options.isActive()) return;
       writing = true;
+      form.setAttribute("aria-busy", "true");
+      submit.disabled = true;
       const epoch = version;
       el("change-result").textContent = "Guardando cambio…";
       const controls = [...form.querySelectorAll("button,select,textarea")];
@@ -49,11 +100,11 @@
         );
         if (epoch !== version || !options.isActive()) return;
         if (result) {
-          dirty = false;
+          initialState = el("state").value;
           el("comment").value = "";
           el("change-result").textContent = result.cambiada
             ? "Cambio guardado y registrado."
-            : "Solicitud confirmada. Consulta el estado actual del historial.";
+            : "Cambio registrado. Revisa el estado actualizado en el historial.";
           view.refresh();
         } else
           el("change-result").textContent =
@@ -65,10 +116,23 @@
       } finally {
         if (epoch === version) {
           writing = false;
+          form.removeAttribute("aria-busy");
+          submit.disabled = false;
           controls.forEach((c) => (c.disabled = false));
         }
       }
     });
-    return view;
+    return {
+      refresh:view.refresh,
+      destroy() { view.destroy(); dialog.remove(); },
+      open(id, opener, incident) {
+        view.open(id, opener);
+        if (!dialog.open || !incident) return;
+        const { node } = global.HMShared.ui;
+        context.replaceChildren(node("p", "hint", "Suministro " + incident.numero_suministro + " · " + incident.tipo),
+          node("p", null, incident.descripcion),
+          node("p", "hint", "Referencia: " + (incident.referencia || "Sin referencia")));
+      }
+    };
   };
 })(window);
