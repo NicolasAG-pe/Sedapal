@@ -100,3 +100,32 @@ test('recibo con correo largo e importe máximo conserva una sola página A4',()
  assert.equal(doc.getNumberOfPages(),1,'Un dato válido largo no debe crear una página casi vacía');
  const r=inspect(doc,'max-fields');assert.ok(r.text.includes('99999999.99'));assert.match(r.info,/A4/);
 });
+
+test('nombres PDF y contenido usan el periodo del recibo en límites de año y no fabrican fechas ausentes',()=>{
+ const feb2026={...receipt,periodo:'Febrero 2026',fechaEmisionISO:'2026-01-31',fechaVencimientoISO:'2026-02-20'};
+ assert.equal(api.receiptFileName(feb2026,context.supply),'Recibo_HidroMejora_020726159_2026-02.pdf');
+ const febText=inspect(api.receipt(feb2026,context),'feb-2026').text;
+ assert.ok(febText.includes('Febrero 2026'));
+ assert.ok(febText.includes('31/01/2026'));
+ assert.ok(febText.includes('20/02/2026'));
+
+ const ene2027={...receipt,periodo:'Enero 2027',fechaEmisionISO:'2026-12-29',fechaVencimientoISO:'2027-01-18'};
+ assert.equal(api.receiptFileName(ene2027,context.supply),'Recibo_HidroMejora_020726159_2027-01.pdf');
+ const eneText=inspect(api.receipt(ene2027,context),'ene-2027').text;
+ assert.ok(eneText.includes('Enero 2027'));
+ assert.ok(eneText.includes('29/12/2026'));
+ assert.ok(eneText.includes('18/01/2027'));
+
+ const dic2026={...receipt,periodo:'Diciembre 2026',fechaEmisionISO:'2027-01-02',fechaVencimientoISO:'2027-01-20'};
+ assert.equal(api.receiptFileName(dic2026,context.supply),'Recibo_HidroMejora_020726159_2026-12.pdf');
+
+ assert.equal(api.receiptFileName({...receipt,periodo:'Setiembre 2026',fechaEmisionISO:'2026-08-31'},context.supply),'Recibo_HidroMejora_020726159_2026-09.pdf');
+ assert.equal(api.receiptFileName({...receipt,periodo:'01/2027',fechaEmisionISO:'2026-12-28'},context.supply),'Recibo_HidroMejora_020726159_2027-01.pdf');
+ assert.equal(api.receiptFileName({...receipt,periodo:'Feb. 2026',fechaEmisionISO:'2026-01-30'},context.supply),'Recibo_HidroMejora_020726159_2026-02.pdf');
+ // Periodo sin año en cruce de año: no usa fecha de emisión errónea ni fabrica año
+ assert.equal(api.receiptFileName({...receipt,periodo:'Enero',fechaEmisionISO:'2026-12-29'},context.supply),'Recibo_HidroMejora_020726159_sin_fecha.pdf');
+ // Sin periodo ni fecha de emisión: nunca fabrica año/mes actual
+ assert.equal(api.receiptFileName({...receipt,periodo:'',etiqueta:'',fechaEmisionISO:null,fecha_emision:null},context.supply),'Recibo_HidroMejora_020726159_sin_fecha.pdf');
+ // Periodo ausente con fecha de emisión válida conserva respaldo en emisión
+ assert.equal(api.receiptFileName({...receipt,periodo:'',etiqueta:'',fechaEmisionISO:'2026-10-01'},context.supply),'Recibo_HidroMejora_020726159_2026-10.pdf');
+});

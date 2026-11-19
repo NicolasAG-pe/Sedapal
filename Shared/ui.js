@@ -23,6 +23,66 @@
     const day = /^\d{4}-\d{2}-\d{2}(?=T|$)/.exec(value || '');
     return date(day ? day[0] : value);
   }
+  const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const MONTHS_SHORT = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const MONTH_TOKENS = new Map([
+    ['enero',0],['ene',0],['febrero',1],['feb',1],['marzo',2],['mar',2],['abril',3],['abr',3],
+    ['mayo',4],['may',4],['junio',5],['jun',5],['julio',6],['jul',6],['agosto',7],['ago',7],
+    ['septiembre',8],['setiembre',8],['sept',8],['sep',8],['set',8],
+    ['octubre',9],['oct',9],['noviembre',10],['nov',10],['diciembre',11],['dic',11]
+  ]);
+  function parseEmissionYearMonth(value) {
+    if (!value) return null;
+    const raw = String(value).trim();
+    const iso = raw.match(/^((?:19|20|21)\d{2})-(0[1-9]|1[0-2])(?=-\d{2}(?:$|[T\s]))/);
+    if (iso) return { year: Number(iso[1]), month: Number(iso[2]) - 1 };
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+      return { year: value.getUTCFullYear(), month: value.getUTCMonth() };
+    }
+    const parsed = new Date(raw);
+    if (!Number.isNaN(parsed.getTime())) {
+      return { year: parsed.getUTCFullYear(), month: parsed.getUTCMonth() };
+    }
+    return null;
+  }
+  function parseReceiptPeriod(periodo, fechaEmision) {
+    const raw = periodo == null ? '' : String(periodo).trim();
+    let year = null, month = null, source = 'none';
+    if (raw) {
+      const ym = raw.match(/(?:^|[^\d])((?:19|20|21)\d{2})[-/](0?[1-9]|1[0-2])(?=$|[^\d])/);
+      const my = !ym && raw.match(/(?:^|[^\d])(0?[1-9]|1[0-2])[-/]((?:19|20|21)\d{2})(?=$|[^\d])/);
+      if (ym) {
+        year = Number(ym[1]);
+        month = Number(ym[2]) - 1;
+        source = 'periodo';
+      } else if (my) {
+        month = Number(my[1]) - 1;
+        year = Number(my[2]);
+        source = 'periodo';
+      } else {
+        const normalized = raw.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const tokens = normalized.match(/[a-z]+/g) || [];
+        const matchedMonths = [...new Set(tokens.filter(t => MONTH_TOKENS.has(t)).map(t => MONTH_TOKENS.get(t)))];
+        if (matchedMonths.length === 1) month = matchedMonths[0];
+        const y = raw.match(/(?:^|[^\d])((?:19|20|21)\d{2})(?=$|[^\d])/);
+        if (y) year = Number(y[1]);
+        if (month !== null || year !== null) source = 'periodo';
+      }
+    }
+    if (source === 'none') {
+      const emitted = parseEmissionYearMonth(fechaEmision);
+      if (emitted) {
+        year = emitted.year;
+        month = emitted.month;
+        source = 'emision';
+      }
+    }
+    const mesNombre = month !== null ? MONTHS[month] : '';
+    const mesShort = month !== null ? MONTHS_SHORT[month] : '';
+    const filePeriod = year !== null && month !== null ? year + '-' + String(month + 1).padStart(2, '0') : null;
+    const etiqueta = raw || (mesNombre && year !== null ? mesNombre + ' ' + year : mesNombre || (year !== null ? String(year) : 'Sin periodo'));
+    return { anio: year, mes: month, mesNombre, mesShort, etiqueta, filePeriod, source };
+  }
   function debounce(fn, milliseconds = 300) {
     let timer;
     function wrapped(...args) { clearTimeout(timer); timer = setTimeout(() => fn(...args), milliseconds); }
@@ -118,7 +178,7 @@
     return Object.hasOwn(labels,value)?labels[value]:String(value??'');
   }
   global.HMShared.ui = {
-    node, date, receiptDate, debounce, paymentAuditMessage, beginForm, clearFormLocks, installFormUX, copyText,
+    node, date, receiptDate, parseReceiptPeriod, debounce, paymentAuditMessage, beginForm, clearFormLocks, installFormUX, copyText,
     money: value => {
       const amount = Number(value);
       return 'S/ ' + (Number.isFinite(amount) ? amount : 0)

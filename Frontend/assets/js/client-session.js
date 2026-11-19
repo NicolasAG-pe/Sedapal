@@ -57,16 +57,16 @@
         try{
           const saved=await secure.readSession();guard();
           if(!saved.token)return {state:'anonymous'};
-          const response=await authFetch('/api/auth/session',{headers:{Authorization:'Bearer '+saved.token}});guard();
+          const response=await authFetch('/api/auth/session',{headers:{Authorization:'Bearer '+saved.token},timeoutMs:30000});guard();
           if(response.status===401 || response.status===403){await response.json().catch(()=>null);guard();await secure.clearSession();guard();return {state:'ended'};}
           const data=await response.json().catch(()=>null);guard();
-          if(!response.ok || data?.estado!=='ok' || data.usuario?.rol!=='usuario' || !/^\d{9}$/.test(data.suministro?.numero_suministro || ''))return {state:'unavailable'};
+          if(!response.ok || data?.estado!=='ok' || data.usuario?.rol!=='usuario' || !/^\d{9}$/.test(data.suministro?.numero_suministro || ''))return {state:'unavailable',reason:'server'};
           set(saved.token,'usuario');
           return {state:'authenticated',data};
         }catch(error){
           if(error?.name==='AbortError')return {state:'cancelled'};
-          // Sin red/5xx/almacén inaccesible: no mostrar datos ni borrar una credencial aún no validada.
-          return {state:'unavailable'};
+          // Sin red/5xx/timeout/almacén inaccesible: no mostrar datos ni borrar una credencial aún no validada.
+          return {state:'unavailable',reason:error?.name==='TimeoutError'?'timeout':'network'};
         }
       })();
       restoration=operation;

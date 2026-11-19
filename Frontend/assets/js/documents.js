@@ -20,7 +20,14 @@
   function safeName(value){return text(value).replace(/[^a-zA-Z0-9_-]/g,'_').replace(/_+/g,'_').slice(0,100)||'sin_referencia';}
   function dateOnly(value){const m=String(value||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[3]+'/'+m[2]+'/'+m[1]:'No disponible';}
   function money(value){if(value===null||value===undefined||!Number.isFinite(Number(value)))throw Error('Importe no disponible.');return 'S/ '+Number(value).toFixed(2);}
-  function periodForFile(r){const p=String(r.periodo||r.etiqueta||'').match(/\b(\d{4})-(0[1-9]|1[0-2])\b/);if(p)return p[1]+'-'+p[2];const d=String(r.fechaEmisionISO||r.fecha_emision||'').match(/^(\d{4})-(\d{2})/);return d?d[1]+'-'+d[2]:'sin_fecha';}
+  function periodForFile(r){
+    const parsed=global.HMShared?.ui?.parseReceiptPeriod?.(r.periodo||r.etiqueta,r.fechaEmisionISO||r.fecha_emision);
+    if(parsed)return parsed.filePeriod||'sin_fecha';
+    const p=String(r.periodo||r.etiqueta||'').match(/\b(\d{4})-(0[1-9]|1[0-2])\b/);
+    if(p)return p[1]+'-'+p[2];
+    const d=String(r.fechaEmisionISO||r.fecha_emision||'').match(/^(\d{4})-(\d{2})/);
+    return d?d[1]+'-'+d[2]:'sin_fecha';
+  }
   function receiptFileName(r,supply){return 'Recibo_HidroMejora_'+safeName(supply)+'_'+periodForFile(r)+'.pdf';}
   function paymentFileName(pago){return 'Constancia_Pago_HidroMejora_'+safeName(pago.codigo_operacion)+'.pdf';}
   async function save(doc,fileName){
