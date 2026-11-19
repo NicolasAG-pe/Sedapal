@@ -61,7 +61,6 @@ async function fixture(t, hash = 'inicio') {
   await page.locator('#password').fill('Fixture123');
   await page.locator('#btn-login').click();
   await page.waitForFunction(() => document.getElementById('view-dashboard').classList.contains('active') && document.getElementById('stat-debt').textContent === 'S/ 0.00');
-  await page.waitForTimeout(700); // termina el bloqueo de navegación de 600 ms
   const count = () => requests.filter(r => r.name === '/api/me/perfil').length;
   const populated = async () => {
     await page.waitForFunction(d => document.getElementById('sec-perfil').classList.contains('active') && document.getElementById('pf-correo').textContent === d.correo && document.getElementById('pf-suministro').textContent === d.numero_suministro && document.getElementById('pf-fecha').textContent === window.HMShared.ui.date(d.fecha_registro), profile, { timeout: 5000 });
@@ -120,7 +119,8 @@ test('HidroBot en Perfil conserva la navegación y el campo de escritura con tec
     await page.setViewportSize({ width, height: 844 });
     const tabBox = await accountTab.boundingBox();
     const fabBox = await fab.boundingBox();
-    assert.ok(tabBox.x + tabBox.width <= fabBox.x, 'Cuenta y el asistente tienen espacio propio');
+    const navigation = await page.locator('.mobile-tabs').boundingBox();
+    assert.ok(fabBox.y + fabBox.height <= navigation.y, 'HidroBot deja libre toda la barra de navegación');
     assert.ok(tabBox.width >= 44 && fabBox.width >= 44);
   }
 

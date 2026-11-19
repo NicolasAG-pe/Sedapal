@@ -6,9 +6,9 @@ const path = require('node:path');
 module.exports = async function ({ chrome:c, origin, output, pool, request, admin, user, password,
   adminSupply, userSupply, png, wait, pause, ok, expiredToken, mailbox }) {
   const receipt = await request('POST','/api/admin/recibos',admin.token,{numero_suministro:userSupply,
-    periodo:'Cliente UI fixture',fecha_emision:'2026-10-01',fecha_vencimiento:'2030-11-01',monto:45,consumo_m3:15},201);
+    periodo:'Cliente UI fixture',fecha_emision:'2030-10-01',fecha_vencimiento:'2030-11-01',monto:45,consumo_m3:15},201);
   const dates=(await pool.query('SELECT fecha_emision::text,fecha_vencimiento::text FROM recibos WHERE id_recibo=$1',[receipt.recibo.id_recibo])).rows[0];
-  assert.equal(dates.fecha_emision,'2026-10-01');assert.equal(dates.fecha_vencimiento,'2030-11-01');
+  assert.equal(dates.fecha_emision,'2030-10-01');assert.equal(dates.fecha_vencimiento,'2030-11-01');
   await request('POST','/api/admin/cortes',admin.token,{alcance:'Zona',distrito:'Distrito fixture',zona:'Zona fixture',
     motivo:'Corte cliente fixture',fecha_inicio:'2030-01-01T09:00:00',fecha_fin:'2030-01-01T12:00:00'},201);
   await c.goto(origin+'/cliente/index.html');
@@ -53,6 +53,11 @@ module.exports = async function ({ chrome:c, origin, output, pool, request, admi
   }
   await c.evaluate('location.hash="admin-recibos"');await pause(500);
   assert.equal(await c.evaluate('document.querySelector(".dash-sec.active").id'),'sec-inicio');
+  await c.evaluate(`for (const section of ['historial','incidencias','consumos']) document.querySelector('#sidebar [data-sec="'+section+'"]').click();`);
+  await wait(()=>c.evaluate('document.querySelector(".dash-sec.active").id === "sec-consumos" && location.hash === "#consumos"'),'respeta el último destino durante la transición');
+  await c.evaluate(`for (const section of ['historial','consumos']) document.querySelector('#sidebar [data-sec="'+section+'"]').click();`);
+  await pause(220);
+  assert.equal(await c.evaluate('document.querySelector(".dash-sec.active").id'), 'sec-consumos');
   await nav('historial','document.getElementById("cards").textContent.includes("Cliente UI fixture")');
   await c.click('[data-filter="Pagado"]');
   await wait(()=>c.evaluate('!document.getElementById("cards").textContent.includes("Cliente UI fixture")'),'filtro pagado excluye emitido');

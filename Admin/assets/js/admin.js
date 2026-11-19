@@ -362,7 +362,7 @@
       console.error('No se pudieron cargar los cortes del panel.', err);
       adminCortes = [];
       if(emptyEl){
-        emptyEl.textContent = 'No fue posible cargar los cortes. Inténtalo nuevamente.';
+        emptyEl.textContent = 'No pudimos cargar los cortes. Inténtalo de nuevo.';
         emptyEl.classList.add('show');
       }
       if(list) list.innerHTML = '';
@@ -409,7 +409,7 @@
         if(c.estado !== 'Finalizado'){
           const bC = document.createElement('button');
           bC.type = 'button'; bC.className = 'btn-sm payb'; bC.textContent = 'Cancelar';
-          bC.addEventListener('click', ()=>pedirConfirmacion('Cancelar corte', '¿Deseas cancelar este aviso de corte?', ()=>cancelarCorteAdmin(c.id_corte)));
+          bC.addEventListener('click', ()=>pedirConfirmacion('¿Cancelar el aviso de corte #'+c.id_corte+'?', c.motivo, ()=>cancelarCorteAdmin(c.id_corte)));
           box.appendChild(bC);
         }
       }
@@ -441,7 +441,7 @@
     }catch(err){
       if(esAbortado(err) || !esAdmin()) return;
       console.error('No se pudo cancelar el corte.', err);
-      showToast('No se pudo cancelar el aviso. Inténtalo nuevamente.');
+      showToast('No se pudo cancelar el aviso. Inténtalo de nuevo.');
     }
   }
   document.getElementById('admin-corte-form').addEventListener('submit', async ev=>{
@@ -603,7 +603,7 @@
       if(esAbortado(err) || !esAdmin()) return;
       console.error('No se pudieron cargar los usuarios del panel.', err);
       adminUsuarios = [];
-      if(emptyEl){ emptyEl.textContent = 'No fue posible cargar los usuarios. Inténtalo nuevamente.'; emptyEl.classList.add('show'); }
+      if(emptyEl){ emptyEl.textContent = 'No pudimos cargar los usuarios. Inténtalo de nuevo.'; emptyEl.classList.add('show'); }
       if(list) list.innerHTML = '';
       return;
     }
@@ -800,7 +800,7 @@
       console.error('No se pudieron cargar las incidencias del panel.', err);
       adminIncidencias = [];
       if(emptyEl){
-        emptyEl.textContent = 'No fue posible cargar las incidencias. Inténtalo nuevamente.';
+        emptyEl.textContent = 'No pudimos cargar las incidencias. Inténtalo de nuevo.';
         emptyEl.classList.add('show');
       }
       if(list) list.innerHTML = '';
@@ -940,7 +940,7 @@
       console.error('No se pudieron cargar los recibos del panel.', err);
       adminRecibos = [];
       if(emptyEl){
-        emptyEl.textContent = 'No fue posible cargar los recibos. Inténtalo nuevamente.';
+        emptyEl.textContent = 'No pudimos cargar los recibos. Inténtalo de nuevo.';
         emptyEl.classList.add('show');
       }
       if(list) list.innerHTML = '';
@@ -999,7 +999,7 @@
         if(r.estado !== 'Anulado'){
           const bA = document.createElement('button');
           bA.type = 'button'; bA.className = 'btn-sm dangerb'; bA.textContent = 'Anular';
-          bA.addEventListener('click', ()=>pedirConfirmacion('Anular recibo', '¿Deseas anular este recibo? Ya no podrá pagarse.', ()=>anularReciboAdmin(r.id_recibo)));
+          bA.addEventListener('click', ()=>pedirConfirmacion('¿Anular el recibo R-'+r.id_recibo+'?', 'El recibo seguirá en el historial y ya no podrá pagarse.', ()=>anularReciboAdmin(r.id_recibo)));
           box.appendChild(bA);
         }
       } else {
@@ -1093,7 +1093,7 @@
     }catch(err){
       if(esAbortado(err) || !esAdmin()) return;
       console.error('No se pudo anular el recibo.', err);
-      showToast('No se pudo anular el recibo. Inténtalo nuevamente.');
+      showToast('No se pudo anular el recibo. Inténtalo de nuevo.');
       await cargarAdminRecibos();
     }
   }
@@ -1203,7 +1203,7 @@
       if(esAbortado(err)) return;
       console.error('No se pudieron cargar los pagos del panel.', err);
       adminPagos = [];
-      if(emptyEl){ emptyEl.textContent = 'No fue posible cargar los pagos. Inténtalo nuevamente.'; emptyEl.classList.add('show'); }
+      if(emptyEl){ emptyEl.textContent = 'No pudimos cargar los pagos. Inténtalo de nuevo.'; emptyEl.classList.add('show'); }
       if(list) list.innerHTML = '';
       return;
     }
@@ -1291,7 +1291,7 @@
       if(esAbortado(err)) return;
       console.error('No se pudieron cargar las solicitudes del panel.', err);
       adminSolicitudes = [];
-      if(emptyEl){ emptyEl.textContent = 'No fue posible cargar las solicitudes. Inténtalo nuevamente.'; emptyEl.classList.add('show'); }
+      if(emptyEl){ emptyEl.textContent = 'No pudimos cargar las solicitudes. Inténtalo de nuevo.'; emptyEl.classList.add('show'); }
       if(list) list.innerHTML = '';
       return;
     }

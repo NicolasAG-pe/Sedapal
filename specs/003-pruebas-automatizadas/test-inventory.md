@@ -2,7 +2,7 @@
 
 Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada para listas explícitas; señales estáticas fuera de ellas no acreditan ejecución.
 
-121 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 69. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
+122 archivos (incluye helpers). Duplicados exactos: 0. Sin entrada npm histórica directa: 70. Ver JSON para imports, variables, referencias y scripts. Los hashes detectan deriva de contenido.
 
 | Archivo | Tipo | Grupo nuevo | Requisitos | Riesgo |
 |---|---|---|---|---|
@@ -88,6 +88,7 @@ Generado por `node scripts/test-catalog.cjs --write`. Clasificación revisada pa
 | `scripts/test/backend-history23.cjs` | manual/historica | fuera por defecto | Node22, PostgreSQL sintetico/fixture, dependencias Backend instaladas (rutas literales) | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/chatbot-ui-checks.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
 | `scripts/test/client-checks.cjs` | helper | fuera por defecto | Node22 | NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso |
+| `scripts/test/client-consumption.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/client-packaging-browser.cjs` | E2E/navegador | e2e | Node22, Firefox y origen Nginx aislado | opt-in: HTTP local/Firefox con API sintetica |
 | `scripts/test/client-packaging.test.cjs` | contrato | contract | Node22, herramientas opt-in indicadas en fuente | revisada: mocks/archivos temporales/loopback; guard de red |
 | `scripts/test/client-session.test.cjs` | unitaria | unit | Node22 | revisada: mocks/archivos temporales/loopback; guard de red |

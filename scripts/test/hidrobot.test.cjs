@@ -271,7 +271,9 @@ test('todos los scripts inline mantienen sintaxis válida y el motor se carga an
 });
 
 function consumo(recibos) {
-  const context = vm.createContext({recibos});
+  const context = vm.createContext({recibos, HMShared:{ui:{}}});
+  context.window = context;
+  vm.runInContext(fs.readFileSync('Frontend/assets/js/client-home.js','utf8'),context);
   for (const name of ['reciboNoAnulado','ultimos6','promedio6','promedioGasto6'])vm.runInContext(extractFunction(name),context);
   return {
     labels:Array.from(context.ultimos6(),r=>r.etiqueta),
@@ -294,7 +296,7 @@ test('gráficos y HidroBot excluyen anulados antes de elegir los seis recientes'
 test('HidroBot y gráficos tratan como vacío un suministro con solo recibos anulados',()=>{
   const result=consumo([latest]);
   assert.deepEqual(result.labels,[]);
-  assert.equal(result.average,0);
+  assert.equal(result.average,null);
   assert.equal(result.averageAmount,0);
   assert.match(result.bot,/no hay información de consumo disponible/);
 });

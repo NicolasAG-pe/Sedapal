@@ -1,5 +1,12 @@
 # Historial de versiones
 
+## Océano Claro · Android 1.2.3 (9) y panel administrativo
+
+- Inicio reúne saldo, vencimiento, suministro y consumo de los últimos seis recibos vigentes. El detalle y el resumen comparan el consumo con su promedio real y distinguen los datos ausentes.
+- Se actualizaron la navegación, el área de escritura de HidroBot, las pantallas de cuenta y servicio, las tablas de Admin y los textos de las operaciones demostrativas.
+- El cliente genera recibos y constancias A4 con la nueva identidad. Las constancias distinguen el código, el identificador interno y la referencia declarada.
+- Se corrigió la pérdida de la última navegación durante una transición y se incorporaron pruebas de consumos, navegación y revisión manual. La guía de revisión local incluye la aplicación, el panel y las evidencias.
+
 ## Candidata local integrada para la feria
 
 - HidroBot conserva el último tema público para reformular, resumir o ampliar una respuesta desde la interfaz modernizada. Si falta el contexto o ha caducado, pide precisar el tema.

@@ -53,7 +53,7 @@
           el("comment").value = "";
           el("change-result").textContent = result.cambiada
             ? "Cambio guardado y registrado."
-            : "Solicitud confirmada. Consulta el estado actual del historial.";
+            : "Cambio registrado. Revisa el estado actualizado en el historial.";
           view.refresh();
         } else
           el("change-result").textContent =

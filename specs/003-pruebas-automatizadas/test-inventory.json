@@ -17,6 +17,7 @@
       "Backend/test/start.test.cjs",
       "Backend/test/totp-crypto.test.js",
       "Backend/test/push-credentials.cjs",
+      "scripts/test/client-consumption.test.cjs",
       "scripts/test/client-session.test.cjs",
       "scripts/test/realtime.test.cjs",
       "scripts/test/registration-state.test.cjs",
@@ -1852,7 +1853,7 @@
     },
     {
       "path": "scripts/test/admin-e2e.cjs",
-      "sha256": "96ad14b922a9ee8fed763c41df49215b93c4be8b76c2250f22ff091f6015ec6e",
+      "sha256": "7600c4ca94072c728d2983fdfeaeeb6bec93e4418c431736ce640bf98e520bef",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": false,
@@ -1875,6 +1876,7 @@
       "environmentNames": [
         "HIDRO_EMAIL_TEST_DB_PORT",
         "HIDRO_TEST_CHROME",
+        "HIDRO_TEST_COMPOSE_SMOKE",
         "HIDRO_TEST_DB_PORT",
         "HIDRO_TEST_DOUBLE_SUBMIT",
         "HIDRO_TEST_REPORT_DIR"
@@ -2316,7 +2318,7 @@
     },
     {
       "path": "scripts/test/chatbot-ui-checks.cjs",
-      "sha256": "bc640324d926a1ac7cbf2f65d3d2a763fcab09d8d6b8cc16e22374b52c84a29e",
+      "sha256": "79d8882d493c4e11ec13bbefafb8773e1d86f9ee93f3b3e90c00a0bb58d31c42",
       "type": "helper",
       "group": null,
       "nodeTest": false,
@@ -2336,7 +2338,7 @@
     },
     {
       "path": "scripts/test/client-checks.cjs",
-      "sha256": "e83d2bd321b28a28eca26bb8b8450769856dd46f65ccb8bf64cc89d59947cd18",
+      "sha256": "7967704d06cb09864562fa97740b90741f6f1d025a0a674a8fbb411e2f4bf8fb",
       "type": "helper",
       "group": null,
       "nodeTest": false,
@@ -2358,6 +2360,26 @@
         "scripts/test/admin-e2e.cjs"
       ],
       "risk": "NO ejecutada por runner: revisar herramientas, destinos y efectos del archivo/helper antes de uso"
+    },
+    {
+      "path": "scripts/test/client-consumption.test.cjs",
+      "sha256": "7a938fce16126295c4d0cd64d5a4ad0e59cf842a8ce4925e8a2346384a60a49c",
+      "type": "unitaria",
+      "group": "unit",
+      "nodeTest": true,
+      "requirements": [
+        "Node22"
+      ],
+      "dependencies": [
+        "node:test",
+        "node:assert/strict",
+        "node:fs",
+        "node:vm"
+      ],
+      "environmentNames": [],
+      "legacyNpm": [],
+      "referencedBy": [],
+      "risk": "revisada: mocks/archivos temporales/loopback; guard de red"
     },
     {
       "path": "scripts/test/client-packaging-browser.cjs",
@@ -2500,7 +2522,7 @@
     },
     {
       "path": "scripts/test/documents.test.cjs",
-      "sha256": "53900352a7a913c967c4ae357dfb80378bfba55550273fe1e5132b98b5732fc8",
+      "sha256": "477532fc29e43c771a2e448c764b40b8ed8c4b2c6d91151d3a71bd1e10b4cd9f",
       "type": "unitaria/suplementaria",
       "group": null,
       "nodeTest": true,
@@ -2603,7 +2625,7 @@
     },
     {
       "path": "scripts/test/hidrobot.test.cjs",
-      "sha256": "bd6547dcf0a6b9a6bb278659b88bd8865d49a09cd19bf08ed4e84475f1a6a476",
+      "sha256": "493d5d9dc95a532e7145d045b4238d0cef28bd458fe389c05806551c7fc8ad6f",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2628,7 +2650,7 @@
     },
     {
       "path": "scripts/test/identity-palette.test.cjs",
-      "sha256": "0bd0228ccf58b9231fa65f79eb0b6b11a19da15978f5fcc8e4b6086b87d41638",
+      "sha256": "772c3c13edbadf758ffb39bda70afc62ea5eab897edd3c2b8c5cf7192219269f",
       "type": "unitaria",
       "group": "unit",
       "nodeTest": true,
@@ -2675,7 +2697,7 @@
     },
     {
       "path": "scripts/test/incident-tracking-flow.cjs",
-      "sha256": "b1f0d4619ea2f9964c6d33e352e87ee1d7744bb401d1f30198b5cd3cdc952afb",
+      "sha256": "bcf1169daf9e6daa782251b35a257c3ca55c68eed087edd7b651a8a603f2a7a1",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": true,
@@ -2808,7 +2830,7 @@
     },
     {
       "path": "scripts/test/payment-flow.cjs",
-      "sha256": "1015505ca6c754c920604d27bfb9f2f0f22f5d2b3adc37f0f4175a24a09a0842",
+      "sha256": "38c9d2f5d3ecb08ec651e18831178df6bb48a5f07bd94b8696146d8152f80bc2",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": true,
@@ -2975,7 +2997,7 @@
     },
     {
       "path": "scripts/test/profile-navigation.test.cjs",
-      "sha256": "72dcb7bc7ef1c0739a46d35d652c8a90e1ef9fa1336dd0246b65534acc492b2a",
+      "sha256": "cc8ac63c14329e878a42044edbfc0af145cd02cb8427239272ea5fec19ef90fc",
       "type": "E2E/navegador",
       "group": null,
       "nodeTest": true,
@@ -3694,6 +3716,11 @@
         "scripts/test/admin-e2e.cjs"
       ],
       "managedGroup": null
+    },
+    {
+      "path": "scripts/test/client-consumption.test.cjs",
+      "referencedBy": [],
+      "managedGroup": "unit"
     },
     {
       "path": "scripts/test/client-packaging-browser.cjs",

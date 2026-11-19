@@ -198,12 +198,14 @@ async function browser(executable) {
     ok('Datos de prueba creados únicamente en hm_admin_test');
 
     chrome = await browser(process.env.HIDRO_TEST_CHROME || '/home/nico/.cache/puppeteer/chrome-headless-shell/linux-154.0.8037.57/chrome-headless-shell-linux64/chrome-headless-shell');
-    await chrome.goto('http://localhost:8081/');
-    assert.equal(await chrome.evaluate('document.getElementById("admin-login").hidden'), false);
-    await chrome.screenshot(path.join(output, 'admin-local-login.png'));
-    assert.equal((await fetch('http://localhost:8080/')).status, 200);
-    assert.equal((await fetch('http://localhost:8081/api/health')).status, 200);
-    ok('8080 conserva Frontend; 8081 sirve login Admin y proxy /api/health con PostgreSQL local');
+    if (process.env.HIDRO_TEST_COMPOSE_SMOKE !== '0') {
+      await chrome.goto('http://localhost:8081/');
+      assert.equal(await chrome.evaluate('document.getElementById("admin-login").hidden'), false);
+      await chrome.screenshot(path.join(output, 'admin-local-login.png'));
+      assert.equal((await fetch('http://localhost:8080/')).status, 200);
+      assert.equal((await fetch('http://localhost:8081/api/health')).status, 200);
+      ok('8080 conserva Frontend; 8081 sirve login Admin y proxy /api/health con PostgreSQL local');
+    }
     await chrome.goto(origin + '/');
     await require('./visual-checks.cjs').matrix(chrome,output,'admin-login','admin');
     await chrome.evaluate(`window.__sockets=[];const originalIO=window.io;window.io=Object.assign((...args)=>{const socket=originalIO(...args);window.__sockets.push(socket);return socket;},originalIO);void 0;`);

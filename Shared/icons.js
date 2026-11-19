@@ -39,6 +39,7 @@
       const old=el.querySelector('svg');if(old)old.replaceWith(icon(el.dataset.icon));else el.prepend(icon(el.dataset.icon));
     });
     root.querySelectorAll('svg[stroke="currentColor"]').forEach(svg=>{
+      if(svg.closest('#hb-fab,.hb-avatar')) return;
       svg.setAttribute('stroke-width','1.8');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');
     });
   }

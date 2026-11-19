@@ -229,7 +229,7 @@ test(
       await a.locator("#incident-history-change button").click();
       await a
         .locator("#incident-history-change-result")
-        .getByText(/Solicitud confirmada/)
+        .getByText(/Cambio registrado/)
         .waitFor();
       assert.equal(
         (await c.history(incident.id_incidencia)).data.eventos.length,
@@ -275,7 +275,7 @@ test(
           const contrast = await pg
             .locator("#incident-history-current")
             .evaluate((e) => getComputedStyle(e).color);
-          assert.equal(contrast, "rgb(36, 55, 70)");
+          assert.equal(contrast, "rgb(20, 41, 59)");
           const box = await pg
             .locator(".incident-history-dialog")
             .boundingBox();
