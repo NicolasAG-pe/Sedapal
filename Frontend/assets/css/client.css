@@ -650,6 +650,7 @@
   .hb-panel{position:fixed;right:20px;bottom:92px;z-index:60;width:min(380px,calc(100vw - 2rem));
     height:min(560px,calc(100dvh - 130px));min-height:380px;background:#fff;border-radius:16px;
     box-shadow:0 24px 60px rgba(0,20,40,.35);display:flex;flex-direction:column;overflow:hidden;
+    overscroll-behavior:contain;
     opacity:0;visibility:hidden;transform:translateY(8px) scale(.99);
     transition:opacity 240ms var(--ease-out),transform 240ms var(--ease-out),visibility 240ms}
   .hb-panel.open{opacity:1;visibility:visible;transform:none}
@@ -668,7 +669,10 @@
   .hb-iconbtn:hover{background:rgba(255,255,255,.28)}
   .hb-iconbtn svg{width:16px;height:16px}
   #hb-clear{grid-column:3;grid-row:1}#hb-min{grid-column:4;grid-row:1}#hb-close{grid-column:5;grid-row:1}
-  .hb-body{flex:1;overflow-y:auto;padding:.9rem;display:flex;flex-direction:column;gap:.55rem;background:#fbfdff;min-height:0}
+  /* El gesto que llega al tope/final del historial muere aquí: en la WebView
+     Android no debe encadenarse al documento y desplazar Inicio por detrás. */
+  .hb-body{flex:1;overflow-y:auto;padding:.9rem;display:flex;flex-direction:column;gap:.55rem;background:#fbfdff;min-height:0;
+    overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
   .hb-msg{max-width:85%;padding:.55rem .75rem;border-radius:12px;font-size:.86rem;line-height:1.5;overflow-wrap:break-word}
   .hb-msg.bot{align-self:flex-start;background:#f1f6fa;color:var(--text);border-bottom-left-radius:4px}
   .hb-msg.user{align-self:flex-end;background:var(--navy);color:#fff;border-bottom-right-radius:4px}
@@ -922,6 +926,8 @@
      Solo móvil: desktop >=900px conserva layout actual. */
   /* Body bloqueado por drawer: fijado vía JS (position:fixed; top:-scrollY). Sin saltos visuales. */
   body.drawer-open{overflow:hidden}
+  /* HidroBot expandido en Android: Inicio queda congelado en su posición. */
+  body.hidrobot-open{overflow:hidden}
   body.drawer-open #hidrobot-root .hb-fab,
   body.drawer-open #hidrobot-root .hb-panel{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
   body.tutorial-open #hidrobot-root .hb-fab,

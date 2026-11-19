@@ -10,6 +10,7 @@
       "integration/avance-18": false,
       "main": false,
       "fix/lab-consumo-recibos-anulados": false,
+      "fix/hidrobot-scroll-android": false,
       "feature/hidrobot-contexto-lab120": false,
       "feature/hidrobot-groqcloud-lab120": false,
       "feature/hidrobot-produccion": false,

@@ -3367,6 +3367,48 @@
   }
 
   /* ---------- HidroBot open / close ---------- */
+  /* Mientras el panel está expandido, Inicio no participa del scroll: se
+     conserva su posición exacta y ningún gesto puede encadenarse al
+     documento. El bloqueo NO intercepta touchmove; el historial, las
+     respuestas rápidas y el compositor conservan todos sus gestos. */
+  let hbPageLocked = false;
+  let hbPageScrollY = 0;
+  function hbDebeBloquearInicio(){
+    try{ return window.matchMedia('(hover: none) and (pointer: coarse)').matches; }catch(e){ return false; }
+  }
+  function lockPageForHidroBot(){
+    if(hbPageLocked || !hbDebeBloquearInicio()) return;
+    hbPageScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+    hbPageLocked = true;
+    document.body.classList.add('hidrobot-open');
+    if(isDrawerLocked()) return;
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.overscrollBehavior = 'none';
+    document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+  }
+  function unlockPageForHidroBot(){
+    if(!hbPageLocked) return;
+    hbPageLocked = false;
+    document.body.classList.remove('hidrobot-open');
+    if(isDrawerLocked()){
+      // El drawer asumió el bloqueo; no liberar sus estilos.
+    } else if(anyModalOpen()){
+      // El modal solo necesita body overflow; el bloqueo raíz era de HidroBot.
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.overscrollBehavior = '';
+    } else {
+      document.documentElement.style.overflow = '';
+      document.documentElement.style.overscrollBehavior = '';
+      document.body.style.overflow = '';
+      document.body.style.overscrollBehavior = '';
+    }
+    try{
+      const y = hbPageScrollY;
+      const actual = window.scrollY || document.documentElement.scrollTop || 0;
+      if(actual !== y) window.scrollTo({top:y, left:0, behavior:'instant'});
+    }catch(e){ try{ window.scrollTo(0, hbPageScrollY); }catch(_){} }
+  }
   function refocusFab(){
     // La visibilidad del FAB vuelve con transición: enfocar cuando ya sea enfocable
     setTimeout(()=>{ try{ hbFab.focus({preventScroll:true}); }catch(e){ try{ hbFab.focus(); }catch(_){} } }, isReduced() ? 0 : 120);
@@ -3379,6 +3421,7 @@
       return;
     }
     hidroBotState.open = true;
+    lockPageForHidroBot();
     hbPanel.classList.add('open');
     hbPanel.setAttribute('aria-hidden','false');
     hbFab.classList.add('hide');
@@ -3391,6 +3434,7 @@
   }
   function minimizeBot(){
     hidroBotState.open = false;
+    unlockPageForHidroBot();
     hbPanel.classList.remove('open');
     hbPanel.setAttribute('aria-hidden','true');
     hbFab.classList.remove('hide');
