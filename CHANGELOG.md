@@ -1,5 +1,10 @@
 # Historial de versiones
 
+## Océano Claro · Preparación de 1.2.3
+
+- La rama de integración visual queda fuera de los despliegues Git automáticos de ambos proyectos Vercel.
+- Se ajustó la prueba de revocación 2FA para interceptar la configuración de consulta que usa PostgreSQL y fallar con un plazo explícito si no alcanza la lectura esperada.
+
 ## Océano Claro · Cuadros de acción en Admin
 
 - Los formularios administrativos usan un panel lateral en escritorio y un cuadro de pantalla completa en tablet y móvil. Los historiales y la fotografía usan un modal ancho en escritorio.

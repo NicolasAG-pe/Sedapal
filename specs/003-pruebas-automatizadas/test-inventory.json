@@ -1732,7 +1732,7 @@
     },
     {
       "path": "Backend/test/two-factor-audit.cjs",
-      "sha256": "71e50783e274a1196968481be5036ec2720c57e04f2283936c728473c4254834",
+      "sha256": "3f1ddb3d26f65e17adbf1c06fa01ee1692ffe764482288425d117d9e5c8090cf",
       "type": "integracion",
       "group": null,
       "nodeTest": true,

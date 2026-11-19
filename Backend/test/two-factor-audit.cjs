@@ -4,6 +4,36 @@ const {iniciar}=require('./email-api.cjs'),OTPAuth=require('otpauth');
 global.WebSocket=require('ws');const {io}=require('../../Frontend/assets/vendor/socket.io.min.js');
 let ctx,n=870,ip=1;const key=crypto.randomBytes(32);
 const deferred=()=>{let resolve;const promise=new Promise(r=>{resolve=r;});return{promise,resolve};};
+
+function holdAuthentication(id) {
+ const read=deferred(), release=deferred();
+ const original=ctx.pool.query;
+ let held=false;
+ ctx.pool.query=async function(query, args) {
+  const result=await original.call(this,query,args);
+  const text=typeof query==='string'?query:query.text;
+  const values=typeof query==='string'?args:query.values;
+  if(!held && text.includes('COALESCE(m.version') && String(values?.[0])===String(id)){
+   held=true;
+   read.resolve();
+   await release.promise;
+  }
+  return result;
+ };
+ return {
+  async wait() {
+   let timer;
+   try {
+    await Promise.race([read.promise,new Promise((_,reject)=>{
+     timer=setTimeout(()=>reject(Error('No se alcanzó la lectura de autenticación esperada.')),5000);
+    })]);
+   } finally { clearTimeout(timer); }
+  },
+  release:release.resolve,
+  restore() { release.resolve();ctx.pool.query=original; }
+ };
+}
+
 before(async()=>{process.env.TOTP_ENCRYPTION_KEY=key.toString('base64');process.env.TOTP_ENROLLMENT_ENABLED='1';ctx=await iniciar();});
 after(async()=>{if(ctx)await ctx.close();delete process.env.TOTP_ENCRYPTION_KEY;delete process.env.TOTP_ENROLLMENT_ENABLED;});
 async function request(path,body,token){const r=await fetch(ctx.base+path,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json','X-Forwarded-For':'198.51.100.'+ip++,...(token?{Authorization:'Bearer '+token}:{})},...(body===undefined?{}:{body:JSON.stringify(body)})});return{status:r.status,data:await r.json()};}
@@ -30,24 +60,26 @@ test('Retención elimina solo material temporal y no revive versiones ni pasos T
  assert.equal((await request('/api/auth/session',undefined,a.token)).status,401);
 });
 test('Una petición validada antes de cambiar la versión MFA no modifica el estado posterior',async()=>{
- const a=await account(),read=deferred(),release=deferred(),original=ctx.pool.query;let held=false;
- ctx.pool.query=async function(sql,args){const result=await original.call(this,sql,args);if(!held&&typeof sql==='string'&&sql.includes('COALESCE(m.version')&&String(args?.[0])===String(a.id)){held=true;read.resolve();await release.promise;}return result;};
+ const a=await account(), barrier=holdAuthentication(a.id);
+ const operation=request('/api/auth/2fa/setup',{password:a.password},a.token);
  try{
-  const operation=request('/api/auth/2fa/setup',{password:a.password},a.token);await read.promise;
-  await ctx.db.query('INSERT INTO usuario_2fa(id_usuario,version) VALUES ($1,1)',[a.id]);release.resolve();
+  await barrier.wait();
+  await ctx.db.query('INSERT INTO usuario_2fa(id_usuario,version) VALUES ($1,1)',[a.id]);barrier.release();
   assert.equal((await operation).status,401);
   assert.equal((await ctx.db.query('SELECT pendiente_secreto FROM usuario_2fa WHERE id_usuario=$1',[a.id])).rows[0].pendiente_secreto,null);
- }finally{release.resolve();ctx.pool.query=original;}
+ }finally{
+  barrier.restore();
+  await operation;
+ }
 });
 test('Un handshake leído antes de activar MFA no entra en rooms privadas tras la revocación',async t=>{
- const a=await account(),read=deferred(),release=deferred(),original=ctx.pool.query;let held=false;
- ctx.pool.query=async function(sql,args){const result=await original.call(this,sql,args);if(!held&&typeof sql==='string'&&sql.includes('COALESCE(m.version')&&String(args?.[0])===String(a.id)){held=true;read.resolve();await release.promise;}return result;};
+ const a=await account(), barrier=holdAuthentication(a.id);
  const s=io(ctx.base,{auth:{token:a.token},transports:['websocket'],reconnection:false,timeout:4000});t.after(()=>s.close());
  try{
-  await read.promise;assert.equal((await request('/api/auth/2fa/setup',{password:a.password},a.token)).status,200);
+  await barrier.wait();assert.equal((await request('/api/auth/2fa/setup',{password:a.password},a.token)).status,200);
   assert.equal((await request('/api/auth/2fa/confirm',{codigo:await pendingCode(a)},a.token)).status,200);
-  const ended=new Promise(resolve=>{s.once('disconnect',resolve);s.once('connect_error',resolve);});release.resolve();
+  const ended=new Promise(resolve=>{s.once('disconnect',resolve);s.once('connect_error',resolve);});barrier.release();
   let timer;try{await Promise.race([ended,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Handshake antiguo mantuvo conexión')),2000);})]);}finally{clearTimeout(timer);}
   assert.equal(ctx.io.sockets.adapter.rooms.get('usuario:'+a.id)?.size||0,0);
- }finally{release.resolve();ctx.pool.query=original;}
+ }finally{barrier.restore();}
 });
